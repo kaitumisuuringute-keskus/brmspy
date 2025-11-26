@@ -1,9 +1,11 @@
 # brmspy
 
-Python interface to R's brms for Bayesian regression modeling.
+Python-first access to R's brms with proper parameter names, ArviZ support, and cmdstanr performance. The easiest way to run brms models from Python.
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![codecov](https://codecov.io/gh/kaitumisuuringute-keskus/brmspy/branch/master/graph/badge.svg)](https://codecov.io/gh/kaitumisuuringute-keskus/brmspy)
+[![Tests](https://github.com/kaitumisuuringute-keskus/brmspy/workflows/Python%20Test%20Matrix/badge.svg)](https://github.com/kaitumisuuringute-keskus/brmspy/actions)
 
 ## Overview
 
