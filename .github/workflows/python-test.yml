@@ -135,9 +135,9 @@ jobs:
           python -m pytest tests/ -v --cov=brmspy \
             --cov-report=term \
             --cov-report=xml \
-            --cov-report=json:coverage/coverage-summary.json
+            --cov-report=json
       
       - name: Update Coverage Badge
         if: github.event_name == 'push' && github.ref == 'refs/heads/master' && matrix.python-version == '3.12'
-        uses: we-cli/coverage-badge-action@v1.0.1
+        uses: we-cli/coverage-badge-action@main
 
