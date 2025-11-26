@@ -30,7 +30,7 @@ Example:
 """
 
 __version__ = "0.1.0"
-__author__ = "Adam Haber, Remi Sebastian Kits"
+__author__ = "Remi Sebastian Kits, Adam Haber"
 __license__ = "Apache-2.0"
 
 # Import main functions from brmspy module

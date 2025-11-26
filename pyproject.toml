@@ -10,8 +10,8 @@ readme = "README.md"
 requires-python = ">=3.8,<3.15"
 license = {text = "Apache-2.0"}
 authors = [
-    {name = "Adam Haber", email = "adamhaber@gmail.com"},
-    {name = "Remi Sebastian Kits", email = "remi.sebastian.kits@gmail.com"}
+    {name = "Remi Sebastian Kits", email = "remi.sebastian.kits@gmail.com"},
+    {name = "Adam Haber", email = "adamhaber@gmail.com"}
 ]
 maintainers = [
     {name = "Remi Sebastian Kits", email = "remi.sebastian.kits@gmail.com"}
