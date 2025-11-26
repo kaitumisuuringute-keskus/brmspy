@@ -7,9 +7,12 @@ on:
     branches: [ master ]
 
 jobs:
-  # 1) Build & cache CmdStan once
+  # 1) Build & cache CmdStan + R packages once
   cmdstan:
     runs-on: ubuntu-latest
+
+    env:
+      RSPM: https://cloud.r-project.org
 
     steps:
       - uses: actions/checkout@v4
@@ -20,9 +23,19 @@ jobs:
           r-version: 'release'
           use-public-rspm: true
 
+      - name: Ensure R library dir exists
+        run: |
+          echo "R_LIBS_USER: ${R_LIBS_USER}"
+          mkdir -p "${R_LIBS_USER}"
+
+      - name: Restore R library cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: r-lib-${{ runner.os }}-cmdstanr-brms-posterior-v1
+
       - name: Install R packages (cmdstanr, brms, posterior)
         run: |
-          R -q -e "install.packages(c('remotes'), repos = 'https://cloud.r-project.org')"
           R -q -e "
             options(repos = c(
               'https://stan-dev.r-universe.dev',
@@ -51,14 +64,17 @@ jobs:
             cat('CmdStan version: ', cmdstan_version(), '\n');
           "
 
-  # 2) Python matrix tests that reuse cached CmdStan
+  # 2) Python matrix tests that reuse cached R libs + CmdStan
   build:
     runs-on: ubuntu-latest
-    needs: cmdstan   # wait for CmdStan job
+    needs: cmdstan   # wait for CmdStan job to finish
 
     strategy:
       matrix:
         python-version: [ '3.9', '3.10', '3.11', '3.12' ]
+
+    env:
+      RSPM: https://cloud.r-project.org
 
     steps:
       - uses: actions/checkout@v4
@@ -75,10 +91,16 @@ jobs:
           r-version: 'release'
           use-public-rspm: true
 
-      - name: Install R packages (cmdstanr, brms, posterior)
+      - name: Ensure R library dir exists
         run: |
-          R -q -e "install.packages(c('remotes'), repos = 'https://cloud.r-project.org')"
-          R -q -e "remotes::install_cran(c('cmdstanr', 'brms', 'posterior'))"
+          echo "R_LIBS_USER: ${R_LIBS_USER}"
+          mkdir -p "${R_LIBS_USER}"
+
+      - name: Restore R library cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: r-lib-${{ runner.os }}-cmdstanr-brms-posterior-v1
 
       - name: Restore CmdStan cache
         uses: actions/cache@v3
@@ -90,6 +112,8 @@ jobs:
         run: |
           R -q -e "
             library(cmdstanr);
+            library(brms);
+            library(posterior);
             cmdstan_dir <- path.expand('~/.cmdstan');
             target <- file.path(cmdstan_dir, 'cmdstan-2.34.1');
             set_cmdstan_path(target);
