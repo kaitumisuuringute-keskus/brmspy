@@ -93,7 +93,8 @@ class TestSimpleModelFitting:
             warmup=100,
             chains=1,
             silent=2,
-            refresh=0
+            refresh=0,
+            return_type="idata"
         )
         
         # Check return type - now returns arviz InferenceData by default
@@ -119,7 +120,8 @@ class TestSimpleModelFitting:
             warmup=100,
             chains=1,
             silent=2,
-            refresh=0
+            refresh=0,
+            return_type="idata"
         )
         
         # Check return type - now returns arviz InferenceData by default
@@ -144,7 +146,8 @@ class TestSimpleModelFitting:
             warmup=100,
             chains=1,
             silent=2,
-            refresh=0
+            refresh=0,
+            return_type="idata"
         )
         
         # Check return type - now returns arviz InferenceData by default
@@ -179,7 +182,8 @@ class TestModelWithRandomEffects:
             warmup=200,
             chains=1,
             silent=2,
-            refresh=0
+            refresh=0,
+            return_type="idata"
         )
         
         # Check return type - now returns arviz InferenceData by default
@@ -208,7 +212,8 @@ class TestArVizIntegration:
             warmup=100,
             chains=1,
             silent=2,
-            refresh=0
+            refresh=0,
+            return_type="idata"
         )
         
         try:
@@ -272,7 +277,8 @@ class TestRealWorldExample:
             warmup=200,
             chains=2,
             silent=2,
-            refresh=0
+            refresh=0,
+            return_type="idata"
         )
         
         # Check it worked - now returns arviz InferenceData by default
