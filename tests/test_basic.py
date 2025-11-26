@@ -25,7 +25,6 @@ class TestImports:
         import brmspy
         assert hasattr(brmspy, '__version__')
         assert isinstance(brmspy.__version__, str)
-        assert brmspy.__version__ == "0.1.0"
     
     def test_main_functions_exist(self):
         """Test that main API functions are accessible"""
@@ -45,7 +44,7 @@ class TestDataConversion:
     
     def test_convert_dataframe_to_r(self, sample_dataframe):
         """Test DataFrame to R conversion"""
-        from brmspy.brmspy import _convert_python_to_R
+        from brmspy.helpers import _convert_python_to_R
         from rpy2.robjects import DataFrame as RDataFrame
         
         r_data = _convert_python_to_R(sample_dataframe)
@@ -53,7 +52,7 @@ class TestDataConversion:
     
     def test_convert_dict_to_r(self, sample_dict):
         """Test dict to R list conversion"""
-        from brmspy.brmspy import _convert_python_to_R
+        from brmspy.helpers import _convert_python_to_R
         from rpy2.robjects import ListVector
         
         r_data = _convert_python_to_R(sample_dict)
@@ -61,7 +60,7 @@ class TestDataConversion:
     
     def test_convert_invalid_type_raises_error(self):
         """Test that invalid types raise ValueError"""
-        from brmspy.brmspy import _convert_python_to_R
+        from brmspy.helpers import _convert_python_to_R
         
         with pytest.raises(ValueError, match="should be either a pandas DataFrame or a dictionary"):
             _convert_python_to_R([1, 2, 3])  # Lists not supported
@@ -75,7 +74,7 @@ class TestTypeCoercion:
     
     def test_coerce_types_basic(self):
         """Test basic type coercion from Stan code"""
-        from brmspy.brmspy import _coerce_types
+        from brmspy.helpers import _coerce_types
         
         # Simple Stan code with int and real types
         stan_code = """
@@ -105,7 +104,7 @@ class TestTypeCoercion:
     
     def test_coerce_types_preserves_arrays(self):
         """Test that arrays are preserved correctly"""
-        from brmspy.brmspy import _coerce_types
+        from brmspy.helpers import _coerce_types
         
         stan_code = """
         data {
@@ -130,7 +129,7 @@ class TestTypeCoercion:
     
     def test_coerce_int_array(self):
         """Test coercion of int arrays"""
-        from brmspy.brmspy import _coerce_types
+        from brmspy.helpers import _coerce_types
         
         stan_code = """
         data {
@@ -158,7 +157,7 @@ class TestTypeCoercion:
     
     def test_coerce_mixed_types(self):
         """Test coercion with mixed int and real types"""
-        from brmspy.brmspy import _coerce_types
+        from brmspy.helpers import _coerce_types
         
         stan_code = """
         data {
@@ -193,7 +192,7 @@ class TestTypeCoercion:
     
     def test_coerce_handles_non_numpy(self):
         """Test coercion handles non-numpy types"""
-        from brmspy.brmspy import _coerce_types
+        from brmspy.helpers import _coerce_types
         
         stan_code = """
         data {
@@ -227,7 +226,7 @@ class TestTypeCoercion:
         Regression test for issue where old parser captured 'array' as type
         instead of 'int', causing Stan runtime errors.
         """
-        from brmspy.brmspy import _coerce_types
+        from brmspy.helpers import _coerce_types
         
         # New Stan array syntax
         stan_code = """
@@ -265,7 +264,7 @@ class TestErrorHandling:
     
     def test_brms_not_installed_error_message(self):
         """Test that helpful error is raised when brms is not found"""
-        from brmspy.brmspy import _get_brms
+        from brmspy.helpers import _get_brms
         import rpy2.robjects.packages as rpackages
         
         # This test might pass if brms IS installed
@@ -298,7 +297,7 @@ class TestModuleStructure:
     
     def test_submodule_structure(self):
         """Test submodule structure"""
-        from brmspy import brmspy as brmspy_module
+        from brmspy import brms as brmspy_module
         
         # Check module has expected functions
         assert hasattr(brmspy_module, 'install_brms')
@@ -330,6 +329,12 @@ class TestDocumentation:
         import brmspy
         assert brmspy.get_brms_data.__doc__ is not None
         assert "dataset_name" in brmspy.get_brms_data.__doc__
+    
+    def test_summary_has_docstring(self):
+        """Test summary() has docstring"""
+        import brmspy
+        assert brmspy.summary.__doc__ is not None
+        assert "summary" in brmspy.summary.__doc__.lower()
 
 
 if __name__ == '__main__':

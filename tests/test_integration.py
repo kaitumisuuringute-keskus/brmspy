@@ -93,16 +93,15 @@ class TestSimpleModelFitting:
             warmup=100,
             chains=1,
             silent=2,
-            refresh=0,
-            return_type="idata"
+            refresh=0
         )
         
         # Check return type - now returns arviz InferenceData by default
         import arviz as az
-        assert isinstance(model, az.InferenceData)
+        assert isinstance(model.idata, az.InferenceData)
         
         # Check we can get parameter names
-        param_names = list(model.posterior.data_vars)
+        param_names = list(model.idata.posterior.data_vars)
         assert len(param_names) > 0
         
         # Check key parameters exist
@@ -120,16 +119,15 @@ class TestSimpleModelFitting:
             warmup=100,
             chains=1,
             silent=2,
-            refresh=0,
-            return_type="idata"
+            refresh=0
         )
         
         # Check return type - now returns arviz InferenceData by default
         import arviz as az
-        assert isinstance(model, az.InferenceData)
+        assert isinstance(model.idata, az.InferenceData)
         
         # Check we can get summary
-        summary = az.summary(model)
+        summary = az.summary(model.idata)
         assert summary is not None
         assert len(summary) > 0
     
@@ -146,16 +144,15 @@ class TestSimpleModelFitting:
             warmup=100,
             chains=1,
             silent=2,
-            refresh=0,
-            return_type="idata"
+            refresh=0
         )
         
         # Check return type - now returns arviz InferenceData by default
         import arviz as az
-        assert isinstance(model, az.InferenceData)
+        assert isinstance(model.idata, az.InferenceData)
         
         # Check we can get summary
-        summary = az.summary(model)
+        summary = az.summary(model.idata)
         assert summary is not None
 
 
@@ -182,16 +179,15 @@ class TestModelWithRandomEffects:
             warmup=200,
             chains=1,
             silent=2,
-            refresh=0,
-            return_type="idata"
+            refresh=0
         )
         
         # Check return type - now returns arviz InferenceData by default
         import arviz as az
-        assert isinstance(model, az.InferenceData)
+        assert isinstance(model.idata, az.InferenceData)
         
         # Check that random effects parameters exist
-        param_names = list(model.posterior.data_vars)
+        param_names = list(model.idata.posterior.data_vars)
         # Should have standard deviation parameter for random effects
         assert any('sd_group' in p for p in param_names)
 
@@ -212,8 +208,7 @@ class TestArVizIntegration:
             warmup=100,
             chains=1,
             silent=2,
-            refresh=0,
-            return_type="idata"
+            refresh=0
         )
         
         try:
@@ -222,10 +217,10 @@ class TestArVizIntegration:
             pytest.skip("arviz not installed")
         
         # Model is already InferenceData, no conversion needed
-        assert isinstance(model, az.InferenceData)
+        assert isinstance(model.idata, az.InferenceData)
         
         # Check it has posterior
-        assert hasattr(model, 'posterior')
+        assert hasattr(model.idata, 'posterior')
 
 
 @pytest.mark.requires_brms
@@ -277,21 +272,20 @@ class TestRealWorldExample:
             warmup=200,
             chains=2,
             silent=2,
-            refresh=0,
-            return_type="idata"
+            refresh=0
         )
         
         # Check it worked - now returns arviz InferenceData by default
         import arviz as az
-        assert isinstance(model, az.InferenceData)
+        assert isinstance(model.idata, az.InferenceData)
         
         # Check key parameters exist
-        param_names = list(model.posterior.data_vars)
+        param_names = list(model.idata.posterior.data_vars)
         assert any('b_zAge' in p for p in param_names)
         assert any('b_zBase' in p for p in param_names)
         
         # Check some basic convergence (Rhat close to 1)
-        summary = az.summary(model)
+        summary = az.summary(model.idata)
         if 'r_hat' in summary.columns:
             max_rhat = summary['r_hat'].max()
             # Warn if convergence is poor, but don't fail
@@ -307,7 +301,7 @@ class TestNaNRegression:
     @pytest.mark.slow
     def test_no_nans_in_idata_conversion(self):
         """
-        Regression test for NaN bug in _brmsfit_to_idata().
+        Regression test for NaN bug in brmsfit_to_idata().
         
         The posterior R package numbers draws sequentially across chains
         (chain1: 1-500, chain2: 501-1000), but arviz expects draws numbered
@@ -326,12 +320,10 @@ class TestNaNRegression:
             'x': np.random.randn(50)
         })
         
-        # Fit model with return_type="both" to check both formats
         result = brmspy.fit(
             formula="y ~ x",
             data=data,
             family="gaussian",
-            return_type="both",
             chains=4,
             iter=200,
             warmup=100,
@@ -339,19 +331,19 @@ class TestNaNRegression:
             refresh=0
         )
         
-        # Check that brmsfit has no NaNs (via posterior package)
+        # Check that r has no NaNs (via posterior package)
         from rpy2.robjects.packages import importr
         from rpy2.robjects import pandas2ri, default_converter
         from rpy2.robjects.conversion import localconverter
         
         posterior = importr('posterior')
-        draws = posterior.as_draws_df(result.brmsfit)
+        draws = posterior.as_draws_df(result.r)
         
         with localconverter(default_converter + pandas2ri.converter):
             df = pandas2ri.rpy2py(draws)
         
         # Verify no NaNs in original draws from R
-        assert not df.isna().any().any(), "brmsfit draws should not contain NaNs"
+        assert not df.isna().any().any(), "r draws should not contain NaNs"
         
         # Check that InferenceData has no NaNs (this was the bug)
         idata = result.idata
