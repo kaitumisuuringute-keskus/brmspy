@@ -294,5 +294,78 @@ class TestRealWorldExample:
                 warnings.warn(f"Max R-hat is {max_rhat:.3f} (>1.1) - may need more iterations")
 
 
+@pytest.mark.requires_brms
+class TestNaNRegression:
+    """Regression tests for specific bugs that were fixed."""
+    
+    @pytest.mark.slow
+    def test_no_nans_in_idata_conversion(self):
+        """
+        Regression test for NaN bug in _brmsfit_to_idata().
+        
+        The posterior R package numbers draws sequentially across chains
+        (chain1: 1-500, chain2: 501-1000), but arviz expects draws numbered
+        within each chain (each chain: 0-499). This test verifies that the
+        conversion correctly renumbers draws to avoid NaNs.
+        
+        Bug was: df.pivot(index='.draw', columns='.chain', values=col)
+        Fix: Renumber draws within each chain before pivoting
+        """
+        import brmspy
+        
+        # Create simple test data
+        np.random.seed(42)
+        data = pd.DataFrame({
+            'y': np.random.randn(50),
+            'x': np.random.randn(50)
+        })
+        
+        # Fit model with return_type="both" to check both formats
+        result = brmspy.fit(
+            formula="y ~ x",
+            data=data,
+            family="gaussian",
+            return_type="both",
+            chains=4,
+            iter=200,
+            warmup=100,
+            silent=2,
+            refresh=0
+        )
+        
+        # Check that brmsfit has no NaNs (via posterior package)
+        from rpy2.robjects.packages import importr
+        from rpy2.robjects import pandas2ri, default_converter
+        from rpy2.robjects.conversion import localconverter
+        
+        posterior = importr('posterior')
+        draws = posterior.as_draws_df(result.brmsfit)
+        
+        with localconverter(default_converter + pandas2ri.converter):
+            df = pandas2ri.rpy2py(draws)
+        
+        # Verify no NaNs in original draws from R
+        assert not df.isna().any().any(), "brmsfit draws should not contain NaNs"
+        
+        # Check that InferenceData has no NaNs (this was the bug)
+        idata = result.idata
+        
+        # Check all parameters in posterior group
+        for param_name in idata.posterior.data_vars:
+            param_values = idata.posterior[param_name].values
+            n_nans = np.isnan(param_values).sum()
+            assert n_nans == 0, (
+                f"Parameter '{param_name}' has {n_nans} NaN values in InferenceData. "
+                f"This indicates the draw renumbering fix failed."
+            )
+        
+        # Verify we have the expected shape (chains, draws)
+        # Use .sizes instead of .dims to avoid FutureWarning
+        assert idata.posterior.sizes['chain'] == 4, "Should have 4 chains"
+        assert idata.posterior.sizes['draw'] == 100, "Should have 100 draws per chain"
+        
+        print("✓ No NaNs found in InferenceData conversion")
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v', '-m', 'requires_brms'])

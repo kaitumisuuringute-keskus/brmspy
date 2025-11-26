@@ -13,9 +13,12 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/stan-dev/cmdstan:latest
     strategy:
       matrix:
-        python-version: [3.9, "3.10", 3.11, 3.12, 3.13, 3.14]
+        # skip some versions for better costs
+        python-version: [3.9, "3.10", 3.12, 3.14]
 
     steps:
     - uses: actions/checkout@v2
@@ -29,13 +32,14 @@ jobs:
         r-version: 'release'
     - name: Install R dependencies
       run: |
-        R -e "install.packages('remotes')"
-        R -e "remotes::install_cran(c('brms', 'posterior'))"
-        R -e "install.packages('cmdstanr', repos = c('https://stan-dev.r-universe.dev', getOption('repos')))"
-        R -e "cmdstanr::install_cmdstan()"
+        R -e "install.packages(c('remotes', 'posterior'))"
+        R -e "remotes::install_cran('brms')"
+        R -e "remotes::install_cran('cmdstanr')"
+        R -e "cmdstanr::set_cmdstan_path('/cmdstan')"
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
+        pip install pytest arviz
         pip install -e ".[dev]"
     - name: Test with pytest
       run: |

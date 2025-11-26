@@ -541,16 +541,22 @@ def _brmsfit_to_idata(brmsfit_obj):
         chain_col = '.chain' if '.chain' in df.columns else 'chain'
         draw_col = '.draw' if '.draw' in df.columns else 'draw'
         
-        # Get unique chains and draws
+        # IMPORTANT: posterior R package numbers draws sequentially across chains
+        # (e.g., chain1: 1-500, chain2: 501-1000), but arviz expects draws
+        # numbered within each chain (e.g., each chain: 0-499).
+        # We must renumber draws to start from 0 within each chain.
+        df['draw_idx'] = df.groupby(chain_col)[draw_col].transform(lambda x: np.arange(len(x)))
+        
+        # Get unique chains and draws per chain
         chains = sorted(df[chain_col].unique())
-        draws = sorted(df[draw_col].unique())
+        n_draws = df['draw_idx'].max() + 1
         
         # Prepare posterior dict
         posterior_dict = {}
         for col in df.columns:
-            if col not in [chain_col, draw_col, '.iteration']:
-                # Reshape to (chain, draw) format
-                values = df.pivot(index=draw_col, columns=chain_col, values=col).values.T
+            if col not in [chain_col, draw_col, '.iteration', 'draw_idx']:
+                # Reshape to (chain, draw) format using renumbered draws
+                values = df.pivot(index='draw_idx', columns=chain_col, values=col).values.T
                 posterior_dict[col] = values
         
         # Create InferenceData
@@ -573,9 +579,9 @@ def fit(
     sample_prior: str = "no",
     sample: bool = True,
     backend: str = "cmdstanr",
-    return_type: str = "idata",
+    return_type: str = "both",
     **brm_args,
-) -> typing.Union['arviz.InferenceData', 'brmsfit', BrmsFitResult]:
+) -> typing.Union[BrmsFitResult, 'arviz.InferenceData', 'brmsfit']:
     """
     Fit a Bayesian regression model using brms.
     
@@ -760,21 +766,10 @@ def fit(
     
     # Convert based on return_type
     if return_type == "idata":
-        print("\nConverting to arviz InferenceData...")
         idata = _brmsfit_to_idata(fit)
-        print("✓ Conversion complete!")
-        print("\nUse arviz for analysis:")
-        print("  import arviz as az")
-        print("  az.plot_posterior(idata)")
-        print("  az.summary(idata)")
         return idata
     
     elif return_type == "brmsfit":
-        print("\nReturned brmsfit R object.")
-        print("To use in R:")
-        print("  import rpy2.robjects as ro")
-        print("  ro.globalenv['fit'] = result")
-        print("  ro.r('summary(fit)')")
         return fit
     
     elif return_type == "both":
