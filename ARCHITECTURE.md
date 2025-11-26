@@ -187,7 +187,7 @@ Required:
 - numpy ≥ 1.20.0  # Arrays
 
 Optional:
-- arviz ≥ 0.11.0  # InferenceData (for return_type="idata")
+- arviz ≥ 0.11.0  # InferenceData
 ```
 
 ### R Dependencies
@@ -296,40 +296,6 @@ pytest tests/ --cov=brmspy --cov-report=html
 - Core functions well tested
 - Installation/error paths less tested (hard to mock R)
 
-## Migration from v0.0.3
-
-### Breaking Changes
-
-**1. Return Type**
-```python
-# Old (v0.0.3)
-model = brmspy.fit(...)  # Returns pystan.StanFit4Model
-idata = az.from_pystan(model)
-
-# New (v0.1.0)
-idata = brmspy.fit(...)  # Returns arviz.InferenceData by default
-# Or: fit = brmspy.fit(..., return_type="brmsfit")
-```
-
-**2. Sampling Parameters**
-```python
-# Old
-fit(..., iter_warmup=1000, iter_sampling=1000)
-
-# New
-fit(..., warmup=1000, iter=2000)  # iter = warmup + sampling
-```
-
-**3. Backend**
-```python
-# Old: Direct CmdStanPy usage
-# New: brms with cmdstanr backend
-```
-
-### Non-Breaking Changes
-- Formula syntax unchanged
-- Prior specification unchanged
-- Data format unchanged
 
 ## Performance Considerations
 
@@ -346,7 +312,6 @@ fit(..., warmup=1000, iter=2000)  # iter = warmup + sampling
 ### Memory
 - Python + R both hold data
 - arviz InferenceData more memory-efficient than R objects
-- Use `return_type="brmsfit"` to avoid double storage
 
 ### Type Conversion
 - rpy2 conversions add ~50-100ms overhead

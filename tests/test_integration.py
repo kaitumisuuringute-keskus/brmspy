@@ -93,16 +93,15 @@ class TestSimpleModelFitting:
             warmup=100,
             chains=1,
             silent=2,
-            refresh=0,
-            return_type="idata"
+            refresh=0
         )
         
         # Check return type - now returns arviz InferenceData by default
         import arviz as az
-        assert isinstance(model, az.InferenceData)
+        assert isinstance(model.idata, az.InferenceData)
         
         # Check we can get parameter names
-        param_names = list(model.posterior.data_vars)
+        param_names = list(model.idata.posterior.data_vars)
         assert len(param_names) > 0
         
         # Check key parameters exist
@@ -120,16 +119,15 @@ class TestSimpleModelFitting:
             warmup=100,
             chains=1,
             silent=2,
-            refresh=0,
-            return_type="idata"
+            refresh=0
         )
         
         # Check return type - now returns arviz InferenceData by default
         import arviz as az
-        assert isinstance(model, az.InferenceData)
+        assert isinstance(model.idata, az.InferenceData)
         
         # Check we can get summary
-        summary = az.summary(model)
+        summary = az.summary(model.idata)
         assert summary is not None
         assert len(summary) > 0
     
@@ -146,16 +144,15 @@ class TestSimpleModelFitting:
             warmup=100,
             chains=1,
             silent=2,
-            refresh=0,
-            return_type="idata"
+            refresh=0
         )
         
         # Check return type - now returns arviz InferenceData by default
         import arviz as az
-        assert isinstance(model, az.InferenceData)
+        assert isinstance(model.idata, az.InferenceData)
         
         # Check we can get summary
-        summary = az.summary(model)
+        summary = az.summary(model.idata)
         assert summary is not None
 
 
@@ -182,16 +179,15 @@ class TestModelWithRandomEffects:
             warmup=200,
             chains=1,
             silent=2,
-            refresh=0,
-            return_type="idata"
+            refresh=0
         )
         
         # Check return type - now returns arviz InferenceData by default
         import arviz as az
-        assert isinstance(model, az.InferenceData)
+        assert isinstance(model.idata, az.InferenceData)
         
         # Check that random effects parameters exist
-        param_names = list(model.posterior.data_vars)
+        param_names = list(model.idata.posterior.data_vars)
         # Should have standard deviation parameter for random effects
         assert any('sd_group' in p for p in param_names)
 
@@ -212,8 +208,7 @@ class TestArVizIntegration:
             warmup=100,
             chains=1,
             silent=2,
-            refresh=0,
-            return_type="idata"
+            refresh=0
         )
         
         try:
@@ -222,10 +217,10 @@ class TestArVizIntegration:
             pytest.skip("arviz not installed")
         
         # Model is already InferenceData, no conversion needed
-        assert isinstance(model, az.InferenceData)
+        assert isinstance(model.idata, az.InferenceData)
         
         # Check it has posterior
-        assert hasattr(model, 'posterior')
+        assert hasattr(model.idata, 'posterior')
 
 
 @pytest.mark.requires_brms
@@ -277,21 +272,20 @@ class TestRealWorldExample:
             warmup=200,
             chains=2,
             silent=2,
-            refresh=0,
-            return_type="idata"
+            refresh=0
         )
         
         # Check it worked - now returns arviz InferenceData by default
         import arviz as az
-        assert isinstance(model, az.InferenceData)
+        assert isinstance(model.idata, az.InferenceData)
         
         # Check key parameters exist
-        param_names = list(model.posterior.data_vars)
+        param_names = list(model.idata.posterior.data_vars)
         assert any('b_zAge' in p for p in param_names)
         assert any('b_zBase' in p for p in param_names)
         
         # Check some basic convergence (Rhat close to 1)
-        summary = az.summary(model)
+        summary = az.summary(model.idata)
         if 'r_hat' in summary.columns:
             max_rhat = summary['r_hat'].max()
             # Warn if convergence is poor, but don't fail
@@ -326,12 +320,10 @@ class TestNaNRegression:
             'x': np.random.randn(50)
         })
         
-        # Fit model with return_type="both" to check both formats
         result = brmspy.fit(
             formula="y ~ x",
             data=data,
             family="gaussian",
-            return_type="both",
             chains=4,
             iter=200,
             warmup=100,

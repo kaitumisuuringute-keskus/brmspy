@@ -74,49 +74,28 @@ import arviz as az
 kidney = brmspy.get_brms_data("kidney")
 
 # Fit Gaussian model
-idata = brmspy.fit(
+model = brmspy.fit(
     formula="time ~ age + disease",
     data=kidney,
-    family="gaussian",
-    return_type="idata"
+    family="gaussian"
 )
 
 # View summary
-az.summary(idata)
+az.summary(model.idata)
 ```
 
 ### With Priors
 
 ```python
-idata = brmspy.fit(
+model = brmspy.fit(
     formula="count ~ zAge + (1|patient)",
     data=epilepsy,
     family="poisson",
     priors=[
         ("normal(0, 0.5)", "b"),
         ("cauchy(0, 1)", "sd")
-    ],
-    return_type="idata"
+    ]
 )
-```
-
-### Return Type Options
-
-```python
-# Default: arviz InferenceData (Pythonic)
-idata = brmspy.fit(..., return_type="idata")
-az.plot_posterior(idata)
-
-# R brmsfit object (for advanced R users)
-fit = brmspy.fit(..., return_type="brmsfit")
-import rpy2.robjects as ro
-ro.globalenv['fit'] = fit
-ro.r('summary(fit)')
-
-# Both formats
-result = brmspy.fit(..., return_type="both")
-az.plot_posterior(result.idata)  # Python
-# result.brmsfit for R methods
 ```
 
 ### Sampling Parameters

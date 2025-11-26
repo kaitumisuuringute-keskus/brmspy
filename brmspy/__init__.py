@@ -34,7 +34,7 @@ __author__ = "Remi Sebastian Kits, Adam Haber"
 __license__ = "Apache-2.0"
 
 # Import main functions from brmspy module
-from brmspy.brmspy import (
+from brmspy.brms import (
     get_brms_data,
     fit,
     install_brms,

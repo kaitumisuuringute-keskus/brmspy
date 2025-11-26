@@ -101,7 +101,7 @@ Homepage = "https://github.com/kaitumisuuringute-keskus/brmspy"
 Repository = "https://github.com/kaitumisuuringute-keskus/brmspy"
 Documentation = "https://kaitumisuuringute-keskus.github.io/brmspy/"
 "Bug Tracker" = "https://github.com/kaitumisuuringute-keskus/brmspy/issues"
-"Original Repository" = "https://github.com/adamhaber/brmspy"
+"Original Repository" = "https://github.com/adamhaber/pybrms"
 Changelog = "https://github.com/kaitumisuuringute-keskus/brmspy/blob/master/CHANGELOG.md"
 
 [project.scripts]

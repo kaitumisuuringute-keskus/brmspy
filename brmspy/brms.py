@@ -9,9 +9,7 @@ import warnings
 import rpy2.robjects.packages as rpackages
 from rpy2.robjects import default_converter, pandas2ri, numpy2ri, ListVector, DataFrame, StrVector
 from rpy2.robjects.conversion import localconverter
-
-# Global variable for lazy brms import
-_brms = None
+from .helpers import _get_brms, _convert_python_to_R, _brmsfit_to_idata
 
 
 def install_brms(version: str = "latest", repo: str = "https://cran.rstudio.com", install_cmdstan: bool = True):
@@ -199,35 +197,6 @@ def get_brms_version() -> str:
         return version_str.replace('[1]', '').strip()
 
 
-def _get_brms():
-    """
-    Lazy import of brms with helpful error message if not installed.
-    
-    Returns
-    -------
-    brms module
-        The imported brms R package
-    
-    Raises
-    ------
-    ImportError
-        If brms is not installed, with instructions for installation
-    """
-    global _brms
-    if _brms is None:
-        try:
-            _brms = rpackages.importr("brms")
-        except Exception as e:
-            raise ImportError(
-                "brms R package not found. Install it using:\n\n"
-                "  import brmspy\n"
-                "  brmspy.install_brms()  # for latest version\n\n"
-                "Or install a specific version:\n"
-                "  brmspy.install_brms(version='2.23.0')\n\n"
-                "Or install manually in R:\n"
-                "  install.packages('brms')\n"
-            ) from e
-    return _brms
 
 
 def get_brms_data(dataset_name: str) -> pd.DataFrame:
@@ -261,35 +230,6 @@ def get_brms_data(dataset_name: str) -> pd.DataFrame:
         return pd.DataFrame(rpackages.data(brms).fetch(dataset_name)[dataset_name])
 
 
-def _convert_python_to_R(data: typing.Union[dict, pd.DataFrame]):
-    """
-    Convert Python data structures to R objects that brms can handle.
-    
-    Parameters
-    ----------
-    data : dict or pd.DataFrame
-        Python data to convert
-    
-    Returns
-    -------
-    R object
-        R list (from dict) or R data.frame (from DataFrame)
-    
-    Raises
-    ------
-    ValueError
-        If data type is not supported
-    """
-    with localconverter(default_converter + pandas2ri.converter + numpy2ri.converter) as cv:
-        if isinstance(data, pd.DataFrame):
-            return DataFrame(data)
-        elif isinstance(data, dict):
-            return ListVector(data)
-        else:
-            raise ValueError(
-                f"Data should be either a pandas DataFrame or a dictionary, "
-                f"got {type(data).__name__}"
-            )
 
 
 def get_stan_code(
@@ -333,114 +273,6 @@ def get_stan_code(
         )[0]
 
 
-def _convert_R_to_python(
-    formula: str, 
-    data: typing.Union[dict, pd.DataFrame], 
-    family: str
-) -> dict:
-    """
-    Convert R data structures from brms to Python dictionaries.
-    
-    Calls brms::make_standata() and converts the result to Python.
-    
-    Parameters
-    ----------
-    formula : str
-        brms formula specification
-    data : dict or pd.DataFrame
-        Model data
-    family : str
-        Distribution family
-    
-    Returns
-    -------
-    dict
-        Stan data as Python dictionary
-    """
-    brms = _get_brms()
-    # Call brms to preprocess the data; returns an R ListVector
-    model_data = brms.make_standata(formula, data, family=family)
-    
-    # Convert R objects to Python/pandas/numpy
-    # We use a context manager because it conflicts with prior creation
-    with localconverter(default_converter + pandas2ri.converter + numpy2ri.converter) as cv:
-        model_data = dict(model_data.items())
-    return model_data
-
-
-def _coerce_types(stan_code: str, stan_data: dict) -> dict:
-    """
-    Coerce Python types to match Stan's type requirements.
-    
-    Stan has strict type requirements (int vs float). This function parses
-    the Stan data block to determine required types and coerces the data
-    accordingly.
-    
-    Parameters
-    ----------
-    stan_code : str
-        Generated Stan code
-    stan_data : dict
-        Data dictionary to coerce
-    
-    Returns
-    -------
-    dict
-        Type-coerced data dictionary
-    """
-    pat_data = re.compile(r'(?<=data {)[^}]*')
-    pat_identifiers = re.compile(r'([\w]+)')
-
-    # Extract the data block and separate lines
-    data_lines = pat_data.findall(stan_code)[0].split('\n')
-    
-    # Remove comments, <>-style bounds and []-style data size declarations
-    data_lines_no_comments = [l.split('//')[0] for l in data_lines]
-    data_lines_no_bounds = [re.sub('<[^>]+>', '', l) for l in data_lines_no_comments]
-    data_lines_no_sizes = [re.sub(r'\[[^>]+\]', '', l) for l in data_lines_no_bounds]
-
-    # Extract identifiers and handle both old and new Stan syntax
-    # Old: int Y; or int Y[N]; -> type is first identifier
-    # New: array[N] int Y; -> type is second identifier (after 'array')
-    identifiers = [pat_identifiers.findall(l) for l in data_lines_no_sizes]
-    
-    var_types = []
-    var_names = []
-    for tokens in identifiers:
-        if len(tokens) == 0:
-            continue
-        # New syntax: array[...] type name
-        if tokens[0] == 'array' and len(tokens) >= 3:
-            var_types.append(tokens[1])  # Type is second token
-            var_names.append(tokens[-1])  # Name is last token
-        # Old syntax: type name
-        elif len(tokens) >= 2:
-            var_types.append(tokens[0])  # Type is first token
-            var_names.append(tokens[-1])  # Name is last token
-    
-    var_dict = dict(zip(var_names, var_types))
-
-    # Coerce integers to int and 1-size arrays to scalars
-    for k, v in stan_data.items():
-        # Convert to numpy array if not already
-        if not isinstance(v, np.ndarray):
-            v = np.asarray(v)
-            stan_data[k] = v
-        
-        # First, convert 1-size arrays to scalars
-        if hasattr(v, 'size') and v.size == 1 and hasattr(v, 'ndim') and v.ndim > 0:
-            v = v.item()
-            stan_data[k] = v
-        
-        # Then coerce to int if Stan expects int
-        if k in var_names and var_dict[k] == "int":
-            # Handle both scalars and arrays
-            if isinstance(v, (int, float, np.number)):  # Scalar
-                stan_data[k] = int(v)
-            elif isinstance(v, np.ndarray):  # Array
-                stan_data[k] = v.astype(np.int64)
-    
-    return stan_data
 
 
 class BrmsFitResult:
@@ -459,7 +291,7 @@ class BrmsFitResult:
     
     Examples
     --------
-    >>> result = brmspy.fit(..., return_type='both')
+    >>> result = brmspy.fit(...)
     >>> # Use with arviz
     >>> az.plot_posterior(result.idata)
     >>> # Use with R
@@ -475,98 +307,6 @@ class BrmsFitResult:
         return f"BrmsFitResult(idata={type(self.idata).__name__}, brmsfit=brmsfit)"
 
 
-def _brmsfit_to_idata(brmsfit_obj):
-    """
-    Convert brmsfit R object to arviz InferenceData.
-    
-    This uses posterior R package to extract draws and then converts
-    to arviz InferenceData format.
-    
-    Parameters
-    ----------
-    brmsfit_obj : R brmsfit object
-        Fitted brms model from brm()
-    
-    Returns
-    -------
-    arviz.InferenceData
-        Arviz InferenceData object with properly named parameters
-    
-    Raises
-    ------
-    ImportError
-        If arviz or required R packages are not installed
-    """
-    try:
-        import arviz as az
-    except ImportError:
-        raise ImportError(
-            "arviz is required for InferenceData conversion. Install it with:\n"
-            "  pip install arviz\n"
-            "Or install the viz extra:\n"
-            "  pip install brmspy[viz]"
-        )
-    
-    import rpy2.robjects as ro
-    from rpy2.robjects import pandas2ri
-    from rpy2.robjects.conversion import localconverter
-    
-    # Assign to R environment
-    ro.globalenv['__temp_brmsfit'] = brmsfit_obj
-    
-    try:
-        # Check if posterior package is available
-        try:
-            posterior = rpackages.importr('posterior')
-        except:
-            raise ImportError(
-                "posterior R package is required for conversion. Install it in R with:\n"
-                "  install.packages('posterior')"
-            )
-        
-        # Extract draws using posterior package
-        # This works with both rstan and cmdstanr backends
-        draws = posterior.as_draws_df(brmsfit_obj)
-        
-        # Convert draws to pandas DataFrame
-        with localconverter(default_converter + pandas2ri.converter):
-            df = pandas2ri.rpy2py(draws)
-        
-        # Convert to arviz InferenceData using from_dict
-        # Split into posterior and other groups
-        chain_col = '.chain' if '.chain' in df.columns else 'chain'
-        draw_col = '.draw' if '.draw' in df.columns else 'draw'
-        
-        # IMPORTANT: posterior R package numbers draws sequentially across chains
-        # (e.g., chain1: 1-500, chain2: 501-1000), but arviz expects draws
-        # numbered within each chain (e.g., each chain: 0-499).
-        # We must renumber draws to start from 0 within each chain.
-        df['draw_idx'] = df.groupby(chain_col)[draw_col].transform(lambda x: np.arange(len(x)))
-        
-        # Get unique chains and draws per chain
-        chains = sorted(df[chain_col].unique())
-        n_draws = df['draw_idx'].max() + 1
-        
-        # Prepare posterior dict
-        posterior_dict = {}
-        for col in df.columns:
-            if col not in [chain_col, draw_col, '.iteration', 'draw_idx']:
-                # Reshape to (chain, draw) format using renumbered draws
-                values = df.pivot(index='draw_idx', columns=chain_col, values=col).values.T
-                posterior_dict[col] = values
-        
-        # Create InferenceData
-        idata = az.from_dict(posterior=posterior_dict)
-        
-        return idata
-    finally:
-        # Clean up temporary R variable
-        try:
-            ro.r('rm(__temp_brmsfit)')
-        except:
-            pass
-
-
 def fit(
     formula: str,
     data: typing.Union[dict, pd.DataFrame],
@@ -575,9 +315,8 @@ def fit(
     sample_prior: str = "no",
     sample: bool = True,
     backend: str = "cmdstanr",
-    return_type: str = "both",
     **brm_args,
-) -> typing.Union[BrmsFitResult, 'arviz.InferenceData', 'brmsfit']:
+) -> BrmsFitResult:
     """
     Fit a Bayesian regression model using brms.
     
@@ -623,16 +362,7 @@ def fit(
     
     Returns
     -------
-    arviz.InferenceData, brmsfit, or BrmsFitResult
-        Depending on return_type parameter:
-        
-        - "idata": arviz.InferenceData object with properly named parameters
-          for use with arviz plotting and analysis functions
-        
-        - "brmsfit": R brmsfit object for use with R/brms functions
-          Access via rpy2: ro.globalenv['fit'] = result
-        
-        - "both": BrmsFitResult object with .idata and .brmsfit attributes
+    BrmsFitResult object with .idata and .brmsfit attributes
           allowing access to both Python and R functionality
     
     Examples
@@ -655,19 +385,6 @@ def fit(
     >>> az.plot_posterior(idata)
     >>> az.summary(idata)
     
-    Return brmsfit for R methods:
-    >>> fit = brmspy.fit(..., return_type="brmsfit")
-    >>> import rpy2.robjects as ro
-    >>> ro.globalenv['fit'] = fit
-    >>> ro.r('summary(fit)')
-    >>> ro.r('plot(fit)')
-    
-    Get both for maximum flexibility:
-    >>> result = brmspy.fit(..., return_type="both")
-    >>> az.plot_posterior(result.idata)  # Python
-    >>> ro.globalenv['fit'] = result.brmsfit  # R
-    >>> ro.r('summary(fit)')
-    
     With priors:
     >>> fit = brmspy.fit(
     ...     formula="count ~ zAge + zBase * Trt + (1|patient)",
@@ -680,14 +397,6 @@ def fit(
     
     Notes
     -----
-    The default return_type="idata" provides the most Pythonic interface,
-    returning an arviz InferenceData object with properly named parameters
-    (e.g., b_Intercept, b_zAge, sd_patient__Intercept) that works seamlessly
-    with the Python Bayesian ecosystem (arviz, matplotlib, etc.).
-    
-    For users who need R-specific brms functionality, use return_type="brmsfit"
-    or return_type="both" for maximum flexibility.
-    
     The backend uses brms with cmdstanr, ensuring proper parameter naming
     and full brms functionality. This replaced the direct CmdStanPy approach
     from earlier versions.
@@ -749,35 +458,7 @@ def fit(
     
     # Handle return type conversion
     if not sample:
-        # For empty models, only brmsfit makes sense
-        if return_type != "brmsfit":
-            warnings.warn(
-                "Empty models (sample=False) only support return_type='brmsfit'. "
-                "Setting return_type='brmsfit'."
-            )
-        print("✓ Empty brmsfit object created (no sampling)!")
-        return fit
-    
-    print("✓ Model fitted successfully!")
-    
-    # Convert based on return_type
-    if return_type == "idata":
-        idata = _brmsfit_to_idata(fit)
-        return idata
-    
-    elif return_type == "brmsfit":
-        return fit
-    
-    elif return_type == "both":
-        print("\nConverting to arviz InferenceData...")
-        idata = _brmsfit_to_idata(fit)
-        print("✓ Conversion complete!")
-        print("\nReturned BrmsFitResult with both formats.")
-        print("Access via result.idata (arviz) or result.brmsfit (R object)")
-        return BrmsFitResult(idata=idata, brmsfit=fit)
-    
-    else:
-        raise ValueError(
-            f"Invalid return_type='{return_type}'. "
-            "Must be 'idata', 'brmsfit', or 'both'."
-        )
+        return BrmsFitResult(idata=[], brmsfit=fit)
+
+    idata = _brmsfit_to_idata(fit)
+    return BrmsFitResult(idata=idata, brmsfit=fit)
