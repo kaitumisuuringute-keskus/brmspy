@@ -351,14 +351,7 @@ def _reshape_r_prediction_to_arviz(r_matrix, brmsfit_obj, obs_coords=None):
     
     return reshaped_data, coords, ["chain", "draw", "obs_id"]
 
-
-def brms_epred_to_idata(r_epred_obj, brmsfit_obj, newdata=None, var_name="epred"):
-    """
-    Converts result of brms::posterior_epred to arviz.InferenceData.
-    
-    The result is stored in the 'posterior' group (as it represents the 
-    expected value/mean), or you could put it in a custom group.
-    """
+def generic_pred_to_idata(r_pred_obj, brmsfit_obj, newdata=None, var_name="pred", az_name="posterior"):
     # Determine coordinates from newdata if available
     obs_coords = None
     if newdata is not None and isinstance(newdata, pd.DataFrame):
@@ -366,7 +359,7 @@ def brms_epred_to_idata(r_epred_obj, brmsfit_obj, newdata=None, var_name="epred"
         obs_coords = newdata.index.values
 
     data_3d, coords, dims = _reshape_r_prediction_to_arviz(
-        r_epred_obj, brmsfit_obj, obs_coords
+        r_pred_obj, brmsfit_obj, obs_coords
     )
 
     # Create DataArray
@@ -376,9 +369,19 @@ def brms_epred_to_idata(r_epred_obj, brmsfit_obj, newdata=None, var_name="epred"
     # Alternatively, often stored in 'predictions' or 'posterior_predictive' 
     # depending on your specific preference. 
     # Here we use 'posterior' to distinguish it from noisy 'posterior_predictive'.
-    return az.InferenceData(
-        posterior=da.to_dataset()
-    )
+    params = {
+        az_name: da.to_dataset()
+    }
+    return az.InferenceData(**params)
+
+def brms_epred_to_idata(r_epred_obj, brmsfit_obj, newdata=None, var_name="epred"):
+    """
+    Converts result of brms::posterior_epred to arviz.InferenceData.
+    
+    The result is stored in the 'posterior' group (as it represents the 
+    expected value/mean), or you could put it in a custom group.
+    """
+    return generic_pred_to_idata(r_epred_obj, brmsfit_obj, newdata=newdata, var_name=var_name, az_name="posterior")
 
 
 def brms_predict_to_idata(r_predict_obj, brmsfit_obj, newdata=None, var_name="y"):
@@ -387,19 +390,21 @@ def brms_predict_to_idata(r_predict_obj, brmsfit_obj, newdata=None, var_name="y"
     
     The result is stored in the 'posterior_predictive' group.
     """
-    # Determine coordinates
-    obs_coords = None
-    if newdata is not None and isinstance(newdata, pd.DataFrame):
-        obs_coords = newdata.index.values
+    return generic_pred_to_idata(r_predict_obj, brmsfit_obj, newdata=newdata, var_name=var_name, az_name="posterior_predictive")
 
-    data_3d, coords, dims = _reshape_r_prediction_to_arviz(
-        r_predict_obj, brmsfit_obj, obs_coords
-    )
+def brms_linpred_to_idata(r_linpred_obj, brmsfit_obj, newdata=None, var_name="linpred"):
+    """
+    Converts result of brms::posterior_linpred to arviz.InferenceData.
+    
+    The result is stored in the 'predictions' group.
+    """
+    return generic_pred_to_idata(r_linpred_obj, brmsfit_obj, newdata=newdata, var_name=var_name, az_name="predictions")
 
-    # Create DataArray
-    da = xr.DataArray(data_3d, coords=coords, dims=dims, name=var_name)
+def brms_log_lik_to_idata(r_log_lik_obj, brmsfit_obj, newdata=None, var_name="log_lik"):
+    """
+    Converts result of brms::log_lik to arviz.InferenceData.
+    
+    The result is stored in the 'log_likelihood' group.
+    """
+    return generic_pred_to_idata(r_log_lik_obj, brmsfit_obj, newdata=newdata, var_name=var_name, az_name="log_likelihood")
 
-    # Store in standard ArviZ location for predictions
-    return az.InferenceData(
-        posterior_predictive=da.to_dataset()
-    )

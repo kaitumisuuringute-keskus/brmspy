@@ -3,6 +3,11 @@ from typing import Any
 import rpy2.robjects as robjects
 
 @dataclass
+class GenericResult:
+    idata: 'arviz.InferenceData'
+    r: robjects.ListVector
+
+@dataclass
 class FitResult:
     idata: 'arviz.InferenceData'
     r: robjects.ListVector

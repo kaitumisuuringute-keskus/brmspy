@@ -7,9 +7,13 @@ import warnings
 import rpy2.robjects.packages as rpackages
 from rpy2.robjects import default_converter, pandas2ri, numpy2ri, ListVector, DataFrame, StrVector
 from rpy2.robjects.conversion import localconverter
-from .helpers import _get_brms, _convert_python_to_R, brmsfit_to_idata, brms_epred_to_idata, brms_predict_to_idata
+from .helpers import (
+    _get_brms, _convert_python_to_R, 
+    brmsfit_to_idata,
+    brms_linpred_to_idata, brms_log_lik_to_idata, brms_epred_to_idata, brms_predict_to_idata
+)
 from .types import (
-    FitResult, PosteriorEpredResult, PosteriorPredictResult
+    FitResult, GenericResult, PosteriorEpredResult, PosteriorPredictResult
 )
 
 __all__ = [
@@ -449,7 +453,7 @@ def posterior_epred(model: FitResult, newdata: pd.DataFrame, **kwargs) -> Poster
     epred_args.update(kwargs)
 
     r = brms.posterior_epred(**epred_args)
-    idata = brms_epred_to_idata(r, model.r)
+    idata = brms_epred_to_idata(r, model.r, newdata=newdata)
 
     return PosteriorEpredResult(
         r=r, idata=idata
@@ -470,8 +474,51 @@ def posterior_predict(model: FitResult, newdata: typing.Optional[pd.DataFrame] =
     epred_args.update(kwargs)
 
     r = brms.posterior_predict(**epred_args)
-    idata = brms_predict_to_idata(r, model.r)
+    idata = brms_predict_to_idata(r, model.r, newdata=newdata)
 
     return PosteriorPredictResult(
+        r=r, idata=idata
+    )
+
+def posterior_linpred(model: FitResult, newdata: typing.Optional[pd.DataFrame] = None, **kwargs) -> GenericResult:
+    brms = _get_brms()
+    m = model.r
+    if newdata is not None:
+        data_r = _convert_python_to_R(newdata)
+    else:
+        data_r = None
+
+    epred_args = {
+        "model": m,
+        "newdata": data_r
+    }
+    epred_args.update(kwargs)
+
+    r = brms.posterior_linpred(**epred_args)
+    idata = brms_linpred_to_idata(r, model.r, newdata=newdata)
+
+    return GenericResult(
+        r=r, idata=idata
+    )
+
+
+def log_lik(model: FitResult, newdata: typing.Optional[pd.DataFrame] = None, **kwargs) -> GenericResult:
+    brms = _get_brms()
+    m = model.r
+    if newdata is not None:
+        data_r = _convert_python_to_R(newdata)
+    else:
+        data_r = None
+
+    epred_args = {
+        "model": m,
+        "newdata": data_r
+    }
+    epred_args.update(kwargs)
+
+    r = brms.posterior_linpred(**epred_args)
+    idata = brms_log_lik_to_idata(r, model.r, newdata=newdata)
+
+    return GenericResult(
         r=r, idata=idata
     )
