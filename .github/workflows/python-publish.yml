@@ -10,7 +10,7 @@ jobs:
   deploy:
 
     runs-on: ubuntu-latest
-
+    
     steps:
       - uses: actions/checkout@v4
 
@@ -26,28 +26,22 @@ jobs:
           r-version: 'release'
           use-public-rspm: true
 
-      # Reuse the same CmdStan cache as in the test matrix workflow
+      - name: Ensure R library dir exists
+        run: |
+          echo "R_LIBS_USER: ${R_LIBS_USER}"
+          mkdir -p "${R_LIBS_USER}"
+
+      - name: Restore R library cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: r-lib-${{ runner.os }}-cmdstanr-brms-posterior-v1
+
       - name: Restore CmdStan cache
         uses: actions/cache@v3
         with:
           path: ~/.cmdstan
           key: cmdstan-2.34.1-v1
-
-      - name: Install R packages and CmdStan if needed
-        run: |
-          R -q -e "install.packages('remotes', repos = 'https://cloud.r-project.org')"
-          R -q -e "remotes::install_cran(c('cmdstanr', 'brms', 'posterior'))"
-          R -q -e "
-            library(cmdstanr);
-            cmdstan_dir <- path.expand('~/.cmdstan');
-            target <- file.path(cmdstan_dir, 'cmdstan-2.34.1');
-            if (!dir.exists(target)) {
-              dir.create(cmdstan_dir, recursive = TRUE, showWarnings = FALSE);
-              install_cmdstan(dir = cmdstan_dir, version = '2.34.1', cores = 2);
-            }
-            set_cmdstan_path(target);
-            cat('CmdStan version: ', cmdstan_version(), '\n');
-          "
 
       - name: Sanity-check R / CmdStan / brms
         run: |
