@@ -42,22 +42,22 @@ def install_brms(version: str = "latest", repo: str = "https://cran.rstudio.com"
     Examples
     --------
     Install latest version (brms + cmdstanr + CmdStan):
-    >>> import pybrms
-    >>> pybrms.install_brms()
+    >>> import brmspy
+    >>> brmspy.install_brms()
     
     Install specific brms version:
-    >>> pybrms.install_brms(version="2.23.0")
+    >>> brmspy.install_brms(version="2.23.0")
     
     Install brms only (skip cmdstanr/CmdStan):
-    >>> pybrms.install_brms(install_cmdstan=False)
+    >>> brmspy.install_brms(install_cmdstan=False)
     
     Notes
     -----
     This is a one-time setup operation. Once installed, brms, cmdstanr, and
-    CmdStan will be available for all subsequent pybrms sessions.
+    CmdStan will be available for all subsequent brmspy sessions.
     """
     print("=" * 60)
-    print("pybrms Setup - Installing Required Components")
+    print("brmspy Setup - Installing Required Components")
     print("=" * 60)
     
     # Install cmdstanr and CmdStan if requested
@@ -155,11 +155,11 @@ def install_brms(version: str = "latest", repo: str = "https://cran.rstudio.com"
     except Exception as e:
         print(f"⚠ brms: Could not verify ({e})")
     
-    print("\n✅ Setup complete! You're ready to use pybrms.")
+    print("\n✅ Setup complete! You're ready to use brmspy.")
     print("\nExample usage:")
-    print("  import pybrms")
-    print("  epilepsy = pybrms.get_brms_data('epilepsy')")
-    print("  fit = pybrms.fit('count ~ zAge + (1|patient)', epilepsy, family='poisson', chains=4)")
+    print("  import brmspy")
+    print("  epilepsy = brmspy.get_brms_data('epilepsy')")
+    print("  fit = brmspy.fit('count ~ zAge + (1|patient)', epilepsy, family='poisson', chains=4)")
 
 # Cell
 def get_brms_version() -> str:
@@ -178,8 +178,8 @@ def get_brms_version() -> str:
     
     Examples
     --------
-    >>> import pybrms
-    >>> version = pybrms.get_brms_version()
+    >>> import brmspy
+    >>> version = brmspy.get_brms_version()
     >>> print(f"brms version: {version}")
     """
     brms = _get_brms()
@@ -224,10 +224,10 @@ def _get_brms():
         except Exception as e:
             raise ImportError(
                 "brms R package not found. Install it using:\n\n"
-                "  import pybrms\n"
-                "  pybrms.install_brms()  # for latest version\n\n"
+                "  import brmspy\n"
+                "  brmspy.install_brms()  # for latest version\n\n"
                 "Or install a specific version:\n"
-                "  pybrms.install_brms(version='2.23.0')\n\n"
+                "  brmspy.install_brms(version='2.23.0')\n\n"
                 "Or install manually in R:\n"
                 "  install.packages('brms')\n"
             ) from e
@@ -250,8 +250,8 @@ def get_brms_data(dataset_name: str) -> pd.DataFrame:
     
     Examples
     --------
-    >>> import pybrms
-    >>> epilepsy = pybrms.get_brms_data("epilepsy")
+    >>> import brmspy
+    >>> epilepsy = brmspy.get_brms_data("epilepsy")
     >>> print(epilepsy.head())
     
     Available datasets include:
@@ -463,7 +463,7 @@ class BrmsFitResult:
     
     Examples
     --------
-    >>> result = pybrms.fit(..., return_type='both')
+    >>> result = brmspy.fit(..., return_type='both')
     >>> # Use with arviz
     >>> az.plot_posterior(result.idata)
     >>> # Use with R
@@ -508,7 +508,7 @@ def _brmsfit_to_idata(brmsfit_obj):
             "arviz is required for InferenceData conversion. Install it with:\n"
             "  pip install arviz\n"
             "Or install the viz extra:\n"
-            "  pip install pybrms[viz]"
+            "  pip install brmspy[viz]"
         )
     
     import rpy2.robjects as ro
@@ -636,12 +636,12 @@ def fit(
     Examples
     --------
     Basic usage with arviz (default):
-    >>> import pybrms
+    >>> import brmspy
     >>> import arviz as az
-    >>> epilepsy = pybrms.get_brms_data("epilepsy")
+    >>> epilepsy = brmspy.get_brms_data("epilepsy")
     >>>
     >>> # Returns arviz InferenceData by default
-    >>> idata = pybrms.fit(
+    >>> idata = brmspy.fit(
     ...     formula="count ~ zAge + zBase * Trt + (1|patient)",
     ...     data=epilepsy,
     ...     family="poisson",
@@ -654,20 +654,20 @@ def fit(
     >>> az.summary(idata)
     
     Return brmsfit for R methods:
-    >>> fit = pybrms.fit(..., return_type="brmsfit")
+    >>> fit = brmspy.fit(..., return_type="brmsfit")
     >>> import rpy2.robjects as ro
     >>> ro.globalenv['fit'] = fit
     >>> ro.r('summary(fit)')
     >>> ro.r('plot(fit)')
     
     Get both for maximum flexibility:
-    >>> result = pybrms.fit(..., return_type="both")
+    >>> result = brmspy.fit(..., return_type="both")
     >>> az.plot_posterior(result.idata)  # Python
     >>> ro.globalenv['fit'] = result.brmsfit  # R
     >>> ro.r('summary(fit)')
     
     With priors:
-    >>> fit = pybrms.fit(
+    >>> fit = brmspy.fit(
     ...     formula="count ~ zAge + zBase * Trt + (1|patient)",
     ...     data=epilepsy,
     ...     family="poisson",

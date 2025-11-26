@@ -1,10 +1,10 @@
-# pybrms Makefile - Modern Python Development Workflow
+# brmspy Makefile - Modern Python Development Workflow
 
 .PHONY: help install dev test lint format clean docs build dist upload-test upload
 
 # Default target
 help:
-	@echo "pybrms - Modern Python Development Workflow"
+	@echo "brmspy - Modern Python Development Workflow"
 	@echo ""
 	@echo "Available targets:"
 	@echo "  install      Install package in development mode"
@@ -29,21 +29,21 @@ dev:
 
 # Run tests
 test:
-	pytest -v --cov=pybrms --cov-report=term-missing
+	pytest -v --cov=brmspy --cov-report=term-missing
 
 # Run linters
 lint:
 	@echo "Running ruff..."
-	ruff check pybrms/
+	ruff check brmspy/
 	@echo "Running mypy..."
-	mypy pybrms/
+	mypy brmspy/
 
 # Format code
 format:
 	@echo "Formatting with black..."
-	black pybrms/ examples/
+	black brmspy/ examples/
 	@echo "Sorting imports with isort..."
-	isort pybrms/ examples/
+	isort brmspy/ examples/
 	@echo "Done!"
 
 # Clean build artifacts

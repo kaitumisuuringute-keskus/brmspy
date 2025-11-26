@@ -1,5 +1,5 @@
 #!/bin/bash
-# pybrms Virtual Environment Setup Script
+# brmspy Virtual Environment Setup Script
 # Uses uv (fast Python package installer) for environment management
 
 set -e  # Exit on error
@@ -15,7 +15,7 @@ NC='\033[0m' # No Color
 VENV_DIR=".venv"
 PYTHON_VERSION="3.12"  # Default Python version (minimum: 3.8, recommended: 3.12)
 
-echo -e "${BLUE}=== pybrms Virtual Environment Setup ===${NC}"
+echo -e "${BLUE}=== brmspy Virtual Environment Setup ===${NC}"
 echo ""
 
 # Function to print colored messages
@@ -111,7 +111,7 @@ info "Upgrading core packages..."
 uv pip install --upgrade pip setuptools wheel
 
 # Install package in development mode with all dependencies
-info "Installing pybrms in development mode..."
+info "Installing brmspy in development mode..."
 info "This will install:"
 info "  - Core dependencies (cmdstanpy, numpy, pandas, rpy2)"
 info "  - Development tools (pytest, black, ruff, mypy)"
@@ -155,7 +155,7 @@ echo -e "${YELLOW}  # For new shells, run:${NC}"
 echo -e "  source $VENV_DIR/bin/activate"
 echo ""
 echo "Next steps:"
-echo "  1. Install R and brms: python -c 'import pybrms; pybrms.install_brms()'"
+echo "  1. Install R and brms: python -c 'import brmspy; brmspy.install_brms()'"
 echo "  2. Run tests: pytest"
 echo "  3. Start development: jupyter notebook"
 echo ""
@@ -166,9 +166,9 @@ echo ""
 # Create activation helper script
 cat > activate.sh << 'EOF'
 #!/bin/bash
-# Quick activation script for pybrms development environment
+# Quick activation script for brmspy development environment
 source .venv/bin/activate
-echo "pybrms development environment activated!"
+echo "brmspy development environment activated!"
 echo "Python: $(python --version)"
 echo "Location: $(which python)"
 EOF

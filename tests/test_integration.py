@@ -1,5 +1,5 @@
 """
-Integration tests for pybrms that require R and brms to be installed.
+Integration tests for brmspy that require R and brms to be installed.
 
 These tests check end-to-end functionality:
 - brms installation
@@ -22,9 +22,9 @@ class TestBrmsInstallation:
     
     def test_get_brms_version(self):
         """Test that we can get brms version"""
-        import pybrms
+        import brmspy
         
-        version = pybrms.get_brms_version()
+        version = brmspy.get_brms_version()
         assert isinstance(version, str)
         assert len(version) > 0
         # Version should be like "2.21.0" or similar
@@ -43,9 +43,9 @@ class TestDataLoading:
     
     def test_get_epilepsy_data(self):
         """Test loading the epilepsy dataset"""
-        import pybrms
+        import brmspy
         
-        epilepsy = pybrms.get_brms_data("epilepsy")
+        epilepsy = brmspy.get_brms_data("epilepsy")
         
         # Check it's a DataFrame
         assert isinstance(epilepsy, pd.DataFrame)
@@ -60,19 +60,19 @@ class TestDataLoading:
     
     def test_get_kidney_data(self):
         """Test loading the kidney dataset"""
-        import pybrms
+        import brmspy
         
-        kidney = pybrms.get_brms_data("kidney")
+        kidney = brmspy.get_brms_data("kidney")
         assert isinstance(kidney, pd.DataFrame)
         assert len(kidney) > 0
     
     def test_invalid_dataset_raises_error(self):
         """Test that invalid dataset name raises appropriate error"""
-        import pybrms
+        import brmspy
         
         with pytest.raises(Exception):
             # This should fail - dataset doesn't exist
-            pybrms.get_brms_data("nonexistent_dataset_name_12345")
+            brmspy.get_brms_data("nonexistent_dataset_name_12345")
 
 
 @pytest.mark.requires_brms
@@ -82,10 +82,10 @@ class TestSimpleModelFitting:
     
     def test_fit_linear_model_minimal(self, sample_dataframe):
         """Test fitting the simplest possible linear model"""
-        import pybrms
+        import brmspy
         
         # Use minimal iterations for faster testing
-        model = pybrms.fit(
+        model = brmspy.fit(
             formula="y ~ x1",
             data=sample_dataframe,
             family="gaussian",
@@ -96,15 +96,12 @@ class TestSimpleModelFitting:
             refresh=0
         )
         
-        # Check return type - now returns brmsfit R object
-        import rpy2.robjects as ro
-        ro.globalenv['model'] = model
-        assert ro.r('class(model)')[0] == 'brmsfit'
+        # Check return type - now returns arviz InferenceData by default
+        import arviz as az
+        assert isinstance(model, az.InferenceData)
         
         # Check we can get parameter names
-        import rpy2.robjects as ro
-        ro.globalenv['model'] = model
-        param_names = list(ro.r('variables(model)'))
+        param_names = list(model.posterior.data_vars)
         assert len(param_names) > 0
         
         # Check key parameters exist
@@ -112,9 +109,9 @@ class TestSimpleModelFitting:
     
     def test_fit_poisson_model(self, poisson_data):
         """Test fitting a Poisson regression model"""
-        import pybrms
+        import brmspy
         
-        model = pybrms.fit(
+        model = brmspy.fit(
             formula="count ~ predictor",
             data=poisson_data,
             family="poisson",
@@ -125,20 +122,20 @@ class TestSimpleModelFitting:
             refresh=0
         )
         
-        # Check return type - now returns brmsfit R object
-        import rpy2.robjects as ro
-        ro.globalenv['model'] = model
-        assert ro.r('class(model)')[0] == 'brmsfit'
+        # Check return type - now returns arviz InferenceData by default
+        import arviz as az
+        assert isinstance(model, az.InferenceData)
         
-        # Check we can get fixed effects summary
-        summary = ro.r('summary(model)$fixed')
+        # Check we can get summary
+        summary = az.summary(model)
         assert summary is not None
+        assert len(summary) > 0
     
     def test_fit_with_priors(self, sample_dataframe):
         """Test fitting model with custom priors"""
-        import pybrms
+        import brmspy
         
-        model = pybrms.fit(
+        model = brmspy.fit(
             formula="y ~ x1",
             data=sample_dataframe,
             priors=[("normal(0, 5)", "b")],
@@ -150,13 +147,12 @@ class TestSimpleModelFitting:
             refresh=0
         )
         
-        # Check return type - now returns brmsfit R object
-        import rpy2.robjects as ro
-        ro.globalenv['model'] = model
-        assert ro.r('class(model)')[0] == 'brmsfit'
+        # Check return type - now returns arviz InferenceData by default
+        import arviz as az
+        assert isinstance(model, az.InferenceData)
         
         # Check we can get summary
-        summary = ro.r('summary(model)$fixed')
+        summary = az.summary(model)
         assert summary is not None
 
 
@@ -167,7 +163,7 @@ class TestModelWithRandomEffects:
     
     def test_fit_random_intercept(self, sample_dataframe):
         """Test fitting model with random intercepts"""
-        import pybrms
+        import brmspy
         
         # Add more group variation for better convergence
         sample_dataframe['y'] = (
@@ -175,7 +171,7 @@ class TestModelWithRandomEffects:
             sample_dataframe['group'].map({'G1': -2, 'G2': 2})
         )
         
-        model = pybrms.fit(
+        model = brmspy.fit(
             formula="y ~ x1 + (1|group)",
             data=sample_dataframe,
             family="gaussian",
@@ -186,13 +182,12 @@ class TestModelWithRandomEffects:
             refresh=0
         )
         
-        # Check return type - now returns brmsfit R object
-        import rpy2.robjects as ro
-        ro.globalenv['model'] = model
-        assert ro.r('class(model)')[0] == 'brmsfit'
+        # Check return type - now returns arviz InferenceData by default
+        import arviz as az
+        assert isinstance(model, az.InferenceData)
         
         # Check that random effects parameters exist
-        param_names = list(ro.r('variables(model)'))
+        param_names = list(model.posterior.data_vars)
         # Should have standard deviation parameter for random effects
         assert any('sd_group' in p for p in param_names)
 
@@ -204,9 +199,9 @@ class TestArVizIntegration:
     @pytest.mark.slow
     def test_arviz_conversion(self, sample_dataframe):
         """Test that model can be converted to arviz InferenceData"""
-        import pybrms
+        import brmspy
         
-        model = pybrms.fit(
+        model = brmspy.fit(
             formula="y ~ x1",
             data=sample_dataframe,
             iter=200,
@@ -221,18 +216,11 @@ class TestArVizIntegration:
         except ImportError:
             pytest.skip("arviz not installed")
         
-        # Convert to arviz - need to get CSV files from brmsfit
-        import rpy2.robjects as ro
-        ro.globalenv['model'] = model
-        csv_files = list(ro.r('model$output_files()'))
-        
-        idata = az.from_cmdstan(csv=csv_files)
-        
-        # Check it's an InferenceData object
-        assert isinstance(idata, az.InferenceData)
+        # Model is already InferenceData, no conversion needed
+        assert isinstance(model, az.InferenceData)
         
         # Check it has posterior
-        assert hasattr(idata, 'posterior')
+        assert hasattr(model, 'posterior')
 
 
 @pytest.mark.requires_brms
@@ -241,11 +229,11 @@ class TestErrorHandling:
     
     def test_invalid_formula_raises_error(self, sample_dataframe):
         """Test that invalid formula raises error"""
-        import pybrms
+        import brmspy
         
         with pytest.raises(Exception):
             # Invalid variable name
-            pybrms.fit(
+            brmspy.fit(
                 formula="y ~ nonexistent_variable",
                 data=sample_dataframe,
                 family="gaussian"
@@ -253,10 +241,10 @@ class TestErrorHandling:
     
     def test_invalid_family_raises_error(self, sample_dataframe):
         """Test that invalid family raises error"""
-        import pybrms
+        import brmspy
         
         with pytest.raises(Exception):
-            pybrms.fit(
+            brmspy.fit(
                 formula="y ~ x1",
                 data=sample_dataframe,
                 family="not_a_real_family"
@@ -270,13 +258,13 @@ class TestRealWorldExample:
     @pytest.mark.slow
     def test_epilepsy_example(self):
         """Test the epilepsy example from README"""
-        import pybrms
+        import brmspy
         
         # Load data
-        epilepsy = pybrms.get_brms_data("epilepsy")
+        epilepsy = brmspy.get_brms_data("epilepsy")
         
         # Fit model (with reduced iterations for testing)
-        model = pybrms.fit(
+        model = brmspy.fit(
             formula="count ~ zAge + zBase * Trt + (1|patient)",
             data=epilepsy,
             family="poisson",
@@ -287,20 +275,19 @@ class TestRealWorldExample:
             refresh=0
         )
         
-        # Check it worked - now returns brmsfit R object
-        import rpy2.robjects as ro
-        ro.globalenv['model'] = model
-        assert ro.r('class(model)')[0] == 'brmsfit'
+        # Check it worked - now returns arviz InferenceData by default
+        import arviz as az
+        assert isinstance(model, az.InferenceData)
         
         # Check key parameters exist
-        param_names = list(ro.r('variables(model)'))
+        param_names = list(model.posterior.data_vars)
         assert any('b_zAge' in p for p in param_names)
         assert any('b_zBase' in p for p in param_names)
         
         # Check some basic convergence (Rhat close to 1)
-        summary_df = ro.conversion.rpy2py(ro.r('as.data.frame(summary(model)$fixed)'))
-        if 'Rhat' in summary_df.columns:
-            max_rhat = summary_df['Rhat'].max()
+        summary = az.summary(model)
+        if 'r_hat' in summary.columns:
+            max_rhat = summary['r_hat'].max()
             # Warn if convergence is poor, but don't fail
             # (we're using minimal iterations for speed)
             if max_rhat > 1.1:

@@ -1,5 +1,5 @@
 """
-Pytest configuration and shared fixtures for pybrms tests
+Pytest configuration and shared fixtures for brmspy tests
 """
 import pytest
 import sys
@@ -108,7 +108,7 @@ def pytest_collection_modifyitems(config, items):
     """
     Automatically skip tests that require brms if it's not installed.
     """
-    skip_requires_brms = pytest.mark.skip(reason="brms not installed - run: python -c 'import pybrms; pybrms.install_brms()'")
+    skip_requires_brms = pytest.mark.skip(reason="brms not installed - run: python -c 'import brmspy; brmspy.install_brms()'")
     
     # Try to check if brms is available
     brms_is_available = False

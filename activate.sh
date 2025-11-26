@@ -1,6 +1,6 @@
 #!/bin/bash
-# Quick activation script for pybrms development environment
+# Quick activation script for brmspy development environment
 source .venv/bin/activate
-echo "pybrms development environment activated!"
+echo "brmspy development environment activated!"
 echo "Python: $(python --version)"
 echo "Location: $(which python)"
