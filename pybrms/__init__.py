@@ -1,1 +1,52 @@
-__version__ = "0.0.3"
+"""
+pybrms - Pythonic interface to the brms R package using CmdStanPy
+
+A Python package that provides a Pythonic interface to the brms R package,
+enabling Bayesian regression modeling through Stan.
+
+Version 0.1.0 introduces:
+- CmdStanPy backend (replaces PyStan)
+- Explicit brms version control
+- Python 3.8+ support
+- Modern packaging standards
+
+Example:
+    >>> import pybrms
+    >>> # First time setup - install brms
+    >>> pybrms.install_brms()  # or install_brms(version="2.23.0")
+    >>> 
+    >>> # Load example data
+    >>> epilepsy = pybrms.get_brms_data("epilepsy")
+    >>> 
+    >>> # Fit a model
+    >>> model = pybrms.fit(
+    ...     formula="count ~ zAge + zBase * Trt + (1|patient)",
+    ...     data=epilepsy,
+    ...     family="poisson"
+    ... )
+    >>> 
+    >>> # View results
+    >>> print(model.summary())
+"""
+
+__version__ = "0.1.0"
+__author__ = "Adam Haber, Remi Sebastian Kits"
+__license__ = "Apache-2.0"
+
+# Import main functions from pybrms module
+from pybrms.pybrms import (
+    get_brms_data,
+    fit,
+    install_brms,
+    get_brms_version,
+    BrmsFitResult,
+)
+
+__all__ = [
+    "get_brms_data",
+    "fit",
+    "install_brms",
+    "get_brms_version",
+    "BrmsFitResult",
+    "__version__",
+]

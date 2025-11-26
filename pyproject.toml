@@ -1,0 +1,213 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pybrms"
+version = "0.1.0"
+description = "Pythonic interface to the brms R package using CmdStanPy"
+readme = "README.md"
+requires-python = ">=3.8,<3.15"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "Adam Haber", email = "adamhaber@gmail.com"},
+    {name = "Remi Sebastian Kits", email = "remi.sebastian.kits@gmail.com"}
+]
+maintainers = [
+    {name = "Remi Sebastian Kits", email = "remi.sebastian.kits@gmail.com"}
+]
+keywords = [
+    "bayesian",
+    "regression",
+    "brms",
+    "stan",
+    "cmdstan",
+    "rpy2",
+    "multilevel-models",
+    "statistical-modeling"
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: R",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Typing :: Typed",
+]
+
+# Core dependencies - keep minimum versions for broad compatibility
+dependencies = [
+    "cmdstanpy>=1.2.0",      # Official Stan interface (replaces pystan)
+    "numpy>=1.20.0",          # Python 3.8+ compatible
+    "pandas>=1.3.0",          # Modern DataFrame API
+    "rpy2>=3.5.0",            # Python 3.8+ compatible, R interface
+]
+
+[project.optional-dependencies]
+# Development dependencies
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+    "isort>=5.12.0",
+    "pre-commit>=3.0.0",
+]
+
+# Documentation dependencies
+docs = [
+    "jupyter>=1.0.0",
+    "sphinx>=5.0.0",
+    "sphinx-rtd-theme>=1.0.0",
+]
+
+# Visualization dependencies
+viz = [
+    "arviz>=0.15.0",          # Bayesian visualization (replaces pystan viz)
+    "matplotlib>=3.5.0",
+    "seaborn>=0.12.0",
+]
+
+# Testing with R dependencies
+test = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-xdist>=3.0.0",    # Parallel test execution
+]
+
+# All optional dependencies
+all = [
+    "pybrms[dev,docs,viz,test]",
+]
+
+[project.urls]
+Homepage = "https://github.com/kaitumisuuringute-keskus/pybrms"
+Repository = "https://github.com/kaitumisuuringute-keskus/pybrms"
+Documentation = "https://kaitumisuuringute-keskus.github.io/pybrms/"
+"Bug Tracker" = "https://github.com/kaitumisuuringute-keskus/pybrms/issues"
+"Original Repository" = "https://github.com/adamhaber/pybrms"
+Changelog = "https://github.com/kaitumisuuringute-keskus/pybrms/blob/master/CHANGELOG.md"
+
+[project.scripts]
+# No console scripts currently
+
+[tool.setuptools]
+zip-safe = false
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pybrms*"]
+exclude = ["tests*", "docs*", "imgs*"]
+
+[tool.setuptools.package-data]
+pybrms = ["py.typed"]
+
+# Black configuration
+[tool.black]
+line-length = 100
+target-version = ["py38", "py39", "py310", "py311", "py312"]
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.venv
+  | build
+  | dist
+  | docs
+)/
+'''
+
+# Ruff configuration (replaces flake8, isort, etc.)
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+]
+ignore = [
+    "E501",   # line too long (handled by black)
+    "B008",   # do not perform function calls in argument defaults
+    "C901",   # too complex
+]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+
+# Pytest configuration
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--verbose",
+    "--cov=pybrms",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+]
+
+# MyPy configuration
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+
+[[tool.mypy.overrides]]
+module = [
+    "rpy2.*",
+    "cmdstanpy.*",
+    "arviz.*",
+]
+ignore_missing_imports = true
+
+# Coverage configuration
+[tool.coverage.run]
+source = ["pybrms"]
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/site-packages/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "if typing.TYPE_CHECKING:",
+]
