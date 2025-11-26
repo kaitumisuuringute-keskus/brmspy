@@ -5,9 +5,9 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "brmspy"
 version = "0.1.2"
-description = "Pythonic interface to the brms R package using CmdStanPy"
+description = "Python-first access to R's brms with proper parameter names, ArviZ support, and cmdstanr performance"
 readme = "README.md"
-requires-python = ">=3.8,<3.15"
+requires-python = ">=3.10,<3.15"
 license = {text = "Apache-2.0"}
 authors = [
     {name = "Remi Sebastian Kits", email = "remi.sebastian.kits@gmail.com"},
@@ -70,9 +70,9 @@ dev = [
 
 # Documentation dependencies
 docs = [
-    "jupyter>=1.0.0",
-    "sphinx>=5.0.0",
-    "sphinx-rtd-theme>=1.0.0",
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.0.0",
+    "mkdocstrings[python]>=0.24.0",
 ]
 
 # Visualization dependencies
