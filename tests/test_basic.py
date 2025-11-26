@@ -329,6 +329,12 @@ class TestDocumentation:
         import brmspy
         assert brmspy.get_brms_data.__doc__ is not None
         assert "dataset_name" in brmspy.get_brms_data.__doc__
+    
+    def test_summary_has_docstring(self):
+        """Test summary() has docstring"""
+        import brmspy
+        assert brmspy.summary.__doc__ is not None
+        assert "summary" in brmspy.summary.__doc__.lower()
 
 
 if __name__ == '__main__':

@@ -1,147 +1,201 @@
 # brmspy
 
-**Pythonic interface to R's brms for Bayesian regression modeling**
+Python interface to R's brms for Bayesian regression modeling.
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-brmspy brings the power of [brms](https://paul-buerkner.github.io/brms/) (Bayesian Regression Models using Stan) to Python, providing proper parameter names and seamless integration with the Python Bayesian ecosystem.
+## Overview
 
-## Quick Start
+This is an early development version of the library, use with caution.
+
+brmspy provides Python access to [brms](https://paul-buerkner.github.io/brms/) (Bayesian Regression Models using Stan) with proper parameter naming and seamless arviz integration. Uses brms with cmdstanr backend. Arviz is required at the moment, numpy-only mode is coming.
+
+## Installation
 
 ```bash
 pip install brmspy
 ```
 
+First-time setup (installs brms, cmdstanr, and CmdStan in R):
+
 ```python
-import brmspy
+from brmspy import brms
+brms.install_brms()
+```
 
-# One-time setup: install brms and CmdStan
-brmspy.install_brms()
+## Quick Start
 
-# Load example data
-epilepsy = brmspy.get_brms_data("epilepsy")
+```python
+from brmspy import brms
+import arviz as az
 
-# Fit model - returns arviz InferenceData by default
-model = brmspy.fit(
+# Load data
+epilepsy = brms.get_brms_data("epilepsy")
+
+# Fit model
+model = brms.fit(
     formula="count ~ zAge + zBase * Trt + (1|patient)",
     data=epilepsy,
     family="poisson",
     chains=4,
     iter=2000
 )
-idata = model.idata
 
-# Analyze with arviz
-import arviz as az
-az.plot_posterior(idata)
-az.summary(idata)
+# Analyze
+az.summary(model.idata)
+az.plot_posterior(model.idata)
 ```
 
 ## Key Features
 
-- **Proper Parameter Names**: Returns `b_Intercept`, `b_zAge`, `sd_patient__Intercept` (not `b_dim_0`, `sd_1_dim_0`)
-- **Pythonic by Default**: Returns `arviz.InferenceData` for seamless Python integration
-- **Formula Syntax**: Use brms' intuitive formula interface
-- **Modern Stack**: Python 3.8-3.14, brms + cmdstanr backend
+- **Proper parameter names**: Returns `b_Intercept`, `b_zAge`, `sd_patient__Intercept` instead of generic names like `b_dim_0`
+- **arviz integration**: Returns `arviz.InferenceData` by default for Python workflow
+- **brms formula syntax**: Full support for brms formula interface including random effects
+- **Dual access**: Results include both `.idata` (arviz) and `.r` (brmsfit) attributes
 
-## Installation
+## API Reference
 
-```bash
-# Install from PyPI
-pip install brmspy
+### Setup Functions
+- `brms.install_brms()` - Install brms, cmdstanr, and CmdStan
+- `brms.get_brms_version()` - Get installed brms version
 
-# Install with optional dependencies
-pip install brmspy[viz]    # includes arviz, matplotlib
-pip install brmspy[all]    # includes all optional dependencies
+### Data Functions
+- `brms.get_brms_data()` - Load example datasets from brms
 
-# First-time setup (installs brms and CmdStan in R)
-python -c "import brmspy; brmspy.install_brms()"
-```
+### Model Functions
+- `brms.fit()` - Fit Bayesian regression model
+- `brms.summary()` - Generate summary statistics as DataFrame
+- `brms.get_stan_code()` - Generate Stan code for model
 
-**Note:** The package is imported as `brmspy` but installed as `brmspy` from PyPI.
+### Prediction Functions
+- `brms.posterior_epred()` - Expected value predictions (without noise)
+- `brms.posterior_predict()` - Posterior predictive samples (with noise)
+- `brms.posterior_linpred()` - Linear predictor values
+- `brms.log_lik()` - Log-likelihood values
+
 
 ## Usage
 
 ### Basic Model
 
 ```python
-import brmspy
-import arviz as az
+from brmspy import brms
 
-# Load data
-kidney = brmspy.get_brms_data("kidney")
+kidney = brms.get_brms_data("kidney")
 
-# Fit Gaussian model
-model = brmspy.fit(
+model = brms.fit(
     formula="time ~ age + disease",
     data=kidney,
-    family="gaussian"
+    family="gaussian",
+    chains=4,
+    iter=2000
 )
-
-# View summary
-az.summary(model.idata)
 ```
 
 ### With Priors
 
 ```python
-model = brmspy.fit(
+model = brms.fit(
     formula="count ~ zAge + (1|patient)",
     data=epilepsy,
     family="poisson",
     priors=[
         ("normal(0, 0.5)", "b"),
         ("cauchy(0, 1)", "sd")
-    ]
+    ],
+    chains=4
 )
 ```
 
-### Sampling Parameters
+### Model Summary
 
 ```python
-model = brmspy.fit(
-    formula="y ~ x",
+from brmspy import summary
+
+# Get summary statistics as DataFrame
+summary_df = summary(model)
+print(summary_df)
+```
+
+### Predictions
+
+```python
+# Expected value (without noise)
+epred = brms.posterior_epred(model, newdata=new_data)
+
+# Posterior predictive (with noise)
+ypred = brms.posterior_predict(model, newdata=new_data)
+
+# Linear predictor
+linpred = brms.posterior_linpred(model, newdata=new_data)
+
+# Log likelihood
+loglik = brms.log_lik(model, newdata=new_data)
+```
+
+### Access Both Python and R Objects
+
+```python
+model = brms.fit(formula="y ~ x", data=data, chains=4)
+
+# Python workflow with arviz
+az.summary(model.idata)
+az.plot_trace(model.idata)
+
+# R workflow (if needed)
+import rpy2.robjects as ro
+ro.r('summary')(model.r)
+```
+
+## Sampling Parameters
+
+```python
+model = brms.fit(
+    formula="y ~ x + (1|group)",
     data=data,
     iter=2000,      # Total iterations per chain
     warmup=1000,    # Warmup iterations
     chains=4,       # Number of chains
     cores=4,        # Parallel cores
-    seed=123        # Reproducibility
+    thin=1,         # Thinning
+    seed=123        # Random seed
 )
 ```
 
 ## Requirements
 
-**Python**: 3.10+
+**Python**: 3.10-3.14
 
-**R Packages** (auto-installed):
-- brms ≥ 2.20.0
+**R packages** (auto-installed via `brms.install_brms()`):
+- brms >= 2.20.0
 - cmdstanr
 - posterior
 
-**Python Dependencies**:
-- rpy2 ≥ 3.5.0
-- pandas ≥ 1.3.0
-- numpy ≥ 1.20.0
-- arviz (optional, for InferenceData conversion)
+**Python dependencies**:
+- rpy2 >= 3.5.0
+- pandas >= 1.3.0
+- numpy >= 1.20.0
+- arviz (optional, for InferenceData)
 
 ## Development
 
 ```bash
-# Clone repository
 git clone https://github.com/kaitumisuuringute-keskus/brmspy.git
 cd brmspy
-
-# Setup environment (requires Python 3.10+)
 ./init-venv.sh
-
-# Run tests
 pytest tests/ -v
-
-# Run tests with coverage
-pytest tests/ --cov=brmspy --cov-report=html
 ```
+
+## Architecture
+
+brmspy uses:
+- **brms::brm()** with cmdstanr backend for fitting (ensures proper parameter naming)
+- **posterior** R package for conversion to draws format
+- **arviz** for Python-native analysis and visualization
+- **rpy2** for Python-R communication
+
+Previous versions used CmdStanPy directly, which resulted in generic parameter names. Current version calls brms directly to preserve brms' parameter renaming logic.
 
 ## License
 
@@ -150,5 +204,5 @@ Apache License 2.0
 ## Credits
 
 - Original concept: [Adam Haber](https://github.com/adamhaber)
-- v0.1.0 modernization: [Remi Sebastian Kits](https://github.com/braffolk)
-- Powered by [brms](https://paul-buerkner.github.io/brms/) by Paul-Christian Bürkner
+- Current maintainer: [Remi Sebastian Kits](https://github.com/braffolk)
+- Built on [brms](https://paul-buerkner.github.io/brms/) by Paul-Christian Bürkner

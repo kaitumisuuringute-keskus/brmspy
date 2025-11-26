@@ -18,7 +18,7 @@ from .types import (
 
 __all__ = [
     'install_brms', 'get_brms_version', 'get_brms_data', 'get_stan_code',
-    'fit',
+    'fit', 'summary',
     "posterior_predict", "posterior_epred", "posterior_linpred", "log_lik",
     'FitResult', 'PosteriorEpredResult'
 ]
@@ -27,41 +27,23 @@ __all__ = [
 
 def install_brms(version: str = "latest", repo: str = "https://cran.rstudio.com", install_cmdstan: bool = True):
     """
-    Install the brms R package, cmdstanr, and CmdStan compiler.
-    
-    This function provides explicit control over brms and CmdStan installation,
-    replacing the automatic installation behavior from previous versions.
+    Install brms R package, cmdstanr, and CmdStan compiler.
     
     Parameters
     ----------
     version : str, default="latest"
-        Version specification for brms:
-        - "latest": Install the latest version from CRAN
-        - Specific version: e.g., "2.23.0"
-        - Version constraint: e.g., ">=2.20.0" (requires remotes package)
-    
+        brms version: "latest", "2.23.0", or ">=2.20.0"
     repo : str, default="https://cran.rstudio.com"
-        CRAN repository URL to use for installation
-    
+        CRAN repository URL
     install_cmdstan : bool, default=True
-        Whether to also install cmdstanr and CmdStan compiler if not present
+        Whether to install cmdstanr and CmdStan
     
     Examples
     --------
-    Install latest version (brms + cmdstanr + CmdStan):
-    >>> import brmspy
-    >>> brmspy.install_brms()
-    
-    Install specific brms version:
-    >>> brmspy.install_brms(version="2.23.0")
-    
-    Install brms only (skip cmdstanr/CmdStan):
-    >>> brmspy.install_brms(install_cmdstan=False)
-    
-    Notes
-    -----
-    This is a one-time setup operation. Once installed, brms, cmdstanr, and
-    CmdStan will be available for all subsequent brmspy sessions.
+    >>> from brmspy import brms
+    >>> brms.install_brms()
+    >>> brms.install_brms(version="2.23.0")
+    >>> brms.install_brms(install_cmdstan=False)
     """
     print("=" * 60)
     print("brmspy Setup - Installing Required Components")
@@ -171,23 +153,17 @@ def install_brms(version: str = "latest", repo: str = "https://cran.rstudio.com"
 
 def get_brms_version() -> str:
     """
-    Get the installed version of the brms R package.
+    Get installed brms R package version.
     
     Returns
     -------
     str
-        Version string of installed brms package
+        Version string (e.g., "2.23.0")
     
     Raises
     ------
     ImportError
         If brms is not installed
-    
-    Examples
-    --------
-    >>> import brmspy
-    >>> version = brmspy.get_brms_version()
-    >>> print(f"brms version: {version}")
     """
     brms = _get_brms()
     utils = rpackages.importr("utils")
@@ -214,29 +190,22 @@ def get_brms_version() -> str:
 
 def get_brms_data(dataset_name: str) -> pd.DataFrame:
     """
-    Import example datasets included in the brms package.
+    Load example dataset from brms package.
     
     Parameters
     ----------
     dataset_name : str
-        Name of the dataset to import (e.g., 'epilepsy', 'kidney', 'inhaler')
+        Dataset name ('epilepsy', 'kidney', 'inhaler', etc.)
     
     Returns
     -------
     pd.DataFrame
-        The requested dataset as a pandas DataFrame
+        Dataset as pandas DataFrame
     
     Examples
     --------
-    >>> import brmspy
-    >>> epilepsy = brmspy.get_brms_data("epilepsy")
-    >>> print(epilepsy.head())
-    
-    Available datasets include:
-    - epilepsy: Epilepsy seizure counts
-    - kidney: Kidney infection data  
-    - inhaler: Asthma inhaler data
-    - And many more - see brms documentation
+    >>> from brmspy import brms
+    >>> epilepsy = brms.get_brms_data("epilepsy")
     """
     brms = _get_brms()
     with localconverter(default_converter + pandas2ri.converter + numpy2ri.converter) as cv:
@@ -253,27 +222,25 @@ def get_stan_code(
     sample_prior: str = "no"
 ) -> str:
     """
-    Generate Stan code for the model using brms.
-    
-    This calls brms::make_stancode() to generate the Stan program.
+    Generate Stan code using brms::make_stancode().
     
     Parameters
     ----------
     formula : str
-        brms formula specification
+        brms formula
     data : dict or pd.DataFrame
         Model data
     priors : list
-        List of prior specifications
+        Prior specifications
     family : str
         Distribution family
     sample_prior : str, default="no"
-        Whether to sample from prior
+        Sample from prior ("no", "yes", "only")
     
     Returns
     -------
     str
-        Generated Stan code
+        Stan program code
     """
     brms = _get_brms()
     if len(priors) > 0:
@@ -301,83 +268,50 @@ def fit(
     **brm_args,
 ) -> FitResult:
     """
-    Fit a Bayesian regression model using brms.
+    Fit Bayesian regression model using brms.
     
-    This function uses brms' native fitting capabilities with the cmdstanr
-    backend, ensuring proper parameter naming and full brms functionality.
+    Uses brms with cmdstanr backend for proper parameter naming.
+    Returns FitResult with .idata (arviz.InferenceData) and .r (brmsfit) attributes.
     
     Parameters
     ----------
     formula : str
-        Model formula in brms syntax, e.g., "y ~ x + (1|group)"
+        brms formula: "y ~ x + (1|group)"
     data : dict or pd.DataFrame
-        Data for the model
-    priors : list, optional
-        List of prior specifications as tuples, e.g.,
-        [("normal(0,1)", "b"), ("cauchy(0,2)", "sd")]
+        Model data
+    priors : list, default=[]
+        Prior specifications: [("normal(0,1)", "b"), ("cauchy(0,2)", "sd")]
     family : str, default="gaussian"
         Distribution family: "gaussian", "poisson", "binomial", etc.
     sample_prior : str, default="no"
-        Whether to sample from the prior: "no", "yes", or "only"
+        Sample from prior: "no", "yes", "only"
     sample : bool, default=True
-        Whether to sample from the model. If False, returns compiled model only
-        with empty=TRUE.
+        Whether to sample. If False, returns compiled model with empty=TRUE
     backend : str, default="cmdstanr"
-        Stan backend to use: "cmdstanr" (recommended), "rstan", or "mock"
+        Stan backend: "cmdstanr" (recommended), "rstan"
     **brm_args
-        Additional arguments passed to brms::brm(), e.g.,
-        chains=4, iter=2000, warmup=1000, cores=4, seed=123
-        
-        Common brm() parameters:
-        - iter: Total iterations per chain (default: 2000)
-        - warmup: Warmup iterations (default: iter/2)
-        - chains: Number of chains (default: 4)
-        - cores: Number of cores for parallel chains (default: 1)
-        - thin: Thinning rate (default: 1)
-        - control: Stan control parameters (default: NULL)
-        - seed: Random seed (default: NA)
-        - silent: Verbosity level (default: 1)
+        Additional brms::brm() arguments:
+        chains=4, iter=2000, warmup=1000, cores=4, seed=123, thin=1, etc.
     
     Returns
     -------
-    FitResult object with .idata and .r attributes
-          allowing access to both Python and R functionality
+    FitResult
+        Object with .idata (arviz.InferenceData) and .r (brmsfit) attributes
     
     Examples
     --------
-    Basic usage with arviz (default):
-    >>> import brmspy
+    >>> from brmspy import brms
     >>> import arviz as az
-    >>> epilepsy = brmspy.get_brms_data("epilepsy")
     >>>
-    >>> # Returns arviz InferenceData by default
-    >>> idata = brmspy.fit(
+    >>> epilepsy = brms.get_brms_data("epilepsy")
+    >>> model = brms.fit(
     ...     formula="count ~ zAge + zBase * Trt + (1|patient)",
     ...     data=epilepsy,
     ...     family="poisson",
     ...     chains=4,
     ...     iter=2000
     ... )
-    >>>
-    >>> # Use arviz for analysis
-    >>> az.plot_posterior(idata)
-    >>> az.summary(idata)
-    
-    With priors:
-    >>> fit = brmspy.fit(
-    ...     formula="count ~ zAge + zBase * Trt + (1|patient)",
-    ...     data=epilepsy,
-    ...     family="poisson",
-    ...     priors=[("normal(0, 0.5)", "b"), ("cauchy(0, 1)", "sd")],
-    ...     chains=4,
-    ...     iter=2000
-    ... )
-    
-    Notes
-    -----
-    The backend uses brms with cmdstanr, ensuring proper parameter naming
-    and full brms functionality. This replaced the direct CmdStanPy approach
-    from earlier versions.
+    >>> az.summary(model.idata)
     """
     brms = _get_brms()
     
@@ -442,6 +376,25 @@ def fit(
     return FitResult(idata=idata, r=fit)
 
 def posterior_epred(model: FitResult, newdata: pd.DataFrame, **kwargs) -> PosteriorEpredResult:
+    """
+    Compute expected value of posterior predictive distribution.
+    
+    Calls brms::posterior_epred() to get E[Y|data] without observation noise.
+    
+    Parameters
+    ----------
+    model : FitResult
+        Fitted model from fit()
+    newdata : pd.DataFrame
+        Data for predictions
+    **kwargs
+        Additional arguments to brms::posterior_epred()
+    
+    Returns
+    -------
+    PosteriorEpredResult
+        Object with .idata and .r attributes
+    """
     import rpy2.robjects as ro
     _get_brms()  # Ensure brms is loaded
     m = model.r
@@ -459,6 +412,25 @@ def posterior_epred(model: FitResult, newdata: pd.DataFrame, **kwargs) -> Poster
     )
 
 def posterior_predict(model: FitResult, newdata: typing.Optional[pd.DataFrame] = None, **kwargs) -> PosteriorPredictResult:
+    """
+    Generate posterior predictive samples with observation noise.
+    
+    Calls brms::posterior_predict() to get samples of Y_new|data.
+    
+    Parameters
+    ----------
+    model : FitResult
+        Fitted model from fit()
+    newdata : pd.DataFrame, optional
+        Data for predictions. If None, uses original data
+    **kwargs
+        Additional arguments to brms::posterior_predict()
+    
+    Returns
+    -------
+    PosteriorPredictResult
+        Object with .idata and .r attributes
+    """
     import rpy2.robjects as ro
     _get_brms()  # Ensure brms is loaded
     m = model.r
@@ -480,6 +452,25 @@ def posterior_predict(model: FitResult, newdata: typing.Optional[pd.DataFrame] =
     )
 
 def posterior_linpred(model: FitResult, newdata: typing.Optional[pd.DataFrame] = None, **kwargs) -> GenericResult:
+    """
+    Compute linear predictor of the model.
+    
+    Calls brms::posterior_linpred() to get samples of the linear predictor.
+    
+    Parameters
+    ----------
+    model : FitResult
+        Fitted model from fit()
+    newdata : pd.DataFrame, optional
+        Data for predictions. If None, uses original data
+    **kwargs
+        Additional arguments to brms::posterior_linpred()
+    
+    Returns
+    -------
+    GenericResult
+        Object with .idata and .r attributes
+    """
     import rpy2.robjects as ro
     _get_brms()  # Ensure brms is loaded
     m = model.r
@@ -502,6 +493,25 @@ def posterior_linpred(model: FitResult, newdata: typing.Optional[pd.DataFrame] =
 
 
 def log_lik(model: FitResult, newdata: typing.Optional[pd.DataFrame] = None, **kwargs) -> GenericResult:
+    """
+    Compute log-likelihood values.
+    
+    Calls brms::log_lik() to get log p(y|theta) for each observation.
+    
+    Parameters
+    ----------
+    model : FitResult
+        Fitted model from fit()
+    newdata : pd.DataFrame, optional
+        Data for predictions. If None, uses original data
+    **kwargs
+        Additional arguments to brms::log_lik()
+    
+    Returns
+    -------
+    GenericResult
+        Object with .idata and .r attributes
+    """
     import rpy2.robjects as ro
     _get_brms()  # Ensure brms is loaded
     m = model.r
@@ -521,3 +531,54 @@ def log_lik(model: FitResult, newdata: typing.Optional[pd.DataFrame] = None, **k
     return GenericResult(
         r=r, idata=idata
     )
+
+
+def summary(model: FitResult, **kwargs) -> pd.DataFrame:
+    """
+    Generate summary statistics for fitted model.
+    
+    Calls R's summary() function on brmsfit object and converts to pandas DataFrame.
+    
+    Parameters
+    ----------
+    model : FitResult
+        Fitted model from fit()
+    **kwargs
+        Additional arguments to summary(), e.g., probs=c(0.025, 0.975)
+    
+    Returns
+    -------
+    pd.DataFrame
+        Summary statistics with columns for Estimate, Est.Error, and credible intervals
+    
+    Examples
+    --------
+    >>> from brmspy import brms
+    >>> model = brms.fit("y ~ x", data=data, chains=4)
+    >>> summary_df = brms.summary(model)
+    >>> print(summary_df)
+    """
+    import rpy2.robjects as ro
+    from rpy2.robjects.conversion import localconverter
+    
+    # Get R summary function
+    r_summary = ro.r('summary')
+    
+    # Call summary on brmsfit object
+    summary_r = r_summary(model.r, **kwargs)
+    
+    # Extract the fixed effects table (summary$fixed)
+    # brms summary returns a list with $fixed, $random, $spec_pars, etc.
+    try:
+        fixed_table = ro.r('function(x) as.data.frame(x$fixed)')(summary_r)
+        
+        # Convert to pandas
+        with localconverter(default_converter + pandas2ri.converter):
+            summary_df = pandas2ri.rpy2py(fixed_table)
+        
+        return summary_df
+    except Exception:
+        # Fallback: just convert the whole summary to string
+        summary_str = str(summary_r)
+        print(summary_str)
+        return pd.DataFrame({'summary': [summary_str]})

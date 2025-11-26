@@ -17,17 +17,17 @@ _brms = None
 
 def _get_brms():
     """
-    Lazy import of brms with helpful error message if not installed.
+    Lazy import of brms R package.
     
     Returns
     -------
     brms module
-        The imported brms R package
+        Imported brms R package
     
     Raises
     ------
     ImportError
-        If brms is not installed, with instructions for installation
+        If brms is not installed
     """
     global _brms
     if _brms is None:
@@ -50,19 +50,19 @@ def _get_brms():
 
 
 def _convert_R_to_python(
-    formula: str, 
-    data: typing.Union[dict, pd.DataFrame], 
+    formula: str,
+    data: typing.Union[dict, pd.DataFrame],
     family: str
 ) -> dict:
     """
-    Convert R data structures from brms to Python dictionaries.
+    Convert brms data structures to Python dict.
     
-    Calls brms::make_standata() and converts the result to Python.
+    Calls brms::make_standata() and converts result to Python.
     
     Parameters
     ----------
     formula : str
-        brms formula specification
+        brms formula
     data : dict or pd.DataFrame
         Model data
     family : str
@@ -71,7 +71,7 @@ def _convert_R_to_python(
     Returns
     -------
     dict
-        Stan data as Python dictionary
+        Stan data dictionary
     """
     brms = _get_brms()
     # Call brms to preprocess the data; returns an R ListVector
@@ -86,23 +86,22 @@ def _convert_R_to_python(
 
 def _coerce_types(stan_code: str, stan_data: dict) -> dict:
     """
-    Coerce Python types to match Stan's type requirements.
+    Coerce Python types to match Stan type requirements.
     
-    Stan has strict type requirements (int vs float). This function parses
-    the Stan data block to determine required types and coerces the data
-    accordingly.
+    Parses Stan data block to determine required types (int vs float)
+    and coerces data accordingly. Handles both old and new Stan array syntax.
     
     Parameters
     ----------
     stan_code : str
-        Generated Stan code
+        Stan program code
     stan_data : dict
-        Data dictionary to coerce
+        Data dictionary
     
     Returns
     -------
     dict
-        Type-coerced data dictionary
+        Type-coerced data
     """
     pat_data = re.compile(r'(?<=data {)[^}]*')
     pat_identifiers = re.compile(r'([\w]+)')
@@ -160,22 +159,22 @@ def _coerce_types(stan_code: str, stan_data: dict) -> dict:
 
 def _convert_python_to_R(data: typing.Union[dict, pd.DataFrame]):
     """
-    Convert Python data structures to R objects that brms can handle.
+    Convert Python data to R objects for brms.
     
     Parameters
     ----------
     data : dict or pd.DataFrame
-        Python data to convert
+        Python data
     
     Returns
     -------
     R object
-        R list (from dict) or R data.frame (from DataFrame)
+        R list or R data.frame
     
     Raises
     ------
     ValueError
-        If data type is not supported
+        If data type unsupported
     """
     with localconverter(default_converter + pandas2ri.converter + numpy2ri.converter) as cv:
         if isinstance(data, pd.DataFrame):
@@ -193,8 +192,22 @@ def _convert_python_to_R(data: typing.Union[dict, pd.DataFrame]):
 
 def brmsfit_to_idata(brmsfit_obj, model_data=None):
     """
-    Convert R object to a complete arviz InferenceData object.
-    Includes Posterior, Posterior Predictive, Log Likelihood, and Observed Data.
+    Convert brmsfit R object to arviz InferenceData.
+    
+    Includes posterior, posterior_predictive, log_likelihood, and observed_data groups.
+    Handles proper chain/draw indexing for arviz compatibility.
+    
+    Parameters
+    ----------
+    brmsfit_obj : R brmsfit object
+        Fitted model from brms::brm()
+    model_data : optional
+        Additional model data (currently unused)
+    
+    Returns
+    -------
+    arviz.InferenceData
+        Complete InferenceData with all groups
     """
     # 1. SETUP: Essential R packages
     try:
@@ -314,8 +327,23 @@ def brmsfit_to_idata(brmsfit_obj, model_data=None):
 
 def _reshape_r_prediction_to_arviz(r_matrix, brmsfit_obj, obs_coords=None):
     """
-    Internal helper to reshape R prediction matrices (Draws x Obs) 
-    into ArviZ 3D arrays (Chains x Draws x Obs).
+    Reshape R prediction matrix to arviz format.
+    
+    Converts (Total_Draws x Observations) to (Chains x Draws x Observations).
+    
+    Parameters
+    ----------
+    r_matrix : R matrix
+        Prediction matrix from brms
+    brmsfit_obj : R brmsfit object
+        Fitted model
+    obs_coords : array-like, optional
+        Observation coordinates
+    
+    Returns
+    -------
+    tuple
+        (reshaped_data, coords, dims)
     """
     # 1. Get dimensions from the model
     # We use R functions to be safe about how brms stored the fit
@@ -352,6 +380,29 @@ def _reshape_r_prediction_to_arviz(r_matrix, brmsfit_obj, obs_coords=None):
     return reshaped_data, coords, ["chain", "draw", "obs_id"]
 
 def generic_pred_to_idata(r_pred_obj, brmsfit_obj, newdata=None, var_name="pred", az_name="posterior"):
+    """
+    Convert generic brms prediction to arviz InferenceData.
+    
+    Generic converter for prediction functions.
+    
+    Parameters
+    ----------
+    r_pred_obj : R matrix
+        Prediction matrix from brms
+    brmsfit_obj : R brmsfit object
+        Fitted model
+    newdata : pd.DataFrame, optional
+        Data for predictions
+    var_name : str, default="pred"
+        Variable name in InferenceData
+    az_name : str, default="posterior"
+        Group name in InferenceData
+    
+    Returns
+    -------
+    arviz.InferenceData
+        InferenceData with specified group
+    """
     # Determine coordinates from newdata if available
     obs_coords = None
     if newdata is not None and isinstance(newdata, pd.DataFrame):
@@ -376,35 +427,34 @@ def generic_pred_to_idata(r_pred_obj, brmsfit_obj, newdata=None, var_name="pred"
 
 def brms_epred_to_idata(r_epred_obj, brmsfit_obj, newdata=None, var_name="epred"):
     """
-    Converts result of brms::posterior_epred to arviz.InferenceData.
+    Convert brms::posterior_epred result to arviz InferenceData.
     
-    The result is stored in the 'posterior' group (as it represents the 
-    expected value/mean), or you could put it in a custom group.
+    Stores expected values in 'posterior' group.
     """
     return generic_pred_to_idata(r_epred_obj, brmsfit_obj, newdata=newdata, var_name=var_name, az_name="posterior")
 
 
 def brms_predict_to_idata(r_predict_obj, brmsfit_obj, newdata=None, var_name="y"):
     """
-    Converts result of brms::posterior_predict to arviz.InferenceData.
+    Convert brms::posterior_predict result to arviz InferenceData.
     
-    The result is stored in the 'posterior_predictive' group.
+    Stores predictions in 'posterior_predictive' group.
     """
     return generic_pred_to_idata(r_predict_obj, brmsfit_obj, newdata=newdata, var_name=var_name, az_name="posterior_predictive")
 
 def brms_linpred_to_idata(r_linpred_obj, brmsfit_obj, newdata=None, var_name="linpred"):
     """
-    Converts result of brms::posterior_linpred to arviz.InferenceData.
+    Convert brms::posterior_linpred result to arviz InferenceData.
     
-    The result is stored in the 'predictions' group.
+    Stores linear predictor in 'predictions' group.
     """
     return generic_pred_to_idata(r_linpred_obj, brmsfit_obj, newdata=newdata, var_name=var_name, az_name="predictions")
 
 def brms_log_lik_to_idata(r_log_lik_obj, brmsfit_obj, newdata=None, var_name="log_lik"):
     """
-    Converts result of brms::log_lik to arviz.InferenceData.
+    Convert brms::log_lik result to arviz InferenceData.
     
-    The result is stored in the 'log_likelihood' group.
+    Stores log-likelihood in 'log_likelihood' group.
     """
     return generic_pred_to_idata(r_log_lik_obj, brmsfit_obj, newdata=newdata, var_name=var_name, az_name="log_likelihood")
 
