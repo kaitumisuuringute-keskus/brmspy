@@ -23,13 +23,14 @@ brmspy.install_brms()
 epilepsy = brmspy.get_brms_data("epilepsy")
 
 # Fit model - returns arviz InferenceData by default
-idata = brmspy.fit(
+model = brmspy.fit(
     formula="count ~ zAge + zBase * Trt + (1|patient)",
     data=epilepsy,
     family="poisson",
     chains=4,
     iter=2000
 )
+idata = model.idata
 
 # Analyze with arviz
 import arviz as az
@@ -76,7 +77,8 @@ kidney = brmspy.get_brms_data("kidney")
 idata = brmspy.fit(
     formula="time ~ age + disease",
     data=kidney,
-    family="gaussian"
+    family="gaussian",
+    return_type="idata"
 )
 
 # View summary
@@ -93,7 +95,8 @@ idata = brmspy.fit(
     priors=[
         ("normal(0, 0.5)", "b"),
         ("cauchy(0, 1)", "sd")
-    ]
+    ],
+    return_type="idata"
 )
 ```
 
@@ -119,7 +122,7 @@ az.plot_posterior(result.idata)  # Python
 ### Sampling Parameters
 
 ```python
-idata = brmspy.fit(
+model = brmspy.fit(
     formula="y ~ x",
     data=data,
     iter=2000,      # Total iterations per chain
@@ -145,33 +148,6 @@ idata = brmspy.fit(
 - numpy ≥ 1.20.0
 - arviz (optional, for InferenceData conversion)
 
-## Migration from v0.0.3
-
-**Breaking Changes:**
-
-1. **Return Type**: Now returns `arviz.InferenceData` by default (was `pystan.StanFit4Model`)
-2. **Parameters**: Use `iter`/`warmup` (not `iter_warmup`/`iter_sampling`)
-3. **Backend**: Uses brms + cmdstanr (replaced direct PyStan usage)
-
-**Migration Example:**
-
-```python
-# Old (v0.0.3)
-model = brmspy.fit(..., iter_warmup=1000, iter_sampling=1000)
-idata = az.from_pystan(model)
-
-# New (v0.1.0)
-idata = brmspy.fit(..., warmup=1000, iter=2000)  # already InferenceData
-```
-
-See [MIGRATION.md](MIGRATION.md) for details.
-
-## Documentation
-
-- [Architecture](ARCHITECTURE.md) - Design decisions and implementation details
-- [Migration Guide](MIGRATION.md) - Upgrading from v0.0.3
-- [API Reference](docs/) - Full API documentation
-
 ## Development
 
 ```bash
@@ -196,5 +172,5 @@ Apache License 2.0
 ## Credits
 
 - Original concept: [Adam Haber](https://github.com/adamhaber)
-- v0.1.0 modernization: [Remi Sebastian Kits](https://github.com/yourusername)
+- v0.1.0 modernization: [Remi Sebastian Kits](https://github.com/braffolk)
 - Powered by [brms](https://paul-buerkner.github.io/brms/) by Paul-Christian Bürkner

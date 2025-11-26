@@ -23,7 +23,13 @@ jobs:
       - name: Install R packages (cmdstanr, brms, posterior)
         run: |
           R -q -e "install.packages(c('remotes'), repos = 'https://cloud.r-project.org')"
-          R -q -e "remotes::install_cran(c('cmdstanr', 'brms', 'posterior'))"
+          R -q -e "
+            options(repos = c(
+              'https://stan-dev.r-universe.dev',
+              CRAN = 'https://cloud.r-project.org'
+            ));
+            install.packages(c('cmdstanr', 'brms', 'posterior'));
+          "
 
       - name: Cache CmdStan
         uses: actions/cache@v3
