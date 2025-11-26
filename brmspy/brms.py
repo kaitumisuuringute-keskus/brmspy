@@ -19,7 +19,7 @@ from .types import (
 __all__ = [
     'install_brms', 'get_brms_version', 'get_brms_data', 'get_stan_code',
     'fit',
-    "posterior_predict", "posterior_epred",
+    "posterior_predict", "posterior_epred", "posterior_linpred", "log_lik",
     'FitResult', 'PosteriorEpredResult'
 ]
 
@@ -442,17 +442,16 @@ def fit(
     return FitResult(idata=idata, r=fit)
 
 def posterior_epred(model: FitResult, newdata: pd.DataFrame, **kwargs) -> PosteriorEpredResult:
-    brms = _get_brms()
+    import rpy2.robjects as ro
+    _get_brms()  # Ensure brms is loaded
     m = model.r
     data_r = _convert_python_to_R(newdata)
 
-    epred_args = {
-        "model": m,
-        "newdata": data_r
-    }
-    epred_args.update(kwargs)
-
-    r = brms.posterior_epred(**epred_args)
+    # Get R function explicitly
+    r_posterior_epred = ro.r('brms::posterior_epred')
+    
+    # Call with proper argument names (object instead of model)
+    r = r_posterior_epred(m, newdata=data_r, **kwargs)
     idata = brms_epred_to_idata(r, model.r, newdata=newdata)
 
     return PosteriorEpredResult(
@@ -460,20 +459,20 @@ def posterior_epred(model: FitResult, newdata: pd.DataFrame, **kwargs) -> Poster
     )
 
 def posterior_predict(model: FitResult, newdata: typing.Optional[pd.DataFrame] = None, **kwargs) -> PosteriorPredictResult:
-    brms = _get_brms()
+    import rpy2.robjects as ro
+    _get_brms()  # Ensure brms is loaded
     m = model.r
+    
+    # Get R function explicitly
+    r_posterior_predict = ro.r('brms::posterior_predict')
+    
+    # Call with proper arguments
     if newdata is not None:
         data_r = _convert_python_to_R(newdata)
+        r = r_posterior_predict(m, newdata=data_r, **kwargs)
     else:
-        data_r = None
-
-    epred_args = {
-        "model": m,
-        "newdata": data_r
-    }
-    epred_args.update(kwargs)
-
-    r = brms.posterior_predict(**epred_args)
+        r = r_posterior_predict(m, **kwargs)
+    
     idata = brms_predict_to_idata(r, model.r, newdata=newdata)
 
     return PosteriorPredictResult(
@@ -481,20 +480,20 @@ def posterior_predict(model: FitResult, newdata: typing.Optional[pd.DataFrame] =
     )
 
 def posterior_linpred(model: FitResult, newdata: typing.Optional[pd.DataFrame] = None, **kwargs) -> GenericResult:
-    brms = _get_brms()
+    import rpy2.robjects as ro
+    _get_brms()  # Ensure brms is loaded
     m = model.r
+    
+    # Get R function explicitly
+    r_posterior_linpred = ro.r('brms::posterior_linpred')
+    
+    # Call with proper arguments
     if newdata is not None:
         data_r = _convert_python_to_R(newdata)
+        r = r_posterior_linpred(m, newdata=data_r, **kwargs)
     else:
-        data_r = None
-
-    epred_args = {
-        "model": m,
-        "newdata": data_r
-    }
-    epred_args.update(kwargs)
-
-    r = brms.posterior_linpred(**epred_args)
+        r = r_posterior_linpred(m, **kwargs)
+    
     idata = brms_linpred_to_idata(r, model.r, newdata=newdata)
 
     return GenericResult(
@@ -503,20 +502,20 @@ def posterior_linpred(model: FitResult, newdata: typing.Optional[pd.DataFrame] =
 
 
 def log_lik(model: FitResult, newdata: typing.Optional[pd.DataFrame] = None, **kwargs) -> GenericResult:
-    brms = _get_brms()
+    import rpy2.robjects as ro
+    _get_brms()  # Ensure brms is loaded
     m = model.r
+    
+    # Get R function explicitly
+    r_log_lik = ro.r('brms::log_lik')
+    
+    # Call with proper arguments
     if newdata is not None:
         data_r = _convert_python_to_R(newdata)
+        r = r_log_lik(m, newdata=data_r, **kwargs)
     else:
-        data_r = None
-
-    epred_args = {
-        "model": m,
-        "newdata": data_r
-    }
-    epred_args.update(kwargs)
-
-    r = brms.posterior_linpred(**epred_args)
+        r = r_log_lik(m, **kwargs)
+    
     idata = brms_log_lik_to_idata(r, model.r, newdata=newdata)
 
     return GenericResult(
