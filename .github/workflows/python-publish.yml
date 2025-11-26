@@ -12,7 +12,7 @@ jobs:
 
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/stan-dev/cmdstan:latest
+      image: jstoropoli/cmdstanr:latest
 
     steps:
     - uses: actions/checkout@v2

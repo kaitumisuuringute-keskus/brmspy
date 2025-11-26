@@ -14,7 +14,7 @@ jobs:
 
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/stan-dev/cmdstan:latest
+      image: jstoropoli/cmdstanr:latest
     strategy:
       matrix:
         # skip some versions for better costs
