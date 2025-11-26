@@ -1,6 +1,6 @@
 # brmspy Architecture
 
-Technical design, implementation choices, and compatibility details for brmspy v0.1.0.
+Technical design, implementation choices, and compatibility details for brmspy v0.1.
 
 ## System Overview
 

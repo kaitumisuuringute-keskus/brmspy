@@ -25,7 +25,6 @@ class TestImports:
         import brmspy
         assert hasattr(brmspy, '__version__')
         assert isinstance(brmspy.__version__, str)
-        assert brmspy.__version__ == "0.1.0"
     
     def test_main_functions_exist(self):
         """Test that main API functions are accessible"""

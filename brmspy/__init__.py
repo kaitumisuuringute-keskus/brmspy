@@ -4,7 +4,7 @@ brmspy - Pythonic interface to the brms R package using CmdStanPy
 A Python package that provides a Pythonic interface to the brms R package,
 enabling Bayesian regression modeling through Stan.
 
-Version 0.1.0 introduces:
+Version 0.1 introduces:
 - CmdStanPy backend (replaces PyStan)
 - Explicit brms version control
 - Python 3.8+ support

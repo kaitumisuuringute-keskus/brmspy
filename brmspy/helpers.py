@@ -199,6 +199,8 @@ def _convert_python_to_R(data: typing.Union[dict, pd.DataFrame]):
             )
 
 
+
+
 def _brmsfit_to_idata(brmsfit_obj, model_data=None):
     """
     Convert brmsfit R object to a complete arviz InferenceData object.
@@ -206,21 +208,23 @@ def _brmsfit_to_idata(brmsfit_obj, model_data=None):
     """
     # 1. SETUP: Essential R packages
     try:
-        posterior = importr('posterior')
-        brms = importr('brms')  # Import brms directly to call functions
+        # We only import these to ensure they are installed/loaded in R
+        importr('posterior')
+        importr('brms')
         base = importr('base')
     except Exception as e:
         raise ImportError(f"Required R packages (brms, posterior) not found. Error: {e}")
 
     # =========================================================================
-    # GROUP 1: POSTERIOR
+    # GROUP 1: POSTERIOR (Parameters)
     # =========================================================================
-    # Extract draws (parameters)
-    draws_r = posterior.as_draws_df(brmsfit_obj)
+    # Safely get the as_draws_df function
+    as_draws_df = ro.r('posterior::as_draws_df')
+    draws_r = as_draws_df(brmsfit_obj)
     
     with localconverter(ro.default_converter + pandas2ri.converter):
         df = pandas2ri.rpy2py(draws_r)
-        
+            
     # Handle Chain/Draw Indexing
     chain_col = '.chain' if '.chain' in df.columns else 'chain'
     draw_col = '.draw' if '.draw' in df.columns else 'draw'
@@ -236,11 +240,9 @@ def _brmsfit_to_idata(brmsfit_obj, model_data=None):
     def reshape_to_arviz(values):
         # values shape: (total_draws, n_obs)
         # Reshape to (n_chains, n_draws, n_obs)
-        # NOTE: This assumes R outputs are ordered by chain then draw (standard brms behavior)
         new_shape = (n_chains, n_draws) + values.shape[1:]
         return values.reshape(new_shape)
 
-    # Dictionary for posterior group
     posterior_dict = {}
     for col in df.columns:
         if col not in [chain_col, draw_col, '.iteration', 'draw_idx']:
@@ -251,34 +253,35 @@ def _brmsfit_to_idata(brmsfit_obj, model_data=None):
     # =========================================================================
     # GROUP 2 & 3: POSTERIOR PREDICTIVE & LOG LIKELIHOOD
     # =========================================================================
-    # Used for PPC and LOO/Waic/Pareto-k
-    
     post_pred_dict = {}
     log_lik_dict = {}
 
     try:
-        # Call R functions directly (Avoids PARSE_ERROR)
-        # These return flat matrices: (total_draws x n_obs)
+        # Get functions explicitly to avoid AttributeError
+        r_posterior_predict = ro.r('brms::posterior_predict')
+        r_log_lik = ro.r('brms::log_lik')
         
         # 1. Posterior Predictive
-        pp_r = brms.posterior_predict(brmsfit_obj)
+        # Returns matrix: (Total_Draws x N_Obs)
+        pp_r = r_posterior_predict(brmsfit_obj)
         pp_mat = np.array(pp_r)
         post_pred_dict['y'] = reshape_to_arviz(pp_mat)
         
         # 2. Log Likelihood
-        ll_r = brms.log_lik(brmsfit_obj)
+        ll_r = r_log_lik(brmsfit_obj)
         ll_mat = np.array(ll_r)
         log_lik_dict['y'] = reshape_to_arviz(ll_mat)
         
     except Exception as e:
         print(f"Warning: Could not extract posterior predictive/log_lik. {e}")
-        # We continue without them so we at least get the posterior
         pass
 
     # =========================================================================
     # GROUP 4: OBSERVED DATA
     # =========================================================================
     observed_data_dict = {}
+    coords = None
+    dims = None
     
     try:
         # Extract data from the fit object: fit$data
@@ -287,19 +290,18 @@ def _brmsfit_to_idata(brmsfit_obj, model_data=None):
         with localconverter(ro.default_converter + pandas2ri.converter):
             df_data = pandas2ri.rpy2py(r_data)
         
-        # Heuristic: The response variable is usually the first column in brms internal data
-        # Ideally, we would parse the formula, but this works 99% of the time.
-        resp_var = df_data.columns[0]
-        observed_data_dict['y'] = df_data[resp_var].values
-        
-        # Create coords for creating dimensions
-        coords = {'obs_id': np.arange(len(df_data))}
-        dims = {'y': ['obs_id']}
+        # Heuristic: The response variable is usually the first column 
+        # (brms rearranges internal data frame to put response first)
+        if df_data is not None and not df_data.empty:
+            resp_var = df_data.columns[0]
+            observed_data_dict['y'] = df_data[resp_var].values
+            
+            # Setup coordinates for ArviZ
+            coords = {'obs_id': np.arange(len(df_data))}
+            dims = {'y': ['obs_id']}
         
     except Exception as e:
         print(f"Warning: Could not extract observed data. {e}")
-        coords = None
-        dims = None
 
     # =========================================================================
     # CREATE INFERENCE DATA
