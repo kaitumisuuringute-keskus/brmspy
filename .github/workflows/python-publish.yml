@@ -25,6 +25,9 @@ jobs:
     - name: Install R dependencies
       run: |
         R -e "install.packages('remotes')"
+        R -e "remotes::install_cran(c('brms', 'posterior'))"
+        R -e "install.packages('cmdstanr', repos = c('https://stan-dev.r-universe.dev', getOption('repos')))"
+        R -e "cmdstanr::install_cmdstan()"
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
