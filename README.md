@@ -2,7 +2,7 @@
 
 **Pythonic interface to R's brms for Bayesian regression modeling**
 
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 brmspy brings the power of [brms](https://paul-buerkner.github.io/brms/) (Bayesian Regression Models using Stan) to Python, providing proper parameter names and seamless integration with the Python Bayesian ecosystem.
@@ -114,7 +114,7 @@ model = brmspy.fit(
 
 ## Requirements
 
-**Python**: 3.8+
+**Python**: 3.10+
 
 **R Packages** (auto-installed):
 - brms ≥ 2.20.0
@@ -134,7 +134,7 @@ model = brmspy.fit(
 git clone https://github.com/kaitumisuuringute-keskus/brmspy.git
 cd brmspy
 
-# Setup environment (requires Python 3.8+)
+# Setup environment (requires Python 3.10+)
 ./init-venv.sh
 
 # Run tests

@@ -7,7 +7,7 @@ enabling Bayesian regression modeling through Stan.
 Version 0.1 introduces:
 - CmdStanPy backend (replaces PyStan)
 - Explicit brms version control
-- Python 3.8+ support
+- Python 3.10+ support
 - Modern packaging standards
 
 Example:
