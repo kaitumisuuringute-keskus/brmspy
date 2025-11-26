@@ -1,0 +1,82 @@
+# .github/workflows/python-publish.yml
+
+name: Upload Python Package
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  deploy:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
+          use-public-rspm: true
+
+      # Reuse the same CmdStan cache as in the test matrix workflow
+      - name: Restore CmdStan cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cmdstan
+          key: cmdstan-2.34.1-v1
+
+      - name: Install R packages and CmdStan if needed
+        run: |
+          R -q -e "install.packages('remotes', repos = 'https://cloud.r-project.org')"
+          R -q -e "remotes::install_cran(c('cmdstanr', 'brms', 'posterior'))"
+          R -q -e "
+            library(cmdstanr);
+            cmdstan_dir <- path.expand('~/.cmdstan');
+            target <- file.path(cmdstan_dir, 'cmdstan-2.34.1');
+            if (!dir.exists(target)) {
+              dir.create(cmdstan_dir, recursive = TRUE, showWarnings = FALSE);
+              install_cmdstan(dir = cmdstan_dir, version = '2.34.1', cores = 2);
+            }
+            set_cmdstan_path(target);
+            cat('CmdStan version: ', cmdstan_version(), '\n');
+          "
+
+      - name: Sanity-check R / CmdStan / brms
+        run: |
+          R -q -e "
+            library(cmdstanr);
+            library(brms);
+            library(posterior);
+            cmdstan_dir <- path.expand('~/.cmdstan');
+            target <- file.path(cmdstan_dir, 'cmdstan-2.34.1');
+            set_cmdstan_path(target);
+            cat('R version: ', R.version.string, '\n');
+            cat('cmdstanr version: ', as.character(packageVersion('cmdstanr')), '\n');
+            cat('CmdStan version: ', cmdstan_version(), '\n');
+            cat('brms version: ', as.character(packageVersion('brms')), '\n');
+          "
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build twine pytest arviz
+          python -m pip install -e ".[dev]"
+
+      - name: Test with pytest
+        run: python -m pytest tests/ -v
+
+      - name: Build and publish
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          python -m build
+          python -m twine upload dist/* --verbose
