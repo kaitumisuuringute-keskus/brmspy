@@ -3,24 +3,14 @@ import pandas as pd
 import numpy as np
 import re
 import warnings
+import xarray as xr
+import arviz as az
 
 import rpy2.robjects.packages as rpackages
 from rpy2.robjects import default_converter, pandas2ri, numpy2ri, ListVector, DataFrame, StrVector
-from rpy2.robjects.conversion import localconverter
-
-import numpy as np
-import pandas as pd
-import arviz as az
 import rpy2.robjects as ro
 from rpy2.robjects import pandas2ri
 from rpy2.robjects.packages import importr
-from rpy2.robjects.conversion import localconverter
-
-import numpy as np
-import pandas as pd
-import arviz as az
-import rpy2.robjects as ro
-from rpy2.robjects import pandas2ri
 from rpy2.robjects.conversion import localconverter
 
 _brms = None
@@ -201,9 +191,9 @@ def _convert_python_to_R(data: typing.Union[dict, pd.DataFrame]):
 
 
 
-def _brmsfit_to_idata(brmsfit_obj, model_data=None):
+def brmsfit_to_idata(brmsfit_obj, model_data=None):
     """
-    Convert brmsfit R object to a complete arviz InferenceData object.
+    Convert R object to a complete arviz InferenceData object.
     Includes Posterior, Posterior Predictive, Log Likelihood, and Observed Data.
     """
     # 1. SETUP: Essential R packages
@@ -316,3 +306,100 @@ def _brmsfit_to_idata(brmsfit_obj, model_data=None):
     )
     
     return idata
+
+
+
+
+
+
+def _reshape_r_prediction_to_arviz(r_matrix, brmsfit_obj, obs_coords=None):
+    """
+    Internal helper to reshape R prediction matrices (Draws x Obs) 
+    into ArviZ 3D arrays (Chains x Draws x Obs).
+    """
+    # 1. Get dimensions from the model
+    # We use R functions to be safe about how brms stored the fit
+    try:
+        r_nchains = ro.r('brms::nchains')
+        n_chains = int(r_nchains(brmsfit_obj)[0])
+    except Exception:
+        # Fallback if brms::nchains fails
+        n_chains = 4 
+
+    # 2. Convert R matrix to Numpy
+    # Shape is (Total_Draws, N_Observations)
+    mat = np.array(r_matrix)
+    total_draws, n_obs = mat.shape
+    
+    # 3. Calculate draws per chain
+    n_draws = total_draws // n_chains
+
+    # 4. Reshape
+    # brms/rstan usually stacks chains: [Chain1_Draws, Chain2_Draws, ...]
+    # So we reshape to (n_chains, n_draws, n_obs)
+    reshaped_data = mat.reshape((n_chains, n_draws, n_obs))
+
+    # 5. Create Coordinates
+    if obs_coords is None:
+        obs_coords = np.arange(n_obs)
+        
+    coords = {
+        "chain": np.arange(n_chains),
+        "draw": np.arange(n_draws),
+        "obs_id": obs_coords
+    }
+    
+    return reshaped_data, coords, ["chain", "draw", "obs_id"]
+
+
+def brms_epred_to_idata(r_epred_obj, brmsfit_obj, newdata=None, var_name="epred"):
+    """
+    Converts result of brms::posterior_epred to arviz.InferenceData.
+    
+    The result is stored in the 'posterior' group (as it represents the 
+    expected value/mean), or you could put it in a custom group.
+    """
+    # Determine coordinates from newdata if available
+    obs_coords = None
+    if newdata is not None and isinstance(newdata, pd.DataFrame):
+        # Use DataFrame index if it's meaningful, otherwise default range
+        obs_coords = newdata.index.values
+
+    data_3d, coords, dims = _reshape_r_prediction_to_arviz(
+        r_epred_obj, brmsfit_obj, obs_coords
+    )
+
+    # Create DataArray
+    da = xr.DataArray(data_3d, coords=coords, dims=dims, name=var_name)
+
+    # Store in 'posterior' group as it is the Expected Value (mu)
+    # Alternatively, often stored in 'predictions' or 'posterior_predictive' 
+    # depending on your specific preference. 
+    # Here we use 'posterior' to distinguish it from noisy 'posterior_predictive'.
+    return az.InferenceData(
+        posterior=da.to_dataset()
+    )
+
+
+def brms_predict_to_idata(r_predict_obj, brmsfit_obj, newdata=None, var_name="y"):
+    """
+    Converts result of brms::posterior_predict to arviz.InferenceData.
+    
+    The result is stored in the 'posterior_predictive' group.
+    """
+    # Determine coordinates
+    obs_coords = None
+    if newdata is not None and isinstance(newdata, pd.DataFrame):
+        obs_coords = newdata.index.values
+
+    data_3d, coords, dims = _reshape_r_prediction_to_arviz(
+        r_predict_obj, brmsfit_obj, obs_coords
+    )
+
+    # Create DataArray
+    da = xr.DataArray(data_3d, coords=coords, dims=dims, name=var_name)
+
+    # Store in standard ArviZ location for predictions
+    return az.InferenceData(
+        posterior_predictive=da.to_dataset()
+    )

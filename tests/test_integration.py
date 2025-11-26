@@ -301,7 +301,7 @@ class TestNaNRegression:
     @pytest.mark.slow
     def test_no_nans_in_idata_conversion(self):
         """
-        Regression test for NaN bug in _brmsfit_to_idata().
+        Regression test for NaN bug in brmsfit_to_idata().
         
         The posterior R package numbers draws sequentially across chains
         (chain1: 1-500, chain2: 501-1000), but arviz expects draws numbered
@@ -331,19 +331,19 @@ class TestNaNRegression:
             refresh=0
         )
         
-        # Check that brmsfit has no NaNs (via posterior package)
+        # Check that r has no NaNs (via posterior package)
         from rpy2.robjects.packages import importr
         from rpy2.robjects import pandas2ri, default_converter
         from rpy2.robjects.conversion import localconverter
         
         posterior = importr('posterior')
-        draws = posterior.as_draws_df(result.brmsfit)
+        draws = posterior.as_draws_df(result.r)
         
         with localconverter(default_converter + pandas2ri.converter):
             df = pandas2ri.rpy2py(draws)
         
         # Verify no NaNs in original draws from R
-        assert not df.isna().any().any(), "brmsfit draws should not contain NaNs"
+        assert not df.isna().any().any(), "r draws should not contain NaNs"
         
         # Check that InferenceData has no NaNs (this was the bug)
         idata = result.idata

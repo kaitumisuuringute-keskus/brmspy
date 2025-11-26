@@ -39,14 +39,22 @@ from brmspy.brms import (
     fit,
     install_brms,
     get_brms_version,
-    BrmsFitResult,
+    posterior_epred,
+    posterior_predict,
+    FitResult,
+    PosteriorEpredResult,
+    PosteriorPredictResult
 )
 
 __all__ = [
     "get_brms_data",
     "fit",
     "install_brms",
+    "posterior_predict",
+    "posterior_epred",
     "get_brms_version",
-    "BrmsFitResult",
+    "FitResult",
+    "PosteriorEpredResult",
+    "PosteriorPredictResult",
     "__version__",
 ]

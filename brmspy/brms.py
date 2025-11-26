@@ -1,5 +1,3 @@
-__all__ = ['install_brms', 'get_brms_version', 'get_brms_data', 'get_stan_code', 'fit', 'BrmsFitResult']
-
 import typing
 import pandas as pd
 import numpy as np
@@ -9,7 +7,18 @@ import warnings
 import rpy2.robjects.packages as rpackages
 from rpy2.robjects import default_converter, pandas2ri, numpy2ri, ListVector, DataFrame, StrVector
 from rpy2.robjects.conversion import localconverter
-from .helpers import _get_brms, _convert_python_to_R, _brmsfit_to_idata
+from .helpers import _get_brms, _convert_python_to_R, brmsfit_to_idata, brms_epred_to_idata, brms_predict_to_idata
+from .types import (
+    FitResult, PosteriorEpredResult, PosteriorPredictResult
+)
+
+__all__ = [
+    'install_brms', 'get_brms_version', 'get_brms_data', 'get_stan_code',
+    'fit',
+    "posterior_predict", "posterior_epred",
+    'FitResult', 'PosteriorEpredResult'
+]
+
 
 
 def install_brms(version: str = "latest", repo: str = "https://cran.rstudio.com", install_cmdstan: bool = True):
@@ -275,36 +284,6 @@ def get_stan_code(
 
 
 
-class BrmsFitResult:
-    """
-    Wrapper class containing both arviz InferenceData and brmsfit R object.
-    
-    This allows users to access both Python-native arviz functionality
-    and R-native brms methods.
-    
-    Attributes
-    ----------
-    idata : arviz.InferenceData
-        Arviz InferenceData object for Python analysis
-    brmsfit : R brmsfit object
-        Original brmsfit R object for R methods
-    
-    Examples
-    --------
-    >>> result = brmspy.fit(...)
-    >>> # Use with arviz
-    >>> az.plot_posterior(result.idata)
-    >>> # Use with R
-    >>> import rpy2.robjects as ro
-    >>> ro.globalenv['fit'] = result.brmsfit
-    >>> ro.r('summary(fit)')
-    """
-    def __init__(self, idata, brmsfit):
-        self.idata = idata
-        self.brmsfit = brmsfit
-    
-    def __repr__(self):
-        return f"BrmsFitResult(idata={type(self.idata).__name__}, brmsfit=brmsfit)"
 
 
 def fit(
@@ -316,7 +295,7 @@ def fit(
     sample: bool = True,
     backend: str = "cmdstanr",
     **brm_args,
-) -> BrmsFitResult:
+) -> FitResult:
     """
     Fit a Bayesian regression model using brms.
     
@@ -341,11 +320,6 @@ def fit(
         with empty=TRUE.
     backend : str, default="cmdstanr"
         Stan backend to use: "cmdstanr" (recommended), "rstan", or "mock"
-    return_type : str, default="idata"
-        Type of object to return:
-        - "idata": arviz InferenceData (recommended for Python users)
-        - "brmsfit": R brmsfit object (for R users or advanced use)
-        - "both": BrmsFitResult with both idata and brmsfit attributes
     **brm_args
         Additional arguments passed to brms::brm(), e.g.,
         chains=4, iter=2000, warmup=1000, cores=4, seed=123
@@ -362,7 +336,7 @@ def fit(
     
     Returns
     -------
-    BrmsFitResult object with .idata and .brmsfit attributes
+    FitResult object with .idata and .r attributes
           allowing access to both Python and R functionality
     
     Examples
@@ -449,7 +423,7 @@ def fit(
     # Set empty=TRUE if not sampling
     if not sample:
         brm_kwargs['empty'] = True
-        print("Creating empty brmsfit object (no sampling)...")
+        print("Creating empty r object (no sampling)...")
     else:
         print(f"Fitting model with brms (backend: {backend})...")
     
@@ -458,7 +432,46 @@ def fit(
     
     # Handle return type conversion
     if not sample:
-        return BrmsFitResult(idata=[], brmsfit=fit)
+        return FitResult(idata=[], r=fit)
 
-    idata = _brmsfit_to_idata(fit)
-    return BrmsFitResult(idata=idata, brmsfit=fit)
+    idata = brmsfit_to_idata(fit)
+    return FitResult(idata=idata, r=fit)
+
+def posterior_epred(model: FitResult, newdata: pd.DataFrame, **kwargs) -> PosteriorEpredResult:
+    brms = _get_brms()
+    m = model.r
+    data_r = _convert_python_to_R(newdata)
+
+    epred_args = {
+        "model": m,
+        "newdata": data_r
+    }
+    epred_args.update(kwargs)
+
+    r = brms.posterior_epred(**epred_args)
+    idata = brms_epred_to_idata(r, model.r)
+
+    return PosteriorEpredResult(
+        r=r, idata=idata
+    )
+
+def posterior_predict(model: FitResult, newdata: typing.Optional[pd.DataFrame] = None, **kwargs) -> PosteriorPredictResult:
+    brms = _get_brms()
+    m = model.r
+    if newdata is not None:
+        data_r = _convert_python_to_R(newdata)
+    else:
+        data_r = None
+
+    epred_args = {
+        "model": m,
+        "newdata": data_r
+    }
+    epred_args.update(kwargs)
+
+    r = brms.posterior_predict(**epred_args)
+    idata = brms_predict_to_idata(r, model.r)
+
+    return PosteriorPredictResult(
+        r=r, idata=idata
+    )

@@ -42,7 +42,6 @@ az.summary(idata)
 
 - **Proper Parameter Names**: Returns `b_Intercept`, `b_zAge`, `sd_patient__Intercept` (not `b_dim_0`, `sd_1_dim_0`)
 - **Pythonic by Default**: Returns `arviz.InferenceData` for seamless Python integration
-- **Flexible**: Optional R `brmsfit` return for full brms functionality
 - **Formula Syntax**: Use brms' intuitive formula interface
 - **Modern Stack**: Python 3.8-3.14, brms + cmdstanr backend
 
