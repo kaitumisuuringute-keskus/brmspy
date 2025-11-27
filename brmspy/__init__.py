@@ -24,7 +24,7 @@ Example:
     >>> az.summary(model.idata)
 """
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 __author__ = "Remi Sebastian Kits, Adam Haber"
 __license__ = "Apache-2.0"
 
