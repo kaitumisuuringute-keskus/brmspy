@@ -11,18 +11,22 @@ from .helpers import (
     _get_brms, 
     brmsfit_to_idata,
     brms_linpred_to_idata, brms_log_lik_to_idata, brms_epred_to_idata, brms_predict_to_idata,
+    build_priors,
     kwargs_r, py_to_r,
     r_to_py
 )
 from .types import (
-    FitResult, FormulaResult, GenericResult, IDEpred, IDFit, IDLinpred, IDLogLik, IDPredict, LogLikResult, PosteriorEpredResult, PosteriorLinpredResult, PosteriorPredictResult
+    FitResult, FormulaResult, GenericResult, IDEpred, IDFit, IDLinpred, IDLogLik,
+    IDPredict, LogLikResult, PosteriorEpredResult, PosteriorLinpredResult, PosteriorPredictResult, PriorSpec,
+    prior
 )
 
 __all__ = [
     'install_brms', 'get_brms_version', 'get_brms_data', 'get_stan_code',
     'fit', 'formula', 'summary',
     "posterior_predict", "posterior_epred", "posterior_linpred", "log_lik",
-    'FitResult', 'FormulaResult', 'PosteriorEpredResult', 'PosteriorPredictResult', 'GenericResult'
+    'FitResult', 'FormulaResult', 'PosteriorEpredResult', 'PosteriorPredictResult', 'GenericResult',
+    "prior"
 ]
 
 
@@ -296,7 +300,7 @@ _formula_fn = formula
 def fit(
     formula: typing.Union[FormulaResult, str],
     data: typing.Union[dict, pd.DataFrame],
-    priors: list = [],
+    priors: typing.Optional[typing.Sequence[PriorSpec]] = None,
     family: str = "gaussian",
     sample_prior: str = "no",
     sample: bool = True,
@@ -378,13 +382,7 @@ def fit(
     data_r = py_to_r(data)
 
     # Setup priors
-    if len(priors) > 0:
-        brms_prior = brms.prior_string(*priors[0])
-        for p in priors[1:]:
-            brms_prior = brms_prior + brms.prior_string(*p)
-        assert brms.is_brmsprior(brms_prior)
-    else:
-        brms_prior = []
+    brms_prior = build_priors(priors)
 
     # Prepare brm() arguments
     brm_kwargs = {
@@ -396,7 +394,7 @@ def fit(
     }
     
     # Add priors if specified
-    if len(priors) > 0:
+    if len(brms_prior) > 0:
         brm_kwargs['prior'] = brms_prior
     
     # Add user-specified arguments

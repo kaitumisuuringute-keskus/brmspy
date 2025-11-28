@@ -41,6 +41,8 @@ from brmspy.brms import (
     posterior_linpred,
     log_lik,
     summary,
+    prior,
+
     FitResult,
     PosteriorEpredResult,
     PosteriorPredictResult,
@@ -51,8 +53,8 @@ from brmspy.brms import (
     IDEpred,
     IDFit,
     IDLogLik,
-    IDPredict
-    
+    IDPredict,
+    PriorSpec
 )
 __all__ = [
     "get_brms_data",
@@ -65,6 +67,7 @@ __all__ = [
     "log_lik",
     "get_brms_version",
     "summary",
+    "prior",
 
     # return types
     "FitResult",

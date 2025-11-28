@@ -138,7 +138,7 @@ class TestSimpleModelFitting:
         model = brmspy.fit(
             formula="y ~ x1",
             data=sample_dataframe,
-            priors=[("normal(0, 5)", "b")],
+            priors=[brmspy.prior("normal(0, 5)", "b")],
             family="gaussian",
             iter=200,
             warmup=100,

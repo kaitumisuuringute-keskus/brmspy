@@ -95,13 +95,15 @@ model = brms.fit(
 ### With Priors
 
 ```python
+from brmspy import prior
+
 model = brms.fit(
     formula="count ~ zAge + (1|patient)",
     data=epilepsy,
     family="poisson",
     priors=[
-        ("normal(0, 0.5)", "b"),
-        ("cauchy(0, 1)", "sd")
+        prior("normal(0, 0.5)", "b"),
+        prior("cauchy(0, 1)", "sd")
     ],
     chains=4
 )

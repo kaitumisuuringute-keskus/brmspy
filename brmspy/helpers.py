@@ -16,7 +16,7 @@ from rpy2.robjects import vectors
 
 from rpy2.robjects.functions import SignatureTranslatedFunction
 
-from brmspy.types import IDFit
+from brmspy.types import IDFit, PriorSpec
 
 _brms = None
 
@@ -508,3 +508,25 @@ def kwargs_r(kwargs: typing.Optional[typing.Dict]) -> typing.Dict:
     if kwargs is None:
         return {}
     return {k: py_to_r(v) for k, v in kwargs.items()}
+
+
+
+def build_priors(priors: typing.Optional[typing.Sequence[PriorSpec]] = None) -> list:
+    brms = _get_brms()
+    if not priors:
+        return []
+
+    prior_objs = []
+    for p in priors:
+        kwargs = p.to_brms_kwargs()
+        # first argument is the prior string
+        prior_str = kwargs.pop("prior")
+        prior_obj = brms.prior_string(prior_str, **kwargs)
+        prior_objs.append(prior_obj)
+
+    brms_prior = prior_objs[0]
+    for p in prior_objs[1:]:
+        brms_prior = brms_prior + p
+
+    assert brms.is_brmsprior(brms_prior)
+    return brms_prior

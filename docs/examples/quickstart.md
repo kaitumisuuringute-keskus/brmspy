@@ -41,13 +41,15 @@ az.plot_posterior(model.idata)
 ## With Priors
 
 ```python
+from brmspy import prior
+
 model = brms.fit(
     formula="count ~ zAge + (1|patient)",
     data=epilepsy,
     family="poisson",
     priors=[
-        ("normal(0, 0.5)", "b"),
-        ("cauchy(0, 1)", "sd")
+        prior("normal(0, 0.5)", class_="b"),
+        prior("cauchy(0, 1)", class_="sd")
     ],
     chains=4
 )
