@@ -1,18 +1,14 @@
 # brmspy
 
-Python-first access to R's brms with proper parameter names, ArviZ support, and cmdstanr performance. The easiest way to run brms models from Python.
+Python-first access to R's [brms](https://paul-buerkner.github.io/brms/)  with proper parameter names, ArviZ support, and cmdstanr performance. The easiest way to run brms models from Python.
+
+This is an early development version of the library, use with caution.
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Documentation](https://img.shields.io/badge/docs-mkdocs-blue.svg)](https://kaitumisuuringute-keskus.github.io/brmspy/)
 [![Coverage](https://kaitumisuuringute-keskus.github.io/brmspy/badges/coverage.svg)](https://github.com/kaitumisuuringute-keskus/brmspy/actions)
 [![Tests](https://github.com/kaitumisuuringute-keskus/brmspy/workflows/Python%20Test%20Matrix/badge.svg)](https://github.com/kaitumisuuringute-keskus/brmspy/actions)
-
-## Overview
-
-This is an early development version of the library, use with caution.
-
-brmspy provides Python access to [brms](https://paul-buerkner.github.io/brms/) (Bayesian Regression Models using Stan) with proper parameter naming and seamless arviz integration. Uses brms with cmdstanr backend. Arviz is required at the moment, numpy-only mode is coming.
 
 ## Installation
 
@@ -24,7 +20,7 @@ First-time setup (installs brms, cmdstanr, and CmdStan in R):
 
 ```python
 from brmspy import brms
-brms.install_brms()
+brms.install_brms() # requires R to be installed already
 ```
 
 ## Quick Start
