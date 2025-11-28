@@ -24,7 +24,10 @@ from .types import (
 # R imports must NOT be done lazily! 
 # Lazy imports with rpy2 within tqdm loops for example WILL cause segfaults!
 # This can lead to wild and unexpected behaviour, hence we do R imports when brms.py is imported
-_get_brms()
+try:
+    _get_brms()
+except ImportError:
+    print("brmspy: brms and other required libraries are not installed. Please call brmspy.install_brms()")
 
 
 __all__ = [
@@ -156,6 +159,9 @@ def install_brms(version: str = "latest", repo: str = "https://cran.rstudio.com"
         print(f"✓ brms: version {brms_version}")
     except Exception as e:
         print(f"⚠ brms: Could not verify ({e})")
+    
+    # Import to mitigate lazy imports
+    _get_brms()
     
     print("\n✅ Setup complete! You're ready to use brmspy.")
     print("\nExample usage:")
