@@ -20,9 +20,9 @@ from .types import (
 
 __all__ = [
     'install_brms', 'get_brms_version', 'get_brms_data', 'get_stan_code',
-    'fit', 'summary',
+    'fit', 'formula', 'summary',
     "posterior_predict", "posterior_epred", "posterior_linpred", "log_lik",
-    'FitResult', 'PosteriorEpredResult'
+    'FitResult', 'FormulaResult', 'PosteriorEpredResult', 'PosteriorPredictResult', 'GenericResult'
 ]
 
 

@@ -365,5 +365,163 @@ class TestNaNRegression:
         print("✓ No NaNs found in InferenceData conversion")
 
 
+@pytest.mark.requires_brms
+class TestFormulaFunction:
+    """Test the formula() function for creating brmsformula objects."""
+    
+    def test_formula_basic_creation(self):
+        """
+        Test basic formula creation with simple formula string.
+        
+        Validates that formula() creates a valid FormulaResult with:
+        - Proper return type structure
+        - Valid R brmsformula object
+        - Python dict conversion
+        """
+        import brmspy
+        from brmspy.types import FormulaResult
+        
+        # Create basic formula
+        formula_result = brmspy.formula("y ~ x")
+        
+        # Check return type
+        assert isinstance(formula_result, FormulaResult), \
+            "formula() should return FormulaResult instance"
+        
+        # Check attributes exist
+        assert hasattr(formula_result, 'r'), \
+            "FormulaResult should have .r attribute"
+        assert hasattr(formula_result, 'dict'), \
+            "FormulaResult should have .dict attribute"
+        
+        # Check R object is valid (not None or NULL)
+        assert formula_result.r is not None, \
+            "R brmsformula object should not be None"
+        
+        # Check dict conversion works
+        assert isinstance(formula_result.dict, dict), \
+            ".dict should be a Python dictionary"
+        assert len(formula_result.dict) > 0, \
+            ".dict should contain formula information"
+    
+    def test_formula_with_brms_arguments(self):
+        """
+        Test formula with brms-specific arguments.
+        
+        Tests that brms arguments are properly passed through:
+        - QR decomposition (decomp="QR")
+        - Centering control (center=False)
+        - Sparse matrix support (sparse=True)
+        - Multiple arguments work together
+        """
+        import brmspy
+        from brmspy.types import FormulaResult
+        
+        # Test QR decomposition
+        formula_qr = brmspy.formula("y ~ x1 + x2", decomp="QR")
+        assert isinstance(formula_qr, FormulaResult), \
+            "formula() with decomp should return FormulaResult"
+        assert formula_qr.r is not None, \
+            "QR decomposition formula should create valid R object"
+        
+        # Test centering control
+        formula_no_center = brmspy.formula("y ~ x", center=False)
+        assert isinstance(formula_no_center, FormulaResult), \
+            "formula() with center should return FormulaResult"
+        assert formula_no_center.r is not None, \
+            "Non-centered formula should create valid R object"
+        
+        # Test sparse matrices
+        formula_sparse = brmspy.formula("y ~ x", sparse=True)
+        assert isinstance(formula_sparse, FormulaResult), \
+            "formula() with sparse should return FormulaResult"
+        assert formula_sparse.r is not None, \
+            "Sparse formula should create valid R object"
+        
+        # Test multiple arguments together
+        formula_multi = brmspy.formula(
+            "y ~ x1 + x2",
+            decomp="QR",
+            center=False
+        )
+        assert isinstance(formula_multi, FormulaResult), \
+            "formula() with multiple arguments should return FormulaResult"
+        assert formula_multi.r is not None, \
+            "Multi-argument formula should create valid R object"
+        assert formula_multi.dict is not None, \
+            "Multi-argument formula should have dict representation"
+    
+    @pytest.mark.slow
+    def test_formula_complex_with_fit_integration(self):
+        """
+        Test complex formula with random effects and integration with fit().
+        
+        Tests real-world usage pattern:
+        - Complex formulas with random effects work
+        - FormulaResult can replace string formula in fit()
+        - Model fitting succeeds with FormulaResult input
+        - Both approaches (string vs FormulaResult) produce equivalent results
+        """
+        import brmspy
+        from brmspy.types import FormulaResult
+        import arviz as az
+        
+        # Load epilepsy dataset
+        epilepsy = brmspy.get_brms_data("epilepsy")
+        
+        # Create formula with random effects
+        formula_obj = brmspy.formula("count ~ zAge + (1|patient)")
+        
+        # Verify formula object structure
+        assert isinstance(formula_obj, FormulaResult), \
+            "formula() should return FormulaResult"
+        assert formula_obj.r is not None, \
+            "Formula R object should be valid"
+        
+        # Use FormulaResult in fit() - should work like string formula
+        model = brmspy.fit(
+            formula=formula_obj,
+            data=epilepsy,
+            family="poisson",
+            iter=200,
+            warmup=100,
+            chains=1,
+            silent=2,
+            refresh=0
+        )
+        
+        # Verify model fitted successfully
+        assert isinstance(model.idata, az.InferenceData), \
+            "fit() with FormulaResult should return InferenceData"
+        
+        # Check parameters exist
+        param_names = list(model.idata.posterior.data_vars)
+        assert len(param_names) > 0, \
+            "Model should have parameters"
+        assert any('b_zAge' in p for p in param_names), \
+            "Model should have coefficient for zAge"
+        assert any('sd_patient' in p for p in param_names), \
+            "Model should have random effect standard deviation"
+        
+        # Compare with string formula approach (should be equivalent)
+        model_string = brmspy.fit(
+            formula="count ~ zAge + (1|patient)",
+            data=epilepsy,
+            family="poisson",
+            iter=200,
+            warmup=100,
+            chains=1,
+            seed=123,  # Use seed for reproducibility
+            silent=2,
+            refresh=0
+        )
+        
+        # Both should have same parameters
+        params_obj = set(model.idata.posterior.data_vars)
+        params_str = set(model_string.idata.posterior.data_vars)
+        assert params_obj == params_str, \
+            "FormulaResult and string formula should produce same parameters"
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v', '-m', 'requires_brms'])
