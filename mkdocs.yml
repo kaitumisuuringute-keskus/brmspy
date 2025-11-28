@@ -58,3 +58,6 @@ nav:
   - Examples:
     - Quick Start: examples/quickstart.md
     - Advanced Usage: examples/advanced.md
+
+extra_javascript:
+  - static/plausible.js
