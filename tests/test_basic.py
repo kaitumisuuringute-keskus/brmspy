@@ -44,29 +44,19 @@ class TestDataConversion:
     
     def test_convert_dataframe_to_r(self, sample_dataframe):
         """Test DataFrame to R conversion"""
-        from brmspy.helpers import _convert_python_to_R
+        from brmspy.helpers import py_to_r
         from rpy2.robjects import DataFrame as RDataFrame
         
-        r_data = _convert_python_to_R(sample_dataframe)
+        r_data = py_to_r(sample_dataframe)
         assert isinstance(r_data, RDataFrame)
     
     def test_convert_dict_to_r(self, sample_dict):
         """Test dict to R list conversion"""
-        from brmspy.helpers import _convert_python_to_R
+        from brmspy.helpers import py_to_r
         from rpy2.robjects import ListVector
         
-        r_data = _convert_python_to_R(sample_dict)
+        r_data = py_to_r(sample_dict)
         assert isinstance(r_data, ListVector)
-    
-    def test_convert_invalid_type_raises_error(self):
-        """Test that invalid types raise ValueError"""
-        from brmspy.helpers import _convert_python_to_R
-        
-        with pytest.raises(ValueError, match="should be either a pandas DataFrame or a dictionary"):
-            _convert_python_to_R([1, 2, 3])  # Lists not supported
-        
-        with pytest.raises(ValueError):
-            _convert_python_to_R("invalid")  # Strings not supported
 
 
 class TestTypeCoercion:

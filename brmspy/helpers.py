@@ -12,6 +12,9 @@ import rpy2.robjects as ro
 from rpy2.robjects import pandas2ri
 from rpy2.robjects.packages import importr
 from rpy2.robjects.conversion import localconverter
+from rpy2.robjects import vectors
+
+from rpy2.robjects.functions import SignatureTranslatedFunction
 
 _brms = None
 
@@ -156,37 +159,6 @@ def _coerce_types(stan_code: str, stan_data: dict) -> dict:
                 stan_data[k] = v.astype(np.int64)
     
     return stan_data
-
-def _convert_python_to_R(data: typing.Union[dict, pd.DataFrame]):
-    """
-    Convert Python data to R objects for brms.
-    
-    Parameters
-    ----------
-    data : dict or pd.DataFrame
-        Python data
-    
-    Returns
-    -------
-    R object
-        R list or R data.frame
-    
-    Raises
-    ------
-    ValueError
-        If data type unsupported
-    """
-    with localconverter(default_converter + pandas2ri.converter + numpy2ri.converter) as cv:
-        if isinstance(data, pd.DataFrame):
-            return DataFrame(data)
-        elif isinstance(data, dict):
-            return ListVector(data)
-        else:
-            raise ValueError(
-                f"Data should be either a pandas DataFrame or a dictionary, "
-                f"got {type(data).__name__}"
-            )
-
 
 
 
@@ -458,3 +430,115 @@ def brms_log_lik_to_idata(r_log_lik_obj, brmsfit_obj, newdata=None, var_name="lo
     """
     return generic_pred_to_idata(r_log_lik_obj, brmsfit_obj, newdata=newdata, var_name=var_name, az_name="log_likelihood")
 
+
+
+
+from collections.abc import Mapping, Sequence
+
+def py_to_r(obj):
+    """
+    Convert arbitrary Python objects into R objects.
+
+    - dict -> R named list (ListVector), recursively
+    - list/tuple:
+        * list of dicts -> R list of named lists
+        * otherwise -> let rpy2 default converter handle
+    - numpy arrays, pandas objects, scalars, strings, etc:
+        -> let rpy2 default converter handle
+    """
+    with localconverter(default_converter + pandas2ri.converter + numpy2ri.converter) as cv:
+        if obj is None:
+            return ro.NULL
+
+        if isinstance(obj, pd.DataFrame):
+            return DataFrame(obj)
+
+        if isinstance(obj, Mapping):
+            converted = {str(k): py_to_r(v) for k, v in obj.items()}
+            return ListVector(converted)
+
+        # 2) list / tuple: inspect contents
+        if isinstance(obj, (list, tuple)):
+            if not obj:
+                return ListVector({})
+
+            if all(isinstance(el, Mapping) for el in obj):
+                # R lists are usually named or indexed; use 1-based index names
+                converted = {str(i + 1): py_to_r(el) for i, el in enumerate(obj)}
+                return ListVector(converted)
+
+            # mixed / other lists: let rpy2 decide (vectors, lists, etc.)
+            return cv.py2rpy(obj)
+
+        if isinstance(obj, np.ndarray):
+            return cv.py2rpy(obj)
+
+        # everything else: trust rpy2's default converter
+        return cv.py2rpy(obj)
+
+    
+def r_to_py(obj):
+    """
+    Generic R → Python converter.
+
+    Rules:
+    - NULL → None
+    - Named ListVector → dict
+    - Unnamed ListVector → list
+    - Atomic Vector length 1 → Python scalar
+    - Atomic Vector length >1 → Python list of scalars
+    - Other objects → fallback: Python repr string
+      (safe for formulas, language objects, etc.)
+    """
+    if obj is ro.NULL:
+        return None
+
+    # 1) Atomic vectors -------------------------------------------------------
+    if isinstance(obj, vectors.Vector) and not isinstance(obj, ListVector):
+        # length 1 → scalar
+        if len(obj) == 1:
+            # Try default R→Python conversion
+            with localconverter(default_converter) as cv:
+                py = cv.rpy2py(obj[0])
+            return py
+
+        # length >1 → list of scalars
+        out = []
+        for el in obj:
+            with localconverter(default_converter) as cv:
+                py = cv.rpy2py(el)
+            out.append(py)
+        return out
+
+    # 2) ListVectors (named/unnamed) -----------------------------------------
+    if isinstance(obj, ListVector):
+        names = list(obj.names) if obj.names is not ro.NULL else None
+
+        # Named list → dict
+        if names and any(n is not ro.NULL and n != "" for n in names):
+            result = {}
+            for name in names:
+                key = str(name) if name not in (None, "") else None
+                result[key] = r_to_py(obj.rx2(name))
+            return result
+
+        # Unnamed → list
+        return [r_to_py(el) for el in obj]
+
+    # 3) Language objects, formulas, calls, functions -------------------------
+    # rpy2 wraps these in LangVector, Formula, or other types.
+    if isinstance(obj, (ro.Formula, ro.language.LangVector, SignatureTranslatedFunction)):
+        # Return a plain descriptive string (safe fallback)
+        return str(obj)
+
+    # 4) Anything else → let rpy2 convert or stringify ------------------------
+    try:
+        with localconverter(default_converter) as cv:
+            return cv.rpy2py(obj)
+    except Exception:
+        return str(obj)
+    
+def kwargs_r(kwargs: typing.Optional[typing.Dict]) -> typing.Dict:
+    if kwargs is None:
+        return {}
+    return {k: py_to_r(v) for k, v in kwargs.items()}

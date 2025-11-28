@@ -1,7 +1,7 @@
 """Result types for brmspy functions."""
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Dict
 import rpy2.robjects as robjects
 
 @dataclass
@@ -60,3 +60,8 @@ class PosteriorPredictResult:
     """
     idata: 'arviz.InferenceData'
     r: robjects.ListVector
+
+@dataclass
+class FormulaResult:
+    r: robjects.ListVector
+    dict: Dict
