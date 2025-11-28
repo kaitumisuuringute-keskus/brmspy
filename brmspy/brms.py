@@ -21,6 +21,12 @@ from .types import (
     prior
 )
 
+# R imports must NOT be done lazily! 
+# Lazy imports with rpy2 within tqdm loops for example WILL cause segfaults!
+# This can lead to wild and unexpected behaviour, hence we do R imports when brms.py is imported
+_get_brms()
+
+
 __all__ = [
     'install_brms', 'get_brms_version', 'get_brms_data', 'make_stancode',
     'fit', 'formula', 'summary',
@@ -310,6 +316,7 @@ def formula(
 
 _formula_fn = formula
 
+
 def fit(
     formula: typing.Union[FormulaResult, str],
     data: typing.Union[dict, pd.DataFrame],
@@ -373,18 +380,6 @@ def fit(
     >>> az.summary(model.idata)
     """
     brms = _get_brms()
-    
-    # Check if cmdstanr backend is available
-    if backend == "cmdstanr":
-        try:
-            import rpy2.robjects.packages as rpackages
-            rpackages.importr("cmdstanr")
-        except:
-            raise ImportError(
-                "cmdstanr R package not found. Install it using:\n\n"
-                "  install.packages('cmdstanr', repos = c('https://stan-dev.r-universe.dev', getOption('repos')))\n\n"
-                "Or use backend='rstan' (requires rstan package)"
-            )
     
     # Convert formula to brms formula object
     if isinstance(formula, FormulaResult):

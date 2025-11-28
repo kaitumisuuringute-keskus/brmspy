@@ -19,6 +19,9 @@ from rpy2.robjects.functions import SignatureTranslatedFunction
 from brmspy.types import IDFit, PriorSpec
 
 _brms = None
+_cmdstanr = None
+_posterior = None
+_base = None
 
 def _get_brms():
     """
@@ -34,10 +37,15 @@ def _get_brms():
     ImportError
         If brms is not installed
     """
-    global _brms
+    global _brms, _cmdstanr, _base, _posterior
     if _brms is None:
+        print("brmspy: Importing R libraries...")
         try:
+            _cmdstanr = rpackages.importr("cmdstanr")
+            _posterior = rpackages.importr("posterior")
             _brms = rpackages.importr("brms")
+            _base = rpackages.importr("base")
+            print("brmspy: R libraries imported!")
         except Exception as e:
             raise ImportError(
                 "brms R package not found. Install it using:\n\n"
@@ -148,14 +156,6 @@ def brmsfit_to_idata(brmsfit_obj, model_data=None) -> IDFit:
     arviz.InferenceData
         Complete InferenceData with all groups
     """
-    # 1. SETUP: Essential R packages
-    try:
-        # We only import these to ensure they are installed/loaded in R
-        importr('posterior')
-        importr('brms')
-        base = importr('base')
-    except Exception as e:
-        raise ImportError(f"Required R packages (brms, posterior) not found. Error: {e}")
 
     # =========================================================================
     # GROUP 1: POSTERIOR (Parameters)
@@ -227,7 +227,10 @@ def brmsfit_to_idata(brmsfit_obj, model_data=None) -> IDFit:
     
     try:
         # Extract data from the fit object: fit$data
-        r_data = base.getElement(brmsfit_obj, "data")
+        if _base:
+            r_data = _base.getElement(brmsfit_obj, "data")
+        else:
+            raise Exception("Base uninitialized (Should not happen if _get_brms was done)!")
         
         with localconverter(ro.default_converter + pandas2ri.converter):
             df_data = pandas2ri.rpy2py(r_data)
@@ -417,7 +420,7 @@ def py_to_r(obj):
             return ro.NULL
 
         if isinstance(obj, pd.DataFrame):
-            return DataFrame(obj)
+            return cv.py2rpy(obj)
 
         if isinstance(obj, Mapping):
             converted = {str(k): py_to_r(v) for k, v in obj.items()}

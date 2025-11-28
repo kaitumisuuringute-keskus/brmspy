@@ -1,3 +1,34 @@
+## 0.1.6 - Fix segfaults, stabilize R imports, faster cold starts
+
+### Core stability
+
+* **Fixed a rare but catastrophic segfault** that could occur when `fit()` was invoked inside a `tqdm` loop or any repeated call context with dynamic stdouts.
+
+  * Root cause: calling `rpackages.importr("cmdstanr")` / `importr("brms")` *inside* functions caused rpy2 to repeatedly rebuild R package proxies, which in some environments led to segfaults and the Python process or even the IDE being killed.
+  * **Resolution:** All R-side imports (`brms`, `cmdstanr`, `posterior`, etc.) are now performed **once at module import time**, *never inside functions*. This completely eliminates the segfault and removes hidden global-state churn.
+
+**Performance & architecture**
+
+* Because heavy rpy2 `importr(...)` calls are no longer done on-demand during `fit()`, repeated model fits are now **measurably faster** (no repeated R namespace setup).
+
+**API invariants & guarantees**
+
+* `fit(sample=False)` is now guaranteed safe to use in loops, notebooks, and benchmarking environments.
+* Repeated calls to `fit()` no longer risk triggering implicit R package reloads, leading to **consistent runtime semantics**.
+
+**Testing**
+
+* Added a dedicated regression test:
+  `test_fit_tqdm_segfault()` — ensures that calling `fit()` inside a `tqdm` loop is stable and does not crash the interpreter.
+
+  * This test reproduces the exact minimal condition under which the old bug appeared and will prevent regressions long-term.
+
+**Misc**
+
+* Minor internal cleanups and defensive guards around lazy globals (`_brms`, etc.) to ensure they initialize exactly once and never re-import.
+* Slightly reduced memory churn on repeated calls by eliminating redundant converter/namespace setup.
+
+
 ## 0.1.5 – Better priors, kwargs parsing, formula helper, typed ArviZ
 
 **API & types**
