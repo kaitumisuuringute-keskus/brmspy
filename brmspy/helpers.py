@@ -16,6 +16,8 @@ from rpy2.robjects import vectors
 
 from rpy2.robjects.functions import SignatureTranslatedFunction
 
+from brmspy.types import IDFit
+
 _brms = None
 
 def _get_brms():
@@ -50,41 +52,6 @@ def _get_brms():
 
 
 
-
-
-def _convert_R_to_python(
-    formula: str,
-    data: typing.Union[dict, pd.DataFrame],
-    family: str
-) -> dict:
-    """
-    Convert brms data structures to Python dict.
-    
-    Calls brms::make_standata() and converts result to Python.
-    
-    Parameters
-    ----------
-    formula : str
-        brms formula
-    data : dict or pd.DataFrame
-        Model data
-    family : str
-        Distribution family
-    
-    Returns
-    -------
-    dict
-        Stan data dictionary
-    """
-    brms = _get_brms()
-    # Call brms to preprocess the data; returns an R ListVector
-    model_data = brms.make_standata(formula, data, family=family)
-    
-    # Convert R objects to Python/pandas/numpy
-    # We use a context manager because it conflicts with prior creation
-    with localconverter(default_converter + pandas2ri.converter + numpy2ri.converter) as cv:
-        model_data = dict(model_data.items())
-    return model_data
 
 
 def _coerce_types(stan_code: str, stan_data: dict) -> dict:
@@ -162,7 +129,7 @@ def _coerce_types(stan_code: str, stan_data: dict) -> dict:
 
 
 
-def brmsfit_to_idata(brmsfit_obj, model_data=None):
+def brmsfit_to_idata(brmsfit_obj, model_data=None) -> IDFit:
     """
     Convert brmsfit R object to arviz InferenceData.
     
@@ -194,7 +161,7 @@ def brmsfit_to_idata(brmsfit_obj, model_data=None):
     # GROUP 1: POSTERIOR (Parameters)
     # =========================================================================
     # Safely get the as_draws_df function
-    as_draws_df = ro.r('posterior::as_draws_df')
+    as_draws_df = typing.cast(typing.Callable, ro.r('posterior::as_draws_df'))
     draws_r = as_draws_df(brmsfit_obj)
     
     with localconverter(ro.default_converter + pandas2ri.converter):
@@ -233,8 +200,8 @@ def brmsfit_to_idata(brmsfit_obj, model_data=None):
 
     try:
         # Get functions explicitly to avoid AttributeError
-        r_posterior_predict = ro.r('brms::posterior_predict')
-        r_log_lik = ro.r('brms::log_lik')
+        r_posterior_predict = typing.cast(typing.Callable, ro.r('brms::posterior_predict'))
+        r_log_lik = typing.cast(typing.Callable, ro.r('brms::log_lik'))
         
         # 1. Posterior Predictive
         # Returns matrix: (Total_Draws x N_Obs)
@@ -290,8 +257,7 @@ def brmsfit_to_idata(brmsfit_obj, model_data=None):
         dims=dims
     )
     
-    return idata
-
+    return typing.cast(IDFit, idata)
 
 
 
@@ -320,7 +286,7 @@ def _reshape_r_prediction_to_arviz(r_matrix, brmsfit_obj, obs_coords=None):
     # 1. Get dimensions from the model
     # We use R functions to be safe about how brms stored the fit
     try:
-        r_nchains = ro.r('brms::nchains')
+        r_nchains = typing.cast(typing.Callable, ro.r('brms::nchains'))
         n_chains = int(r_nchains(brmsfit_obj)[0])
     except Exception:
         # Fallback if brms::nchains fails
@@ -395,7 +361,7 @@ def generic_pred_to_idata(r_pred_obj, brmsfit_obj, newdata=None, var_name="pred"
     params = {
         az_name: da.to_dataset()
     }
-    return az.InferenceData(**params)
+    return az.InferenceData(**params, warn_on_custom_groups=False)
 
 def brms_epred_to_idata(r_epred_obj, brmsfit_obj, newdata=None, var_name="epred"):
     """

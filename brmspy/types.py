@@ -1,8 +1,41 @@
 """Result types for brmspy functions."""
 
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Dict
 import rpy2.robjects as robjects
+import arviz as az
+import xarray as xr
+
+# -----------------------------------------------------
+# az.InferenceData extensions for proper typing in IDEs
+# -----------------------------------------------------
+
+class IDFit(az.InferenceData):
+    posterior: xr.Dataset
+    posterior_predictive: xr.Dataset
+    log_likelihood: xr.Dataset
+    observed_data: xr.Dataset
+    coords: xr.Dataset
+    dims: xr.Dataset
+
+class IDEpred(az.InferenceData):
+    posterior: xr.Dataset
+
+class IDPredict(az.InferenceData):
+    posterior_predictive: xr.Dataset
+
+class IDLinpred(az.InferenceData):
+    predictions: xr.Dataset
+
+class IDLogLik(az.InferenceData):
+    log_likelihood: xr.Dataset
+
+
+
+
+# ---------------------
+# Function return types
+# ---------------------
 
 @dataclass
 class GenericResult:
@@ -15,7 +48,7 @@ class GenericResult:
     r : robjects.ListVector
         R object from brms
     """
-    idata: 'arviz.InferenceData'
+    idata: az.InferenceData
     r: robjects.ListVector
 
 @dataclass
@@ -30,7 +63,7 @@ class FitResult:
     r : robjects.ListVector
         brmsfit R object from brms::brm()
     """
-    idata: 'arviz.InferenceData'
+    idata: IDFit
     r: robjects.ListVector
 
 @dataclass
@@ -44,7 +77,7 @@ class PosteriorEpredResult:
     r : robjects.ListVector
         R matrix from brms::posterior_epred()
     """
-    idata: 'arviz.InferenceData'
+    idata: IDEpred
     r: robjects.ListVector
 
 @dataclass
@@ -58,7 +91,17 @@ class PosteriorPredictResult:
     r : robjects.ListVector
         R matrix from brms::posterior_predict()
     """
-    idata: 'arviz.InferenceData'
+    idata: IDPredict
+    r: robjects.ListVector
+
+@dataclass
+class LogLikResult:
+    idata: IDLogLik
+    r: robjects.ListVector
+
+@dataclass
+class PosteriorLinpredResult:
+    idata: IDLinpred
     r: robjects.ListVector
 
 @dataclass

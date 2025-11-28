@@ -40,12 +40,19 @@ from brmspy.brms import (
     posterior_predict,
     posterior_linpred,
     log_lik,
+    summary,
     FitResult,
     PosteriorEpredResult,
     PosteriorPredictResult,
+    LogLikResult,
     GenericResult,
     FormulaResult,
-    summary
+    IDLinpred,
+    IDEpred,
+    IDFit,
+    IDLogLik,
+    IDPredict
+    
 )
 __all__ = [
     "get_brms_data",
@@ -57,11 +64,22 @@ __all__ = [
     "posterior_linpred",
     "log_lik",
     "get_brms_version",
+    "summary",
+
+    # return types
     "FitResult",
     "PosteriorEpredResult",
     "PosteriorPredictResult",
+    "LogLikResult",
     "GenericResult",
     "FormulaResult",
-    "summary",
+
+    # InferenceData types
+    "IDLinpred",
+    "IDEpred",
+    "IDFit",
+    "IDLogLik",
+    "IDPredict",
+    
     "__version__",
 ]

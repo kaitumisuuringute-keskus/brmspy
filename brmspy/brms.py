@@ -15,7 +15,7 @@ from .helpers import (
     r_to_py
 )
 from .types import (
-    FitResult, FormulaResult, GenericResult, PosteriorEpredResult, PosteriorPredictResult
+    FitResult, FormulaResult, GenericResult, IDEpred, IDFit, IDLinpred, IDLogLik, IDPredict, LogLikResult, PosteriorEpredResult, PosteriorLinpredResult, PosteriorPredictResult
 )
 
 __all__ = [
@@ -134,7 +134,7 @@ def install_brms(version: str = "latest", repo: str = "https://cran.rstudio.com"
     if install_cmdstan:
         try:
             import rpy2.robjects as ro
-            cmdstan_path = str(ro.r('library(cmdstanr); cmdstan_path()')[0])
+            cmdstan_path = str(typing.cast(typing.List, ro.r('library(cmdstanr); cmdstan_path()'))[0])
             print(f"✓ cmdstanr: installed")
             print(f"✓ CmdStan: {cmdstan_path}")
         except:
@@ -211,7 +211,11 @@ def get_brms_data(dataset_name: str) -> pd.DataFrame:
     """
     brms = _get_brms()
     with localconverter(default_converter + pandas2ri.converter + numpy2ri.converter) as cv:
-        return pd.DataFrame(rpackages.data(brms).fetch(dataset_name)[dataset_name])
+        brmsdata = rpackages.data(brms)
+        if brmsdata:
+            return pd.DataFrame(brmsdata.fetch(dataset_name)[dataset_name])
+        else:
+            return pd.DataFrame({})
 
 
 
@@ -411,7 +415,7 @@ def fit(
     
     # Handle return type conversion
     if not sample:
-        return FitResult(idata=[], r=fit)
+        return FitResult(idata=IDFit(), r=fit)
 
     idata = brmsfit_to_idata(fit)
     return FitResult(idata=idata, r=fit)
@@ -445,11 +449,12 @@ def posterior_epred(model: FitResult, newdata: pd.DataFrame, **kwargs) -> Poster
     kwargs = kwargs_r(kwargs)
 
     # Get R function explicitly
-    r_posterior_epred = ro.r('brms::posterior_epred')
+    r_posterior_epred = typing.cast(typing.Callable, ro.r('brms::posterior_epred'))
     
     # Call with proper argument names (object instead of model)
     r = r_posterior_epred(m, newdata=data_r, **kwargs)
     idata = brms_epred_to_idata(r, model.r, newdata=newdata)
+    idata = typing.cast(IDEpred, idata)
 
     return PosteriorEpredResult(
         r=r, idata=idata
@@ -485,7 +490,7 @@ def posterior_predict(model: FitResult, newdata: typing.Optional[pd.DataFrame] =
     kwargs = kwargs_r(kwargs)
     
     # Get R function explicitly
-    r_posterior_predict = ro.r('brms::posterior_predict')
+    r_posterior_predict = typing.cast(typing.Callable, ro.r('brms::posterior_predict'))
     
     # Call with proper arguments
     if newdata is not None:
@@ -494,12 +499,13 @@ def posterior_predict(model: FitResult, newdata: typing.Optional[pd.DataFrame] =
         r = r_posterior_predict(m, **kwargs)
     
     idata = brms_predict_to_idata(r, model.r, newdata=newdata)
+    idata = typing.cast(IDPredict, idata)
 
     return PosteriorPredictResult(
         r=r, idata=idata
     )
 
-def posterior_linpred(model: FitResult, newdata: typing.Optional[pd.DataFrame] = None, **kwargs) -> GenericResult:
+def posterior_linpred(model: FitResult, newdata: typing.Optional[pd.DataFrame] = None, **kwargs) -> PosteriorLinpredResult:
     """
     Compute linear predictor of the model.
     
@@ -529,7 +535,7 @@ def posterior_linpred(model: FitResult, newdata: typing.Optional[pd.DataFrame] =
     kwargs = kwargs_r(kwargs)
     
     # Get R function explicitly
-    r_posterior_linpred = ro.r('brms::posterior_linpred')
+    r_posterior_linpred = typing.cast(typing.Callable, ro.r('brms::posterior_linpred'))
     
     # Call with proper arguments
     if newdata is not None:
@@ -538,13 +544,14 @@ def posterior_linpred(model: FitResult, newdata: typing.Optional[pd.DataFrame] =
         r = r_posterior_linpred(m, **kwargs)
     
     idata = brms_linpred_to_idata(r, model.r, newdata=newdata)
+    idata = typing.cast(IDLinpred, idata)
 
-    return GenericResult(
+    return PosteriorLinpredResult(
         r=r, idata=idata
     )
 
 
-def log_lik(model: FitResult, newdata: typing.Optional[pd.DataFrame] = None, **kwargs) -> GenericResult:
+def log_lik(model: FitResult, newdata: typing.Optional[pd.DataFrame] = None, **kwargs) -> LogLikResult:
     """
     Compute log-likelihood values.
     
@@ -574,7 +581,7 @@ def log_lik(model: FitResult, newdata: typing.Optional[pd.DataFrame] = None, **k
     kwargs = kwargs_r(kwargs)
     
     # Get R function explicitly
-    r_log_lik = ro.r('brms::log_lik')
+    r_log_lik = typing.cast(typing.Callable, ro.r('brms::log_lik'))
     
     # Call with proper arguments
     if newdata is not None:
@@ -583,8 +590,9 @@ def log_lik(model: FitResult, newdata: typing.Optional[pd.DataFrame] = None, **k
         r = r_log_lik(m, **kwargs)
     
     idata = brms_log_lik_to_idata(r, model.r, newdata=newdata)
+    idata = typing.cast(IDLogLik, idata)
 
-    return GenericResult(
+    return LogLikResult(
         r=r, idata=idata
     )
 
@@ -622,7 +630,7 @@ def summary(model: FitResult, **kwargs) -> pd.DataFrame:
     kwargs = kwargs_r(kwargs)
 
     # Get R summary function
-    r_summary = ro.r('summary')
+    r_summary = typing.cast(typing.Callable, ro.r('summary'))
     
     # Call summary on brmsfit object
     summary_r = r_summary(model.r, **kwargs)
@@ -630,7 +638,7 @@ def summary(model: FitResult, **kwargs) -> pd.DataFrame:
     # Extract the fixed effects table (summary$fixed)
     # brms summary returns a list with $fixed, $random, $spec_pars, etc.
     try:
-        fixed_table = ro.r('function(x) as.data.frame(x$fixed)')(summary_r)
+        fixed_table = typing.cast(typing.Callable, ro.r('function(x) as.data.frame(x$fixed)'))(summary_r)
         
         # Convert to pandas
         with localconverter(default_converter + pandas2ri.converter):
