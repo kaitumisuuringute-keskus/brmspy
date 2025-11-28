@@ -57,8 +57,11 @@ az.plot_posterior(model.idata)
 - **arviz integration**: Returns `arviz.InferenceData` by default for Python workflow
 - **brms formula syntax**: Full support for brms formula interface including random effects
 - **Dual access**: Results include both `.idata` (arviz) and `.r` (brmsfit) attributes
+- **No reimplementation**: Delegates all modeling logic to real brms. No Python-side reimplementation, no divergence from native behavior. Opinionated wrappers that rebuild formulas or stancode in Python inevitably drift from brms and accumulate their own bugs.
 
 ## API Reference
+
+[Documentation](https://kaitumisuuringute-keskus.github.io/brmspy/)
 
 ### Setup Functions
 - `brms.install_brms()` - Install brms, cmdstanr, and CmdStan
@@ -68,6 +71,7 @@ az.plot_posterior(model.idata)
 - `brms.get_brms_data()` - Load example datasets from brms
 
 ### Model Functions
+- `brms.formula()` - Define formula with kwargs
 - `brms.fit()` - Fit Bayesian regression model
 - `brms.summary()` - Generate summary statistics as DataFrame
 - `brms.make_stancode()` - Generate Stan code for model
