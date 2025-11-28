@@ -26,7 +26,7 @@ brms.install_brms() # requires R to be installed already
 ## Quick Start
 
 ```python
-from brmspy import brms
+from brmspy import brms, prior
 import arviz as az
 
 # Load data
@@ -70,7 +70,7 @@ az.plot_posterior(model.idata)
 ### Model Functions
 - `brms.fit()` - Fit Bayesian regression model
 - `brms.summary()` - Generate summary statistics as DataFrame
-- `brms.get_stan_code()` - Generate Stan code for model
+- `brms.make_stancode()` - Generate Stan code for model
 
 ### Prediction Functions
 - `brms.posterior_epred()` - Expected value predictions (without noise)

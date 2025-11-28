@@ -110,7 +110,7 @@ def prior(
     -------
     PriorSpec
         A typed prior specification object used by ``brmspy.fit()`` and
-        ``brmspy.get_stan_code()``.
+        ``brmspy.make_stancode()``.
 
     Notes
     -----

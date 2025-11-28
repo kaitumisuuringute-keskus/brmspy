@@ -22,10 +22,11 @@ from .types import (
 )
 
 __all__ = [
-    'install_brms', 'get_brms_version', 'get_brms_data', 'get_stan_code',
+    'install_brms', 'get_brms_version', 'get_brms_data', 'make_stancode',
     'fit', 'formula', 'summary',
     "posterior_predict", "posterior_epred", "posterior_linpred", "log_lik",
-    'FitResult', 'FormulaResult', 'PosteriorEpredResult', 'PosteriorPredictResult', 'GenericResult',
+    'FitResult', 'FormulaResult', 'PosteriorEpredResult', 'PosteriorPredictResult',
+    'PosteriorLinpredResult', 'LogLikResult', 'GenericResult',
     "prior"
 ]
 
@@ -224,12 +225,13 @@ def get_brms_data(dataset_name: str) -> pd.DataFrame:
 
 
 
-def get_stan_code(
-    formula: str,
-    data: typing.Union[dict, pd.DataFrame],
-    priors: list,
-    family: str,
-    sample_prior: str = "no"
+def make_stancode(
+    formula: typing.Union[FormulaResult, str],
+    data: pd.DataFrame,
+    priors: typing.Optional[typing.Sequence[PriorSpec]] = None,
+    family: str = "poisson",
+    sample_prior: str = "no",
+    formula_args: typing.Optional[dict] = None
 ) -> str:
     """
     Generate Stan code using brms::make_stancode().
@@ -238,7 +240,7 @@ def get_stan_code(
     ----------
     formula : str
         brms formula
-    data : dict or pd.DataFrame
+    data : pd.DataFrame
         Model data
     priors : list
         Prior specifications
@@ -253,13 +255,24 @@ def get_stan_code(
         Stan program code
     """
     brms = _get_brms()
-    if len(priors) > 0:
+
+    data_r = py_to_r(data)
+    priors_r = build_priors(priors)
+    if isinstance(formula, FormulaResult):
+        formula_obj = formula.r
+    else:
+        if formula_args is None:
+            formula_args = {}
+        formula_obj = _formula_fn(formula, **formula_args).r
+
+
+    if len(priors_r) > 0:
         return brms.make_stancode(
-            formula=formula, data=data, prior=priors, family=family, sample_prior=sample_prior
+            formula=formula_obj, data=data_r, prior=priors_r, family=family, sample_prior=sample_prior
         )[0]
     else:
         return brms.make_stancode(
-            formula=formula, data=data, family=family, sample_prior=sample_prior
+            formula=formula_obj, data=data_r, family=family, sample_prior=sample_prior
         )[0]
 
 
@@ -268,7 +281,7 @@ def get_stan_code(
 def formula(
     formula: str,
     **formula_args
-):
+) -> FormulaResult:
     """
     Set up a model formula for use in the brms package allowing to define (potentially non-linear) additive multilevel models for all parameters of the assumed response distribution.
 

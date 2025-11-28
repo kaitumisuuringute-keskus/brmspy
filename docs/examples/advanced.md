@@ -163,7 +163,7 @@ print(comparison)
 ### Check Stan Code
 
 ```python
-stan_code = brms.get_stan_code(
+stan_code = brms.make_stancode(
     formula="count ~ zAge + (1|patient)",
     data=data,
     priors=[],
