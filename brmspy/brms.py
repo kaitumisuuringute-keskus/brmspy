@@ -343,13 +343,16 @@ def fit(
     
     Examples
     --------
-    from brmspy import brms
+    from brmspy import brms, prior
     import arviz as az
     
     epilepsy = brms.get_brms_data("epilepsy")
     model = brms.fit(
         formula="count ~ zAge + zBase * Trt + (1|patient)",
         data=epilepsy,
+        priors=[
+            prior("normal(0, 0.5)", "b")
+        ],
         family="poisson",
         chains=4,
         iter=2000

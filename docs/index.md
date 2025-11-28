@@ -25,7 +25,7 @@ brms.install_brms() # requires R to be installed already
 ## Quick Start
 
 ```python
-from brmspy import brms
+from brmspy import brms, prior
 import arviz as az
 
 # Load data
@@ -35,6 +35,11 @@ epilepsy = brms.get_brms_data("epilepsy")
 model = brms.fit(
     formula="count ~ zAge + zBase * Trt + (1|patient)",
     data=epilepsy,
+    priors=[
+        prior("normal(0, 1)", "b"),
+        prior("exponential(1)", "sd", group="patient"),
+        prior("student_t(3, 0, 2.5)", "Intercept")
+    ],
     family="poisson",
     chains=4,
     iter=2000
