@@ -126,7 +126,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install pytest pytest-cov arviz
+          python -m pip install pytest pytest-cov arviz tqdm
           python -m pip install -e ".[dev]"
 
       - name: Test with pytest

@@ -792,6 +792,31 @@ class TestAdditionalFunctions:
         # The idata should be an empty InferenceData or have no posterior samples
         assert model.idata is not None, \
             "fit(sample=False) should have idata attribute"
+
+    @pytest.mark.slow
+    def test_fit_tqdm_segfault(self, sample_dataframe):
+        """
+        Previously running .fit() in a tqdm wrapped loop could cause segfault and instant crashes.
+        This happens when an r import is tried within the loop.
+        """
+        try:
+            from tqdm.auto import tqdm
+        except ImportError:
+            return
+        import brmspy
+        
+        # Fit model with sample=False (compile only)
+        for _ in tqdm(range(2)):
+            model = brmspy.fit(
+                formula="y ~ x1",
+                data=sample_dataframe,
+                family="gaussian",
+                sample=False
+            )
+        
+            # Verify return type
+            assert isinstance(model, brmspy.FitResult), \
+                "fit(sample=False) should return FitResult"
     
     @pytest.mark.slow
     def test_posterior_linpred_without_newdata(self, sample_dataframe):
