@@ -12,6 +12,11 @@ import rpy2.robjects as ro
 from rpy2.robjects import pandas2ri
 from rpy2.robjects.packages import importr
 from rpy2.robjects.conversion import localconverter
+from rpy2.robjects import vectors
+
+from rpy2.robjects.functions import SignatureTranslatedFunction
+
+from brmspy.types import IDFit, PriorSpec
 
 _brms = None
 
@@ -47,41 +52,6 @@ def _get_brms():
 
 
 
-
-
-def _convert_R_to_python(
-    formula: str,
-    data: typing.Union[dict, pd.DataFrame],
-    family: str
-) -> dict:
-    """
-    Convert brms data structures to Python dict.
-    
-    Calls brms::make_standata() and converts result to Python.
-    
-    Parameters
-    ----------
-    formula : str
-        brms formula
-    data : dict or pd.DataFrame
-        Model data
-    family : str
-        Distribution family
-    
-    Returns
-    -------
-    dict
-        Stan data dictionary
-    """
-    brms = _get_brms()
-    # Call brms to preprocess the data; returns an R ListVector
-    model_data = brms.make_standata(formula, data, family=family)
-    
-    # Convert R objects to Python/pandas/numpy
-    # We use a context manager because it conflicts with prior creation
-    with localconverter(default_converter + pandas2ri.converter + numpy2ri.converter) as cv:
-        model_data = dict(model_data.items())
-    return model_data
 
 
 def _coerce_types(stan_code: str, stan_data: dict) -> dict:
@@ -157,40 +127,9 @@ def _coerce_types(stan_code: str, stan_data: dict) -> dict:
     
     return stan_data
 
-def _convert_python_to_R(data: typing.Union[dict, pd.DataFrame]):
-    """
-    Convert Python data to R objects for brms.
-    
-    Parameters
-    ----------
-    data : dict or pd.DataFrame
-        Python data
-    
-    Returns
-    -------
-    R object
-        R list or R data.frame
-    
-    Raises
-    ------
-    ValueError
-        If data type unsupported
-    """
-    with localconverter(default_converter + pandas2ri.converter + numpy2ri.converter) as cv:
-        if isinstance(data, pd.DataFrame):
-            return DataFrame(data)
-        elif isinstance(data, dict):
-            return ListVector(data)
-        else:
-            raise ValueError(
-                f"Data should be either a pandas DataFrame or a dictionary, "
-                f"got {type(data).__name__}"
-            )
 
 
-
-
-def brmsfit_to_idata(brmsfit_obj, model_data=None):
+def brmsfit_to_idata(brmsfit_obj, model_data=None) -> IDFit:
     """
     Convert brmsfit R object to arviz InferenceData.
     
@@ -222,7 +161,7 @@ def brmsfit_to_idata(brmsfit_obj, model_data=None):
     # GROUP 1: POSTERIOR (Parameters)
     # =========================================================================
     # Safely get the as_draws_df function
-    as_draws_df = ro.r('posterior::as_draws_df')
+    as_draws_df = typing.cast(typing.Callable, ro.r('posterior::as_draws_df'))
     draws_r = as_draws_df(brmsfit_obj)
     
     with localconverter(ro.default_converter + pandas2ri.converter):
@@ -261,8 +200,8 @@ def brmsfit_to_idata(brmsfit_obj, model_data=None):
 
     try:
         # Get functions explicitly to avoid AttributeError
-        r_posterior_predict = ro.r('brms::posterior_predict')
-        r_log_lik = ro.r('brms::log_lik')
+        r_posterior_predict = typing.cast(typing.Callable, ro.r('brms::posterior_predict'))
+        r_log_lik = typing.cast(typing.Callable, ro.r('brms::log_lik'))
         
         # 1. Posterior Predictive
         # Returns matrix: (Total_Draws x N_Obs)
@@ -318,8 +257,7 @@ def brmsfit_to_idata(brmsfit_obj, model_data=None):
         dims=dims
     )
     
-    return idata
-
+    return typing.cast(IDFit, idata)
 
 
 
@@ -348,7 +286,7 @@ def _reshape_r_prediction_to_arviz(r_matrix, brmsfit_obj, obs_coords=None):
     # 1. Get dimensions from the model
     # We use R functions to be safe about how brms stored the fit
     try:
-        r_nchains = ro.r('brms::nchains')
+        r_nchains = typing.cast(typing.Callable, ro.r('brms::nchains'))
         n_chains = int(r_nchains(brmsfit_obj)[0])
     except Exception:
         # Fallback if brms::nchains fails
@@ -423,7 +361,7 @@ def generic_pred_to_idata(r_pred_obj, brmsfit_obj, newdata=None, var_name="pred"
     params = {
         az_name: da.to_dataset()
     }
-    return az.InferenceData(**params)
+    return az.InferenceData(**params, warn_on_custom_groups=False)
 
 def brms_epred_to_idata(r_epred_obj, brmsfit_obj, newdata=None, var_name="epred"):
     """
@@ -458,3 +396,137 @@ def brms_log_lik_to_idata(r_log_lik_obj, brmsfit_obj, newdata=None, var_name="lo
     """
     return generic_pred_to_idata(r_log_lik_obj, brmsfit_obj, newdata=newdata, var_name=var_name, az_name="log_likelihood")
 
+
+
+
+from collections.abc import Mapping, Sequence
+
+def py_to_r(obj):
+    """
+    Convert arbitrary Python objects into R objects.
+
+    - dict -> R named list (ListVector), recursively
+    - list/tuple:
+        * list of dicts -> R list of named lists
+        * otherwise -> let rpy2 default converter handle
+    - numpy arrays, pandas objects, scalars, strings, etc:
+        -> let rpy2 default converter handle
+    """
+    with localconverter(default_converter + pandas2ri.converter + numpy2ri.converter) as cv:
+        if obj is None:
+            return ro.NULL
+
+        if isinstance(obj, pd.DataFrame):
+            return DataFrame(obj)
+
+        if isinstance(obj, Mapping):
+            converted = {str(k): py_to_r(v) for k, v in obj.items()}
+            return ListVector(converted)
+
+        # 2) list / tuple: inspect contents
+        if isinstance(obj, (list, tuple)):
+            if not obj:
+                return ListVector({})
+
+            if all(isinstance(el, Mapping) for el in obj):
+                # R lists are usually named or indexed; use 1-based index names
+                converted = {str(i + 1): py_to_r(el) for i, el in enumerate(obj)}
+                return ListVector(converted)
+
+            # mixed / other lists: let rpy2 decide (vectors, lists, etc.)
+            return cv.py2rpy(obj)
+
+        if isinstance(obj, np.ndarray):
+            return cv.py2rpy(obj)
+
+        # everything else: trust rpy2's default converter
+        return cv.py2rpy(obj)
+
+    
+def r_to_py(obj):
+    """
+    Generic R → Python converter.
+
+    Rules:
+    - NULL → None
+    - Named ListVector → dict
+    - Unnamed ListVector → list
+    - Atomic Vector length 1 → Python scalar
+    - Atomic Vector length >1 → Python list of scalars
+    - Other objects → fallback: Python repr string
+      (safe for formulas, language objects, etc.)
+    """
+    if obj is ro.NULL:
+        return None
+
+    # 1) Atomic vectors -------------------------------------------------------
+    if isinstance(obj, vectors.Vector) and not isinstance(obj, ListVector):
+        # length 1 → scalar
+        if len(obj) == 1:
+            # Try default R→Python conversion
+            with localconverter(default_converter) as cv:
+                py = cv.rpy2py(obj[0])
+            return py
+
+        # length >1 → list of scalars
+        out = []
+        for el in obj:
+            with localconverter(default_converter) as cv:
+                py = cv.rpy2py(el)
+            out.append(py)
+        return out
+
+    # 2) ListVectors (named/unnamed) -----------------------------------------
+    if isinstance(obj, ListVector):
+        names = list(obj.names) if obj.names is not ro.NULL else None
+
+        # Named list → dict
+        if names and any(n is not ro.NULL and n != "" for n in names):
+            result = {}
+            for name in names:
+                key = str(name) if name not in (None, "") else None
+                result[key] = r_to_py(obj.rx2(name))
+            return result
+
+        # Unnamed → list
+        return [r_to_py(el) for el in obj]
+
+    # 3) Language objects, formulas, calls, functions -------------------------
+    # rpy2 wraps these in LangVector, Formula, or other types.
+    if isinstance(obj, (ro.Formula, ro.language.LangVector, SignatureTranslatedFunction)):
+        # Return a plain descriptive string (safe fallback)
+        return str(obj)
+
+    # 4) Anything else → let rpy2 convert or stringify ------------------------
+    try:
+        with localconverter(default_converter) as cv:
+            return cv.rpy2py(obj)
+    except Exception:
+        return str(obj)
+    
+def kwargs_r(kwargs: typing.Optional[typing.Dict]) -> typing.Dict:
+    if kwargs is None:
+        return {}
+    return {k: py_to_r(v) for k, v in kwargs.items()}
+
+
+
+def build_priors(priors: typing.Optional[typing.Sequence[PriorSpec]] = None) -> list:
+    brms = _get_brms()
+    if not priors:
+        return []
+
+    prior_objs = []
+    for p in priors:
+        kwargs = p.to_brms_kwargs()
+        # first argument is the prior string
+        prior_str = kwargs.pop("prior")
+        prior_obj = brms.prior_string(prior_str, **kwargs)
+        prior_objs.append(prior_obj)
+
+    brms_prior = prior_objs[0]
+    for p in prior_objs[1:]:
+        brms_prior = brms_prior + p
+
+    assert brms.is_brmsprior(brms_prior)
+    return brms_prior

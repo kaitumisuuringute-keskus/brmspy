@@ -18,7 +18,7 @@ brms.install_brms()
 ## Basic Model
 
 ```python
-from brmspy import brms
+from brmspy import brms, prior
 import arviz as az
 
 # Load example data
@@ -29,6 +29,11 @@ model = brms.fit(
     formula="count ~ zAge + zBase * Trt + (1|patient)",
     data=epilepsy,
     family="poisson",
+    priors=[
+        prior("normal(0, 1)", "b"),
+        prior("exponential(1)", "sd", group="patient"),
+        prior("student_t(3, 0, 2.5)", "Intercept")
+    ],
     chains=4,
     iter=2000
 )
@@ -41,13 +46,15 @@ az.plot_posterior(model.idata)
 ## With Priors
 
 ```python
+from brmspy import prior
+
 model = brms.fit(
     formula="count ~ zAge + (1|patient)",
     data=epilepsy,
     family="poisson",
     priors=[
-        ("normal(0, 0.5)", "b"),
-        ("cauchy(0, 1)", "sd")
+        prior("normal(0, 0.5)", class_="b"),
+        prior("cauchy(0, 1)", class_="sd")
     ],
     chains=4
 )

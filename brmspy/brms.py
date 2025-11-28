@@ -8,19 +8,26 @@ import rpy2.robjects.packages as rpackages
 from rpy2.robjects import default_converter, pandas2ri, numpy2ri, ListVector, DataFrame, StrVector
 from rpy2.robjects.conversion import localconverter
 from .helpers import (
-    _get_brms, _convert_python_to_R, 
+    _get_brms, 
     brmsfit_to_idata,
-    brms_linpred_to_idata, brms_log_lik_to_idata, brms_epred_to_idata, brms_predict_to_idata
+    brms_linpred_to_idata, brms_log_lik_to_idata, brms_epred_to_idata, brms_predict_to_idata,
+    build_priors,
+    kwargs_r, py_to_r,
+    r_to_py
 )
 from .types import (
-    FitResult, GenericResult, PosteriorEpredResult, PosteriorPredictResult
+    FitResult, FormulaResult, GenericResult, IDEpred, IDFit, IDLinpred, IDLogLik,
+    IDPredict, LogLikResult, PosteriorEpredResult, PosteriorLinpredResult, PosteriorPredictResult, PriorSpec,
+    prior
 )
 
 __all__ = [
-    'install_brms', 'get_brms_version', 'get_brms_data', 'get_stan_code',
-    'fit', 'summary',
+    'install_brms', 'get_brms_version', 'get_brms_data', 'make_stancode',
+    'fit', 'formula', 'summary',
     "posterior_predict", "posterior_epred", "posterior_linpred", "log_lik",
-    'FitResult', 'PosteriorEpredResult'
+    'FitResult', 'FormulaResult', 'PosteriorEpredResult', 'PosteriorPredictResult',
+    'PosteriorLinpredResult', 'LogLikResult', 'GenericResult',
+    "prior"
 ]
 
 
@@ -132,7 +139,7 @@ def install_brms(version: str = "latest", repo: str = "https://cran.rstudio.com"
     if install_cmdstan:
         try:
             import rpy2.robjects as ro
-            cmdstan_path = str(ro.r('library(cmdstanr); cmdstan_path()')[0])
+            cmdstan_path = str(typing.cast(typing.List, ro.r('library(cmdstanr); cmdstan_path()'))[0])
             print(f"✓ cmdstanr: installed")
             print(f"✓ CmdStan: {cmdstan_path}")
         except:
@@ -209,17 +216,22 @@ def get_brms_data(dataset_name: str) -> pd.DataFrame:
     """
     brms = _get_brms()
     with localconverter(default_converter + pandas2ri.converter + numpy2ri.converter) as cv:
-        return pd.DataFrame(rpackages.data(brms).fetch(dataset_name)[dataset_name])
+        brmsdata = rpackages.data(brms)
+        if brmsdata:
+            return pd.DataFrame(brmsdata.fetch(dataset_name)[dataset_name])
+        else:
+            return pd.DataFrame({})
 
 
 
 
-def get_stan_code(
-    formula: str,
-    data: typing.Union[dict, pd.DataFrame],
-    priors: list,
-    family: str,
-    sample_prior: str = "no"
+def make_stancode(
+    formula: typing.Union[FormulaResult, str],
+    data: pd.DataFrame,
+    priors: typing.Optional[typing.Sequence[PriorSpec]] = None,
+    family: str = "poisson",
+    sample_prior: str = "no",
+    formula_args: typing.Optional[dict] = None
 ) -> str:
     """
     Generate Stan code using brms::make_stancode().
@@ -228,7 +240,7 @@ def get_stan_code(
     ----------
     formula : str
         brms formula
-    data : dict or pd.DataFrame
+    data : pd.DataFrame
         Model data
     priors : list
         Prior specifications
@@ -243,28 +255,70 @@ def get_stan_code(
         Stan program code
     """
     brms = _get_brms()
-    if len(priors) > 0:
+
+    data_r = py_to_r(data)
+    priors_r = build_priors(priors)
+    if isinstance(formula, FormulaResult):
+        formula_obj = formula.r
+    else:
+        if formula_args is None:
+            formula_args = {}
+        formula_obj = _formula_fn(formula, **formula_args).r
+
+
+    if len(priors_r) > 0:
         return brms.make_stancode(
-            formula=formula, data=data, prior=priors, family=family, sample_prior=sample_prior
+            formula=formula_obj, data=data_r, prior=priors_r, family=family, sample_prior=sample_prior
         )[0]
     else:
         return brms.make_stancode(
-            formula=formula, data=data, family=family, sample_prior=sample_prior
+            formula=formula_obj, data=data_r, family=family, sample_prior=sample_prior
         )[0]
 
 
 
 
+def formula(
+    formula: str,
+    **formula_args
+) -> FormulaResult:
+    """
+    Set up a model formula for use in the brms package allowing to define (potentially non-linear) additive multilevel models for all parameters of the assumed response distribution.
 
+    [BRMS documentation and parameters](https://paulbuerkner.com/brms/reference/brmsformula.html)
+    
+    Parameters
+    ----------
+    formula : str
+        brms formula: "y ~ x + (1|group)"
+    **kwargs
+        Additional brms::brmsformula() arguments:
+        decomp = "QR", center = True, sparse = False etc
+    
+    Returns
+    -------
+    FormulaResult
+        Object with .r (brmsformula) attributes
+    
+    Examples
+    --------
+    """
+    brms = _get_brms()
+    formula_args = kwargs_r(formula_args)
+    formula_obj = brms.bf(formula, **formula_args)
+    return FormulaResult(r=formula_obj, dict=typing.cast(dict, r_to_py(formula_obj)))
+
+_formula_fn = formula
 
 def fit(
-    formula: str,
+    formula: typing.Union[FormulaResult, str],
     data: typing.Union[dict, pd.DataFrame],
-    priors: list = [],
+    priors: typing.Optional[typing.Sequence[PriorSpec]] = None,
     family: str = "gaussian",
     sample_prior: str = "no",
     sample: bool = True,
     backend: str = "cmdstanr",
+    formula_args: typing.Optional[dict] = None,
     **brm_args,
 ) -> FitResult:
     """
@@ -272,11 +326,13 @@ def fit(
     
     Uses brms with cmdstanr backend for proper parameter naming.
     Returns FitResult with .idata (arviz.InferenceData) and .r (brmsfit) attributes.
+
+    [BRMS documentation and parameters](https://paulbuerkner.com/brms/reference/brm.html)
     
     Parameters
     ----------
     formula : str
-        brms formula: "y ~ x + (1|group)"
+        brms formula: formula string, e.g "y ~ x + (1|group)" or FormulaResult from formula()
     data : dict or pd.DataFrame
         Model data
     priors : list, default=[]
@@ -300,17 +356,20 @@ def fit(
     
     Examples
     --------
-    >>> from brmspy import brms
-    >>> import arviz as az
-    >>>
-    >>> epilepsy = brms.get_brms_data("epilepsy")
-    >>> model = brms.fit(
-    ...     formula="count ~ zAge + zBase * Trt + (1|patient)",
-    ...     data=epilepsy,
-    ...     family="poisson",
-    ...     chains=4,
-    ...     iter=2000
-    ... )
+    from brmspy import brms, prior
+    import arviz as az
+    
+    epilepsy = brms.get_brms_data("epilepsy")
+    model = brms.fit(
+        formula="count ~ zAge + zBase * Trt + (1|patient)",
+        data=epilepsy,
+        priors=[
+            prior("normal(0, 0.5)", "b")
+        ],
+        family="poisson",
+        chains=4,
+        iter=2000
+    )
     >>> az.summary(model.idata)
     """
     brms = _get_brms()
@@ -328,19 +387,18 @@ def fit(
             )
     
     # Convert formula to brms formula object
-    formula_obj = brms.bf(formula)
+    if isinstance(formula, FormulaResult):
+        formula_obj = formula.r
+    else:
+        if formula_args is None:
+            formula_args = {}
+        formula_obj = _formula_fn(formula, **formula_args).r
     
     # Convert data to R format
-    data_r = _convert_python_to_R(data)
+    data_r = py_to_r(data)
 
     # Setup priors
-    if len(priors) > 0:
-        brms_prior = brms.prior_string(*priors[0])
-        for p in priors[1:]:
-            brms_prior = brms_prior + brms.prior_string(*p)
-        assert brms.is_brmsprior(brms_prior)
-    else:
-        brms_prior = []
+    brms_prior = build_priors(priors)
 
     # Prepare brm() arguments
     brm_kwargs = {
@@ -352,10 +410,11 @@ def fit(
     }
     
     # Add priors if specified
-    if len(priors) > 0:
+    if len(brms_prior) > 0:
         brm_kwargs['prior'] = brms_prior
     
     # Add user-specified arguments
+    brm_args = kwargs_r(brm_args)
     brm_kwargs.update(brm_args)
     
     # Set empty=TRUE if not sampling
@@ -370,7 +429,7 @@ def fit(
     
     # Handle return type conversion
     if not sample:
-        return FitResult(idata=[], r=fit)
+        return FitResult(idata=IDFit(), r=fit)
 
     idata = brmsfit_to_idata(fit)
     return FitResult(idata=idata, r=fit)
@@ -380,6 +439,8 @@ def posterior_epred(model: FitResult, newdata: pd.DataFrame, **kwargs) -> Poster
     Compute expected value of posterior predictive distribution.
     
     Calls brms::posterior_epred() to get E[Y|data] without observation noise.
+
+    [BRMS documentation and parameters](https://paulbuerkner.com/brms/reference/posterior_epred.brmsfit.html)
     
     Parameters
     ----------
@@ -398,14 +459,16 @@ def posterior_epred(model: FitResult, newdata: pd.DataFrame, **kwargs) -> Poster
     import rpy2.robjects as ro
     _get_brms()  # Ensure brms is loaded
     m = model.r
-    data_r = _convert_python_to_R(newdata)
+    data_r = py_to_r(newdata)
+    kwargs = kwargs_r(kwargs)
 
     # Get R function explicitly
-    r_posterior_epred = ro.r('brms::posterior_epred')
+    r_posterior_epred = typing.cast(typing.Callable, ro.r('brms::posterior_epred'))
     
     # Call with proper argument names (object instead of model)
     r = r_posterior_epred(m, newdata=data_r, **kwargs)
     idata = brms_epred_to_idata(r, model.r, newdata=newdata)
+    idata = typing.cast(IDEpred, idata)
 
     return PosteriorEpredResult(
         r=r, idata=idata
@@ -416,6 +479,8 @@ def posterior_predict(model: FitResult, newdata: typing.Optional[pd.DataFrame] =
     Generate posterior predictive samples with observation noise.
     
     Calls brms::posterior_predict() to get samples of Y_new|data.
+
+    [BRMS documentation and parameters](https://paulbuerkner.com/brms/reference/posterior_predict.brmsfit.html)
     
     Parameters
     ----------
@@ -434,28 +499,33 @@ def posterior_predict(model: FitResult, newdata: typing.Optional[pd.DataFrame] =
     import rpy2.robjects as ro
     _get_brms()  # Ensure brms is loaded
     m = model.r
+
+    data_r = py_to_r(newdata)
+    kwargs = kwargs_r(kwargs)
     
     # Get R function explicitly
-    r_posterior_predict = ro.r('brms::posterior_predict')
+    r_posterior_predict = typing.cast(typing.Callable, ro.r('brms::posterior_predict'))
     
     # Call with proper arguments
     if newdata is not None:
-        data_r = _convert_python_to_R(newdata)
         r = r_posterior_predict(m, newdata=data_r, **kwargs)
     else:
         r = r_posterior_predict(m, **kwargs)
     
     idata = brms_predict_to_idata(r, model.r, newdata=newdata)
+    idata = typing.cast(IDPredict, idata)
 
     return PosteriorPredictResult(
         r=r, idata=idata
     )
 
-def posterior_linpred(model: FitResult, newdata: typing.Optional[pd.DataFrame] = None, **kwargs) -> GenericResult:
+def posterior_linpred(model: FitResult, newdata: typing.Optional[pd.DataFrame] = None, **kwargs) -> PosteriorLinpredResult:
     """
     Compute linear predictor of the model.
     
     Calls brms::posterior_linpred() to get samples of the linear predictor.
+
+    [BRMS documentation and parameters](https://paulbuerkner.com/brms/reference/posterior_linpred.brmsfit.html)
     
     Parameters
     ----------
@@ -474,29 +544,34 @@ def posterior_linpred(model: FitResult, newdata: typing.Optional[pd.DataFrame] =
     import rpy2.robjects as ro
     _get_brms()  # Ensure brms is loaded
     m = model.r
+
+    data_r = py_to_r(newdata)
+    kwargs = kwargs_r(kwargs)
     
     # Get R function explicitly
-    r_posterior_linpred = ro.r('brms::posterior_linpred')
+    r_posterior_linpred = typing.cast(typing.Callable, ro.r('brms::posterior_linpred'))
     
     # Call with proper arguments
     if newdata is not None:
-        data_r = _convert_python_to_R(newdata)
         r = r_posterior_linpred(m, newdata=data_r, **kwargs)
     else:
         r = r_posterior_linpred(m, **kwargs)
     
     idata = brms_linpred_to_idata(r, model.r, newdata=newdata)
+    idata = typing.cast(IDLinpred, idata)
 
-    return GenericResult(
+    return PosteriorLinpredResult(
         r=r, idata=idata
     )
 
 
-def log_lik(model: FitResult, newdata: typing.Optional[pd.DataFrame] = None, **kwargs) -> GenericResult:
+def log_lik(model: FitResult, newdata: typing.Optional[pd.DataFrame] = None, **kwargs) -> LogLikResult:
     """
     Compute log-likelihood values.
     
     Calls brms::log_lik() to get log p(y|theta) for each observation.
+
+    [BRMS documentation and parameters](https://paulbuerkner.com/brms/reference/log_lik.brmsfit.html)
     
     Parameters
     ----------
@@ -515,20 +590,23 @@ def log_lik(model: FitResult, newdata: typing.Optional[pd.DataFrame] = None, **k
     import rpy2.robjects as ro
     _get_brms()  # Ensure brms is loaded
     m = model.r
+
+    data_r = py_to_r(newdata)
+    kwargs = kwargs_r(kwargs)
     
     # Get R function explicitly
-    r_log_lik = ro.r('brms::log_lik')
+    r_log_lik = typing.cast(typing.Callable, ro.r('brms::log_lik'))
     
     # Call with proper arguments
     if newdata is not None:
-        data_r = _convert_python_to_R(newdata)
         r = r_log_lik(m, newdata=data_r, **kwargs)
     else:
         r = r_log_lik(m, **kwargs)
     
     idata = brms_log_lik_to_idata(r, model.r, newdata=newdata)
+    idata = typing.cast(IDLogLik, idata)
 
-    return GenericResult(
+    return LogLikResult(
         r=r, idata=idata
     )
 
@@ -538,6 +616,8 @@ def summary(model: FitResult, **kwargs) -> pd.DataFrame:
     Generate summary statistics for fitted model.
     
     Calls R's summary() function on brmsfit object and converts to pandas DataFrame.
+
+    [BRMS documentation and parameters](https://paulbuerkner.com/brms/reference/summary.brmsfit.html)
     
     Parameters
     ----------
@@ -561,8 +641,10 @@ def summary(model: FitResult, **kwargs) -> pd.DataFrame:
     import rpy2.robjects as ro
     from rpy2.robjects.conversion import localconverter
     
+    kwargs = kwargs_r(kwargs)
+
     # Get R summary function
-    r_summary = ro.r('summary')
+    r_summary = typing.cast(typing.Callable, ro.r('summary'))
     
     # Call summary on brmsfit object
     summary_r = r_summary(model.r, **kwargs)
@@ -570,7 +652,7 @@ def summary(model: FitResult, **kwargs) -> pd.DataFrame:
     # Extract the fixed effects table (summary$fixed)
     # brms summary returns a list with $fixed, $random, $spec_pars, etc.
     try:
-        fixed_table = ro.r('function(x) as.data.frame(x$fixed)')(summary_r)
+        fixed_table = typing.cast(typing.Callable, ro.r('function(x) as.data.frame(x$fixed)'))(summary_r)
         
         # Convert to pandas
         with localconverter(default_converter + pandas2ri.converter):

@@ -24,7 +24,7 @@ Example:
     >>> az.summary(model.idata)
 """
 
-__version__ = "0.1.4"
+__version__ = "0.1.5"
 __author__ = "Remi Sebastian Kits, Adam Haber"
 __license__ = "Apache-2.0"
 
@@ -33,31 +33,60 @@ from brmspy import brms
 from brmspy.brms import (
     get_brms_data,
     fit,
+    formula,
     install_brms,
     get_brms_version,
+    make_stancode,
     posterior_epred,
     posterior_predict,
     posterior_linpred,
     log_lik,
+    summary,
+    prior,
+
     FitResult,
     PosteriorEpredResult,
     PosteriorPredictResult,
+    PosteriorLinpredResult,
+    LogLikResult,
     GenericResult,
-    summary
+    FormulaResult,
+    IDLinpred,
+    IDEpred,
+    IDFit,
+    IDLogLik,
+    IDPredict,
+    PriorSpec
 )
 __all__ = [
     "get_brms_data",
     "fit",
+    "formula",
     "install_brms",
     "posterior_predict",
     "posterior_epred",
     "posterior_linpred",
     "log_lik",
     "get_brms_version",
+    "make_stancode",
+    "summary",
+    "prior",
+
+    # return types
     "FitResult",
     "PosteriorEpredResult",
     "PosteriorPredictResult",
+    "PosteriorLinpredResult",
+    "LogLikResult",
     "GenericResult",
-    "summary",
+    "FormulaResult",
+
+    # InferenceData types
+    "IDLinpred",
+    "IDEpred",
+    "IDFit",
+    "IDLogLik",
+    "IDPredict",
+    
     "__version__",
 ]

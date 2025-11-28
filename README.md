@@ -1,18 +1,14 @@
 # brmspy
 
-Python-first access to R's brms with proper parameter names, ArviZ support, and cmdstanr performance. The easiest way to run brms models from Python.
+Python-first access to R's [brms](https://paul-buerkner.github.io/brms/)  with proper parameter names, ArviZ support, and cmdstanr performance. The easiest way to run brms models from Python.
+
+This is an early development version of the library, use with caution.
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Documentation](https://img.shields.io/badge/docs-mkdocs-blue.svg)](https://kaitumisuuringute-keskus.github.io/brmspy/)
 [![Coverage](https://kaitumisuuringute-keskus.github.io/brmspy/badges/coverage.svg)](https://github.com/kaitumisuuringute-keskus/brmspy/actions)
 [![Tests](https://github.com/kaitumisuuringute-keskus/brmspy/workflows/Python%20Test%20Matrix/badge.svg)](https://github.com/kaitumisuuringute-keskus/brmspy/actions)
-
-## Overview
-
-This is an early development version of the library, use with caution.
-
-brmspy provides Python access to [brms](https://paul-buerkner.github.io/brms/) (Bayesian Regression Models using Stan) with proper parameter naming and seamless arviz integration. Uses brms with cmdstanr backend. Arviz is required at the moment, numpy-only mode is coming.
 
 ## Installation
 
@@ -24,13 +20,13 @@ First-time setup (installs brms, cmdstanr, and CmdStan in R):
 
 ```python
 from brmspy import brms
-brms.install_brms()
+brms.install_brms() # requires R to be installed already
 ```
 
 ## Quick Start
 
 ```python
-from brmspy import brms
+from brmspy import brms, prior
 import arviz as az
 
 # Load data
@@ -41,6 +37,11 @@ model = brms.fit(
     formula="count ~ zAge + zBase * Trt + (1|patient)",
     data=epilepsy,
     family="poisson",
+    priors=[
+        prior("normal(0, 1)", "b"),
+        prior("exponential(1)", "sd", group="patient"),
+        prior("student_t(3, 0, 2.5)", "Intercept")
+    ],
     chains=4,
     iter=2000
 )
@@ -69,7 +70,7 @@ az.plot_posterior(model.idata)
 ### Model Functions
 - `brms.fit()` - Fit Bayesian regression model
 - `brms.summary()` - Generate summary statistics as DataFrame
-- `brms.get_stan_code()` - Generate Stan code for model
+- `brms.make_stancode()` - Generate Stan code for model
 
 ### Prediction Functions
 - `brms.posterior_epred()` - Expected value predictions (without noise)
@@ -99,13 +100,15 @@ model = brms.fit(
 ### With Priors
 
 ```python
+from brmspy import prior
+
 model = brms.fit(
     formula="count ~ zAge + (1|patient)",
     data=epilepsy,
     family="poisson",
     priors=[
-        ("normal(0, 0.5)", "b"),
-        ("cauchy(0, 1)", "sd")
+        prior("normal(0, 0.5)", "b"),
+        prior("cauchy(0, 1)", "sd")
     ],
     chains=4
 )

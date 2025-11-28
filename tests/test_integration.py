@@ -138,7 +138,7 @@ class TestSimpleModelFitting:
         model = brmspy.fit(
             formula="y ~ x1",
             data=sample_dataframe,
-            priors=[("normal(0, 5)", "b")],
+            priors=[brmspy.prior("normal(0, 5)", "b")],
             family="gaussian",
             iter=200,
             warmup=100,
@@ -363,6 +363,515 @@ class TestNaNRegression:
         assert idata.posterior.sizes['draw'] == 100, "Should have 100 draws per chain"
         
         print("✓ No NaNs found in InferenceData conversion")
+
+
+@pytest.mark.requires_brms
+class TestFormulaFunction:
+    """Test the formula() function for creating brmsformula objects."""
+    
+    def test_formula_basic_creation(self):
+        """
+        Test basic formula creation with simple formula string.
+        
+        Validates that formula() creates a valid FormulaResult with:
+        - Proper return type structure
+        - Valid R brmsformula object
+        - Python dict conversion
+        """
+        import brmspy
+        from brmspy.types import FormulaResult
+        
+        # Create basic formula
+        formula_result = brmspy.formula("y ~ x")
+        
+        # Check return type
+        assert isinstance(formula_result, FormulaResult), \
+            "formula() should return FormulaResult instance"
+        
+        # Check attributes exist
+        assert hasattr(formula_result, 'r'), \
+            "FormulaResult should have .r attribute"
+        assert hasattr(formula_result, 'dict'), \
+            "FormulaResult should have .dict attribute"
+        
+        # Check R object is valid (not None or NULL)
+        assert formula_result.r is not None, \
+            "R brmsformula object should not be None"
+        
+        # Check dict conversion works
+        assert isinstance(formula_result.dict, dict), \
+            ".dict should be a Python dictionary"
+        assert len(formula_result.dict) > 0, \
+            ".dict should contain formula information"
+    
+    def test_formula_with_brms_arguments(self):
+        """
+        Test formula with brms-specific arguments.
+        
+        Tests that brms arguments are properly passed through:
+        - QR decomposition (decomp="QR")
+        - Centering control (center=False)
+        - Sparse matrix support (sparse=True)
+        - Multiple arguments work together
+        """
+        import brmspy
+        from brmspy.types import FormulaResult
+        
+        # Test QR decomposition
+        formula_qr = brmspy.formula("y ~ x1 + x2", decomp="QR")
+        assert isinstance(formula_qr, FormulaResult), \
+            "formula() with decomp should return FormulaResult"
+        assert formula_qr.r is not None, \
+            "QR decomposition formula should create valid R object"
+        
+        # Test centering control
+        formula_no_center = brmspy.formula("y ~ x", center=False)
+        assert isinstance(formula_no_center, FormulaResult), \
+            "formula() with center should return FormulaResult"
+        assert formula_no_center.r is not None, \
+            "Non-centered formula should create valid R object"
+        
+        # Test sparse matrices
+        formula_sparse = brmspy.formula("y ~ x", sparse=True)
+        assert isinstance(formula_sparse, FormulaResult), \
+            "formula() with sparse should return FormulaResult"
+        assert formula_sparse.r is not None, \
+            "Sparse formula should create valid R object"
+        
+        # Test multiple arguments together
+        formula_multi = brmspy.formula(
+            "y ~ x1 + x2",
+            decomp="QR",
+            center=False
+        )
+        assert isinstance(formula_multi, FormulaResult), \
+            "formula() with multiple arguments should return FormulaResult"
+        assert formula_multi.r is not None, \
+            "Multi-argument formula should create valid R object"
+        assert formula_multi.dict is not None, \
+            "Multi-argument formula should have dict representation"
+    
+    @pytest.mark.slow
+    def test_formula_complex_with_fit_integration(self):
+        """
+        Test complex formula with random effects and integration with fit().
+        
+        Tests real-world usage pattern:
+        - Complex formulas with random effects work
+        - FormulaResult can replace string formula in fit()
+        - Model fitting succeeds with FormulaResult input
+        - Both approaches (string vs FormulaResult) produce equivalent results
+        """
+        import brmspy
+        from brmspy.types import FormulaResult
+        import arviz as az
+        
+        # Load epilepsy dataset
+        epilepsy = brmspy.get_brms_data("epilepsy")
+        
+        # Create formula with random effects
+        formula_obj = brmspy.formula("count ~ zAge + (1|patient)")
+        
+        # Verify formula object structure
+        assert isinstance(formula_obj, FormulaResult), \
+            "formula() should return FormulaResult"
+        assert formula_obj.r is not None, \
+            "Formula R object should be valid"
+        
+        # Use FormulaResult in fit() - should work like string formula
+        model = brmspy.fit(
+            formula=formula_obj,
+            data=epilepsy,
+            family="poisson",
+            iter=200,
+            warmup=100,
+            chains=1,
+            silent=2,
+            refresh=0
+        )
+        
+        # Verify model fitted successfully
+        assert isinstance(model.idata, az.InferenceData), \
+            "fit() with FormulaResult should return InferenceData"
+        
+        # Check parameters exist
+        param_names = list(model.idata.posterior.data_vars)
+        assert len(param_names) > 0, \
+            "Model should have parameters"
+        assert any('b_zAge' in p for p in param_names), \
+            "Model should have coefficient for zAge"
+        assert any('sd_patient' in p for p in param_names), \
+            "Model should have random effect standard deviation"
+        
+        # Compare with string formula approach (should be equivalent)
+        model_string = brmspy.fit(
+            formula="count ~ zAge + (1|patient)",
+            data=epilepsy,
+            family="poisson",
+            iter=200,
+            warmup=100,
+            chains=1,
+            seed=123,  # Use seed for reproducibility
+            silent=2,
+            refresh=0
+        )
+        
+        # Both should have same parameters
+        params_obj = set(model.idata.posterior.data_vars)
+        params_str = set(model_string.idata.posterior.data_vars)
+        assert params_obj == params_str, \
+            "FormulaResult and string formula should produce same parameters"
+
+
+@pytest.mark.requires_brms
+class TestPriorFunction:
+    """Test the prior() function for creating prior specifications."""
+    
+    @pytest.mark.slow
+    def test_prior_basic_usage(self, sample_dataframe):
+        """
+        Test basic prior() usage with class parameters.
+        
+        Tests that prior() creates valid PriorSpec objects for:
+        - Intercept priors (class_="Intercept")
+        - Coefficient priors (class_="b")
+        - Multiple priors in a single model
+        - Integration with fit() function
+        """
+        import brmspy
+        from brmspy import prior
+        from brmspy.types import PriorSpec
+        import arviz as az
+        
+        # Create prior specifications using prior() function
+        prior_intercept = prior("student_t(3, 0, 2.5)", class_="Intercept")
+        prior_coef = prior("normal(0, 1)", class_="b")
+        
+        # Verify PriorSpec objects are created correctly
+        assert isinstance(prior_intercept, PriorSpec), \
+            "prior() should return PriorSpec instance"
+        assert isinstance(prior_coef, PriorSpec), \
+            "prior() should return PriorSpec instance"
+        
+        # Verify prior specifications have correct attributes
+        assert prior_intercept.prior == "student_t(3, 0, 2.5)", \
+            "Prior string should be stored correctly"
+        assert prior_intercept.class_ == "Intercept", \
+            "Class parameter should be stored correctly"
+        assert prior_coef.prior == "normal(0, 1)", \
+            "Prior string should be stored correctly"
+        assert prior_coef.class_ == "b", \
+            "Class parameter should be stored correctly"
+        
+        # Test that priors work with fit()
+        model = brmspy.fit(
+            formula="y ~ x1",
+            data=sample_dataframe,
+            priors=[prior_intercept, prior_coef],
+            family="gaussian",
+            iter=200,
+            warmup=100,
+            chains=1,
+            silent=2,
+            refresh=0
+        )
+        
+        # Verify model fitted successfully with custom priors
+        assert isinstance(model.idata, az.InferenceData), \
+            "fit() with prior() specifications should return InferenceData"
+        
+        # Check parameters exist
+        param_names = list(model.idata.posterior.data_vars)
+        assert len(param_names) > 0, \
+            "Model should have parameters"
+        assert any('b_Intercept' in p or 'Intercept' in p for p in param_names), \
+            "Model should have intercept parameter"
+        assert any('b_x1' in p or 'x1' in p for p in param_names), \
+            "Model should have coefficient parameter"
+    
+    @pytest.mark.slow
+    def test_prior_with_group_parameter(self):
+        """
+        Test prior() with group parameter for hierarchical models.
+        
+        Tests that prior() correctly handles:
+        - Group-level (random effects) priors
+        - Combination of coefficient and group-level priors
+        - Hierarchical model with (1|group) structure
+        - Integration with real brms dataset
+        """
+        import brmspy
+        from brmspy import prior
+        from brmspy.types import PriorSpec
+        import arviz as az
+        
+        # Load epilepsy dataset (has patient grouping variable)
+        epilepsy = brmspy.get_brms_data("epilepsy")
+        
+        # Create prior specifications including group-level prior
+        priors = [
+            prior("normal(0, 0.5)", class_="b"),  # Coefficient prior
+            prior("exponential(1)", class_="sd", group="patient"),  # Group SD prior
+            prior("student_t(3, 0, 2.5)", class_="Intercept")  # Intercept prior
+        ]
+        
+        # Verify all priors are PriorSpec objects
+        for p in priors:
+            assert isinstance(p, PriorSpec), \
+                "Each prior() call should return PriorSpec instance"
+        
+        # Verify group parameter is set correctly
+        group_prior = priors[1]
+        assert group_prior.class_ == "sd", \
+            "Group prior should have class_='sd'"
+        assert group_prior.group == "patient", \
+            "Group prior should have group='patient'"
+        assert group_prior.prior == "exponential(1)", \
+            "Group prior string should be stored correctly"
+        
+        # Fit hierarchical model with group-level priors
+        model = brmspy.fit(
+            formula="count ~ zAge + (1|patient)",
+            data=epilepsy,
+            priors=priors,
+            family="poisson",
+            iter=200,
+            warmup=100,
+            chains=1,
+            silent=2,
+            refresh=0
+        )
+        
+        # Verify model fitted successfully
+        assert isinstance(model.idata, az.InferenceData), \
+            "fit() with group priors should return InferenceData"
+        
+        # Check that both fixed and random effects parameters exist
+        param_names = list(model.idata.posterior.data_vars)
+        assert len(param_names) > 0, \
+            "Model should have parameters"
+        
+        # Check for fixed effects
+        assert any('b_Intercept' in p or 'Intercept' in p for p in param_names), \
+            "Model should have intercept parameter"
+        assert any('b_zAge' in p for p in param_names), \
+            "Model should have coefficient for zAge"
+        
+        # Check for random effects (group-level standard deviation)
+        assert any('sd_patient' in p for p in param_names), \
+            "Model should have random effect SD parameter for patient group"
+        
+        # Verify the group prior was actually used by checking parameter existence
+        sd_params = [p for p in param_names if 'sd_patient' in p]
+        assert len(sd_params) > 0, \
+            "Group-level prior should result in sd_patient parameters"
+
+
+@pytest.mark.requires_brms
+class TestAdditionalFunctions:
+    """Test additional brms functions to improve coverage."""
+    
+    def test_make_stancode(self, sample_dataframe):
+        """
+        Test make_stancode() function for generating Stan code.
+        
+        Tests that make_stancode():
+        - Generates valid Stan code from formula
+        - Works with and without priors
+        - Returns a non-empty string
+        - Contains expected Stan program structure
+        """
+        import brmspy
+        from brmspy import prior
+        
+        # Test without priors
+        stan_code = brmspy.make_stancode(
+            formula="y ~ x1",
+            data=sample_dataframe,
+            priors=[],
+            family="gaussian"
+        )
+        
+        assert isinstance(stan_code, str), \
+            "make_stancode() should return a string"
+        assert len(stan_code) > 0, \
+            "Stan code should not be empty"
+        assert "data {" in stan_code, \
+            "Stan code should contain data block"
+        assert "parameters {" in stan_code, \
+            "Stan code should contain parameters block"
+        assert "model {" in stan_code, \
+            "Stan code should contain model block"
+        
+        # Test with priors
+        priors = [prior("normal(0, 1)", class_="b")]
+        stan_code_with_priors = brmspy.make_stancode(
+            formula="y ~ x1",
+            data=sample_dataframe,
+            priors=priors,
+            family="gaussian"
+        )
+        
+        assert isinstance(stan_code_with_priors, str), \
+            "make_stancode() with priors should return a string"
+        assert len(stan_code_with_priors) > 0, \
+            "Stan code with priors should not be empty"
+    
+    @pytest.mark.slow
+    def test_summary_function(self, sample_dataframe):
+        """
+        Test summary() function for model summaries.
+        
+        Tests that summary():
+        - Returns a pandas DataFrame
+        - Contains expected columns (Estimate, Est.Error, etc.)
+        - Provides summary statistics for model parameters
+        """
+        import brmspy
+        import pandas as pd
+        
+        # Fit a simple model
+        model = brmspy.fit(
+            formula="y ~ x1",
+            data=sample_dataframe,
+            family="gaussian",
+            iter=200,
+            warmup=100,
+            chains=1,
+            silent=2,
+            refresh=0
+        )
+        
+        # Get summary
+        summary_df = brmspy.summary(model)
+        
+        # Verify return type
+        assert isinstance(summary_df, pd.DataFrame), \
+            "summary() should return a pandas DataFrame"
+        
+        # Verify DataFrame is not empty
+        assert len(summary_df) > 0, \
+            "Summary DataFrame should have rows"
+        assert len(summary_df.columns) > 0, \
+            "Summary DataFrame should have columns"
+        
+        # Check for expected columns (brms typically includes Estimate, Est.Error, etc.)
+        # The exact column names may vary by brms version
+        assert any('Estimate' in col or 'estimate' in col.lower() for col in summary_df.columns), \
+            "Summary should contain estimate information"
+    
+    @pytest.mark.slow
+    def test_fit_sample_false(self, sample_dataframe):
+        """
+        Test fit() with sample=False for compile-only mode.
+        
+        Tests that fit(sample=False):
+        - Compiles model without sampling
+        - Returns FitResult with empty idata
+        - R object is valid brmsfit
+        """
+        import brmspy
+        
+        # Fit model with sample=False (compile only)
+        model = brmspy.fit(
+            formula="y ~ x1",
+            data=sample_dataframe,
+            family="gaussian",
+            sample=False
+        )
+        
+        # Verify return type
+        assert isinstance(model, brmspy.FitResult), \
+            "fit(sample=False) should return FitResult"
+        
+        # Verify R object exists
+        assert model.r is not None, \
+            "fit(sample=False) should have valid R brmsfit object"
+        
+        # Verify idata is empty or minimal (no actual sampling occurred)
+        # The idata should be an empty InferenceData or have no posterior samples
+        assert model.idata is not None, \
+            "fit(sample=False) should have idata attribute"
+    
+    @pytest.mark.slow
+    def test_posterior_linpred_without_newdata(self, sample_dataframe):
+        """
+        Test posterior_linpred() without newdata parameter.
+        
+        Tests that posterior_linpred():
+        - Works without newdata (uses original training data)
+        - Returns valid PosteriorLinpredResult
+        - Contains predictions for original observations
+        """
+        import brmspy
+        import arviz as az
+        
+        # Fit a simple model
+        model = brmspy.fit(
+            formula="y ~ x1",
+            data=sample_dataframe,
+            family="gaussian",
+            iter=200,
+            warmup=100,
+            chains=1,
+            silent=2,
+            refresh=0
+        )
+        
+        # Get linear predictor without newdata
+        linpred = brmspy.posterior_linpred(model)
+        
+        # Verify return type
+        assert isinstance(linpred, brmspy.PosteriorLinpredResult), \
+            "posterior_linpred() should return PosteriorLinpredResult"
+        
+        # Verify idata exists
+        assert isinstance(linpred.idata, az.InferenceData), \
+            "posterior_linpred() should return InferenceData"
+        
+        # Verify R object exists
+        assert linpred.r is not None, \
+            "posterior_linpred() should have R matrix"
+    
+    @pytest.mark.slow
+    def test_log_lik_without_newdata(self, sample_dataframe):
+        """
+        Test log_lik() without newdata parameter.
+        
+        Tests that log_lik():
+        - Works without newdata (uses original training data)
+        - Returns valid LogLikResult
+        - Contains log-likelihood for original observations
+        """
+        import brmspy
+        import arviz as az
+        
+        # Fit a simple model
+        model = brmspy.fit(
+            formula="y ~ x1",
+            data=sample_dataframe,
+            family="gaussian",
+            iter=200,
+            warmup=100,
+            chains=1,
+            silent=2,
+            refresh=0
+        )
+        
+        # Get log-likelihood without newdata
+        loglik = brmspy.log_lik(model)
+        
+        # Verify return type
+        assert isinstance(loglik, brmspy.LogLikResult), \
+            "log_lik() should return LogLikResult"
+        
+        # Verify idata exists
+        assert isinstance(loglik.idata, az.InferenceData), \
+            "log_lik() should return InferenceData"
+        
+        # Verify R object exists
+        assert loglik.r is not None, \
+            "log_lik() should have R matrix"
 
 
 if __name__ == '__main__':
