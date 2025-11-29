@@ -1,0 +1,119 @@
+name: runtime-publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      runtime_version:
+        description: "Logical runtime version (e.g. 0.1.0)"
+        required: true
+        type: string
+      tag:
+        description: "Git tag for the runtime release (e.g. runtime-v0.1.0)"
+        required: true
+        type: string
+
+jobs:
+  # Create a single runtime release that all matrix jobs will attach assets to
+  create-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create runtime pre-release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ inputs.tag }}
+          release_name: "Runtime ${{ inputs.runtime_version }}"
+          body: |
+            brmspy prebuilt runtimes for version ${{ inputs.runtime_version }}.
+          draft: false
+          prerelease: true
+
+  publish:
+    needs: create-release
+    strategy:
+      fail-fast: false
+      matrix:
+        # for now, stick to single OS testing
+        os: [ubuntu-latest]
+
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write        # upload assets
+      id-token: write        # for attestation
+      attestations: write    # for attestation
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # --- Python 3.12 on all OSes ---
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # --- R on all OSes ---
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "4.5"
+
+      - name: Install R packages for runtime
+        shell: bash
+        run: |
+          Rscript -e 'options(repos = c(CRAN = "https://cloud.r-project.org"))' \
+                  -e 'pkgs <- c("jsonlite", "cmdstanr", "brms", "posterior", "loo", "bayesplot")' \
+                  -e 'install.packages(pkgs, dependencies = TRUE)' \
+                  -e 'cmdstanr::install_cmdstan(cores = parallel::detectCores())'
+
+      - name: Install Python package
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest pytest-cov arviz tqdm
+          python -m pip install -e ".[dev]"
+
+      # ---- Build runtime tarball via pytest builder ----
+      - name: Build runtime tarball
+        shell: bash
+        run: |
+          mkdir -p dist/runtime
+          python -m "src.binaries.build" --output-dir "dist/runtime"
+
+          RUNTIME_TARBALL=$(ls dist/runtime/*.tar.gz)
+          if [ -z "$RUNTIME_TARBALL" ]; then
+            echo "No runtime tarball found under dist/runtime" >&2
+            exit 1
+          fi
+
+          RUNTIME_FILENAME=$(basename "$RUNTIME_TARBALL")
+          echo "RUNTIME_TARBALL=$RUNTIME_TARBALL" >> "$GITHUB_ENV"
+          echo "RUNTIME_FILENAME=$RUNTIME_FILENAME" >> "$GITHUB_ENV"
+          echo "Built runtime: $RUNTIME_TARBALL"
+
+      # ---- Attest the tarball (build provenance) ----
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: "${{ env.RUNTIME_TARBALL }}"
+
+      # ---- Upload as release asset ----
+      - name: Upload runtime asset to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ${{ env.RUNTIME_TARBALL }}
+          asset_name: "${{ env.RUNTIME_FILENAME }}"
+          asset_content_type: application/gzip

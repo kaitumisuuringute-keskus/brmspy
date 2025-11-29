@@ -267,7 +267,15 @@ def _build_cmstanr():
 
     ro.r(f"cmdstanr::install_cmdstan(cores = {cores}, overwrite = FALSE)")
 
-
+def install_prebuilt():
+    from brmspy.binaries import env
+    if not env.can_use_prebuilt():
+        raise RuntimeError(
+            "Prebuilt binaries are not available for your system. "
+            "Please install brms manually or set use_prebuilt_binaries=False."
+        )
+    fingerprint = env.system_fingerprint()
+    path = ""
 
 def install_brms(
     brms_version: str = "latest",
@@ -275,7 +283,8 @@ def install_brms(
     install_cmdstanr: bool = True,
     install_rstan: bool = False,
     cmdstanr_version: str = "latest",
-    rstan_version: str = "latest"
+    rstan_version: str = "latest",
+    use_prebuilt_binaries = False
 ):
     """
     Install brms R package, optionally cmdstanr and CmdStan compiler, or rstan.
@@ -294,6 +303,11 @@ def install_brms(
         cmdstanr version: "latest", "0.8.1", or ">=0.8.0"
     rstan_version : str, default="latest"
         rstan version: "latest", "2.32.6", or ">=2.32.0"
+    use_prebuilt_binaries: bool, default=False
+        Uses fully prebuilt binaries for cmdstanr and brms and their dependencies. 
+        Ignores system R libraries and uses the latest brms and cmdstanr available 
+        for your system. Requires R>=4 and might not be compatible with some older
+        systems or missing toolchains. Can reduce setup time by 50x.
     
     Examples
     --------

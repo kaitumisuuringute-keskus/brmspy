@@ -102,12 +102,12 @@ def stage_runtime_tree(base_dir: Path, metadata: dict, runtime_version: str) -> 
         "fingerprint": fingerprint,
         "r_version": metadata["r_version"],
         "cmdstan_version": metadata["cmdstan_version"],
-        "r_packages": r_pkg_versions,
-        "built_at": datetime.now(timezone.utc).isoformat()
+        "r_packages": r_pkg_versions
     }
 
     hash = _generate_manifest_hash(manifest)
     manifest['manifest_hash'] = hash
+    manifest['built_at'] = datetime.now(timezone.utc).isoformat()
 
     manifest_path = runtime_root / "manifest.json"
     with manifest_path.open("w", encoding="utf-8") as f:
@@ -147,7 +147,7 @@ def main():
     parser.add_argument(
         "--runtime-version",
         type=str,
-        default="0.2.0",
+        default="0.1.0",
         help="Logical runtime schema/version identifier (not necessarily pip version).",
     )
     args = parser.parse_args()
