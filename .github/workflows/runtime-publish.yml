@@ -119,7 +119,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p dist/runtime
-          python -m "src.binaries.build" --output-dir "dist/runtime"
+          python -m "brmspy.binaries.build" --output-dir "dist/runtime"
 
           RUNTIME_TARBALL=$(ls dist/runtime/*.tar.gz)
           if [ -z "$RUNTIME_TARBALL" ]; then
