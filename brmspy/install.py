@@ -1,19 +1,11 @@
-import platform
-import os
-import multiprocessing
-from typing import List, Optional, Union, cast
-from rpy2.robjects.packages import importr
-from rpy2.robjects.vectors import StrVector
-from rpy2 import robjects as ro
-
-
-from typing import Optional, Union, Tuple
+from typing import Optional, Union, cast, Tuple
 from packaging.version import Version
+import multiprocessing
+import platform
+
 import rpy2.robjects as ro
 from rpy2.robjects.packages import importr
 from rpy2.robjects.vectors import StrVector
-import multiprocessing
-import platform
 
 from brmspy.helpers import _get_brms, _invalidate_singletons
 
@@ -204,7 +196,23 @@ def _build_cmstanr():
     cores = multiprocessing.cpu_count() - 1
     if cores > 4:
         cores = cores - 1
-    ro.r(f'library(cmdstanr); install_cmdstan(cores = {cores}, overwrite=FALSE)')
+
+    # Load the library first
+    ro.r("library(cmdstanr)")
+
+    # Windows-specific fix: Ensure Rtools is found/configured
+    if platform.system() == "Windows":
+        print("brmspy: Checking Windows toolchain (Rtools)...")
+        # 'fix=True' attempts to download/install or configure paths if missing
+        try:
+            ro.r("cmdstanr::check_cmdstan_toolchain(fix = TRUE)")
+        except Exception as e:
+            print(f"❌ Warning: Toolchain check failed: {e}")
+            print("- You may need to manually install Rtools from: https://cran.r-project.org/bin/windows/Rtools/")
+
+    ro.r(f'install_cmdstan(cores = {cores}, overwrite=FALSE)')
+
+
 
 def install_brms(
     brms_version: str = "latest",
