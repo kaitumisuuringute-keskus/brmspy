@@ -1,6 +1,4 @@
-# .github/workflows/python-publish.yml
-
-name: Upload Python Package
+name: python-publish
 
 on:
   release:
