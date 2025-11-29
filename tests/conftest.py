@@ -86,6 +86,10 @@ def pytest_configure(config):
         "markers",
         "requires_brms: marks tests that require brms to be installed"
     )
+    config.addinivalue_line(
+        "markers",
+        "crossplatform: crossplatform test. only runs within githubs cross-platform-tests workflow."
+    )
 
 
 @pytest.fixture(scope="session")
@@ -106,10 +110,17 @@ def brms_available():
 
 def pytest_collection_modifyitems(config, items):
     """
-    Automatically skip tests that require brms if it's not installed.
+    Automatically skip tests when required.
     """
     skip_requires_brms = pytest.mark.skip(reason="brms not installed - run: python -c 'import brmspy; brmspy.install_brms()'")
-    
+    skip_requires_crossplatform = pytest.mark.skip(reason="crossplatform test. only runs within githubs cross-platform-tests workflow.'")
+
+    user_mark_expr = config.getoption("-m") or ""
+    crossplatform_allowed = (
+        "crossplatform" in user_mark_expr
+        and os.getenv('BRMSPY_CROSSPLATFORM_TESTS') == "1"
+    )
+
     # Try to check if brms is available
     brms_is_available = False
     try:
@@ -118,8 +129,9 @@ def pytest_collection_modifyitems(config, items):
         brms_is_available = True
     except:
         pass
-    
-    if not brms_is_available:
-        for item in items:
-            if "requires_brms" in item.keywords:
-                item.add_marker(skip_requires_brms)
+
+    for item in items:
+        if not brms_is_available and "requires_brms" in item.keywords:
+            item.add_marker(skip_requires_brms)
+        if "crossplatform" in item.keywords and not crossplatform_allowed:
+            item.add_marker(skip_requires_crossplatform)
