@@ -129,7 +129,6 @@ jobs:
               echo "== Installing missing system libs for rpy2 =="
               apt-get update
               apt-get install -y --no-install-recommends \
-                r-base-dev \
                 libpcre2-dev \
                 libblas-dev \
                 liblapack-dev \
