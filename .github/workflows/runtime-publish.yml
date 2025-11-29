@@ -126,6 +126,10 @@ jobs:
               echo "== Installing R $R_VERSION =="
               .runtime_builder/linux/install_r.sh "$R_VERSION"
 
+              echo "== Installing missing system libs for rpy2 =="
+              apt-get update
+              apt-get install -y --no-install-recommends libpcre2-dev
+
               echo "== Creating Python 3.12 venv =="
               python3.12 -m venv .venv
               . .venv/bin/activate
