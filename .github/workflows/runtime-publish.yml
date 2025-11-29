@@ -82,6 +82,7 @@ jobs:
       contents: write        # upload assets
       id-token: write        # for attestation
       attestations: write    # for attestation
+      packages: read
 
     steps:
       - name: Checkout
