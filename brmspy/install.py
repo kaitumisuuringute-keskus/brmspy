@@ -164,7 +164,7 @@ def _install_rpackage(
             print(f"brmspy: Installed {package}=={required_version} via remotes::install_version.")
             return
         except Exception as e:
-            print(f"❌ Failed to install exact {package}=={required_version}: {e}")
+            print(f"Failed to install exact {package}=={required_version}: {e}")
             raise
 
     # --- normal path: use install.packages with preferred type, then fallback to source ---
@@ -181,7 +181,7 @@ def _install_rpackage(
             raise RuntimeError(f"{package} did not appear after install (type={preferred_type}).")
         print(f"brmspy: Installed {package} via {preferred_type} path.")
     except Exception as e:
-        print(f"⚠️ {preferred_type} install failed. Falling back to source compilation. ({e})")
+        print(f"{preferred_type} install failed. Falling back to source compilation. ({e})")
         try:
             utils.install_packages(
                 StrVector((package,)),
@@ -194,7 +194,7 @@ def _install_rpackage(
                 raise RuntimeError(f"{package} did not appear after source install.")
             print(f"brmspy: Installed {package} from source.")
         except Exception as e2:
-            print(f"❌ Failed to install {package}.")
+            print(f"Failed to install {package}.")
             raise e2
 
 
@@ -254,7 +254,7 @@ def _build_cmstanr():
         try:
             ro.r("cmdstanr::check_cmdstan_toolchain(fix = TRUE)")
         except Exception as e:
-            print(f"❌ Toolchain check failed: {e}")
+            print(f"Toolchain check failed: {e}")
             tag = _install_rtools_for_current_r(ci_only=True)
             if not tag:
                 print(
@@ -277,7 +277,7 @@ def install_prebuilt(runtime_version="0.1.0", url: Optional[str] = None, bundle:
         )
     fingerprint = env.system_fingerprint()
     if url is None and bundle is None:
-        url = f"https://github.com/kaitumisuuringute-keskus/brmspy/releases/download/runtime-dev/brmspy-runtime-{version}-{fingerprint}.tar.gz"
+        url = f"https://github.com/kaitumisuuringute-keskus/brmspy/releases/download/runtime-dev/brmspy-runtime-{runtime_version}-{fingerprint}.tar.gz"
 
     try:
         return install_and_activate_runtime(
@@ -329,7 +329,7 @@ def install_brms(
     """
     if use_prebuilt_binaries:
         if install_prebuilt():
-            print("\n✅ Setup complete! You're ready to use brmspy.")
+            print("\nSetup complete! You're ready to use brmspy.")
             return
 
     print("Installing brms...")
@@ -349,4 +349,4 @@ def install_brms(
     # Import to mitigate lazy imports
     _get_brms()
 
-    print("\n✅ Setup complete! You're ready to use brmspy.")
+    print("\nSetup complete! You're ready to use brmspy.")

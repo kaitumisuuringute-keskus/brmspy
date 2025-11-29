@@ -143,6 +143,8 @@ jobs:
                 gfortran-9 \
                 libv8-dev
 
+              update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-9 100
+
               echo "== Creating Python 3.12 venv =="
               python3.12 -m venv .venv
               . .venv/bin/activate

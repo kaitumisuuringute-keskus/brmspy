@@ -282,7 +282,7 @@ def can_use_prebuilt() -> bool:
         return False
 
     fp = system_fingerprint()
-    if not prebuilt_available_for(fp):
-        return False
+    #if not prebuilt_available_for(fp):
+    #    return False
 
     return True
