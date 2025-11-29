@@ -52,6 +52,14 @@ def _get_base():
     global _base
     return _base
 
+def _get_rstan():
+    global _rstan
+    return _rstan
+
+def _get_cmdstanr():
+    global _cmdstanr
+    return _cmdstanr
+
 def _invalidate_singletons():
     global _brms, _cmdstanr, _base, _posterior
     _brms = None

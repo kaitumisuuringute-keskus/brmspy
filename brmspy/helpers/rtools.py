@@ -63,14 +63,26 @@ def _install_rtools_for_current_r(ci_only: bool = True) -> Optional[str]:
     if platform.system() != "Windows":
         return None
 
-    if ci_only and os.environ.get("GITHUB_ACTIONS") != "true":
+    # Safety: Only run in CI unless forced
+    if ci_only:
         print("brmspy: not in CI, refusing to auto-install Rtools.")
         return None
 
     r_ver = _get_r_version()
     tag = pick_rtools_for_r(r_ver)
+    
+    # If Rtools is already found, skip (cmdstanr check)
+    try:
+        # Check if 'make' is available. If yes, we probably have Rtools.
+        make_path = str(cast(list, ro.r('Sys.which("make")'))[0])
+        if make_path:
+            print(f"brmspy: Rtools seems present (make found at {make_path}). Skipping install.")
+            return tag
+    except Exception:
+        pass
+
     if tag is None:
-        print(f"brmspy: R {r_ver} is too old for automatic Rtools handling.")
+        print(f"brmspy: R {r_ver} is too old/new for automatic Rtools handling.")
         return None
 
     url = RTOOLS_INSTALLERS.get(tag)
@@ -80,16 +92,36 @@ def _install_rtools_for_current_r(ci_only: bool = True) -> Optional[str]:
 
     _silent_install_exe(url, f"rtools{tag}")
 
-    # Best-effort PATH tweaks for current process (default layout)
+    # Best-effort PATH tweaks
     root = rf"C:\rtools{tag}"
     candidates = [
         os.path.join(root, "usr", "bin"),
         os.path.join(root, "x86_64-w64-mingw32.static.posix", "bin"),
-        os.path.join(root, "mingw64", "bin"),  # varies by version
+        os.path.join(root, "mingw64", "bin"),
     ]
+    
+    new_paths = []
     for p in candidates:
-        if os.path.isdir(p) and p not in os.environ.get("PATH", ""):
-            os.environ["PATH"] = p + os.pathsep + os.environ["PATH"]
-            print(f"brmspy: added to PATH: {p}")
+        if os.path.isdir(p):
+            new_paths.append(p)
+            print(f"brmspy: found Rtools bin: {p}")
+
+    if new_paths:
+        # Update Python environment (for subprocesses)
+        path_sep = os.pathsep
+        full_new_path = path_sep.join(new_paths)
+        os.environ["PATH"] = full_new_path + path_sep + os.environ.get("PATH", "")
+
+        # CRITICAL: Update R's environment directly!
+        # rpy2 has already started, so R won't see the os.environ change unless we force it.
+        r_path_cmd = f'Sys.setenv(PATH = paste("{full_new_path}", Sys.getenv("PATH"), sep="{path_sep}"))'
+        ro.r(r_path_cmd)
+        
+        # 3. Force R to re-scan for build tools
+        ro.r("""
+        if (requireNamespace("pkgbuild", quietly = TRUE)) {
+            pkgbuild::find_rtools(debug = TRUE)
+        }
+        """)
 
     return tag

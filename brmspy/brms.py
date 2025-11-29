@@ -8,7 +8,7 @@ import rpy2.robjects.packages as rpackages
 from rpy2.robjects import default_converter, pandas2ri, numpy2ri, ListVector, DataFrame, StrVector
 from rpy2.robjects.conversion import localconverter
 from .helpers.priors import _build_priors
-from .helpers.singleton import _get_base, _get_brms, _invalidate_singletons
+from .helpers.singleton import _get_base, _get_brms, _get_cmdstanr, _get_rstan, _invalidate_singletons
 from .helpers.conversion import (
     brmsfit_to_idata,
     brms_linpred_to_idata, brms_log_lik_to_idata, brms_epred_to_idata, brms_predict_to_idata,
@@ -256,6 +256,17 @@ def fit(
     >>> az.summary(model.idata)
     """
     brms = _get_brms()
+
+    if backend == "cmdstanr":
+        cmdstanr = _get_cmdstanr()
+        if cmdstanr is None:
+            raise RuntimeError("cmdstanr backend is not installed! Please run install_brms(install_cmdstanr=True)")
+
+    if backend == "rstan":
+        rstan = _get_rstan()
+        if rstan is None:
+            raise RuntimeError("rstan backend is not installed! Please run install_brms(install_rstan=True)")
+    
     
     # Convert formula to brms formula object
     if isinstance(formula, FormulaResult):
