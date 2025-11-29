@@ -58,7 +58,7 @@ def activate_runtime(runtime_root: Union[str, Path]) -> None:
         #ro.r(f'.libPaths(c("{rlib_posix}", .libPaths()))')
 
     # Replace libPaths
-    ro.r(f'.libPaths(c("{rlib_posix}")')
+    ro.r(f'.libPaths(c("{rlib_posix}"))')
 
     # Point cmdstanr to this cmdstan installation
     ro.r(
