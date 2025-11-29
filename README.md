@@ -8,7 +8,8 @@ This is an early development version of the library, use with caution.
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Documentation](https://img.shields.io/badge/docs-mkdocs-blue.svg)](https://kaitumisuuringute-keskus.github.io/brmspy/)
 [![Coverage](https://kaitumisuuringute-keskus.github.io/brmspy/badges/coverage.svg)](https://github.com/kaitumisuuringute-keskus/brmspy/actions)
-[![Tests](https://github.com/kaitumisuuringute-keskus/brmspy/workflows/Python%20Test%20Matrix/badge.svg)](https://github.com/kaitumisuuringute-keskus/brmspy/actions)
+[![Tests](https://github.com/kaitumisuuringute-keskus/brmspy/workflows/python-test-matrix/badge.svg)](https://github.com/kaitumisuuringute-keskus/brmspy/actions)
+[![Cross-Platform Tests](https://github.com/kaitumisuuringute-keskus/brmspy/actions/workflows/crossplatform-tests/badge.svg)](https://github.com/kaitumisuuringute-keskus/brmspy/actions)
 
 ## Installation
 

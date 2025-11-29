@@ -1,3 +1,20 @@
+## 0.1.8 - Rstan support, version pinning, and cross-platform fixes
+
+**Features**
+
+*   **Rstan Backend Support:** Added `rstan` as an alternative backend. install_brms now takes `install_rstan` param and `fit()` now seamlessly accepts `backend="rstan"` (defaults to "cmdstanr").
+*   **Exact Version Installation:** `install_brms()` now supports pinning specific R package versions (e.g., `version="2.21.0"`) using `remotes` for all R dependencies.
+
+**Installation & Platform Support**
+
+*   **Windows Toolchain:** Implemented automatic Rtools detection and setup within `install_brms()`, resolving compiler issues on Windows.
+*   **macOS/Windows Binaries:** Fixed installation failures for dependencies (like `data.table`) by defaulting to `type="both"` instead of forcing source compilation.
+
+**Infrastructure**
+
+*   Added dedicated cross-platform CI workflow (Windows, macOS, Ubuntu) to ensure installation stability across operating systems.
+
+
 ## 0.1.7 - Automatic r imports after installation and import failure warning
 
 * Fixed an issue where the library could refuse import in case of missing R deps

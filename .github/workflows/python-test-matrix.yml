@@ -1,4 +1,4 @@
-name: Python Test Matrix
+name: python-test-matrix
 
 on:
   push:
@@ -71,7 +71,8 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [ '3.10', '3.11', '3.12', '3.14' ]
+        # skip one testing. Keep costs sane for active dev.
+        python-version: [ '3.10', '3.12', '3.14' ]
 
     env:
       RSPM: https://cloud.r-project.org

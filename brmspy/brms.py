@@ -7,11 +7,11 @@ import warnings
 import rpy2.robjects.packages as rpackages
 from rpy2.robjects import default_converter, pandas2ri, numpy2ri, ListVector, DataFrame, StrVector
 from rpy2.robjects.conversion import localconverter
-from .helpers import (
-    _get_brms, 
+from .helpers.priors import _build_priors
+from .helpers.singleton import _get_base, _get_brms, _get_cmdstanr, _get_rstan, _invalidate_singletons
+from .helpers.conversion import (
     brmsfit_to_idata,
     brms_linpred_to_idata, brms_log_lik_to_idata, brms_epred_to_idata, brms_predict_to_idata,
-    build_priors,
     kwargs_r, py_to_r,
     r_to_py
 )
@@ -20,6 +20,7 @@ from .types import (
     IDPredict, LogLikResult, PosteriorEpredResult, PosteriorLinpredResult, PosteriorPredictResult, PriorSpec,
     prior
 )
+from .install import install_brms
 
 # R imports must NOT be done lazily! 
 # Lazy imports with rpy2 within tqdm loops for example WILL cause segfaults!
@@ -38,137 +39,6 @@ __all__ = [
     'PosteriorLinpredResult', 'LogLikResult', 'GenericResult',
     "prior"
 ]
-
-
-
-def install_brms(version: str = "latest", repo: str = "https://cran.rstudio.com", install_cmdstan: bool = True):
-    """
-    Install brms R package, cmdstanr, and CmdStan compiler.
-    
-    Parameters
-    ----------
-    version : str, default="latest"
-        brms version: "latest", "2.23.0", or ">=2.20.0"
-    repo : str, default="https://cran.rstudio.com"
-        CRAN repository URL
-    install_cmdstan : bool, default=True
-        Whether to install cmdstanr and CmdStan
-    
-    Examples
-    --------
-    >>> from brmspy import brms
-    >>> brms.install_brms()
-    >>> brms.install_brms(version="2.23.0")
-    >>> brms.install_brms(install_cmdstan=False)
-    """
-    print("=" * 60)
-    print("brmspy Setup - Installing Required Components")
-    print("=" * 60)
-    
-    # Install cmdstanr and CmdStan if requested
-    if install_cmdstan:
-        print("\n[1/3] Installing cmdstanr R package...")
-        try:
-            cmdstanr = rpackages.importr("cmdstanr")
-            print("✓ cmdstanr already installed")
-        except:
-            print("Installing cmdstanr from r-universe...")
-            utils = rpackages.importr("utils")
-            utils.install_packages(
-                StrVector(('cmdstanr',)),
-                repos=StrVector(('https://stan-dev.r-universe.dev', repo))
-            )
-            print("✓ cmdstanr installed successfully!")
-        
-        print("\n[2/3] Checking CmdStan installation...")
-        try:
-            import rpy2.robjects as ro
-            ro.r('library(cmdstanr); cmdstan_path()')
-            print("✓ CmdStan already installed")
-        except Exception:
-            print("Installing CmdStan compiler via cmdstanr...")
-            print("This may take several minutes depending on your system.")
-            try:
-                import rpy2.robjects as ro
-                ro.r('library(cmdstanr); install_cmdstan()')
-                print("✓ CmdStan installed successfully!")
-            except Exception as e:
-                warnings.warn(f"Could not install CmdStan: {e}")
-                print("You can install it manually later in R with:")
-                print("  library(cmdstanr)")
-                print("  install_cmdstan()")
-    
-    # Install brms
-    print(f"\n[3/3] Installing brms R package (version: {version})...")
-    
-    utils = rpackages.importr("utils")
-    utils.chooseCRANmirror(ind=1)
-    
-    if version == "latest":
-        # Install latest version from CRAN
-        print("Installing latest brms from CRAN...")
-        utils.install_packages(StrVector(('brms',)), repos=repo)
-        print("✓ brms installed successfully!")
-    else:
-        # Install specific version using remotes package
-        print(f"Installing brms version {version}...")
-        try:
-            remotes = rpackages.importr("remotes")
-        except:
-            print("Installing remotes package (required for version-specific installation)...")
-            utils.install_packages(StrVector(('remotes',)))
-            remotes = rpackages.importr("remotes")
-        
-        # Handle version constraints
-        if ">=" in version or "<=" in version or "==" in version:
-            # Version constraint - install latest matching version
-            warnings.warn(
-                f"Version constraint '{version}' specified. "
-                "Installing latest version that matches. "
-                "For reproducibility, specify exact version (e.g., '2.23.0')"
-            )
-            # Extract version number for comparison
-            version_num = version.replace(">=", "").replace("<=", "").replace("==", "").strip()
-            remotes.install_version("brms", version=version_num, repos=repo)
-        else:
-            # Exact version
-            remotes.install_version("brms", version=version, repos=repo)
-        
-        print(f"✓ brms {version} installed successfully!")
-    
-    # Clear cached brms import to force reload
-    global _brms
-    _brms = None
-    
-    # Verify installation
-    print("\n" + "=" * 60)
-    print("Installation Summary")
-    print("=" * 60)
-    
-    if install_cmdstan:
-        try:
-            import rpy2.robjects as ro
-            cmdstan_path = str(typing.cast(typing.List, ro.r('library(cmdstanr); cmdstan_path()'))[0])
-            print(f"✓ cmdstanr: installed")
-            print(f"✓ CmdStan: {cmdstan_path}")
-        except:
-            print("⚠ cmdstanr/CmdStan: Not installed")
-    
-    try:
-        brms_version = get_brms_version()
-        print(f"✓ brms: version {brms_version}")
-    except Exception as e:
-        print(f"⚠ brms: Could not verify ({e})")
-    
-    # Import to mitigate lazy imports
-    _get_brms()
-    
-    print("\n✅ Setup complete! You're ready to use brmspy.")
-    print("\nExample usage:")
-    print("  import brmspy")
-    print("  epilepsy = brmspy.get_brms_data('epilepsy')")
-    print("  fit = brmspy.fit('count ~ zAge + (1|patient)', epilepsy, family='poisson', chains=4)")
-
 
 def get_brms_version() -> str:
     """
@@ -269,7 +139,7 @@ def make_stancode(
     brms = _get_brms()
 
     data_r = py_to_r(data)
-    priors_r = build_priors(priors)
+    priors_r = _build_priors(priors)
     if isinstance(formula, FormulaResult):
         formula_obj = formula.r
     else:
@@ -386,6 +256,17 @@ def fit(
     >>> az.summary(model.idata)
     """
     brms = _get_brms()
+
+    if backend == "cmdstanr":
+        cmdstanr = _get_cmdstanr()
+        if cmdstanr is None:
+            raise RuntimeError("cmdstanr backend is not installed! Please run install_brms(install_cmdstanr=True)")
+
+    if backend == "rstan":
+        rstan = _get_rstan()
+        if rstan is None:
+            raise RuntimeError("rstan backend is not installed! Please run install_brms(install_rstan=True)")
+    
     
     # Convert formula to brms formula object
     if isinstance(formula, FormulaResult):
@@ -399,7 +280,7 @@ def fit(
     data_r = py_to_r(data)
 
     # Setup priors
-    brms_prior = build_priors(priors)
+    brms_prior = _build_priors(priors)
 
     # Prepare brm() arguments
     brm_kwargs = {

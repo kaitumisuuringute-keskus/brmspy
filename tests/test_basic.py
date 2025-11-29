@@ -44,7 +44,7 @@ class TestDataConversion:
     
     def test_convert_dataframe_to_r(self, sample_dataframe):
         """Test DataFrame to R conversion"""
-        from brmspy.helpers import py_to_r
+        from brmspy.helpers.conversion import py_to_r
         from rpy2.robjects import DataFrame as RDataFrame
         
         r_data = py_to_r(sample_dataframe)
@@ -52,7 +52,7 @@ class TestDataConversion:
     
     def test_convert_dict_to_r(self, sample_dict):
         """Test dict to R list conversion"""
-        from brmspy.helpers import py_to_r
+        from brmspy.helpers.conversion import py_to_r
         from rpy2.robjects import ListVector
         
         r_data = py_to_r(sample_dict)
@@ -64,7 +64,7 @@ class TestTypeCoercion:
     
     def test_coerce_types_basic(self):
         """Test basic type coercion from Stan code"""
-        from brmspy.helpers import _coerce_types
+        from brmspy.helpers.conversion import _coerce_stan_types
         
         # Simple Stan code with int and real types
         stan_code = """
@@ -84,7 +84,7 @@ class TestTypeCoercion:
             'X': np.random.randn(3, 3)  # Should stay as is
         }
         
-        result = _coerce_types(stan_code, stan_data)
+        result = _coerce_stan_types(stan_code, stan_data)
         
         # Check N and K are scalars and integers
         assert isinstance(result['N'], (int, np.integer))
@@ -94,7 +94,7 @@ class TestTypeCoercion:
     
     def test_coerce_types_preserves_arrays(self):
         """Test that arrays are preserved correctly"""
-        from brmspy.helpers import _coerce_types
+        from brmspy.helpers.conversion import _coerce_stan_types
         
         stan_code = """
         data {
@@ -109,7 +109,7 @@ class TestTypeCoercion:
             'y': y_data
         }
         
-        result = _coerce_types(stan_code, stan_data)
+        result = _coerce_stan_types(stan_code, stan_data)
         
         # N should be scalar
         assert isinstance(result['N'], (int, np.integer))
@@ -119,7 +119,7 @@ class TestTypeCoercion:
     
     def test_coerce_int_array(self):
         """Test coercion of int arrays"""
-        from brmspy.helpers import _coerce_types
+        from brmspy.helpers.conversion import _coerce_stan_types
         
         stan_code = """
         data {
@@ -134,7 +134,7 @@ class TestTypeCoercion:
             'Y': np.array([1.0, 2.0, 3.0, 4.0, 5.0])  # Floats that should be ints
         }
         
-        result = _coerce_types(stan_code, stan_data)
+        result = _coerce_stan_types(stan_code, stan_data)
         
         # N should be scalar int
         assert isinstance(result['N'], (int, np.integer))
@@ -147,8 +147,8 @@ class TestTypeCoercion:
     
     def test_coerce_mixed_types(self):
         """Test coercion with mixed int and real types"""
-        from brmspy.helpers import _coerce_types
-        
+        from brmspy.helpers.conversion import _coerce_stan_types
+
         stan_code = """
         data {
             int<lower=1> N;
@@ -167,7 +167,7 @@ class TestTypeCoercion:
             'Z': np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
         }
         
-        result = _coerce_types(stan_code, stan_data)
+        result = _coerce_stan_types(stan_code, stan_data)
         
         # Scalars should be properly coerced
         assert isinstance(result['N'], (int, np.integer))
@@ -182,7 +182,7 @@ class TestTypeCoercion:
     
     def test_coerce_handles_non_numpy(self):
         """Test coercion handles non-numpy types"""
-        from brmspy.helpers import _coerce_types
+        from brmspy.helpers.conversion import _coerce_stan_types
         
         stan_code = """
         data {
@@ -197,7 +197,7 @@ class TestTypeCoercion:
             'K': [3]
         }
         
-        result = _coerce_types(stan_code, stan_data)
+        result = _coerce_stan_types(stan_code, stan_data)
         
         # Should convert and coerce properly
         assert isinstance(result['N'], (int, np.integer))
@@ -216,7 +216,7 @@ class TestTypeCoercion:
         Regression test for issue where old parser captured 'array' as type
         instead of 'int', causing Stan runtime errors.
         """
-        from brmspy.helpers import _coerce_types
+        from brmspy.helpers.conversion import _coerce_stan_types
         
         # New Stan array syntax
         stan_code = """
@@ -234,7 +234,7 @@ class TestTypeCoercion:
             'K': np.array([3.0])
         }
         
-        result = _coerce_types(stan_code, stan_data)
+        result = _coerce_stan_types(stan_code, stan_data)
         
         # Verify scalars are converted
         assert isinstance(result['N'], (int, np.integer))
@@ -254,7 +254,7 @@ class TestErrorHandling:
     
     def test_brms_not_installed_error_message(self):
         """Test that helpful error is raised when brms is not found"""
-        from brmspy.helpers import _get_brms
+        from brmspy.helpers.singleton import _get_brms
         import rpy2.robjects.packages as rpackages
         
         # This test might pass if brms IS installed
