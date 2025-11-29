@@ -36,10 +36,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ inputs.tag }}
-          release_name: "Runtime ${{ inputs.runtime_version }}"
+          tag_name: ${{ inputs.tag || 'runtime-dev' }}
+          release_name: "Runtime ${{ inputs.runtime_version || 'runtime-dev' }}"
           body: |
-            brmspy prebuilt runtimes for version ${{ inputs.runtime_version }}.
+            brmspy prebuilt runtimes for version ${{ inputs.runtime_version || 'runtime-dev' }}.
           draft: false
           prerelease: true
 
