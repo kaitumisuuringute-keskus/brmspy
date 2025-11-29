@@ -1,3 +1,6 @@
+import os
+import shutil
+import subprocess
 from typing import Optional, Union, cast, Tuple
 from packaging.version import Version
 import multiprocessing
@@ -7,7 +10,8 @@ import rpy2.robjects as ro
 from rpy2.robjects.packages import importr
 from rpy2.robjects.vectors import StrVector
 
-from brmspy.helpers import _get_brms, _invalidate_singletons
+from brmspy.helpers.rtools import _install_rtools_for_current_r
+from brmspy.helpers.singleton import _get_brms, _invalidate_singletons
 
 def _parse_version_spec(spec: Optional[str]) -> Tuple[str, Optional[Version]]:
     """
@@ -192,25 +196,76 @@ def _install_rpackage(
             print(f"❌ Failed to install {package}.")
             raise e2
 
-def _build_cmstanr():
-    cores = multiprocessing.cpu_count() - 1
-    if cores > 4:
-        cores = cores - 1
 
-    # Load the library first
+def _install_rtools44_goblin_mode():
+    """Best-effort install of Rtools44 on CI Windows runner."""
+    # 1) Try Chocolatey first (usually present on GH Actions)
+    if shutil.which("choco"):
+        print("brmspy: Installing Rtools via Chocolatey...")
+        subprocess.run(
+            ["choco", "install", "rtools", "-y"],
+            check=True,
+        )
+    else:
+        # 2) Fallback: download CRAN installer + silent install
+        # NOTE: pin the URL to a specific version once you know it.
+        import tempfile
+        import urllib.request
+
+        url = "https://cran.r-project.org/bin/windows/Rtools/rtools44-<EXACT>.exe"
+        tmp_exe = os.path.join(tempfile.gettempdir(), "rtools44-installer.exe")
+        print(f"brmspy: Downloading Rtools from {url} ...")
+        urllib.request.urlretrieve(url, tmp_exe)
+
+        print("brmspy: Running Rtools installer (silent)...")
+        subprocess.run(
+            [
+                tmp_exe,
+                "/VERYSILENT",
+                "/SUPPRESSMSGBOXES",
+                "/NORESTART",
+            ],
+            check=True,
+        )
+
+    # 3) Manually extend PATH so current process sees it
+    # Default Rtools44 paths – adjust if you change install dir
+    rtools_root = r"C:\rtools44"
+    candidate_paths = [
+        os.path.join(rtools_root, "usr", "bin"),
+        os.path.join(rtools_root, "mingw64", "bin"),
+    ]
+    for p in candidate_paths:
+        if os.path.isdir(p) and p not in os.environ["PATH"]:
+            os.environ["PATH"] = p + os.pathsep + os.environ["PATH"]
+            print(f"brmspy: Added to PATH: {p}")
+
+
+def _build_cmstanr():
+    cores = multiprocessing.cpu_count()
+    if cores > 4:
+        cores -= 1
+
     ro.r("library(cmdstanr)")
 
-    # Windows-specific fix: Ensure Rtools is found/configured
     if platform.system() == "Windows":
-        print("brmspy: Checking Windows toolchain (Rtools)...")
-        # 'fix=True' attempts to download/install or configure paths if missing
+        print("brmspy: Checking Windows toolchain (Rtools/cmdstanr)...")
         try:
             ro.r("cmdstanr::check_cmdstan_toolchain(fix = TRUE)")
         except Exception as e:
-            print(f"❌ Warning: Toolchain check failed: {e}")
-            print("- You may need to manually install Rtools from: https://cran.r-project.org/bin/windows/Rtools/")
+            print(f"❌ Toolchain check failed: {e}")
+            tag = _install_rtools_for_current_r(ci_only=True)
+            if not tag:
+                print(
+                    "brmspy: Rtools auto-install failed or disabled. "
+                    "Please install the matching Rtools version manually: "
+                    "https://cran.r-project.org/bin/windows/Rtools/"
+                )
+                return
+            print(f"brmspy: Installed Rtools{tag}, re-checking toolchain...")
+            ro.r("cmdstanr::check_cmdstan_toolchain(fix = TRUE)")
 
-    ro.r(f'install_cmdstan(cores = {cores}, overwrite=FALSE)')
+    ro.r(f"cmdstanr::install_cmdstan(cores = {cores}, overwrite = FALSE)")
 
 
 
@@ -245,7 +300,7 @@ def install_brms(
     _install_rpackage("brms", version=brms_version, repos_extra=[repo])
 
     if install_cmdstanr:
-        print("Installin cmdstanr...")
+        print("Installing cmdstanr...")
         _install_rpackage("cmdstanr", version=cmdstanr_version, repos_extra=["https://mc-stan.org/r-packages/", repo])
         print("Building cmdstanr...")
         _build_cmstanr()

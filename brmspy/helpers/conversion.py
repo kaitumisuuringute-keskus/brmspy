@@ -14,66 +14,12 @@ from rpy2.robjects import vectors
 
 from rpy2.robjects.functions import SignatureTranslatedFunction
 
+from brmspy.helpers import singleton
 from brmspy.types import IDFit, PriorSpec
 
-_brms = None
-_cmdstanr = None
-_rstan = None
-_posterior = None
-_base = None
-
-def _get_brms():
-    """
-    Lazy import of brms R package.
-    
-    Returns
-    -------
-    brms module
-        Imported brms R package
-    
-    Raises
-    ------
-    ImportError
-        If brms is not installed
-    """
-    global _brms, _cmdstanr, _base, _posterior, _rstan
-    if _brms is None:
-        print("brmspy: Importing R libraries...")
-        try:
-            try:
-                _cmdstanr = rpackages.importr("cmdstanr")
-            except Exception as e:
-                _cmdstanr = None
-            try:
-                _rstan = rpackages.importr("rstan")
-            except Exception as e:
-                _rstan = None
-            _posterior = rpackages.importr("posterior")
-            _brms = rpackages.importr("brms")
-            _base = rpackages.importr("base")
-            print("brmspy: R libraries imported!")
-        except Exception as e:
-            raise ImportError(
-                "brms R package not found. Install it using:\n\n"
-                "  import brmspy\n"
-                "  brmspy.install_brms()  # for latest version\n\n"
-                "Or install a specific version:\n"
-                "  brmspy.install_brms(version='2.23.0')\n\n"
-                "Or install manually in R:\n"
-                "  install.packages('brms')\n"
-            ) from e
-    return _brms
-
-def _invalidate_singletons():
-    global _brms, _cmdstanr, _base, _posterior
-    _brms = None
-    _cmdstanr = None
-    _base = None
-    _posterior = None
 
 
-
-def _coerce_types(stan_code: str, stan_data: dict) -> dict:
+def _coerce_stan_types(stan_code: str, stan_data: dict) -> dict:
     """
     Coerce Python types to match Stan type requirements.
     
@@ -145,7 +91,6 @@ def _coerce_types(stan_code: str, stan_data: dict) -> dict:
                 stan_data[k] = v.astype(np.int64)
     
     return stan_data
-
 
 
 def brmsfit_to_idata(brmsfit_obj, model_data=None) -> IDFit:
@@ -237,6 +182,7 @@ def brmsfit_to_idata(brmsfit_obj, model_data=None) -> IDFit:
     dims = None
     
     try:
+        _base = singleton._get_base()
         # Extract data from the fit object: fit$data
         if _base:
             r_data = _base.getElement(brmsfit_obj, "data")
@@ -524,23 +470,3 @@ def kwargs_r(kwargs: typing.Optional[typing.Dict]) -> typing.Dict:
     return {k: py_to_r(v) for k, v in kwargs.items()}
 
 
-
-def build_priors(priors: typing.Optional[typing.Sequence[PriorSpec]] = None) -> list:
-    brms = _get_brms()
-    if not priors:
-        return []
-
-    prior_objs = []
-    for p in priors:
-        kwargs = p.to_brms_kwargs()
-        # first argument is the prior string
-        prior_str = kwargs.pop("prior")
-        prior_obj = brms.prior_string(prior_str, **kwargs)
-        prior_objs.append(prior_obj)
-
-    brms_prior = prior_objs[0]
-    for p in prior_objs[1:]:
-        brms_prior = brms_prior + p
-
-    assert brms.is_brmsprior(brms_prior)
-    return brms_prior

@@ -55,7 +55,7 @@ class TestBrmsInstallationFlow:
 
         # Keep brmspy after removal to ensure the library imports without brms installed
         from brmspy import brms
-        from brmspy.helpers import _get_brms
+        from brmspy.helpers.singleton import _get_brms
         with pytest.raises(ImportError):
             _get_brms()
 

@@ -7,11 +7,11 @@ import warnings
 import rpy2.robjects.packages as rpackages
 from rpy2.robjects import default_converter, pandas2ri, numpy2ri, ListVector, DataFrame, StrVector
 from rpy2.robjects.conversion import localconverter
-from .helpers import (
-    _get_brms, 
+from .helpers.priors import _build_priors
+from .helpers.singleton import _get_base, _get_brms, _invalidate_singletons
+from .helpers.conversion import (
     brmsfit_to_idata,
     brms_linpred_to_idata, brms_log_lik_to_idata, brms_epred_to_idata, brms_predict_to_idata,
-    build_priors,
     kwargs_r, py_to_r,
     r_to_py
 )
@@ -139,7 +139,7 @@ def make_stancode(
     brms = _get_brms()
 
     data_r = py_to_r(data)
-    priors_r = build_priors(priors)
+    priors_r = _build_priors(priors)
     if isinstance(formula, FormulaResult):
         formula_obj = formula.r
     else:
@@ -269,7 +269,7 @@ def fit(
     data_r = py_to_r(data)
 
     # Setup priors
-    brms_prior = build_priors(priors)
+    brms_prior = _build_priors(priors)
 
     # Prepare brm() arguments
     brm_kwargs = {

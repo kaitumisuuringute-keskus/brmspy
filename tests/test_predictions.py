@@ -8,6 +8,7 @@ Tests all prediction and conversion functions:
 - log_lik: Log likelihood
 - Helper conversion functions
 """
+from typing import Callable, cast
 import pytest
 import pandas as pd
 import numpy as np
@@ -241,7 +242,7 @@ class TestBrmsfitToIdata:
     def test_complete_idata_conversion(self, sample_dataframe):
         """Test that brmsfit_to_idata creates all groups"""
         import brmspy
-        from brmspy.helpers import brmsfit_to_idata
+        from brmspy.helpers.conversion import brmsfit_to_idata
         
         # Fit model
         model = brmspy.fit(
@@ -275,7 +276,7 @@ class TestBrmsfitToIdata:
     def test_posterior_predictive_shape(self, sample_dataframe):
         """Test posterior predictive has correct shape"""
         import brmspy
-        from brmspy.helpers import brmsfit_to_idata
+        from brmspy.helpers.conversion import brmsfit_to_idata
         
         # Fit model with known parameters
         n_chains = 2
@@ -309,7 +310,7 @@ class TestConversionHelpers:
     def test_reshape_r_prediction_to_arviz(self, sample_dataframe):
         """Test _reshape_r_prediction_to_arviz function"""
         import brmspy
-        from brmspy.helpers import _reshape_r_prediction_to_arviz
+        from brmspy.helpers.conversion import _reshape_r_prediction_to_arviz
         import rpy2.robjects as ro
         
         # Fit model
@@ -325,7 +326,7 @@ class TestConversionHelpers:
         )
         
         # Get a prediction matrix from R
-        r_posterior_predict = ro.r('brms::posterior_predict')
+        r_posterior_predict = cast(Callable, ro.r('brms::posterior_predict'))
         r_pred = r_posterior_predict(model.r)
         
         # Test reshape function
@@ -348,7 +349,7 @@ class TestConversionHelpers:
     def test_epred_to_idata_helper(self, sample_dataframe):
         """Test brms_epred_to_idata helper function"""
         import brmspy
-        from brmspy.helpers import brms_epred_to_idata
+        from brmspy.helpers.conversion import brms_epred_to_idata
         import rpy2.robjects as ro
         
         # Fit model
@@ -364,7 +365,7 @@ class TestConversionHelpers:
         )
         
         # Get epred from R
-        r_posterior_epred = ro.r('brms::posterior_epred')
+        r_posterior_epred = cast(Callable, ro.r('brms::posterior_epred'))
         r_epred = r_posterior_epred(model.r)
         
         # Convert using helper
