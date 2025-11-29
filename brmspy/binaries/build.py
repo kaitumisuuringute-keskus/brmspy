@@ -157,6 +157,10 @@ def main():
     out_dir = base_dir  # can separate if you want
     runtime_version = args.runtime_version
 
+    # Set the CRAN mirror globally for this session. 
+    # This prevents 'build-manifest.R' or subsequent installs from prompting for a mirror.
+    ro.r('options(repos = c(CRAN = "https://cloud.r-project.org"))')
+
     print("[meta] Collecting R / brms / cmdstanr metadata via rpy2...")
     metadata = collect_runtime_metadata()
 
