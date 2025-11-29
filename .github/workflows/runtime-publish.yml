@@ -126,9 +126,6 @@ jobs:
               echo "== Installing R $R_VERSION =="
               .runtime_builder/linux/install_r.sh "$R_VERSION"
 
-              update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 100
-              update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-9 100
-
               echo "== Creating Python 3.12 venv =="
               python3.12 -m venv .venv
               . .venv/bin/activate
