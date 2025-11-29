@@ -132,7 +132,7 @@ def _install_rpackage(
     if repos_extra:
         if isinstance(repos_extra, list):
             for _r in repos_extra:
-                if _r not in repos and isinstance(_r, str):
+                if isinstance(_r, str) and _r not in repos:
                     repos.append(_r)
         elif repos_extra not in repos:
             repos.append(repos_extra)
@@ -189,7 +189,7 @@ def _install_rpackage(
             utils.install_packages(
                 StrVector((package,)),
                 repos=StrVector(repos),
-                type="source",
+                # dont set type, let R manage this.
                 Ncpus=cores,
             )
             installed_version = _get_r_pkg_version(package)
