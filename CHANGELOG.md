@@ -1,3 +1,5 @@
+## 0.1.8 - Crossplatform testing, 
+
 ## 0.1.7 - Automatic r imports after installation and import failure warning
 
 * Fixed an issue where the library could refuse import in case of missing R deps
