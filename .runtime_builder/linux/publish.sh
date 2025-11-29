@@ -6,7 +6,7 @@ set -eu
 #
 # Defaults:
 #   TAG         = latest
-#   CONTEXT_DIR = runtime-builder
+#   CONTEXT_DIR = .runtime_builder
 #   DOCKERFILE  = <CONTEXT_DIR>/Dockerfile
 #
 # Required env vars:
@@ -18,7 +18,7 @@ set -eu
 #       GHCR_USER and GHCR_TOKEN (a PAT with "write:packages")
 
 TAG="${1:-latest}"
-CONTEXT_DIR="${2:-runtime-builder}"
+CONTEXT_DIR="${2:-.runtime_builder}"
 DOCKERFILE="${3:-${CONTEXT_DIR}/Dockerfile}"
 
 # Determine owner (org/user) for ghcr.io/<OWNER>/<IMAGE_NAME>
