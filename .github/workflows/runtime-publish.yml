@@ -140,9 +140,10 @@ jobs:
                 libpng-dev \
                 libtiff5-dev \
                 libjpeg-dev \
-                gfortran-9 \
-                libv8-dev
+                gcc-9 \
+                gfortran-9
 
+              update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 100
               update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-9 100
 
               echo "== Creating Python 3.12 venv =="
