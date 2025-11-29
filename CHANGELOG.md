@@ -1,3 +1,8 @@
+## 0.1.7 - Automatic r imports after installation and import failure warning
+
+* Fixed an issue where the library could refuse import in case of missing R deps
+* R libraries are now automatically imported after installation
+
 ## 0.1.6 - Fix segfaults, stabilize R imports, faster cold starts
 
 ### Core stability
