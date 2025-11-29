@@ -30,18 +30,43 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Create runtime pre-release
-        id: create_release
-        uses: actions/create-release@v1
+      - name: Get or create runtime pre-release
+        id: get_or_create_release
+        uses: actions/github-script@v7
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag || 'runtime-dev' }}
+          RUNTIME_VERSION: ${{ inputs.runtime_version || 'runtime-dev' }}
         with:
-          tag_name: ${{ inputs.tag || 'runtime-dev' }}
-          release_name: "Runtime ${{ inputs.runtime_version || 'runtime-dev' }}"
-          body: |
-            brmspy prebuilt runtimes for version ${{ inputs.runtime_version || 'runtime-dev' }}.
-          draft: false
-          prerelease: true
+          script: |
+            const tag = process.env.TAG;
+            const runtimeVersion = process.env.RUNTIME_VERSION;
+            const { owner, repo } = context.repo;
+
+            let release;
+            try {
+              // Try to find existing release by tag
+              release = await github.rest.repos.getReleaseByTag({
+                owner,
+                repo,
+                tag
+              });
+              core.info(`Found existing release for tag ${tag}: id=${release.data.id}`);
+            } catch (error) {
+              if (error.status !== 404) throw error;
+
+              core.info(`No release for tag ${tag}, creating one...`);
+              release = await github.rest.repos.createRelease({
+                owner,
+                repo,
+                tag_name: tag,
+                name: `Runtime ${runtimeVersion}`,
+                body: `brmspy prebuilt runtimes for version ${runtimeVersion}.`,
+                draft: false,
+                prerelease: true
+              });
+            }
+
+            core.setOutput("upload_url", release.data.upload_url);
 
   publish:
     needs: create-release
@@ -109,6 +134,38 @@ jobs:
           echo "RUNTIME_TARBALL=$RUNTIME_TARBALL" >> "$GITHUB_ENV"
           echo "RUNTIME_FILENAME=$RUNTIME_FILENAME" >> "$GITHUB_ENV"
           echo "Built runtime: $RUNTIME_TARBALL"
+
+      - name: Delete existing asset if it exists
+        uses: actions/github-script@v7
+        env:
+          TAG: ${{ inputs.tag || 'runtime-dev' }}
+          ASSET_NAME: "runtime-${{ inputs.runtime_version || 'runtime-dev' }}-${{ matrix.os }}.tar.gz"
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const tag = process.env.TAG;
+            const assetName = process.env.ASSET_NAME;
+
+            // Get release by tag
+            const release = await github.rest.repos.getReleaseByTag({
+              owner,
+              repo,
+              tag
+            });
+
+            const assets = release.data.assets || [];
+            const existing = assets.find(a => a.name === assetName);
+
+            if (existing) {
+              core.info(`Deleting existing asset: ${assetName} (id=${existing.id})`);
+              await github.rest.repos.deleteReleaseAsset({
+                owner,
+                repo,
+                asset_id: existing.id
+              });
+            } else {
+              core.info(`No existing asset named ${assetName}`);
+            }
 
       # ---- Attest the tarball (build provenance) ----
       - name: Generate artifact attestation
