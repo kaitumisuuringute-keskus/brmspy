@@ -278,23 +278,29 @@ def install_brms(
     rstan_version: str = "latest"
 ):
     """
-    Install brms R package, optionally cmdstanr, and CmdStan compiler or rstan.
+    Install brms R package, optionally cmdstanr and CmdStan compiler, or rstan.
     
     Parameters
     ----------
-    version : str, default="latest"
+    brms_version : str, default="latest"
         brms version: "latest", "2.23.0", or ">=2.20.0"
-    repo : str, default="https://cran.rstudio.com"
-        CRAN repository URL
-    install_cmdstan : bool, default=True
-        Whether to install cmdstanr and CmdStan
+    repo : str | None, default=None
+        Extra CRAN repository URL
+    install_cmdstanr : bool, default=True
+        Whether to install cmdstanr and build CmdStan compiler
+    install_rstan : bool, default=False
+        Whether to install rstan (alternative to cmdstanr)
+    cmdstanr_version : str, default="latest"
+        cmdstanr version: "latest", "0.8.1", or ">=0.8.0"
+    rstan_version : str, default="latest"
+        rstan version: "latest", "2.32.6", or ">=2.32.0"
     
     Examples
     --------
     >>> from brmspy import brms
     >>> brms.install_brms()
     >>> brms.install_brms(brms_version="2.23.0")
-    >>> brms.install_brms(install_cmdstanr=False)
+    >>> brms.install_brms(install_cmdstanr=False, install_rstan=True)
     """
     print("Installing brms...")
     _install_rpackage("brms", version=brms_version, repos_extra=[repo])
