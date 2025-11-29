@@ -19,7 +19,11 @@ set -eu
 
 TAG="${1:-latest}"
 CONTEXT_DIR="${2:-.runtime_builder}"
-DOCKERFILE="${3:-${CONTEXT_DIR}/Dockerfile}"
+DOCKERFILE="${3:-$CONTEXT_DIR/Dockerfile}"
+
+echo "TAG=$TAG"
+echo "CONTEXT_DIR=$CONTEXT_DIR"
+echo "DOCKERFILE=$DOCKERFILE"
 
 # Determine owner (org/user) for ghcr.io/<OWNER>/<IMAGE_NAME>
 if [ -n "${GITHUB_REPOSITORY:-}" ]; then
