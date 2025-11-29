@@ -2,6 +2,9 @@ name: build-linux-runtime-image
 
 on:
   workflow_dispatch:
+  push: # TEMPORARY. REMOVE BEFORE MERGE
+    branches:
+      - dev
 
 jobs:
   build-linux-runtime:
