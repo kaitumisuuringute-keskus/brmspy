@@ -24,12 +24,17 @@ Example:
     >>> az.summary(model.idata)
 """
 
-__version__ = "0.1.8"
+__version__ = "0.1.9"
 __author__ = "Remi Sebastian Kits, Adam Haber"
 __license__ = "Apache-2.0"
 
 # Import brms module for use as: from brmspy import brms
 from brmspy import brms
+from brmspy.binaries import (
+    system_fingerprint,
+    activate_runtime,
+    install_and_activate_runtime
+)
 from brmspy.brms import (
     get_brms_data,
     fit,
@@ -62,7 +67,6 @@ __all__ = [
     "get_brms_data",
     "fit",
     "formula",
-    "install_brms",
     "posterior_predict",
     "posterior_epred",
     "posterior_linpred",
@@ -71,6 +75,13 @@ __all__ = [
     "make_stancode",
     "summary",
     "prior",
+
+    # installation
+    "install_brms",
+    "system_fingerprint",
+    "activate_runtime",
+    "install_and_activate_runtime",
+
 
     # return types
     "FitResult",

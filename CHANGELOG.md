@@ -1,3 +1,7 @@
+## 0.1.9 - 
+
+
+
 ## 0.1.8 - Rstan support, version pinning, and cross-platform fixes
 
 **Features**
