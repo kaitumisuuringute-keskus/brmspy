@@ -9,12 +9,20 @@ on:
 jobs:
   build-linux-runtime:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Build & push runtime builder image
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GHCR_OWNER: ${{ github.repository_owner }}
         run: |
             chmod +x .runtime_builder/linux/publish.sh
             .runtime_builder/linux/publish.sh ubuntu18-gcc9
