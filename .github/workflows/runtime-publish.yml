@@ -128,7 +128,12 @@ jobs:
 
               echo "== Installing missing system libs for rpy2 =="
               apt-get update
-              apt-get install -y --no-install-recommends libpcre2-dev
+              apt-get install -y --no-install-recommends \
+                r-base-dev \
+                libpcre2-dev \
+                libblas-dev \
+                liblapack-dev \
+                gfortran
 
               echo "== Creating Python 3.12 venv =="
               python3.12 -m venv .venv
