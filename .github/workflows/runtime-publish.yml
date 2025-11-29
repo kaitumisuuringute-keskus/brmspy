@@ -7,10 +7,12 @@ on:
         description: "Logical runtime version (e.g. 0.1.0)"
         required: true
         type: string
+        default: "0.1.0"
       tag:
         description: "Git tag for the runtime release (e.g. runtime-v0.1.0)"
         required: true
         type: string
+        default: "runtime-v0.1.0"
   push: # TEMPORARY. REMOVE BEFORE MERGE
     branches:
       - dev
