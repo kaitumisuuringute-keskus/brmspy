@@ -18,6 +18,7 @@ from brmspy.types import IDFit, PriorSpec
 
 _brms = None
 _cmdstanr = None
+_rstan = None
 _posterior = None
 _base = None
 
@@ -35,11 +36,18 @@ def _get_brms():
     ImportError
         If brms is not installed
     """
-    global _brms, _cmdstanr, _base, _posterior
+    global _brms, _cmdstanr, _base, _posterior, _rstan
     if _brms is None:
         print("brmspy: Importing R libraries...")
         try:
-            _cmdstanr = rpackages.importr("cmdstanr")
+            try:
+                _cmdstanr = rpackages.importr("cmdstanr")
+            except Exception as e:
+                _cmdstanr = None
+            try:
+                _rstan = rpackages.importr("rstan")
+            except Exception as e:
+                _rstan = None
             _posterior = rpackages.importr("posterior")
             _brms = rpackages.importr("brms")
             _base = rpackages.importr("base")

@@ -114,7 +114,8 @@ def pytest_collection_modifyitems(config, items):
     """
     skip_requires_brms = pytest.mark.skip(reason="brms not installed - run: python -c 'import brmspy; brmspy.install_brms()'")
     skip_requires_crossplatform = pytest.mark.skip(reason="crossplatform test. only runs within githubs cross-platform-tests workflow.'")
-
+    skip_only_using_crossplatform = pytest.mark.skip(reason="Running in crossplatform-only mode!'")
+    
     user_mark_expr = config.getoption("-m") or ""
     crossplatform_allowed = (
         "crossplatform" in user_mark_expr
@@ -133,5 +134,8 @@ def pytest_collection_modifyitems(config, items):
     for item in items:
         if not brms_is_available and "requires_brms" in item.keywords:
             item.add_marker(skip_requires_brms)
-        if "crossplatform" in item.keywords and not crossplatform_allowed:
+        if not crossplatform_allowed and "crossplatform" in item.keywords:
             item.add_marker(skip_requires_crossplatform)
+        if crossplatform_allowed and "crossplatform" not in item.keywords:
+            item.add_marker(skip_only_using_crossplatform)
+            

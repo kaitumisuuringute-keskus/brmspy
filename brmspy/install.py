@@ -89,7 +89,7 @@ def _get_linux_repo():
 def _install_rpackage(
     package: str,
     version: Optional[str] = None,
-    repos_extra: Optional[Union[str, list[str]]] = None,
+    repos_extra: Optional[Union[str, list[Optional[str]]]] = None,
 ):
     """
     Ensure an R package is installed, with optional version constraint.
@@ -202,7 +202,7 @@ def _build_cmstanr():
 
 def install_brms(
     brms_version: str = "latest",
-    repo: str = "https://cran.rstudio.com",
+    repo: Optional[str] = None,
     install_cmdstanr: bool = True,
     install_rstan: bool = False,
     cmdstanr_version: str = "latest",
