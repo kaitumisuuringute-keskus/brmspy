@@ -18,7 +18,7 @@ set -eu
 #       GHCR_USER and GHCR_TOKEN (a PAT with "write:packages")
 
 TAG="${1:-latest}"
-CONTEXT_DIR="${2:-.runtime_builder}"
+CONTEXT_DIR="${2:-.runtime_builder/linux}"
 DOCKERFILE="${3:-$CONTEXT_DIR/Dockerfile}"
 
 echo "TAG=$TAG"
