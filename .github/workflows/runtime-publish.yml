@@ -77,6 +77,7 @@ jobs:
         os: [ubuntu-latest]
 
     runs-on: ${{ matrix.os }}
+    container: ${{ matrix.os == 'ubuntu-latest' && 'ghcr.io/kaitumisuuringute-keskus/brmspy-runtime-builder:ubuntu18-gcc9' || '' }}
     permissions:
       contents: write        # upload assets
       id-token: write        # for attestation
