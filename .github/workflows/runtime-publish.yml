@@ -140,7 +140,8 @@ jobs:
                 libpng-dev \
                 libtiff5-dev \
                 libjpeg-dev \
-                gfortran
+                gfortran-9 \
+                libv8-dev
 
               echo "== Creating Python 3.12 venv =="
               python3.12 -m venv .venv
