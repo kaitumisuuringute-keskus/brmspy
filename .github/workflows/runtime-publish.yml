@@ -111,13 +111,13 @@ jobs:
               echo "== Toolchain =="
               ldd --version
               g++ --version
-              python3.10 --version || true
+              python3.12 --version || true
 
               echo "== Installing R $R_VERSION =="
               .runtime_builder/linux/install_r.sh "$R_VERSION"
 
-              echo "== Creating Python 3.10 venv =="
-              python3.10 -m venv .venv
+              echo "== Creating Python 3.12 venv =="
+              python3.12 -m venv .venv
               . .venv/bin/activate
 
               echo "== Installing Python deps =="
