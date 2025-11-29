@@ -30,6 +30,7 @@ def _run_r_json(code: str) -> dict:
     return json.loads(json_str)
 
 script_path = os.path.realpath(__file__)
+script_dir = os.path.dirname(script_path)
 
 def collect_runtime_metadata() -> dict:
     """
@@ -40,7 +41,7 @@ def collect_runtime_metadata() -> dict:
       - per-package info (Package, Version, LibPath, Priority)
     Returns a Python dict.
     """
-    with open(os.path.join(script_path, "build-manifest.R"), "r") as f:
+    with open(os.path.join(script_dir, "build-manifest.R"), "r") as f:
         r_code = f.read()
     # Make sure jsonlite is available
     ro.r('if (!requireNamespace("jsonlite", quietly = TRUE)) '
