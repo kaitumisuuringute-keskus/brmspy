@@ -10,15 +10,81 @@ import rpy2.robjects as ro
 
 def activate_runtime(runtime_root: Union[str, Path]) -> None:
     """
-    Given a runtime root directory (containing manifest.json, Rlib/, cmdstan/),
-    hook it into the current R session via rpy2:
-      - prepend Rlib/ to .libPaths()
-      - set cmdstanr::set_cmdstan_path()
-      - do basic sanity checks
+    Activate a prebuilt brms runtime bundle in the current R session.
+    
+    Configures the embedded R session (via rpy2) to use libraries and
+    CmdStan from a prebuilt runtime bundle. Updates R's library paths
+    and sets cmdstanr's CmdStan path, then performs sanity checks.
+    
+    Parameters
+    ----------
+    runtime_root : str or Path
+        Path to runtime bundle root directory containing:
+        - manifest.json: Bundle metadata and fingerprint
+        - Rlib/: R package library with brms, cmdstanr, etc.
+        - cmdstan/: CmdStan installation
+    
+    Raises
+    ------
+    RuntimeError
+        If required directories/files are missing or validation fails
+    
+    Notes
+    -----
+    **Important Limitations:**
+    
+    This function reconfigures the running embedded R session but does NOT
+    fully restart R (rpy2 cannot do that). For a truly clean environment:
+    - Call this function BEFORE loading any R packages
+    - Or restart the Python process after installation
+    
+    **What this function does:**
+    
+    1. Validates runtime bundle structure (manifest, Rlib, cmdstan directories)
+    2. Optionally verifies system fingerprint matches bundle fingerprint
+    3. Replaces R's .libPaths() with runtime Rlib directory
+    4. Sets cmdstanr::set_cmdstan_path() to runtime cmdstan directory
+    5. Performs sanity checks (brms and cmdstanr load successfully)
+    
+    **Fingerprint Validation:**
+    
+    If available, validates that the runtime bundle's fingerprint (from
+    manifest.json) matches the current system fingerprint. This prevents
+    incompatible bundles (e.g., Linux bundle on macOS) from being activated.
+    
+    Examples
+    --------
 
-    This does NOT fully "restart R" (rpy2 cannot do that); it reconfigures
-    the running embedded R. For a truly clean environment, call this before
-    loading any R packages, or restart the Python process after installation.
+    ```python
+    from pathlib import Path
+    from brmspy.binaries.use import activate_runtime
+    
+    # Activate a previously installed runtime
+    runtime_path = Path.home() / ".brmspy" / "runtime" / "linux-x86_64-r4.3"
+    activate_runtime(runtime_path)
+    
+    # Now brms and cmdstanr use the prebuilt bundle
+    from brmspy import fit
+    
+    result = fit("y ~ x", data={"y": [1, 2, 3], "x": [1, 2, 3]})
+    ```
+
+    ```python
+    # Activate runtime before any R operations (recommended)
+    import sys
+    from brmspy.binaries.use import activate_runtime
+    
+    # Do this FIRST, before importing brmspy or using rpy2
+    activate_runtime("/path/to/runtime")
+    
+    # Now safe to use brmspy
+    from brmspy import fit
+    ```
+
+    See Also
+    --------
+    install_and_activate_runtime : Download, install, and activate runtime
+    brmspy.binaries.env.system_fingerprint : Get current system identifier
     """
     runtime_root = Path(runtime_root).expanduser().resolve()
 
@@ -92,18 +158,141 @@ def install_and_activate_runtime(
     activate: bool = True,
 ) -> Path:
     """
-    Install (and optionally activate) a prebuilt runtime.
+    Download, install, and optionally activate a prebuilt brms runtime bundle.
+    
+    Flexible installation function that can download from URL, extract from
+    local archive, or use an already-extracted runtime directory. Installs
+    to a fingerprint-specific directory and optionally activates immediately.
+    
+    Parameters
+    ----------
+    url : str, optional
+        URL to download runtime bundle archive (.tar.gz, .tar.bz2, etc.)
+        Mutually exclusive with `bundle`
+    bundle : str or Path, optional
+        Local path to runtime bundle, either:
+        - Archive file (.tar.gz, .tar.bz2, etc.) to extract
+        - Directory containing extracted runtime
+        Mutually exclusive with `url`
+    runtime_version : str, default="0.1.0"
+        Expected runtime version for validation
+    base_dir : str or Path, optional
+        Base directory for runtime installation
+        Default: ~/.brmspy/runtime/
+        Runtime will be installed to: {base_dir}/{fingerprint}/
+    activate : bool, default=True
+        If True, call `activate_runtime()` after installation
+    
+    Returns
+    -------
+    Path
+        Path to installed runtime root directory
+    
+    Raises
+    ------
+    ValueError
+        If both or neither of `url` and `bundle` are provided
+    RuntimeError
+        If bundle structure is invalid or extraction fails
+    
+    Notes
+    -----
+    **Installation Process:**
+    
+    1. **Source Resolution:**
+       - If `url`: Downloads to temporary file
+       - If `bundle` (archive): Uses local archive
+       - If `bundle` (directory): Assumes already extracted
+    
+    2. **Extraction (for archives):**
+       - Extracts to temporary directory under base_dir
+       - Expects archive structure: runtime/{manifest.json,Rlib/,cmdstan/}
+       - Reads fingerprint from manifest.json
+    
+    3. **Installation:**
+       - Moves runtime to: {base_dir}/{fingerprint}/
+       - If fingerprint directory exists, removes it first
+       - Cleans up temporary files
+    
+    4. **Validation:**
+       - Verifies manifest.json exists and contains fingerprint
+       - Optionally warns if runtime_version mismatch
+    
+    5. **Activation (if requested):**
+       - Calls `activate_runtime()` to configure R session
+    
+    **Directory Structure:**
+    
+    After installation:
+    ```
+    ~/.brmspy/runtime/
+    ├── linux-x86_64-r4.3/
+    │   ├── manifest.json
+    │   ├── Rlib/
+    │   │   ├── brms/
+    │   │   ├── cmdstanr/
+    │   │   └── ... (other R packages)
+    │   └── cmdstan/
+    │       ├── bin/
+    │       └── ... (CmdStan files)
+    └── macos-arm64-r4.4/
+        └── ... (another runtime)
+    ```
+    
+    Examples
+    --------
 
-    - If `url` is provided, downloads a tar archive (e.g. .tar.gz) and extracts it.
-    - If `bundle` is provided:
-        * if it's a tar.* file -> extracts it
-        * if it's a directory -> assumes it's already an extracted runtime root
-    - Extracts into:
-        base_dir / fingerprint
-      where `fingerprint` is taken from manifest.json.
-    - Optionally calls `activate_runtime()`.
+    ```python
+    from brmspy.binaries.use import install_and_activate_runtime
+    
+    # Install from URL (e.g., GitHub Releases)
+    url = "https://github.com/user/repo/releases/download/v1.0/runtime.tar.gz"
+    runtime_path = install_and_activate_runtime(url=url)
+    print(f"Installed to: {runtime_path}")
+    
+    # Now brms is ready to use
+    from brmspy import fit
+    result = fit("y ~ x", data={"y": [1, 2, 3], "x": [1, 2, 3]})
+    ```
 
-    Returns: Path to the runtime root directory.
+    ```python
+    # Install from local archive without activating
+    from pathlib import Path
+    
+    bundle_file = Path("/tmp/runtime-linux-x86_64-r4.3.tar.gz")
+    runtime_path = install_and_activate_runtime(
+        bundle=bundle_file,
+        activate=False  # Don't activate yet
+    )
+    
+    # Later, manually activate
+    from brmspy.binaries.use import activate_runtime
+    activate_runtime(runtime_path)
+    ```
+
+    ```python
+    # Use already-extracted runtime directory
+    extracted_dir = Path("/path/to/extracted/runtime")
+    runtime_path = install_and_activate_runtime(
+        bundle=extracted_dir,
+        base_dir=Path.home() / "custom_runtimes"
+    )
+    ```
+
+    ```python
+    # Download and install with custom base directory
+    runtime_path = install_and_activate_runtime(
+        url="https://example.com/runtime.tar.gz",
+        base_dir="/opt/brmspy/runtimes",
+        runtime_version="1.0.0"
+    )
+    ```
+
+    See Also
+    --------
+    activate_runtime : Activate an installed runtime
+    brmspy.binaries.env.system_fingerprint : Get system fingerprint
+    brmspy.binaries.build.pack_runtime : Create runtime bundles
     """
     if (url is None) == (bundle is None):
         raise ValueError("Exactly one of `url` or `bundle` must be provided.")

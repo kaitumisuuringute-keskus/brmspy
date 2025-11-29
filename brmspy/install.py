@@ -593,6 +593,7 @@ def install_prebuilt(runtime_version="0.1.0", url: Optional[str] = None, bundle:
             runtime_version=runtime_version
         )
     except Exception as e:
+        print(f"{e}")
         return False
 
 def install_brms(

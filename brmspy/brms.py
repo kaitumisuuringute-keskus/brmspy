@@ -53,6 +53,15 @@ def get_brms_version() -> str:
     ------
     ImportError
         If brms is not installed
+    
+    Examples
+    --------
+
+    ```python
+    from brmspy import brms
+    version = brms.get_brms_version()
+    print(f"brms version: {version}")
+    ```
     """
     brms = _get_brms()
     utils = rpackages.importr("utils")
@@ -84,17 +93,41 @@ def get_brms_data(dataset_name: str) -> pd.DataFrame:
     Parameters
     ----------
     dataset_name : str
-        Dataset name ('epilepsy', 'kidney', 'inhaler', etc.)
+        Dataset name. Available datasets include:
+        - 'epilepsy': Epileptic seizure counts
+        - 'kidney': Kidney infection data with censoring
+        - 'inhaler': Inhaler usage study
+        - 'btdata': British Telecom share price data
+        - And many more from brms package
     
     Returns
     -------
     pd.DataFrame
-        Dataset as pandas DataFrame
+        Dataset as pandas DataFrame with column names preserved
+    
+    See Also
+    --------
+    brms::brmsdata : R documentation for available datasets
+        https://paulbuerkner.com/brms/reference/index.html#data
     
     Examples
     --------
-    >>> from brmspy import brms
-    >>> epilepsy = brms.get_brms_data("epilepsy")
+    Load epilepsy dataset:
+    
+    ```python
+    from brmspy import brms
+    epilepsy = brms.get_brms_data("epilepsy")
+    print(epilepsy.head())
+    print(epilepsy.columns)
+    ```
+
+    Load kidney dataset with censoring:
+    
+    ```python
+    kidney = brms.get_brms_data("kidney")
+    print(f"Shape: {kidney.shape}")
+    print(f"Censored observations: {kidney['censored'].sum()}")
+    ```
     """
     brms = _get_brms()
     with localconverter(default_converter + pandas2ri.converter + numpy2ri.converter) as cv:
@@ -118,23 +151,80 @@ def make_stancode(
     """
     Generate Stan code using brms::make_stancode().
     
+    Useful for inspecting the generated Stan model before fitting,
+    understanding the model structure, or using the code with other
+    Stan interfaces.
+    
     Parameters
     ----------
-    formula : str
-        brms formula
+    formula : str or FormulaResult
+        brms formula specification
     data : pd.DataFrame
         Model data
-    priors : list
-        Prior specifications
-    family : str
-        Distribution family
+    priors : list of PriorSpec, optional
+        Prior specifications from prior() function
+    family : str, default="poisson"
+        Distribution family (gaussian, poisson, binomial, etc.)
     sample_prior : str, default="no"
-        Sample from prior ("no", "yes", "only")
+        Whether to sample from prior:
+        - "no": No prior samples
+        - "yes": Include prior samples alongside posterior
+        - "only": Sample from prior only (no data)
+    formula_args : dict, optional
+        Additional arguments passed to formula()
     
     Returns
     -------
     str
-        Stan program code
+        Complete Stan program code as string
+    
+    See Also
+    --------
+    brms::make_stancode : R documentation
+        https://paulbuerkner.com/brms/reference/make_stancode.html
+    fit : Fit model instead of just generating code
+    make_standata : Generate Stan data block
+    
+    Examples
+    --------
+    Generate Stan code for simple model:
+    
+    ```python
+    from brmspy import brms
+    epilepsy = brms.get_brms_data("epilepsy")
+    
+    stan_code = brms.make_stancode(
+        formula="count ~ zAge + zBase * Trt + (1|patient)",
+        data=epilepsy,
+        family="poisson"
+    )
+    
+    print(stan_code[:500])  # Print first 500 characters
+    ```
+
+    With custom priors:
+    
+    ```python
+        from brmspy import prior
+        
+        stan_code = brms.make_stancode(
+            formula="count ~ zAge",
+            data=epilepsy,
+            priors=[prior("normal(0, 1)", class_="b")],
+            family="poisson"
+        )
+    ```
+
+    For prior predictive checks (sample_prior="only"):
+
+    ```
+    stan_code = brms.make_stancode(
+        formula="count ~ zAge",
+        data=epilepsy,
+        family="poisson",
+        sample_prior="only"
+    )
+    ```
     """
     brms = _get_brms()
 
@@ -165,25 +255,65 @@ def formula(
     **formula_args
 ) -> FormulaResult:
     """
-    Set up a model formula for use in the brms package allowing to define (potentially non-linear) additive multilevel models for all parameters of the assumed response distribution.
-
-    [BRMS documentation and parameters](https://paulbuerkner.com/brms/reference/brmsformula.html)
+    Set up a model formula for brms package.
     
+    Allows defining (potentially non-linear) additive multilevel models
+    for all parameters of the assumed response distribution.
+
     Parameters
     ----------
     formula : str
-        brms formula: "y ~ x + (1|group)"
-    **kwargs
+        brms formula specification, e.g., "y ~ x + (1|group)"
+    **formula_args : dict
         Additional brms::brmsformula() arguments:
-        decomp = "QR", center = True, sparse = False etc
+        
+        - decomp : str
+            Decomposition method (e.g., "QR" for QR decomposition)
+        - center : bool
+            Whether to center predictors (default True)
+        - sparse : bool
+            Use sparse matrix representation
+        - nl : bool
+            Whether formula is non-linear
+        - loop : bool
+            Use loop-based Stan code
     
     Returns
     -------
     FormulaResult
-        Object with .r (brmsformula) attributes
+        Object with .r (R brmsformula object) and .dict (Python dict) attributes
+    
+    See Also
+    --------
+    brms::brmsformula : R documentation
+        https://paulbuerkner.com/brms/reference/brmsformula.html
+    fit : Fit model using formula
     
     Examples
     --------
+    Basic formula:
+    
+    ```python
+        from brmspy import brms
+        f = brms.formula("y ~ x1 + x2 + (1|group)")
+    ```
+
+    With QR decomposition for numerical stability:
+    
+    ```python
+    f = brms.formula(
+        "reaction ~ days + (days|subject)",
+        decomp="QR"
+    )
+    ```
+
+    Multivariate formula:
+    ```
+        f = brms.formula(
+            "mvbind(y1, y2) ~ x1 + x2",
+            center=True
+        )
+    ```
     """
     brms = _get_brms()
     formula_args = kwargs_r(formula_args)
@@ -237,23 +367,79 @@ def fit(
     FitResult
         Object with .idata (arviz.InferenceData) and .r (brmsfit) attributes
     
+    See Also
+    --------
+    brms::brm : R documentation
+        https://paulbuerkner.com/brms/reference/brm.html
+    posterior_epred : Expected value predictions
+    posterior_predict : Posterior predictive samples
+    formula : Create formula object with options
+    
     Examples
     --------
-    from brmspy import brms, prior
+    Basic Poisson regression:
+    
+    ```python
+    from brmspy import brms
     import arviz as az
     
     epilepsy = brms.get_brms_data("epilepsy")
     model = brms.fit(
         formula="count ~ zAge + zBase * Trt + (1|patient)",
         data=epilepsy,
-        priors=[
-            prior("normal(0, 0.5)", "b")
-        ],
         family="poisson",
         chains=4,
         iter=2000
     )
-    >>> az.summary(model.idata)
+    
+    az.summary(model.idata)
+    ```
+    With custom priors:
+    
+    ```python
+    from brmspy import prior
+    
+    model = brms.fit(
+        formula="count ~ zAge + zBase * Trt + (1|patient)",
+        data=epilepsy,
+        priors=[
+            prior("normal(0, 0.5)", class_="b"),
+            prior("exponential(2)", class_="sd", group="patient")
+        ],
+        family="poisson",
+        chains=4
+    )
+    ```
+    Survival model with censoring:
+    
+    ```python
+    kidney = brms.get_brms_data("kidney")
+    
+    survival_model = brms.fit(
+        formula="time | cens(censored) ~ age + sex + disease + (1|patient)",
+        data=kidney,
+        family="weibull",
+        chains=4,
+        iter=4000,
+        warmup=2000,
+        cores=4,
+        seed=42
+    )
+    ```
+    Gaussian model with distributional regression:
+    
+    ```python
+        # Model both mean and variance
+        model = brms.fit(
+            formula=brms.formula(
+                "y ~ x",
+                sigma ~ "z"  # Model heteroscedasticity
+            ),
+            data=data,
+            family="gaussian",
+            chains=4
+        )
+    ```
     """
     brms = _get_brms()
 
@@ -405,23 +591,50 @@ def posterior_linpred(model: FitResult, newdata: typing.Optional[pd.DataFrame] =
     """
     Compute linear predictor of the model.
     
-    Calls brms::posterior_linpred() to get samples of the linear predictor.
+    Returns samples of the linear predictor (before applying the link function).
+    Useful for understanding the model's predictions on the linear scale.
 
-    [BRMS documentation and parameters](https://paulbuerkner.com/brms/reference/posterior_linpred.brmsfit.html)
-    
     Parameters
     ----------
     model : FitResult
         Fitted model from fit()
     newdata : pd.DataFrame, optional
         Data for predictions. If None, uses original data
-    **kwargs
-        Additional arguments to brms::posterior_linpred()
+    **kwargs : dict
+        Additional arguments to brms::posterior_linpred():
+        
+        - transform : bool - Apply inverse link function (default False)
+        - ndraws : int - Number of posterior draws
+        - summary : bool - Return summary statistics
     
     Returns
     -------
-    GenericResult
-        Object with .idata and .r attributes
+    PosteriorLinpredResult
+        Object with .idata (IDLinpred) and .r (R matrix) attributes
+    
+    See Also
+    --------
+    brms::posterior_linpred : R documentation
+        https://paulbuerkner.com/brms/reference/posterior_linpred.brmsfit.html
+    posterior_epred : Expected values on response scale
+    
+    Examples
+    --------
+    ```python
+        from brmspy import brms
+        
+        epilepsy = brms.get_brms_data("epilepsy")
+        model = brms.fit(
+            "count ~ zAge + zBase * Trt + (1|patient)",
+            data=epilepsy,
+            family="poisson",
+            chains=4
+        )
+        
+        # Linear predictor (log scale for Poisson)
+        linpred = brms.posterior_linpred(model)
+        print(linpred.idata.predictions)
+    ```
     """
     import rpy2.robjects as ro
     _get_brms()  # Ensure brms is loaded
@@ -451,23 +664,62 @@ def log_lik(model: FitResult, newdata: typing.Optional[pd.DataFrame] = None, **k
     """
     Compute log-likelihood values.
     
-    Calls brms::log_lik() to get log p(y|theta) for each observation.
+    Returns log p(y|theta) for each observation. Essential for model
+    comparison via LOO-CV and WAIC.
 
-    [BRMS documentation and parameters](https://paulbuerkner.com/brms/reference/log_lik.brmsfit.html)
-    
     Parameters
     ----------
     model : FitResult
         Fitted model from fit()
     newdata : pd.DataFrame, optional
         Data for predictions. If None, uses original data
-    **kwargs
-        Additional arguments to brms::log_lik()
+    **kwargs : dict
+        Additional arguments to brms::log_lik():
+        
+        - ndraws : int - Number of posterior draws
+        - combine_chains : bool - Combine chains (default True)
     
     Returns
     -------
-    GenericResult
-        Object with .idata and .r attributes
+    LogLikResult
+        Object with .idata (IDLogLik) and .r (R matrix) attributes
+    
+    See Also
+    --------
+    brms::log_lik : R documentation
+        https://paulbuerkner.com/brms/reference/log_lik.brmsfit.html
+    arviz.loo : Leave-One-Out Cross-Validation
+    arviz.waic : Widely Applicable Information Criterion
+    
+    Examples
+    --------
+    Compute log-likelihood for model comparison:
+    
+    ```python
+    from brmspy import brms
+    import arviz as az
+    
+    epilepsy = brms.get_brms_data("epilepsy")
+    model = brms.fit(
+        "count ~ zAge + zBase * Trt + (1|patient)",
+        data=epilepsy,
+        family="poisson",
+        chains=4
+    )
+    
+    # LOO-CV for model comparison
+    loo = az.loo(model.idata)
+    print(loo)
+    ```
+
+    Compare multiple models:
+    ```python
+    model1 = brms.fit("count ~ zAge + (1|patient)", data=epilepsy, family="poisson", chains=4)
+    model2 = brms.fit("count ~ zAge + zBase + (1|patient)", data=epilepsy, family="poisson", chains=4)
+    
+    comp = az.compare({'model1': model1.idata, 'model2': model2.idata})
+    print(comp)
+    ```
     """
     import rpy2.robjects as ro
     _get_brms()  # Ensure brms is loaded
@@ -513,12 +765,20 @@ def summary(model: FitResult, **kwargs) -> pd.DataFrame:
     pd.DataFrame
         Summary statistics with columns for Estimate, Est.Error, and credible intervals
     
+    See Also
+    --------
+    brms::summary.brmsfit : R documentation
+        https://paulbuerkner.com/brms/reference/summary.brmsfit.html
+    
     Examples
     --------
-    >>> from brmspy import brms
-    >>> model = brms.fit("y ~ x", data=data, chains=4)
-    >>> summary_df = brms.summary(model)
-    >>> print(summary_df)
+    ```python
+    from brmspy import brms
+    
+    model = brms.fit("y ~ x", data=data, chains=4)
+    summary_df = brms.summary(model)
+    print(summary_df)
+    ```
     """
     import rpy2.robjects as ro
     from rpy2.robjects.conversion import localconverter

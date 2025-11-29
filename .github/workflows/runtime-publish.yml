@@ -59,8 +59,8 @@ jobs:
                 owner,
                 repo,
                 tag_name: tag,
-                name: `Runtime ${runtimeVersion}`,
-                body: `brmspy prebuilt runtimes for version ${runtimeVersion}.`,
+                name: `Runtimes`,
+                body: `brmspy prebuilt runtimes for cmdstanr and brms.`,
                 draft: false,
                 prerelease: true
               });
@@ -125,23 +125,6 @@ jobs:
 
               echo "== Installing R $R_VERSION =="
               .runtime_builder/linux/install_r.sh "$R_VERSION"
-
-              echo "== Installing missing system libs for rpy2 =="
-              apt-get update
-              apt-get install -y --no-install-recommends \
-                libpcre2-dev \
-                libblas-dev \
-                liblapack-dev \
-                libv8-dev \
-                libglpk-dev \
-                libharfbuzz-dev \
-                libfribidi-dev \
-                libfreetype6-dev \
-                libpng-dev \
-                libtiff5-dev \
-                libjpeg-dev \
-                gcc-9 \
-                gfortran-9
 
               update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 100
               update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-9 100

@@ -8,14 +8,109 @@ from packaging.version import Version
 from rpy2 import robjects as ro
 
 def _get_r_version() -> Version:
-    """Return R version as packaging.Version."""
+    """
+    Get current R version from active R installation via rpy2.
+    
+    Queries the embedded R session to retrieve version information and
+    converts it to a packaging.Version object for version comparisons.
+    
+    Returns
+    -------
+    packaging.version.Version
+        R version as Version object (e.g., Version("4.3.2"))
+    
+    Notes
+    -----
+    This function uses rpy2 to call R's `getRversion()` function and
+    converts the result to Python's packaging.Version for semantic
+    version comparisons.
+    
+    Examples
+    --------
+
+    ```python
+    from brmspy.helpers.rtools import _get_r_version
+    
+    r_ver = _get_r_version()
+    print(r_ver)  # e.g., "4.3.2"
+    
+    # Version comparisons
+    if r_ver >= Version("4.3.0"):
+        print("R 4.3+")
+    ```
+
+    See Also
+    --------
+    pick_rtools_for_r : Select appropriate Rtools version for R
+    """
     ver_str = str(cast(list, ro.r('as.character(getRversion())'))[0])
     return Version(ver_str)
 
 
 def pick_rtools_for_r(r_ver: Version) -> str | None:
     """
-    Return the Rtools 'major' tag: '40', '42', '43', '44', '45', or None for legacy.
+    Select appropriate Rtools version tag for given R version.
+    
+    Maps R version to compatible Rtools major version. Rtools is required
+    on Windows to compile Stan models and R packages with C++ code.
+    
+    Parameters
+    ----------
+    r_ver : packaging.version.Version
+        R version to match
+    
+    Returns
+    -------
+    str or None
+        Rtools version tag ('40', '42', '43', '44', '45') or None if
+        R version is too old (< 4.0.0) for automatic handling
+    
+    Notes
+    -----
+    **R to Rtools Version Mapping:**
+    
+    - R 4.0.x - 4.1.x: Rtools 40
+    - R 4.2.x: Rtools 42
+    - R 4.3.x: Rtools 43
+    - R 4.4.x: Rtools 44
+    - R 4.5.x+: Rtools 45
+    - R < 4.0.0: None (legacy, not supported)
+    
+    **Rtools Purpose:**
+    
+    Rtools provides MinGW-w64 compiler toolchain on Windows for:
+    - Compiling Stan models (required by cmdstanr)
+    - Building R packages from source
+    - C++ compilation for brms/Stan
+    
+    Examples
+    --------
+
+    ```python
+    from packaging.version import Version
+    from brmspy.helpers.rtools import pick_rtools_for_r
+    
+    # R 4.3.2 needs Rtools 43
+    tag = pick_rtools_for_r(Version("4.3.2"))
+    print(tag)  # "43"
+    
+    # R 4.4.1 needs Rtools 44
+    tag = pick_rtools_for_r(Version("4.4.1"))
+    print(tag)  # "44"
+    
+    # Legacy R not supported
+    tag = pick_rtools_for_r(Version("3.6.3"))
+    print(tag)  # None
+    ```
+
+    See Also
+    --------
+    _install_rtools_for_current_r : Automatically install matching Rtools
+    _get_r_version : Get current R version
+    
+    References
+    ----------
+    .. [1] Rtools download page: https://cran.r-project.org/bin/windows/Rtools/
     """
     if r_ver < Version("4.0.0"):
         return None  # legacy, not worth supporting in brmspy
@@ -27,6 +122,9 @@ def pick_rtools_for_r(r_ver: Version) -> str | None:
         return "43"  # R 4.3.x
     if r_ver < Version("4.5.0"):
         return "44"  # R 4.4.x
+    if r_ver < Version("4.6.0"):
+        return "44"  # R 4.4.x
+    
     return "45"      # R 4.5.x and up
 
 
@@ -39,6 +137,57 @@ RTOOLS_INSTALLERS = {
 }
 
 def _silent_install_exe(url: str, label: str) -> None:
+    """
+    Download and silently install Windows executable.
+    
+    Downloads installer from URL to temp directory and runs it with
+    silent installation flags. Used for automated Rtools installation.
+    
+    Parameters
+    ----------
+    url : str
+        Direct download URL for .exe installer
+    label : str
+        Label for downloaded file (e.g., "rtools44")
+    
+    Raises
+    ------
+    subprocess.CalledProcessError
+        If installer execution fails
+    
+    Notes
+    -----
+    **Silent Installation Flags:**
+    
+    Uses Inno Setup silent install flags:
+    - `/VERYSILENT`: No GUI, no progress window
+    - `/SUPPRESSMSGBOXES`: Suppress message boxes
+    - `/NORESTART`: Don't restart system after install
+    
+    **Download Location:**
+    
+    Installer is downloaded to system temp directory (tempfile.gettempdir()).
+    
+    **Subprocess Behavior:**
+    
+    Blocks until installation completes. Installation typically takes 1-2 minutes.
+    
+    Examples
+    --------
+
+    ```python
+    from brmspy.helpers.rtools import _silent_install_exe
+    
+    # Install Rtools 44 silently
+    url = "https://cran.r-project.org/bin/windows/Rtools/rtools44/files/rtools44-6459-6401.exe"
+    _silent_install_exe(url, "rtools44")
+    # Rtools 44 now installed to C:\\rtools44
+    ```
+
+    See Also
+    --------
+    _install_rtools_for_current_r : High-level Rtools installation
+    """
     tmp_dir = tempfile.gettempdir()
     exe_path = os.path.join(tmp_dir, f"{label}.exe")
     print(f"brmspy: downloading {label} from {url}")
@@ -57,8 +206,80 @@ def _silent_install_exe(url: str, label: str) -> None:
 
 def _install_rtools_for_current_r(ci_only: bool = True) -> Optional[str]:
     """
-    Detect R version via rpy2, install matching Rtools if missing.
-    Returns the rtools tag ('40', '42', ...) or None.
+    Auto-detect R version and install matching Rtools if needed (Windows only).
+    
+    Detects current R version via rpy2, determines appropriate Rtools version,
+    checks if already installed, and installs if missing. Updates PATH to
+    include Rtools binaries for both Python and R sessions.
+    
+    Parameters
+    ----------
+    ci_only : bool, default=True
+        Safety flag: if True, only runs in CI environments. Set to False
+        to allow installation in local environments.
+    
+    Returns
+    -------
+    str or None
+        Rtools version tag installed ('40', '42', '43', '44', '45'),
+        or None if:
+        - Not on Windows
+        - R version too old/new for automatic handling
+        - Rtools already present
+        - CI safety check failed
+    
+    Notes
+    -----
+    **Safety Features:**
+    
+    By default (ci_only=True), refuses to auto-install unless in CI environment.
+    This prevents unexpected system modifications on user machines.
+    
+    **Installation Process:**
+    
+    1. Check if Windows (return None otherwise)
+    2. Check CI safety flag
+    3. Detect R version via rpy2
+    4. Map R version to Rtools version
+    5. Check if make command available (indicates Rtools present)
+    6. Download and silently install Rtools if missing
+    7. Update PATH for Python subprocesses
+    8. Update R's PATH environment directly via rpy2
+    9. Force R to re-scan for build tools (pkgbuild)
+    
+    **PATH Updates:**
+    
+    After installation, adds these directories to PATH:
+    - `C:\\rtools{tag}\\usr\\bin`: Unix utilities
+    - `C:\\rtools{tag}\\mingw64\\bin`: MinGW compiler
+    
+    **R Environment Update:**
+    
+    Critical: Since rpy2 has already started R, PATH changes must be
+    applied directly to R's environment via `Sys.setenv()` in addition
+    to Python's `os.environ`.
+    
+    Examples
+    --------
+
+    ```python
+    from brmspy.helpers.rtools import _install_rtools_for_current_r
+    
+    tag = _install_rtools_for_current_r(ci_only=True)
+    if tag:
+        print(f"Rtools {tag} installed/verified")
+    ```
+
+    See Also
+    --------
+    pick_rtools_for_r : Determine Rtools version for R version
+    _silent_install_exe : Download and install executable
+    _get_r_version : Get current R version
+    
+    References
+    ----------
+    .. [1] Rtools information: https://cran.r-project.org/bin/windows/Rtools/
+    .. [2] cmdstanr Rtools setup: https://mc-stan.org/cmdstanr/articles/cmdstanr.html#installation
     """
     if platform.system() != "Windows":
         return None
