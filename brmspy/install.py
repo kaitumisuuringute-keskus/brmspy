@@ -16,8 +16,43 @@ from brmspy.helpers.singleton import _get_brms, _invalidate_singletons
 
 def _parse_version_spec(spec: Optional[str]) -> Tuple[str, Optional[Version]]:
     """
-    Parse a spec like '>=2.21.0', '==2.20.0', '2.21.0'.
-    Returns (op, Version) where op in {'any','==','>=','<='}.
+    Parse version specification string into operator and Version object.
+    
+    Supports version constraints commonly used in package managers:
+    bare version ("2.21.0") treated as exact match, explicit operators
+    ("==2.21.0", ">=2.20.0", "<=2.23.0"), or None/empty for any version.
+    
+    Parameters
+    ----------
+    spec : str or None
+        Version specification string. Formats:
+        - None or empty: accept any version
+        - "2.21.0": exact version (treated as ==)
+        - "==2.21.0": exact version
+        - ">=2.20.0": minimum version
+        - "<=2.23.0": maximum version
+    
+    Returns
+    -------
+    tuple of (str, Version or None)
+        (operator, version) where operator is one of:
+        - "any": no version constraint
+        - "==": exact version match
+        - ">=": minimum version
+        - "<=": maximum version
+    
+    Examples
+    --------
+    ```python
+    _parse_version_spec("2.21.0")
+    # ('==', <Version('2.21.0')>)
+    
+    _parse_version_spec(">=2.20.0")
+    # ('>=', <Version('2.20.0')>)
+    
+    _parse_version_spec(None)
+    # ('any', None)
+    ```
     """
     if spec is None:
         return "any", None
@@ -29,6 +64,41 @@ def _parse_version_spec(spec: Optional[str]) -> Tuple[str, Optional[Version]]:
     return "==", Version(spec)
 
 def _satisfies(installed: Version, op: str, required: Optional[Version]) -> bool:
+    """
+    Check if installed version satisfies version constraint.
+    
+    Evaluates version requirements using packaging.Version comparison.
+    Used to determine if package upgrade is needed.
+    
+    Parameters
+    ----------
+    installed : Version
+        Currently installed package version
+    op : str
+        Comparison operator: "any", "==", ">=", or "<="
+    required : Version or None
+        Required version, or None if op is "any"
+    
+    Returns
+    -------
+    bool
+        True if installed version satisfies constraint
+    
+    Examples
+    --------
+    ```python
+    from packaging.version import Version
+    
+    _satisfies(Version("2.21.0"), ">=", Version("2.20.0"))
+    # True
+    
+    _satisfies(Version("2.19.0"), ">=", Version("2.20.0"))
+    # False
+    
+    _satisfies(Version("2.21.0"), "any", None)
+    # True
+    ```
+    """
     if op == "any" or required is None:
         return True
     if op == "==":
@@ -37,12 +107,34 @@ def _satisfies(installed: Version, op: str, required: Optional[Version]) -> bool
         return installed >= required
     if op == "<=":
         return installed <= required
-    # shouldn't get here
     return True
 
 def _get_r_pkg_version(package: str) -> Optional[Version]:
     """
-    Return installed R package version as packaging.Version, or None if not installed.
+    Get installed R package version.
+    
+    Queries R's package system via rpy2 to retrieve the installed
+    version of a package. Returns None if package is not installed.
+    
+    Parameters
+    ----------
+    package : str
+        R package name (e.g., "brms", "cmdstanr", "rstan")
+    
+    Returns
+    -------
+    Version or None
+        Package version if installed, None otherwise
+    
+    Examples
+    --------
+    ```python
+    _get_r_pkg_version("brms")
+    # <Version('2.21.0')>
+    
+    _get_r_pkg_version("nonexistent_package")
+    # None
+    ```
     """
     try:
         # utils::packageVersion("pkg") -> "x.y.z"
@@ -53,7 +145,42 @@ def _get_r_pkg_version(package: str) -> Optional[Version]:
     
 def _install_exact_version(package: str, version: Version, repos) -> None:
     """
-    Install an exact package version via remotes::install_version.
+    Install specific R package version using remotes::install_version().
+    
+    Pins installation to exact version, useful for reproducibility.
+    Requires the remotes R package, which is auto-installed if missing.
+    
+    Parameters
+    ----------
+    package : str
+        R package name
+    version : Version
+        Exact version to install
+    repos : list of str
+        Repository URLs for package installation
+    
+    Raises
+    ------
+    Exception
+        If installation fails or package version unavailable
+    
+    Notes
+    -----
+    Uses remotes::install_version() which downloads packages from CRAN
+    archives. Historical versions may not always be available, especially
+    for very recent or very old packages.
+    
+    Examples
+    --------
+    ```python
+    from packaging.version import Version
+    
+    _install_exact_version(
+        "brms",
+        Version("2.21.0"),
+        ["https://cloud.r-project.org"]
+    )
+    ```
     """
     # ensure remotes is available
     ro.r('if (!requireNamespace("remotes", quietly = TRUE)) '
@@ -67,7 +194,37 @@ def _install_exact_version(package: str, version: Version, repos) -> None:
 
 
 def _get_linux_repo():
-    """Detects Linux distro and returns the Posit Binary Manager URL."""
+    """
+    Detect Linux distribution and return Posit Package Manager URL.
+    
+    Reads /etc/os-release to identify the Linux distribution codename
+    (e.g., "jammy", "focal") and constructs the appropriate Posit
+    Package Manager binary repository URL. Falls back to Ubuntu 22.04
+    (jammy) if detection fails.
+    
+    Returns
+    -------
+    str
+        Posit Package Manager repository URL for detected distribution
+    
+    Notes
+    -----
+    Posit Package Manager (P3M) provides precompiled R packages for Linux,
+    dramatically speeding up installation by avoiding source compilation.
+    The URL format includes the Linux distribution codename to ensure
+    binary compatibility with the system's glibc version.
+    
+    Examples
+    --------
+
+    ```python
+        _get_linux_repo()  # On Ubuntu 22.04
+        # 'https://packagemanager.posit.co/cran/__linux__/jammy/latest'
+        
+        _get_linux_repo()  # On Ubuntu 20.04
+        # 'https://packagemanager.posit.co/cran/__linux__/focal/latest'
+    ```
+    """
     try:
         with open("/etc/os-release") as f:
             lines = f.readlines()
@@ -199,7 +356,35 @@ def _install_rpackage(
 
 
 def _install_rtools44_goblin_mode():
-    """Best-effort install of Rtools44 on CI Windows runner."""
+    """
+    Install Rtools44 on Windows CI runners (best-effort).
+    
+    Attempts automatic Rtools installation via Chocolatey or direct
+    download. Used in continuous integration environments where manual
+    installation is not possible. Not recommended for local development.
+    
+    This function is intentionally named "goblin_mode" to indicate it
+    uses aggressive tactics suitable only for CI environments.
+    
+    Raises
+    ------
+    subprocess.CalledProcessError
+        If Chocolatey installation fails
+    
+    Notes
+    -----
+    Installation methods (tried in order):
+    1. Chocolatey: `choco install rtools -y`
+    2. Direct download: Downloads and runs CRAN installer silently
+    3. PATH manipulation: Adds Rtools directories to environment
+    
+    For local development, manually install Rtools from:
+    https://cran.r-project.org/bin/windows/Rtools/
+    
+    See Also
+    --------
+    _build_cmstanr : Calls this if toolchain check fails
+    """
     # 1) Try Chocolatey first (usually present on GH Actions)
     if shutil.which("choco"):
         print("brmspy: Installing Rtools via Chocolatey...")
@@ -243,6 +428,54 @@ def _install_rtools44_goblin_mode():
 
 
 def _build_cmstanr():
+    """
+    Build and configure CmdStan compiler via cmdstanr.
+    
+    Downloads and compiles the CmdStan probabilistic programming language
+    compiler, which brms uses for model fitting. Handles Windows toolchain
+    verification and automatic Rtools installation if needed.
+    
+    The build process:
+    1. Verifies Windows toolchain (Rtools) if on Windows
+    2. Auto-installs Rtools if missing (CI only)
+    3. Downloads CmdStan source from GitHub
+    4. Compiles CmdStan using available CPU cores
+    5. Configures cmdstanr to use the compiled installation
+    
+    Raises
+    ------
+    Exception
+        If toolchain verification fails on Windows
+        If CmdStan compilation fails
+    
+    Notes
+    -----
+    **Performance**: Uses (n_cores - 1) for compilation to leave one core
+    available for system responsiveness. On systems with <= 4 cores, uses
+    all cores.
+    
+    **Windows Requirements**: Requires Rtools with compatible version:
+    - R 4.0-4.1: Rtools40
+    - R 4.2: Rtools42
+    - R 4.3: Rtools43
+    - R 4.4: Rtools44
+    - R 4.5+: Rtools45
+    
+    **Linux/macOS**: Requires C++ compiler (g++ >= 9 or clang >= 11)
+    
+    See Also
+    --------
+    install_brms : Main installation function that calls this
+    cmdstanr::install_cmdstan : R documentation
+        https://mc-stan.org/cmdstanr/reference/install_cmdstan.html
+    
+    Examples
+    --------
+    ```python
+    from brmspy.install import _build_cmstanr
+    _build_cmstanr()  # Downloads and compiles CmdStan
+    ```
+    """
     cores = multiprocessing.cpu_count()
     if cores > 4:
         cores -= 1
@@ -269,6 +502,80 @@ def _build_cmstanr():
     ro.r(f"cmdstanr::install_cmdstan(cores = {cores}, overwrite = FALSE)")
 
 def install_prebuilt(runtime_version="0.1.0", url: Optional[str] = None, bundle: Optional[str] = None):
+    """
+    Install prebuilt brmspy runtime bundle for fast setup.
+    
+    Downloads and activates a precompiled runtime containing:
+    - R packages (brms, cmdstanr, dependencies)
+    - Compiled CmdStan binary
+    - Complete environment ready for immediate use
+    
+    This reduces setup time from ~30 minutes to ~1 minute by avoiding
+    compilation. Available for specific platform/R version combinations.
+    
+    Parameters
+    ----------
+    runtime_version : str, default="0.1.0"
+        Runtime schema version (not pip version)
+    url : str, optional
+        Custom URL for runtime bundle. If None, uses GitHub releases
+    bundle : str, optional
+        Local path to runtime bundle (.tar.gz or directory)
+    
+    Returns
+    -------
+    bool
+        True if installation succeeded, False otherwise
+    
+    Raises
+    ------
+    RuntimeError
+        If prebuilt binaries not available for this platform
+    
+    Notes
+    -----
+    **Platform Support**: Prebuilt binaries are available for:
+    - Linux: x86_64, glibc >= 2.27, g++ >= 9
+    - macOS: x86_64 and arm64, clang >= 11
+    - Windows: x86_64 with Rtools
+    
+    **R Version**: Runtime includes all R packages, so they must match
+    your R installation's major.minor version (e.g., R 4.3.x).
+    
+    **System Fingerprint**: Runtime is selected based on:
+    - Operating system (linux/macos/windows)
+    - CPU architecture (x86_64/arm64)
+    - R version (major.minor)
+    
+    Example: `linux-x86_64-r4.3`
+    
+    See Also
+    --------
+    install_brms : Main installation function
+    brmspy.binaries.install_and_activate_runtime : Low-level installer
+    brmspy.binaries.system_fingerprint : Platform detection
+    
+    Examples
+    --------
+    Install from GitHub releases:
+
+    ```python
+    from brmspy.install import install_prebuilt
+    install_prebuilt()
+    ```
+
+    Install from local bundle:
+    
+    ```python
+    install_prebuilt(bundle="/path/to/runtime.tar.gz")
+    ```
+
+    Install from custom URL:
+    
+    ```python
+        install_prebuilt(url="https://example.com/runtime.tar.gz")
+    ```
+    """
     from brmspy.binaries import env
     if not env.can_use_prebuilt():
         raise RuntimeError(
@@ -277,7 +584,7 @@ def install_prebuilt(runtime_version="0.1.0", url: Optional[str] = None, bundle:
         )
     fingerprint = env.system_fingerprint()
     if url is None and bundle is None:
-        url = f"https://github.com/kaitumisuuringute-keskus/brmspy/releases/download/runtime-dev/brmspy-runtime-{runtime_version}-{fingerprint}.tar.gz"
+        url = f"https://github.com/kaitumisuuringute-keskus/brmspy/releases/download/runtime/brmspy-runtime-{runtime_version}-{fingerprint}.tar.gz"
 
     try:
         return install_and_activate_runtime(
@@ -322,10 +629,28 @@ def install_brms(
     
     Examples
     --------
-    >>> from brmspy import brms
-    >>> brms.install_brms()
-    >>> brms.install_brms(brms_version="2.23.0")
-    >>> brms.install_brms(install_cmdstanr=False, install_rstan=True)
+    Basic installation:
+    
+    ```python
+    from brmspy import brms
+    brms.install_brms()
+    ```
+    Install specific version:
+    
+    ```python
+    brms.install_brms(brms_version="2.23.0")
+    ```
+
+    Use rstan instead of cmdstanr:
+
+    ```python
+    brms.install_brms(install_cmdstanr=False, install_rstan=True)
+    ```
+
+    Fast installation with prebuilt binaries:
+    ```python
+    brms.install_brms(use_prebuilt_binaries=True)
+    ```
     """
     if use_prebuilt_binaries:
         if install_prebuilt():
