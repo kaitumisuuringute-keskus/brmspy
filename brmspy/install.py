@@ -10,6 +10,7 @@ import rpy2.robjects as ro
 from rpy2.robjects.packages import importr
 from rpy2.robjects.vectors import StrVector
 
+from brmspy.binaries.use import install_and_activate_runtime
 from brmspy.helpers.rtools import _install_rtools_for_current_r
 from brmspy.helpers.singleton import _get_brms, _invalidate_singletons
 
@@ -267,7 +268,7 @@ def _build_cmstanr():
 
     ro.r(f"cmdstanr::install_cmdstan(cores = {cores}, overwrite = FALSE)")
 
-def install_prebuilt():
+def install_prebuilt(runtime_version="0.1.0", url: Optional[str] = None, bundle: Optional[str] = None):
     from brmspy.binaries import env
     if not env.can_use_prebuilt():
         raise RuntimeError(
@@ -275,7 +276,17 @@ def install_prebuilt():
             "Please install brms manually or set use_prebuilt_binaries=False."
         )
     fingerprint = env.system_fingerprint()
-    path = ""
+    if url is None and bundle is None:
+        url = f"https://github.com/kaitumisuuringute-keskus/brmspy/releases/download/runtime-dev/brmspy-runtime-{version}-{fingerprint}.tar.gz"
+
+    try:
+        return install_and_activate_runtime(
+            url=url,
+            bundle=bundle,
+            runtime_version=runtime_version
+        )
+    except Exception as e:
+        return False
 
 def install_brms(
     brms_version: str = "latest",
@@ -316,6 +327,11 @@ def install_brms(
     >>> brms.install_brms(brms_version="2.23.0")
     >>> brms.install_brms(install_cmdstanr=False, install_rstan=True)
     """
+    if use_prebuilt_binaries:
+        if install_prebuilt():
+            print("\n✅ Setup complete! You're ready to use brmspy.")
+            return
+
     print("Installing brms...")
     _install_rpackage("brms", version=brms_version, repos_extra=[repo])
 

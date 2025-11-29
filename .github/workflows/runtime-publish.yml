@@ -132,6 +132,14 @@ jobs:
                 libpcre2-dev \
                 libblas-dev \
                 liblapack-dev \
+                libv8-dev \
+                libglpk-dev \
+                libharfbuzz-dev \
+                libfribidi-dev \
+                libfreetype6-dev \
+                libpng-dev \
+                libtiff5-dev \
+                libjpeg-dev \
                 gfortran
 
               echo "== Creating Python 3.12 venv =="
