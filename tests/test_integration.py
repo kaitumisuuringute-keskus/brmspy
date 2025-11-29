@@ -35,6 +35,23 @@ class TestBrmsInstallation:
         import rpy2.robjects.packages as rpackages
         brms = rpackages.importr("brms")
         assert brms is not None
+    
+    @pytest.mark.slow
+    def test_brms_install(self):
+        from brmspy import brms
+        from brmspy.helpers import _get_brms
+        import rpy2.robjects as ro
+        import rpy2.robjects.packages as rpackages
+        if rpackages.isinstalled("brms"):
+            ro.r('remove.packages("brms")')
+        
+        assert not rpackages.isinstalled("brms")
+
+        brms.install_brms()
+
+        assert rpackages.isinstalled("brms")
+        _brms = _get_brms()
+        assert _brms is not None
 
 
 @pytest.mark.requires_brms
