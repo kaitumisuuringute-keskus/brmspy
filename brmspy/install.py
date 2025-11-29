@@ -179,6 +179,9 @@ def _install_rpackage(
             type=preferred_type,
             Ncpus=cores,
         )
+        installed_version = _get_r_pkg_version(package)
+        if installed_version is None:
+            raise RuntimeError(f"{package} did not appear after install (type={preferred_type}).")
         print(f"brmspy: Installed {package} via {preferred_type} path.")
     except Exception as e:
         print(f"⚠️ {preferred_type} install failed. Falling back to source compilation. ({e})")
@@ -189,6 +192,9 @@ def _install_rpackage(
                 type="source",
                 Ncpus=cores,
             )
+            installed_version = _get_r_pkg_version(package)
+            if installed_version is None:
+                raise RuntimeError(f"{package} did not appear after source install.")
             print(f"brmspy: Installed {package} from source.")
         except Exception as e2:
             print(f"❌ Failed to install {package}.")
@@ -224,8 +230,8 @@ def install_brms(
     --------
     >>> from brmspy import brms
     >>> brms.install_brms()
-    >>> brms.install_brms(version="2.23.0")
-    >>> brms.install_brms(install_cmdstan=False)
+    >>> brms.install_brms(brms_version="2.23.0")
+    >>> brms.install_brms(install_cmdstanr=False)
     """
     print("Installing brms...")
     _install_rpackage("brms", version=brms_version, repos_extra=[repo])
