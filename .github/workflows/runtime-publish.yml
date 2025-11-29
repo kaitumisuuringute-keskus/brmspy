@@ -11,6 +11,9 @@ on:
         description: "Git tag for the runtime release (e.g. runtime-v0.1.0)"
         required: true
         type: string
+  push: # TEMPORARY. REMOVE BEFORE MERGE
+    branches:
+      - dev
 
 jobs:
   # Create a single runtime release that all matrix jobs will attach assets to
