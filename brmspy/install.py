@@ -19,48 +19,29 @@ def _parse_version_spec(spec: Optional[str]) -> Tuple[str, Optional[Version]]:
     """
     Parse version specification string into operator and Version object.
     
-    Supports version constraints commonly used in package managers:
-    bare version ("2.21.0") treated as exact match, explicit operators
-    ("==2.21.0", ">=2.20.0", "<=2.23.0"), or None/empty for any version.
-    
-    Parameters
-    ----------
-    spec : str or None
-        Version specification string. Formats:
-        - None or empty: accept any version
-        - "2.21.0": exact version (treated as ==)
-        - "==2.21.0": exact version
-        - ">=2.20.0": minimum version
-        - "<=2.23.0": maximum version
-    
-    Returns
-    -------
-    tuple of (str, Version or None)
-        (operator, version) where operator is one of:
-        - "any": no version constraint
-        - "==": exact version match
-        - ">=": minimum version
-        - "<=": maximum version
-    
-    Examples
-    --------
-    ```python
-    _parse_version_spec("2.21.0")
-    # ('==', <Version('2.21.0')>)
-    
-    _parse_version_spec(">=2.20.0")
-    # ('>=', <Version('2.20.0')>)
-    
-    _parse_version_spec(None)
-    # ('any', None)
-    ```
+    Supports:
+      - None / "" / "any" / "*"  -> no constraint ("any")
+      - "2.21.0"                 -> exact, equivalent to "==2.21.0"
+      - "==2.21.0"               -> exact version
+      - ">=2.20.0"               -> minimum version
+      - "<=2.23.0"               -> maximum version
     """
     if spec is None:
         return "any", None
+
     spec = spec.strip()
+    if not spec:
+        return "any", None
+
+    lower = spec.lower()
+    if lower in ("any", "*"):
+        return "any", None
+
     for op in ("<=", ">=", "=="):
         if spec.startswith(op):
-            return op, Version(spec[len(op):].strip())
+            ver = spec[len(op):].strip()
+            return op, Version(ver)
+
     # bare version => '=='
     return "==", Version(spec)
 
@@ -108,7 +89,7 @@ def _satisfies(installed: Version, op: str, required: Optional[Version]) -> bool
         return installed >= required
     if op == "<=":
         return installed <= required
-    return True
+    raise ValueError(f"Unsupported version operator: {op!r}")
 
 def _get_r_pkg_version(package: str) -> Optional[Version]:
     """
@@ -254,34 +235,45 @@ def _install_rpackage(
     package : str
         R package name.
     version : str | None
-        Version spec. Supported forms:
-          - None        -> any version is fine
-          - '2.21.0'    -> exact, equivalent to '==2.21.0'
-          - '==2.21.0'  -> exact version via remotes::install_version
-          - '>=2.21.0'  -> require at least this version
-          - '<=2.20.0'  -> require at most this version
-        For >= / <= we *check* the constraint; if it fails we install/upgrade
-        using the normal CRAN path (latest from the configured repos).
+        Version spec. Semantics when not None are delegated entirely to
+        remotes::install_version(), so you get full support for:
+
+          - Exact version:
+              "2.21.0"
+          - Single constraint:
+              ">= 2.21.0"
+              "< 2.23.0"
+          - Multiple constraints:
+              ">= 1.12.0, < 1.14"
+              c(">= 1.12.0", "< 1.14")  # if you pass a vector via R
+
+        Special cases handled here:
+          - None / "" / "latest" / "any"  -> no constraint, use install.packages()
     repos_extra : str | list[str] | None
         Extra repositories to append in addition to CRAN / binary repo.
     """
-    if version == "latest":
-        version = None
+    # Normalise special values that mean "latest / no constraint"
+    if version is not None:
+        v = version.strip()
+        if v == "" or v.lower() in ("latest", "any"):
+            version = None
+        else:
+            version = v
+
     utils = importr("utils")
     system = platform.system()
     cores = multiprocessing.cpu_count()
 
-    op, required_version = _parse_version_spec(version)
-
     repos: list[str] = ["https://cloud.r-project.org"]  # good default mirror
 
     if system == "Linux":
-        # On Linux, we MUST use P3M to get binaries.
+        # On Linux, we MUST use P3M to get binaries. These present as "source"
+        # to R, so type="source" is actually fine.
         binary_repo = _get_linux_repo()
         repos.insert(0, binary_repo)  # high priority
-        preferred_type = "source"     # P3M binaries look like source to R
+        preferred_type = "source"
     else:
-        # Windows / macOS use native CRAN binaries
+        # Windows / macOS use native CRAN binaries in the "no version" path
         preferred_type = "binary"
 
     if repos_extra:
@@ -292,7 +284,53 @@ def _install_rpackage(
         elif repos_extra not in repos:
             repos.append(repos_extra)
 
-    # --- check current installation + version ---
+    # ------------------------------------------------------------------
+    # BRANCH 1: version *specified* -> delegate entirely to remotes
+    # ------------------------------------------------------------------
+    if version is not None:
+        print(
+            f"brmspy: Installing {package} "
+            f"(version spec: {version!r}) via remotes::install_version()..."
+        )
+
+        # Ensure remotes is available
+        ro.r(
+            'if (!requireNamespace("remotes", quietly = TRUE)) '
+            'install.packages("remotes", repos = "https://cloud.r-project.org")'
+        )
+
+        # Pass repo vector from Python into R
+        ro.globalenv[".brmspy_repos"] = StrVector(repos)
+
+        # Escape double quotes in version spec just in case
+        v_escaped = version.replace('"', '\\"')
+
+        try:
+            ro.r(
+                f'remotes::install_version('
+                f'package = "{package}", '
+                f'version = "{v_escaped}", '
+                f'repos = .brmspy_repos)'
+            )
+        finally:
+            # Clean up
+            del ro.globalenv[".brmspy_repos"]
+
+        installed_version = _get_r_pkg_version(package)
+        if installed_version is None:
+            raise RuntimeError(
+                f"{package} did not appear after remotes::install_version('{version}')."
+            )
+
+        print(
+            f"brmspy: Installed {package} via remotes::install_version "
+            f"(installed: {installed_version})."
+        )
+        return
+
+    # ------------------------------------------------------------------
+    # BRANCH 2: no version spec -> "latest" from repos via install.packages
+    # ------------------------------------------------------------------
     try:
         importr(package)
         installed_version = _get_r_pkg_version(package)
@@ -300,32 +338,11 @@ def _install_rpackage(
         installed_version = None
 
     if installed_version is not None:
-        if _satisfies(installed_version, op, required_version):
-            print(
-                f"brmspy: {package} {installed_version} already installed "
-                f"and satisfies '{op} {required_version}'." if required_version else
-                f"brmspy: {package} {installed_version} already installed."
-            )
-            return
-        else:
-            print(
-                f"brmspy: {package} {installed_version} does NOT satisfy "
-                f"'{op} {required_version}', reinstalling..."
-            )
+        print(f"brmspy: {package} {installed_version} already installed.")
+        return
 
     print(f"brmspy: Installing {package} on {system} (Repos: {len(repos)})...")
 
-    # --- exact pin via remotes::install_version ---
-    if op == "==" and required_version is not None:
-        try:
-            _install_exact_version(package, required_version, repos)
-            print(f"brmspy: Installed {package}=={required_version} via remotes::install_version.")
-            return
-        except Exception as e:
-            print(f"Failed to install exact {package}=={required_version}: {e}")
-            raise
-
-    # --- normal path: use install.packages with preferred type, then fallback to source ---
     try:
         # Primary Attempt (Fast Binary / P3M)
         utils.install_packages(
@@ -336,15 +353,20 @@ def _install_rpackage(
         )
         installed_version = _get_r_pkg_version(package)
         if installed_version is None:
-            raise RuntimeError(f"{package} did not appear after install (type={preferred_type}).")
+            raise RuntimeError(
+                f"{package} did not appear after install (type={preferred_type})."
+            )
         print(f"brmspy: Installed {package} via {preferred_type} path.")
     except Exception as e:
-        print(f"{preferred_type} install failed. Falling back to source compilation. ({e})")
+        print(
+            f"{preferred_type} install failed for {package}. "
+            f"Falling back to source compilation. ({e})"
+        )
         try:
             utils.install_packages(
                 StrVector((package,)),
                 repos=StrVector(repos),
-                # dont set type, let R manage this.
+                # don't set type, let R manage this.
                 Ncpus=cores,
             )
             installed_version = _get_r_pkg_version(package)
@@ -548,7 +570,7 @@ def install_brms(
     Parameters
     ----------
     brms_version : str, default="latest"
-        brms version: "latest", "2.23.0", or ">=2.20.0"
+        brms version: "latest", "2.23.0", or ">= 2.20.0"
     repo : str | None, default=None
         Extra CRAN repository URL
     install_cmdstanr : bool, default=True
@@ -556,9 +578,9 @@ def install_brms(
     install_rstan : bool, default=False
         Whether to install rstan (alternative to cmdstanr)
     cmdstanr_version : str, default="latest"
-        cmdstanr version: "latest", "0.8.1", or ">=0.8.0"
+        cmdstanr version: "latest", "0.8.1", or ">= 0.8.0"
     rstan_version : str, default="latest"
-        rstan version: "latest", "2.32.6", or ">=2.32.0"
+        rstan version: "latest", "2.32.6", or ">= 2.32.0"
     use_prebuilt_binaries: bool, default=False
         Uses fully prebuilt binaries for cmdstanr and brms and their dependencies. 
         Ignores system R libraries and uses the latest brms and cmdstanr available 
@@ -605,7 +627,7 @@ def install_brms(
                 print("R>=4.5 and OS is windows. Limiting cmdstanr version to >= 0.9")
                 if cmdstanr_version == "latest" or cmdstanr_version == "any" or not cmdstanr_version:
                     # cmdstanr <0.9 does not recognise rtools 45.
-                    cmdstanr_version = ">=0.9.0"
+                    cmdstanr_version = ">= 0.9.0"
 
         print("Installing cmdstanr...")
         _install_rpackage("cmdstanr", version=cmdstanr_version, repos_extra=["https://mc-stan.org/r-packages/", repo])
