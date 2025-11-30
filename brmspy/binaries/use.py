@@ -310,7 +310,7 @@ def install_and_activate_runtime(
         # Download into a temporary file
         with tempfile.NamedTemporaryFile(suffix=".tar.gz", delete=False) as tmp:
             tmp_path = Path(tmp.name)
-        print(f"[download] Fetching {url} → {tmp_path}")
+        print(f"[download] Fetching {url} to {tmp_path}")
         urllib.request.urlretrieve(url, tmp_path)
         bundle_path = tmp_path
         tmp_download = tmp_path
@@ -365,7 +365,7 @@ def install_and_activate_runtime(
             print(f"[extract] Removing existing runtime at {runtime_root}")
             shutil.rmtree(runtime_root)
 
-        print(f"[extract] Moving runtime → {runtime_root}")
+        print(f"[extract] Moving runtime to {runtime_root}")
         shutil.move(str(runtime_tmp), str(runtime_root))
 
         # Clean temporary extraction dir

@@ -267,7 +267,7 @@ def stage_runtime_tree(base_dir: Path, metadata: dict, runtime_version: str) -> 
         if not src.exists():
             raise RuntimeError(f"Package directory not found: {src}")
 
-        print(f"[Rlib] Copying {name} from {src} → {dest}")
+        print(f"[Rlib] Copying {name} from {src} to {dest}")
         # Python 3.8+: dirs_exist_ok=True
         shutil.copytree(src, dest, dirs_exist_ok=True)
 
@@ -276,7 +276,7 @@ def stage_runtime_tree(base_dir: Path, metadata: dict, runtime_version: str) -> 
     if not cmdstan_path.exists():
         raise RuntimeError(f"cmdstan_path does not exist on disk: {cmdstan_path}")
 
-    print(f"[cmdstan] Copying CmdStan from {cmdstan_path} → {cmdstan_dir}")
+    print(f"[cmdstan] Copying CmdStan from {cmdstan_path} to {cmdstan_dir}")
     shutil.copytree(cmdstan_path, cmdstan_dir, dirs_exist_ok=True)
 
     # ---- Write manifest.json ----
