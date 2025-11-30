@@ -106,7 +106,7 @@ def get_r_version_tuple() -> Optional[Tuple[int, int, int]]:
         return None
 
 
-def r_available_and_supported(min_major: int = 4, min_minor: int = 2) -> bool:
+def r_available_and_supported(min_major: int = 4, min_minor: int = 0) -> bool:
     """
     Check if R is available and meets minimum version requirements.
     
