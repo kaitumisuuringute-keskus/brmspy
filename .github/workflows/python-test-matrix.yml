@@ -23,7 +23,7 @@ jobs:
     env:
       RSPM: https://cloud.r-project.org
       # Single cross-platform cache location for R libs
-      R_LIBS_USER: ${{ runner.temp }}/R-lib
+      R_LIBS_USER: ${{ github.workspace }}/.r-lib
 
     steps:
       - uses: actions/checkout@v4

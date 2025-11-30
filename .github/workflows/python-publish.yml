@@ -17,7 +17,7 @@ jobs:
     
     env:
       RSPM: https://cloud.r-project.org
-      R_LIBS_USER: ${{ runner.temp }}/R-lib
+      R_LIBS_USER: ${{ github.workspace }}/.r-lib
 
     steps:
       - uses: actions/checkout@v4
