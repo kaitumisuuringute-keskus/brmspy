@@ -5,6 +5,11 @@
 # - Rscript commands for powershell MUST evaluate to a
 #   single line, hence no indentation, always using >
 #   and semicolons wherever necessary
+#   (after if statements on single liners, R has opinions)
+# - Windows doesnt like cmdstan < 2.35 without extra tools.
+#   this test setup DOES NOT aim to test compatibility of
+#   versions, so we stick to 2.36
+#  - NO ~ symbols in paths!
 
 name: python-test-matrix
 
@@ -26,8 +31,9 @@ jobs:
 
     env:
       RSPM: https://cloud.r-project.org
-      # Single cross-platform cache location for R libs
+      # cross-platform paths. DO NOT replace
       R_LIBS_USER: ${{ github.workspace }}/.r-lib
+      CMDSTAN_DIR: ${{ github.workspace }}/.cmdstan 
 
     steps:
       - uses: actions/checkout@v4
@@ -63,14 +69,14 @@ jobs:
         id: cmdstan-cache
         uses: actions/cache@v3
         with:
-          path: ~/.cmdstan
+          path: ${{ env.CMDSTAN_DIR }}
           key: cmdstan-2.36.0-${{ runner.os }}-v1
 
       - name: Install CmdStan if needed
         if: steps.cmdstan-cache.outputs.cache-hit != 'true'
         run: >
           Rscript -e 'library(cmdstanr);
-          cmdstan_dir <- path.expand("~/.cmdstan");
+          cmdstan_dir <- Sys.getenv("CMDSTAN_DIR");
           target <- file.path(cmdstan_dir, "cmdstan-2.36.0");
           if (!dir.exists(target)) {
           dir.create(cmdstan_dir, recursive = TRUE, showWarnings = FALSE);
@@ -85,6 +91,7 @@ jobs:
     needs: cmdstan   # wait for all CmdStan matrix jobs to finish
 
     strategy:
+      fail-fast: false
       matrix:
         # default: all Python versions on ubuntu
         python-version: [ '3.10', '3.12', '3.14' ]
@@ -100,6 +107,7 @@ jobs:
     env:
       RSPM: https://cloud.r-project.org
       R_LIBS_USER: ${{ github.workspace }}/.r-lib
+      CMDSTAN_DIR: ${{ github.workspace }}/.cmdstan 
 
     steps:
       - uses: actions/checkout@v4
@@ -133,7 +141,7 @@ jobs:
         id: cmdstan-cache
         uses: actions/cache@v3
         with:
-          path: ~/.cmdstan
+          path: ${{ env.CMDSTAN_DIR }}
           key: cmdstan-2.36.0-${{ runner.os }}-v1
 
       - name: Sanity-check R / CmdStan / brms
@@ -141,7 +149,7 @@ jobs:
           Rscript -e "library(cmdstanr);
           library(brms);
           library(posterior);
-          cmdstan_dir <- path.expand('~/.cmdstan');
+          cmdstan_dir <- Sys.getenv("CMDSTAN_DIR");
           target <- file.path(cmdstan_dir, 'cmdstan-2.36.0');
           set_cmdstan_path(target);
           cat('R version: ', R.version.string, '\n');
