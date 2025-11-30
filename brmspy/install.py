@@ -15,47 +15,92 @@ from brmspy.helpers.rtools import _install_rtools_for_current_r
 from brmspy.helpers.singleton import _get_brms, _invalidate_singletons
 from brmspy.helpers.rtools import _get_r_version
 
-
-def _try_force_unload_package(package: str):
+def try_force_unload_package(package: str) -> None:
     """
-    Required for windows when changing versions.
+    Try to unload and remove an R package as aggressively as possible.
 
-    Does NOT guarantee unloading. 
+    - Logs each step (start / ok / error) from inside R.
+    - Does NOT raise on R-side failures; only logs them.
+    - May still fail on Windows if DLLs are locked or dependencies keep it loaded.
     """
-    code = f"""
+    r_code = f"""
       pkg <- "{package}"
+
+      log_step <- function(step, expr) {{
+        msg_prefix <- paste0("[unload:", pkg, "][", step, "] ")
+        cat(msg_prefix, "start\\n", sep = "")
+        res <- try(eval(expr), silent = TRUE)
+
+        if (inherits(res, "try-error")) {{
+          cond <- attr(res, "condition")
+          if (!is.null(cond)) {{
+            cat(msg_prefix, "ERROR: ", conditionMessage(cond), "\\n", sep = "")
+          }} else {{
+            cat(msg_prefix, "ERROR: ", as.character(res), "\\n", sep = "")
+          }}
+          FALSE
+        }} else {{
+          cat(msg_prefix, "ok\\n", sep = "")
+          TRUE
+        }}
+      }}
 
       .unload_pkg <- function(pkg) {{
         search_name <- paste0("package:", pkg)
-        if (search_name %in% search()) {{
-          try(detach(search_name, unload = TRUE, character.only = TRUE), silent = TRUE)
-        }}
 
-        if (pkg %in% loadedNamespaces()) {{
-          try(unloadNamespace(pkg), silent = TRUE)
-        }}
+        # 1) Detach from search path
+        log_step("detach_search", quote({{
+          if (search_name %in% search()) {{
+            detach(search_name, unload = TRUE, character.only = TRUE)
+          }}
+        }}))
 
-        if (requireNamespace("pkgload", quietly = TRUE)) {{
-          try(pkgload::unload(pkg), silent = TRUE)
-        }}
+        # 2) Unload namespace
+        log_step("unloadNamespace", quote({{
+          if (pkg %in% loadedNamespaces()) {{
+            unloadNamespace(pkg)
+          }}
+        }}))
 
-        dlls <- getLoadedDLLs()
-        if (pkg %in% rownames(dlls)) {{
-          dll_info <- dlls[[pkg]]
-          try(library.dynam.unload(chname = pkg,
-                                   package = pkg,
-                                   libpath = dirname(dll_info[["path"]])),
-              silent = TRUE)
-        }}
+        # 3) pkgload (devtools-style unload)
+        log_step("pkgload::unload", quote({{
+          if (requireNamespace("pkgload", quietly = TRUE)) {{
+            pkgload::unload(pkg)
+          }}
+        }}))
+
+        # 4) DLL unload if still registered
+        log_step("library.dynam.unload", quote({{
+          dlls <- getLoadedDLLs()
+          if (pkg %in% rownames(dlls)) {{
+            dll_info <- dlls[[pkg]]
+            dll_name <- dll_info[["name"]]
+            libpath  <- dirname(dll_info[["path"]])
+            library.dynam.unload(chname = dll_name,
+                                 package = pkg,
+                                 libpath = libpath)
+          }}
+        }}))
+
+        # 5) Remove package from library if still installed
+        log_step("remove.packages", quote({{
+          ip <- installed.packages()
+          if (pkg %in% rownames(ip)) {{
+            remove.packages(pkg)
+          }}
+        }}))
       }}
 
       .unload_pkg(pkg)
     """
+
     try:
-        ro.r(code)
-        ro.r(f'remove.packages("{package}")')
+        print(f"[brmspy] Attempting aggressive unload of R package '{package}'")
+        ro.r(r_code)
+        print(f"[brmspy] Aggressive unload completed for '{package}'")
     except Exception as e:
-        print(f"Package {package} unloading failed: {e}")
+        # rpy2 / transport-level failure – log, but don't kill caller
+        print(f"[brmspy] Aggressive unload of '{package}' raised a Python/rpy2 exception: \n{e}")
     
 
 def _init():
