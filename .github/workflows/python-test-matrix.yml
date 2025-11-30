@@ -161,6 +161,10 @@ jobs:
           cat('brms version: ', as.character(packageVersion('brms')), '\n')"
 
       - name: Install Python dependencies
+        env:
+          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+          CMDSTAN_DIR: ${{ env.CMDSTAN_DIR }} # not used in here atm
+          R_LIBS_USER: ${{ env.R_LIBS_USER }}
         run: |
           python -m pip install --upgrade pip
           python -m pip install pytest pytest-cov arviz tqdm
@@ -171,9 +175,22 @@ jobs:
         run: |
           mkdir -p coverage
 
+      - name: Debug R libs on Windows
+        if: matrix.os == 'windows-latest'
+        env:
+          R_LIBS_USER: ${{ env.R_LIBS_USER }}
+        run: >
+          Rscript -e 'cat("R_LIBS_USER:", Sys.getenv("R_LIBS_USER"), "\n");
+          print(.libPaths());
+          pkgs <- c("cmdstanr","brms","posterior");
+          ip <- installed.packages();
+          print(ip[rownames(ip) %in% pkgs, c("Package","LibPath","Version")])'
+
       - name: Test with pytest
         env:
           GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+          CMDSTAN_DIR: ${{ env.CMDSTAN_DIR }} # not used in here atm
+          R_LIBS_USER: ${{ env.R_LIBS_USER }}
         run: >
           python -m pytest tests/ -v --cov=brmspy 
           --cov-report=term 
