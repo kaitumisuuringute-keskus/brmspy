@@ -182,6 +182,7 @@ jobs:
       - name: Sanity-check R / CmdStan / brms
         env:
           CMDSTAN_DIR: ${{ env.CMDSTAN_DIR }}
+          R_LIBS_USER: ${{ env.R_LIBS_USER }}
         run: >
           Rscript -e "library(cmdstanr);
           library(brms);
