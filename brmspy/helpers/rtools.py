@@ -204,7 +204,7 @@ def _silent_install_exe(url: str, label: str) -> None:
     )
 
 
-def _install_rtools_for_current_r(ci_only: bool = True) -> Optional[str]:
+def _install_rtools_for_current_r() -> Optional[str]:
     """
     Auto-detect R version and install matching Rtools if needed (Windows only).
     
@@ -214,9 +214,6 @@ def _install_rtools_for_current_r(ci_only: bool = True) -> Optional[str]:
     
     Parameters
     ----------
-    ci_only : bool, default=True
-        Safety flag: if True, only runs in CI environments. Set to False
-        to allow installation in local environments.
     
     Returns
     -------
@@ -230,10 +227,6 @@ def _install_rtools_for_current_r(ci_only: bool = True) -> Optional[str]:
     
     Notes
     -----
-    **Safety Features:**
-    
-    By default (ci_only=True), refuses to auto-install unless in CI environment.
-    This prevents unexpected system modifications on user machines.
     
     **Installation Process:**
     
@@ -265,7 +258,7 @@ def _install_rtools_for_current_r(ci_only: bool = True) -> Optional[str]:
     ```python
     from brmspy.helpers.rtools import _install_rtools_for_current_r
     
-    tag = _install_rtools_for_current_r(ci_only=True)
+    tag = _install_rtools_for_current_r()
     if tag:
         print(f"Rtools {tag} installed/verified")
     ```
@@ -284,10 +277,6 @@ def _install_rtools_for_current_r(ci_only: bool = True) -> Optional[str]:
     if platform.system() != "Windows":
         return None
 
-    # Safety: Only run in CI unless forced
-    if ci_only:
-        print("brmspy: not in CI, refusing to auto-install Rtools.")
-        return None
 
     r_ver = _get_r_version()
     tag = pick_rtools_for_r(r_ver)

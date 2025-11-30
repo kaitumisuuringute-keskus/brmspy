@@ -355,77 +355,6 @@ def _install_rpackage(
             raise e2
 
 
-def _install_rtools44_goblin_mode():
-    """
-    Install Rtools44 on Windows CI runners (best-effort).
-    
-    Attempts automatic Rtools installation via Chocolatey or direct
-    download. Used in continuous integration environments where manual
-    installation is not possible. Not recommended for local development.
-    
-    This function is intentionally named "goblin_mode" to indicate it
-    uses aggressive tactics suitable only for CI environments.
-    
-    Raises
-    ------
-    subprocess.CalledProcessError
-        If Chocolatey installation fails
-    
-    Notes
-    -----
-    Installation methods (tried in order):
-    1. Chocolatey: `choco install rtools -y`
-    2. Direct download: Downloads and runs CRAN installer silently
-    3. PATH manipulation: Adds Rtools directories to environment
-    
-    For local development, manually install Rtools from:
-    https://cran.r-project.org/bin/windows/Rtools/
-    
-    See Also
-    --------
-    _build_cmstanr : Calls this if toolchain check fails
-    """
-    # 1) Try Chocolatey first (usually present on GH Actions)
-    if shutil.which("choco"):
-        print("brmspy: Installing Rtools via Chocolatey...")
-        subprocess.run(
-            ["choco", "install", "rtools", "-y"],
-            check=True,
-        )
-    else:
-        # 2) Fallback: download CRAN installer + silent install
-        # NOTE: pin the URL to a specific version once you know it.
-        import tempfile
-        import urllib.request
-
-        url = "https://cran.r-project.org/bin/windows/Rtools/rtools44-<EXACT>.exe"
-        tmp_exe = os.path.join(tempfile.gettempdir(), "rtools44-installer.exe")
-        print(f"brmspy: Downloading Rtools from {url} ...")
-        urllib.request.urlretrieve(url, tmp_exe)
-
-        print("brmspy: Running Rtools installer (silent)...")
-        subprocess.run(
-            [
-                tmp_exe,
-                "/VERYSILENT",
-                "/SUPPRESSMSGBOXES",
-                "/NORESTART",
-            ],
-            check=True,
-        )
-
-    # 3) Manually extend PATH so current process sees it
-    # Default Rtools44 paths – adjust if you change install dir
-    rtools_root = r"C:\rtools44"
-    candidate_paths = [
-        os.path.join(rtools_root, "usr", "bin"),
-        os.path.join(rtools_root, "mingw64", "bin"),
-    ]
-    for p in candidate_paths:
-        if os.path.isdir(p) and p not in os.environ["PATH"]:
-            os.environ["PATH"] = p + os.pathsep + os.environ["PATH"]
-            print(f"brmspy: Added to PATH: {p}")
-
 
 def _build_cmstanr():
     """
@@ -488,7 +417,7 @@ def _build_cmstanr():
             ro.r("cmdstanr::check_cmdstan_toolchain(fix = TRUE)")
         except Exception as e:
             print(f"Toolchain check failed: {e}")
-            tag = _install_rtools_for_current_r(ci_only=True)
+            tag = _install_rtools_for_current_r()
             if not tag:
                 print(
                     "brmspy: Rtools auto-install failed or disabled. "
