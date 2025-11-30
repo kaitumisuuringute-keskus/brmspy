@@ -13,6 +13,7 @@ from rpy2.robjects.vectors import StrVector
 from brmspy.binaries.use import install_and_activate_runtime
 from brmspy.helpers.rtools import _install_rtools_for_current_r
 from brmspy.helpers.singleton import _get_brms, _invalidate_singletons
+from build.lib.brmspy.helpers.rtools import _get_r_version
 
 def _parse_version_spec(spec: Optional[str]) -> Tuple[str, Optional[Version]]:
     """
@@ -512,8 +513,12 @@ def install_prebuilt(runtime_version="0.1.0", url: Optional[str] = None, bundle:
     if not env.can_use_prebuilt():
         raise RuntimeError(
             "Prebuilt binaries are not available for your system. "
-            "Please install brms manually or set use_prebuilt_binaries=False."
+            "Please install brms manually or in install_brms set use_prebuilt_binaries=False."
         )
+    
+    if platform.system() == "Windows":
+        rtools_tag = _install_rtools_for_current_r()
+
     fingerprint = env.system_fingerprint()
     if url is None and bundle is None:
         url = f"https://github.com/kaitumisuuringute-keskus/brmspy/releases/download/runtime/brmspy-runtime-{runtime_version}-{fingerprint}.tar.gz"
@@ -594,6 +599,10 @@ def install_brms(
     _install_rpackage("brms", version=brms_version, repos_extra=[repo])
 
     if install_cmdstanr:
+        if platform.system() == "Windows" and _get_r_version() >= Version("4.5.0") and not cmdstanr_version:
+            # cmdstanr <0.9 does not recognise rtools 45.
+            cmdstanr_version = ">=0.9.0"
+
         print("Installing cmdstanr...")
         _install_rpackage("cmdstanr", version=cmdstanr_version, repos_extra=["https://mc-stan.org/r-packages/", repo])
         print("Building cmdstanr...")

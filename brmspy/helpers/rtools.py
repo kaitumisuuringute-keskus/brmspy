@@ -122,8 +122,12 @@ def pick_rtools_for_r(r_ver: Version) -> str | None:
         return "43"  # R 4.3.x
     if r_ver < Version("4.5.0"):
         return "44"  # R 4.4.x
-    
-    return "45"      # R 4.5.x and up
+    if r_ver < Version("4.6.0"):
+        return "45"
+    if r_ver < Version("4.7.0"):
+        return "47"
+
+    return "46"      # R 4.5.x and up
 
 
 RTOOLS_INSTALLERS = {
