@@ -72,28 +72,6 @@ jobs:
           CRAN = 'https://cloud.r-project.org'));
           install.packages(c('cmdstanr','brms','posterior'))"
 
-      - name: Prune R library docs for CI
-        shell: bash
-        run: |
-          set -eux
-          if [ -d "${R_LIBS_USER}" ]; then
-            for pkg in "${R_LIBS_USER}"/*; do
-              [ -d "$pkg" ] || continue
-              rm -rf \
-                "$pkg/doc" \
-                "$pkg/docs" \
-                "$pkg/help" \
-                "$pkg/html" \
-                "$pkg/examples" \
-                "$pkg/example" \
-                "$pkg/demo" \
-                "$pkg/tests" \
-                "$pkg/test" \
-                "$pkg/vignettes" \
-                "$pkg/inst/doc" || true
-            done
-          fi
-
       - name: Restore CmdStan cache
         id: cmdstan-cache
         uses: actions/cache@v3
