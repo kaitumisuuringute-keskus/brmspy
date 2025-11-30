@@ -46,14 +46,10 @@ jobs:
 
       - name: Install R packages (cmdstanr, brms, posterior)
         if: steps.r-lib-cache.outputs.cache-hit != 'true'
-        run: |
-          R -q -e "
-            options(repos = c(
-              'https://stan-dev.r-universe.dev',
-              CRAN = 'https://cloud.r-project.org'
-            ));
-            install.packages(c('cmdstanr', 'brms', 'posterior'));
-          "
+        run: >
+          Rscript -e "options(repos = c('https://stan-dev.r-universe.dev',
+          CRAN = 'https://cloud.r-project.org'));
+          install.packages(c('cmdstanr','brms','posterior'))"
 
       - name: Restore CmdStan cache
         id: cmdstan-cache
@@ -64,18 +60,16 @@ jobs:
 
       - name: Install CmdStan if needed
         if: steps.cmdstan-cache.outputs.cache-hit != 'true'
-        run: |
-          R -q -e "
-            library(cmdstanr);
-            cmdstan_dir <- path.expand('~/.cmdstan');
-            target <- file.path(cmdstan_dir, 'cmdstan-2.34.1');
-            if (!dir.exists(target)) {
-              dir.create(cmdstan_dir, recursive = TRUE, showWarnings = FALSE);
-              install_cmdstan(dir = cmdstan_dir, version = '2.34.1', cores = 2);
-            }
-            set_cmdstan_path(target);
-            cat('CmdStan version: ', cmdstan_version(), '\n');
-          "
+        run: >
+          Rscript -e "library(cmdstanr);
+          cmdstan_dir <- path.expand('~/.cmdstan');
+          target <- file.path(cmdstan_dir, 'cmdstan-2.34.1');
+          if (!dir.exists(target)) {
+            dir.create(cmdstan_dir, recursive = TRUE, showWarnings = FALSE);
+            install_cmdstan(dir = cmdstan_dir, version = '2.34.1', cores = 2);
+          }
+          set_cmdstan_path(target);
+          cat('CmdStan version: ', cmdstan_version(), '\n')"
 
   # 2) Python matrix tests that reuse cached R libs + CmdStan
   build:
@@ -135,19 +129,17 @@ jobs:
           key: cmdstan-2.34.1-${{ runner.os }}-v1
 
       - name: Sanity-check R / CmdStan / brms
-        run: |
-          R -q -e "
-            library(cmdstanr);
-            library(brms);
-            library(posterior);
-            cmdstan_dir <- path.expand('~/.cmdstan');
-            target <- file.path(cmdstan_dir, 'cmdstan-2.34.1');
-            set_cmdstan_path(target);
-            cat('R version: ', R.version.string, '\n');
-            cat('cmdstanr version: ', as.character(packageVersion('cmdstanr')), '\n');
-            cat('CmdStan version: ', cmdstan_version(), '\n');
-            cat('brms version: ', as.character(packageVersion('brms')), '\n');
-          "
+        run: >
+          Rscript -e "library(cmdstanr);
+          library(brms);
+          library(posterior);
+          cmdstan_dir <- path.expand('~/.cmdstan');
+          target <- file.path(cmdstan_dir, 'cmdstan-2.34.1');
+          set_cmdstan_path(target);
+          cat('R version: ', R.version.string, '\n');
+          cat('cmdstanr version: ', as.character(packageVersion('cmdstanr')), '\n');
+          cat('CmdStan version: ', cmdstan_version(), '\n');
+          cat('brms version: ', as.character(packageVersion('brms')), '\n')"
 
       - name: Install Python dependencies
         run: |
@@ -170,5 +162,8 @@ jobs:
             --cov-report=json
       
       - name: Update Coverage Badge
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master' && matrix.python-version == '3.12'
+        if: github.event_name == 'push' &&
+            matrix.os == 'ubuntu-latest' &&
+            github.ref == 'refs/heads/master' &&
+            matrix.python-version == '3.12'
         uses: we-cli/coverage-badge-action@main
