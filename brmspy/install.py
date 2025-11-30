@@ -630,7 +630,11 @@ def install_brms(
                     cmdstanr_version = ">= 0.9.0"
 
         print("Installing cmdstanr...")
-        _install_rpackage("cmdstanr", version=cmdstanr_version, repos_extra=["https://mc-stan.org/r-packages/", repo])
+        _install_rpackage("cmdstanr", version=cmdstanr_version, repos_extra=[
+            "https://mc-stan.org/r-packages/",
+            'https://stan-dev.r-universe.dev',
+            repo
+        ])
         print("Building cmdstanr...")
         _build_cmstanr()
 
