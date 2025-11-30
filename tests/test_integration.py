@@ -391,7 +391,7 @@ class TestNaNRegression:
         assert idata.posterior.sizes['chain'] == 4, "Should have 4 chains"
         assert idata.posterior.sizes['draw'] == 100, "Should have 100 draws per chain"
         
-        print("✓ No NaNs found in InferenceData conversion")
+        print("No NaNs found in InferenceData conversion")
 
 
 @pytest.mark.requires_brms

@@ -1,3 +1,22 @@
+## 0.1.9 - Prebuilt runtimes, windows toolchain
+
+**New Features**
+
+*   **Prebuilt Runtimes**: Introduced `brmspy.binaries` subpackage to manage precompiled R environments containing `brms` and `cmdstanr` (installs up to 50x faster than default).
+*   **Fast Installation**: Added `use_prebuilt_binaries=True` argument to `install_brms()`, reducing setup time by bypassing source compilation.
+*   **Windows Toolchain**: Implemented automatic detection and installation of Rtools (MinGW-w64) within `install_brms()` to support compilation on Windows.
+
+**Enhancements**
+
+*   **Linux Binaries**: Updated Linux installation logic to prioritize Posit Package Manager (P3M) binary repositories based on OS codename detection.
+*    **Extended documentation**: Added docstring documentation to all public and internal functions.
+
+**Infrastructure**
+
+*   **Docker**: Added `.runtime_builder` Dockerfiles for creating reproducible Linux runtime environments.
+
+
+
 ## 0.1.8 - Rstan support, version pinning, and cross-platform fixes
 
 **Features**

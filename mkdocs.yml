@@ -53,11 +53,21 @@ nav:
   - Home: index.md
   - API Reference:
     - Main Module: api/brms.md
-    - Helpers: api/helpers.md
+    - Install: api/install.md
     - Types: api/types.md
   - Examples:
     - Quick Start: examples/quickstart.md
     - Advanced Usage: examples/advanced.md
+  - Helpers:
+    - Conversion: helpers/conversion.md
+    - Priors: helpers/priors.md
+    - RTools (Windows): helpers/rtools.md
+    - Singleton: helpers/singleton.md
+  - Binaries:
+    - Build: binaries/build.md
+    - Env: binaries/env.md
+    - Use: binaries/use.md
+  - Development: development/development.md
 
 extra_javascript:
   - static/plausible.js
