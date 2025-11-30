@@ -173,7 +173,6 @@ jobs:
         with:
           r-version: ${{ matrix.r }}
           use-public-rspm: true
-          cache-version: 2
           # Windows only – ignored on macOS / Linux
           rtools-version: >
             ${{ fromJson('{
