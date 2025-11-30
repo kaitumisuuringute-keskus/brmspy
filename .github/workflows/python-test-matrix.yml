@@ -152,7 +152,7 @@ jobs:
           Rscript -e "library(cmdstanr);
           library(brms);
           library(posterior);
-          cmdstan_dir <- Sys.getenv("CMDSTAN_DIR");
+          cmdstan_dir <- Sys.getenv('CMDSTAN_DIR');
           target <- file.path(cmdstan_dir, 'cmdstan-2.36.0');
           set_cmdstan_path(target);
           cat('R version: ', R.version.string, '\n');
