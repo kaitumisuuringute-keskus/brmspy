@@ -1,3 +1,9 @@
+# CRITICAL NOTES:
+# - This is a 3-OS test setup, DO NOT unnecessarily 
+#   change the shell or commands being used
+# - Rscript commands for powershell MUST evaluate to a
+#   single line, hence no indentation and always using >
+
 name: python-test-matrix
 
 on:
@@ -60,8 +66,6 @@ jobs:
 
       - name: Install CmdStan if needed
         if: steps.cmdstan-cache.outputs.cache-hit != 'true'
-        # don't modify the quotes used or make it a multiliner
-        # powershell will choke otherwise
         run: >
           Rscript -e 'library(cmdstanr);
           cmdstan_dir <- path.expand("~/.cmdstan");
@@ -69,7 +73,7 @@ jobs:
           if (!dir.exists(target)) {
           dir.create(cmdstan_dir, recursive = TRUE, showWarnings = FALSE);
           install_cmdstan(dir = cmdstan_dir, version = "2.34.1", cores = 2);
-          }
+          };
           set_cmdstan_path(target);
           cat("CmdStan version: ", cmdstan_version(), "\n")'
 
@@ -157,11 +161,11 @@ jobs:
       - name: Test with pytest
         env:
           GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          python -m pytest tests/ -v --cov=brmspy \
-            --cov-report=term \
-            --cov-report=xml \
-            --cov-report=json
+        run: >
+          python -m pytest tests/ -v --cov=brmspy 
+          --cov-report=term 
+          --cov-report=xml 
+          --cov-report=json
       
       - name: Update Coverage Badge
         if: github.event_name == 'push' &&
