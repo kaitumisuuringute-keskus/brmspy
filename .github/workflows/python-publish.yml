@@ -46,6 +46,7 @@ jobs:
         uses: actions/cache@v3
         with:
           lookup-only: true
+          fail-on-cache-miss: true
           path: ${{ env.R_LIBS_USER }}
           key: r-lib-${{ runner.os }}-cmdstanr-brms-posterior-v1
 
@@ -54,6 +55,7 @@ jobs:
         uses: actions/cache@v3
         with:
           lookup-only: true
+          fail-on-cache-miss: true
           path: ${{ env.CMDSTAN_DIR }}
           key: cmdstan-2.36.0-${{ runner.os }}-v1
 

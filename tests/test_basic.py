@@ -14,7 +14,7 @@ import numpy as np
 
 class TestImports:
     """Test that all modules and functions can be imported."""
-    
+
     def test_import_brmspy(self):
         """Test basic brmspy import"""
         import brmspy

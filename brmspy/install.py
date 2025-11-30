@@ -1,7 +1,7 @@
 import os
 import shutil
 import subprocess
-from typing import Callable, Optional, Union, cast, Tuple
+from typing import Callable, List, Optional, Union, cast, Tuple
 from packaging.version import Version
 import multiprocessing
 import platform
@@ -14,6 +14,46 @@ from brmspy.binaries.use import install_and_activate_runtime
 from brmspy.helpers.rtools import _install_rtools_for_current_r
 from brmspy.helpers.singleton import _get_brms, _invalidate_singletons
 from brmspy.helpers.rtools import _get_r_version
+
+
+def _try_force_unload_package(package: str):
+    """
+    Required for windows when changing versions.
+    """
+    code = f"""
+      pkg <- "{package}"
+
+      .unload_pkg <- function(pkg) {{
+        search_name <- paste0("package:", pkg)
+        if (search_name %in% search()) {{
+          try(detach(search_name, unload = TRUE, character.only = TRUE), silent = TRUE)
+        }}
+
+        if (pkg %in% loadedNamespaces()) {{
+          try(unloadNamespace(pkg), silent = TRUE)
+        }}
+
+        if (requireNamespace("pkgload", quietly = TRUE)) {{
+          try(pkgload::unload(pkg), silent = TRUE)
+        }}
+
+        dlls <- getLoadedDLLs()
+        if (pkg %in% rownames(dlls)) {{
+          dll_info <- dlls[[pkg]]
+          try(library.dynam.unload(chname = pkg,
+                                   package = pkg,
+                                   libpath = dirname(dll_info[["path"]])),
+              silent = TRUE)
+        }}
+      }}
+
+      .unload_pkg(pkg)
+    """
+    try:
+        ro.r(code)
+    except Exception as e:
+        print(f"Package {package} unloading failed: {e}")
+    
 
 def _init():
     # Set the CRAN mirror globally for this session. 
@@ -152,6 +192,20 @@ def _get_r_pkg_version(package: str) -> Optional[Version]:
         return Version(v_str)
     except Exception:
         return None
+
+
+def _get_r_pkg_installed(package: str) -> bool:
+    """
+    Return True if `pkg` is installed in any library in .libPaths(),
+    without loading the package/namespace.
+    """
+    expr = f"""
+      suppressWarnings(suppressMessages(
+        "{package}" %%in%% rownames(installed.packages())
+      ))
+    """
+    return bool(cast(List, ro.r(expr))[0])
+
     
 def _install_exact_version(package: str, version: Version, repos) -> None:
     """
@@ -292,6 +346,8 @@ def _install_rpackage(
     system = platform.system()
     cores = multiprocessing.cpu_count()
 
+    already_installed = _get_r_pkg_installed(package)
+
     repos: list[str] = ["https://cloud.r-project.org"]  # good default mirror
 
     if system == "Linux":
@@ -334,6 +390,8 @@ def _install_rpackage(
         v_escaped = version.replace('"', '\\"')
 
         try:
+            if already_installed and system == "Windows":
+                _try_force_unload_package(package)
             ro.r(
                 f'remotes::install_version('
                 f'package = "{package}", '
@@ -359,9 +417,10 @@ def _install_rpackage(
     # ------------------------------------------------------------------
     # BRANCH 2: no version spec -> "latest" from repos via install.packages
     # ------------------------------------------------------------------
+    installed_version = None
     try:
-        importr(package)
-        installed_version = _get_r_pkg_version(package)
+        if already_installed:
+            installed_version = _get_r_pkg_version(package)
     except Exception:
         installed_version = None
 
@@ -373,6 +432,8 @@ def _install_rpackage(
 
     try:
         # Primary Attempt (Fast Binary / P3M)
+        if already_installed and system == "Windows":
+            _try_force_unload_package(package)
         utils.install_packages(
             StrVector((package,)),
             repos=StrVector(repos),
@@ -391,6 +452,8 @@ def _install_rpackage(
             f"Falling back to source compilation. ({e})"
         )
         try:
+            if already_installed and system == "Windows":
+                _try_force_unload_package(package)
             utils.install_packages(
                 StrVector((package,)),
                 repos=StrVector(repos),
