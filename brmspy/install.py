@@ -19,6 +19,8 @@ from brmspy.helpers.rtools import _get_r_version
 def _try_force_unload_package(package: str):
     """
     Required for windows when changing versions.
+
+    Does NOT guarantee unloading. 
     """
     code = f"""
       pkg <- "{package}"
@@ -51,6 +53,7 @@ def _try_force_unload_package(package: str):
     """
     try:
         ro.r(code)
+        ro.r(f'remove.packages("{package}")')
     except Exception as e:
         print(f"Package {package} unloading failed: {e}")
     

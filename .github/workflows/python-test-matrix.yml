@@ -56,6 +56,7 @@ jobs:
 
       # ---------------------------------------------------
       # CHECK CACHES WITHOUT DOWNLOADING THEM
+      # This speeds cmdstan (cached) windows run up by 8x
       # ---------------------------------------------------
 
       - name: Check R library cache
