@@ -62,7 +62,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cmdstan
-          key: cmdstan-2.34.1-${{ runner.os }}-v1
+          key: cmdstan-2.36.0-${{ runner.os }}-v1
 
       - name: Install CmdStan if needed
         if: steps.cmdstan-cache.outputs.cache-hit != 'true'
@@ -70,10 +70,10 @@ jobs:
           R -q -e "
             library(cmdstanr);
             cmdstan_dir <- path.expand('~/.cmdstan');
-            target <- file.path(cmdstan_dir, 'cmdstan-2.34.1');
+            target <- file.path(cmdstan_dir, 'cmdstan-2.36.0');
             if (!dir.exists(target)) {
               dir.create(cmdstan_dir, recursive = TRUE, showWarnings = FALSE);
-              install_cmdstan(dir = cmdstan_dir, version = '2.34.1', cores = 2);
+              install_cmdstan(dir = cmdstan_dir, version = '2.36.0', cores = 2);
             }
             set_cmdstan_path(target);
             cat('CmdStan version: ', cmdstan_version(), '\n');
@@ -86,7 +86,7 @@ jobs:
             library(brms);
             library(posterior);
             cmdstan_dir <- path.expand('~/.cmdstan');
-            target <- file.path(cmdstan_dir, 'cmdstan-2.34.1');
+            target <- file.path(cmdstan_dir, 'cmdstan-2.36.0');
             set_cmdstan_path(target);
             cat('R version: ', R.version.string, '\n');
             cat('cmdstanr version: ', as.character(packageVersion('cmdstanr')), '\n');
