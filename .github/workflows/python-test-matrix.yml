@@ -5,11 +5,15 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  workflow_dispatch:
 
 jobs:
-  # 1) Build & cache CmdStan + R packages once
+  # 1) Build & cache CmdStan + R packages once per OS
   cmdstan:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
 
     env:
       RSPM: https://cloud.r-project.org
@@ -20,7 +24,8 @@ jobs:
       - name: Set up R
         uses: r-lib/actions/setup-r@v2
         with:
-          r-version: 'release'
+          r-version: '4.5'
+          rtools-version: '45'       # used on Windows, ignored elsewhere
           use-public-rspm: true
 
       - name: Ensure R library dir exists
@@ -29,12 +34,14 @@ jobs:
           mkdir -p "${R_LIBS_USER}"
 
       - name: Restore R library cache
+        id: r-lib-cache
         uses: actions/cache@v3
         with:
           path: ${{ env.R_LIBS_USER }}
           key: r-lib-${{ runner.os }}-cmdstanr-brms-posterior-v1
 
       - name: Install R packages (cmdstanr, brms, posterior)
+        if: steps.r-lib-cache.outputs.cache-hit != 'true'
         run: |
           R -q -e "
             options(repos = c(
@@ -44,13 +51,15 @@ jobs:
             install.packages(c('cmdstanr', 'brms', 'posterior'));
           "
 
-      - name: Cache CmdStan
+      - name: Restore CmdStan cache
+        id: cmdstan-cache
         uses: actions/cache@v3
         with:
           path: ~/.cmdstan
-          key: cmdstan-2.34.1-v1
+          key: cmdstan-2.34.1-${{ runner.os }}-v1
 
       - name: Install CmdStan if needed
+        if: steps.cmdstan-cache.outputs.cache-hit != 'true'
         run: |
           R -q -e "
             library(cmdstanr);
@@ -66,13 +75,21 @@ jobs:
 
   # 2) Python matrix tests that reuse cached R libs + CmdStan
   build:
-    runs-on: ubuntu-latest
-    needs: cmdstan   # wait for CmdStan job to finish
+    runs-on: ${{ matrix.os }}
+    needs: cmdstan   # wait for all CmdStan matrix jobs to finish
 
     strategy:
       matrix:
-        # skip one testing. Keep costs sane for active dev.
+        # default: all Python versions on ubuntu
         python-version: [ '3.10', '3.12', '3.14' ]
+        os: [ 'ubuntu-latest' ]
+
+        include:
+          # extra OSes, but only with 3.12
+          - os: 'macos-latest'
+            python-version: '3.12'
+          - os: 'windows-latest'
+            python-version: '3.12'
 
     env:
       RSPM: https://cloud.r-project.org
@@ -89,7 +106,8 @@ jobs:
       - name: Set up R
         uses: r-lib/actions/setup-r@v2
         with:
-          r-version: 'release'
+          r-version: '4.5'
+          rtools-version: '45'
           use-public-rspm: true
 
       - name: Ensure R library dir exists
@@ -104,10 +122,11 @@ jobs:
           key: r-lib-${{ runner.os }}-cmdstanr-brms-posterior-v1
 
       - name: Restore CmdStan cache
+        id: cmdstan-cache
         uses: actions/cache@v3
         with:
           path: ~/.cmdstan
-          key: cmdstan-2.34.1-v1
+          key: cmdstan-2.34.1-${{ runner.os }}-v1
 
       - name: Sanity-check R / CmdStan / brms
         run: |
@@ -141,6 +160,5 @@ jobs:
             --cov-report=json
       
       - name: Update Coverage Badge
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master' && matrix.python-version == '3.12'
+        if: github.event_name == 'push' && matrix.os == 'ubuntu-latest' && github.ref == 'refs/heads/master' && matrix.python-version == '3.12'
         uses: we-cli/coverage-badge-action@main
-

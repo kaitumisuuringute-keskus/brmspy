@@ -114,6 +114,20 @@ make -j"${JOBS}"
 log "Installing..."
 make install
 
+log "Registering R shared library path..."
+
+R_HOME="$(R RHOME)"
+R_LIBDIR="${R_HOME}/lib"
+
+if [ -d "${R_LIBDIR}" ] && [ -f "${R_LIBDIR}/libR.so" ]; then
+    echo "${R_LIBDIR}" > /etc/ld.so.conf.d/R.conf
+    ldconfig
+    log "Registered ${R_LIBDIR} with dynamic linker."
+else
+    error "libR.so not found in ${R_LIBDIR} — did the build succeed with --enable-R-shlib?"
+    exit 1
+fi
+
 # 3e. Clean up
 cd /
 rm -rf "${WORK_DIR}"
