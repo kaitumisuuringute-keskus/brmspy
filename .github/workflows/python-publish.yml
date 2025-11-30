@@ -10,9 +10,14 @@ jobs:
       github.event.release.prerelease == false &&
       contains(github.event.release.tag_name, 'release-')
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
     
     env:
       RSPM: https://cloud.r-project.org
+      R_LIBS_USER: ${{ runner.temp }}/R-lib
 
     steps:
       - uses: actions/checkout@v4
