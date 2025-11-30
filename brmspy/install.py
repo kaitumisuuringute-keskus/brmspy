@@ -206,56 +206,6 @@ def _get_r_pkg_installed(package: str) -> bool:
     """
     return bool(cast(List, ro.r(expr))[0])
 
-    
-def _install_exact_version(package: str, version: Version, repos) -> None:
-    """
-    Install specific R package version using remotes::install_version().
-    
-    Pins installation to exact version, useful for reproducibility.
-    Requires the remotes R package, which is auto-installed if missing.
-    
-    Parameters
-    ----------
-    package : str
-        R package name
-    version : Version
-        Exact version to install
-    repos : list of str
-        Repository URLs for package installation
-    
-    Raises
-    ------
-    Exception
-        If installation fails or package version unavailable
-    
-    Notes
-    -----
-    Uses remotes::install_version() which downloads packages from CRAN
-    archives. Historical versions may not always be available, especially
-    for very recent or very old packages.
-    
-    Examples
-    --------
-    ```python
-    from packaging.version import Version
-    
-    _install_exact_version(
-        "brms",
-        Version("2.21.0"),
-        ["https://cloud.r-project.org"]
-    )
-    ```
-    """
-    # ensure remotes is available
-    ro.r('if (!requireNamespace("remotes", quietly = TRUE)) '
-         'install.packages("remotes", repos="https://cloud.r-project.org")')
-
-    # pass repos vector from Python into R
-    ro.globalenv[".brmspy_repos"] = StrVector(repos)
-    ro.r(f'remotes::install_version("{package}", '
-         f'version="{version}", repos=.brmspy_repos)')
-    del ro.globalenv[".brmspy_repos"]
-
 
 def _get_linux_repo():
     """
