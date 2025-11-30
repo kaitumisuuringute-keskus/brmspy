@@ -67,7 +67,7 @@ nav:
     - Build: binaries/build.md
     - Env: binaries/env.md
     - Use: binaries/use.md
-  - Development: development.md
+  - Development: development/development.md
 
 extra_javascript:
   - static/plausible.js

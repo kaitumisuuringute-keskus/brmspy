@@ -8,6 +8,7 @@ Python-first access to R's [brms](https://paul-buerkner.github.io/brms/)  with p
 - **arviz integration**: Returns `arviz.InferenceData` by default for Python workflow
 - **brms formula syntax**: Full support for brms formula interface including random effects
 - **Dual access**: Results include both `.idata` (arviz) and `.r` (brmsfit or other) attributes
+- **Prebuilt Binaries**: Fast installation with precompiled runtimes containing brms and cmstanr (50x faster, 25 seconds on Google Colab)
 
 ## Installation
 
