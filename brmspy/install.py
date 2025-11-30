@@ -425,8 +425,11 @@ def _build_cmstanr():
                     "https://cran.r-project.org/bin/windows/Rtools/"
                 )
                 return
-            print(f"brmspy: Installed Rtools{tag}, re-checking toolchain...")
-            ro.r("cmdstanr::check_cmdstan_toolchain(fix = TRUE)")
+            if tag != "45":
+                # cmdstanr does an invalid mapping of r4.5 -> 44
+                # only check if tag isnt 45
+                print(f"brmspy: Installed Rtools{tag}, re-checking toolchain...")
+                ro.r("cmdstanr::check_cmdstan_toolchain(fix = TRUE)")
 
     ro.r(f"cmdstanr::install_cmdstan(cores = {cores}, overwrite = FALSE)")
 

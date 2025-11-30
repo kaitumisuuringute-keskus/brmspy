@@ -23,6 +23,32 @@ from brmspy import brms
 brms.install_brms() # requires R to be installed already
 ```
 
+
+### Prebuilt Runtimes (Optional)
+
+For faster installation (~20-60 seconds vs 20-30 minutes), use prebuilt runtime bundles:
+
+```python
+from brmspy import install_prebuilt
+install_prebuilt()  # Downloads pre-compiled cmdstanr + brms
+```
+
+#### System Requirements
+
+**Linux (x86_64):**
+- glibc >= 2.27 (Ubuntu 18.04+, Debian 10+, RHEL 8+)
+- g++ >= 9.0
+
+**macOS (Intel & Apple Silicon):**
+- Xcode Command Line Tools: `xcode-select --install`
+- clang >= 11.0
+
+**Windows (x86_64):**
+- Rtools 4.0+ with MinGW toolchain
+- g++ >= 9.0
+
+Download Rtools from: https://cran.r-project.org/bin/windows/Rtools/
+
 ## Quick Start
 
 ```python
