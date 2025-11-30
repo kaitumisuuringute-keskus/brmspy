@@ -60,13 +60,15 @@ jobs:
 
       - name: Install CmdStan if needed
         if: steps.cmdstan-cache.outputs.cache-hit != 'true'
+        # don't modify the quotes used or make it a multiliner
+        # powershell will choke otherwise
         run: >
           Rscript -e 'library(cmdstanr);
           cmdstan_dir <- path.expand("~/.cmdstan");
           target <- file.path(cmdstan_dir, "cmdstan-2.34.1");
           if (!dir.exists(target)) {
-            dir.create(cmdstan_dir, recursive = TRUE, showWarnings = FALSE);
-            install_cmdstan(dir = cmdstan_dir, version = "2.34.1", cores = 2);
+          dir.create(cmdstan_dir, recursive = TRUE, showWarnings = FALSE);
+          install_cmdstan(dir = cmdstan_dir, version = "2.34.1", cores = 2);
           }
           set_cmdstan_path(target);
           cat("CmdStan version: ", cmdstan_version(), "\n")'
