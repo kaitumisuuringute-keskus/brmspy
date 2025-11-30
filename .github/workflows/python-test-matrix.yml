@@ -31,9 +31,8 @@ jobs:
 
     env:
       RSPM: https://cloud.r-project.org
-      # cross-platform paths. DO NOT replace
       R_LIBS_USER: ${{ github.workspace }}/.r-lib
-      CMDSTAN_DIR: ${{ github.workspace }}/.cmdstan 
+      CMDSTAN_DIR: ${{ github.workspace }}/.cmdstan
 
     steps:
       - uses: actions/checkout@v4
@@ -42,11 +41,10 @@ jobs:
         uses: r-lib/actions/setup-r@v2
         with:
           r-version: '4.5'
-          rtools-version: '45'       # used on Windows, ignored elsewhere
+          rtools-version: '45'
           use-public-rspm: true
       
       - name: Capture R_LIBS_USER from R
-        # windows silently rewrites R_LIBS_USER
         shell: bash
         run: |
           echo "R_LIBS_USER=${R_LIBS_USER}" >> "$GITHUB_ENV"
@@ -54,33 +52,41 @@ jobs:
 
       - name: Ensure R library dir exists
         shell: bash
-        run: |
-          echo "R_LIBS_USER: ${R_LIBS_USER}"
-          mkdir -p "${R_LIBS_USER}"
+        run: mkdir -p "${R_LIBS_USER}"
 
-      - name: Restore R library cache
-        id: r-lib-cache
-        uses: actions/cache@v3
+      # ---------------------------------------------------
+      # CHECK CACHES WITHOUT DOWNLOADING THEM
+      # ---------------------------------------------------
+
+      - name: Check R library cache
+        id: r-lib-check
+        uses: actions/cache/restore@v3
         with:
           path: ${{ env.R_LIBS_USER }}
           key: r-lib-${{ runner.os }}-cmdstanr-brms-posterior-v1
+          lookup-only: true
+
+      - name: Check CmdStan cache
+        id: cmdstan-check
+        uses: actions/cache/restore@v3
+        with:
+          path: ${{ env.CMDSTAN_DIR }}
+          key: cmdstan-2.36.0-${{ runner.os }}-v1
+          lookup-only: true
+
+      # ---------------------------------------------------
+      # INSTALL ONLY IF CACHE MISS
+      # ---------------------------------------------------
 
       - name: Install R packages (cmdstanr, brms, posterior)
-        if: steps.r-lib-cache.outputs.cache-hit != 'true'
+        if: steps.r-lib-check.outputs.cache-hit != 'true'
         run: >
           Rscript -e "options(repos = c('https://stan-dev.r-universe.dev',
           CRAN = 'https://cloud.r-project.org'));
           install.packages(c('cmdstanr','brms','posterior'))"
 
-      - name: Restore CmdStan cache
-        id: cmdstan-cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.CMDSTAN_DIR }}
-          key: cmdstan-2.36.0-${{ runner.os }}-v1
-
       - name: Install CmdStan if needed
-        if: steps.cmdstan-cache.outputs.cache-hit != 'true'
+        if: steps.cmdstan-check.outputs.cache-hit != 'true'
         run: >
           Rscript -e 'library(cmdstanr);
           cmdstan_dir <- Sys.getenv("CMDSTAN_DIR");
@@ -91,8 +97,9 @@ jobs:
           };
           set_cmdstan_path(target);
           cat("CmdStan version: ", cmdstan_version(), "\n")'
-      
+
       - name: Prune CmdStan tree for CI
+        if: steps.cmdstan-check.outputs.cache-hit != 'true'
         shell: bash
         run: |
           set -eux
@@ -107,6 +114,24 @@ jobs:
               stan/lib/stan_math/doxygen \
               stan/lib/stan_math/test
           fi
+
+      # ---------------------------------------------------
+      # SAVE CACHES ONLY IF WE JUST BUILT THEM
+      # ---------------------------------------------------
+
+      - name: Save R library cache
+        if: steps.r-lib-check.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v3
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: r-lib-${{ runner.os }}-cmdstanr-brms-posterior-v1
+
+      - name: Save CmdStan cache
+        if: steps.cmdstan-check.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v3
+        with:
+          path: ${{ env.CMDSTAN_DIR }}
+          key: cmdstan-2.36.0-${{ runner.os }}-v1
 
   # 2) Python matrix tests that reuse cached R libs + CmdStan
   build-test:
