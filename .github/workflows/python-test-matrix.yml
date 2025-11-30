@@ -44,6 +44,13 @@ jobs:
           r-version: '4.5'
           rtools-version: '45'       # used on Windows, ignored elsewhere
           use-public-rspm: true
+      
+      - name: Capture R_LIBS_USER from R
+        # windows silently rewrites R_LIBS_USER
+        shell: bash
+        run: |
+          echo "R_LIBS_USER=${R_LIBS_USER}" >> "$GITHUB_ENV"
+          echo "Using R_LIBS_USER=${R_LIBS_USER}"
 
       - name: Ensure R library dir exists
         shell: bash
@@ -65,6 +72,28 @@ jobs:
           CRAN = 'https://cloud.r-project.org'));
           install.packages(c('cmdstanr','brms','posterior'))"
 
+      - name: Prune R library docs for CI
+        shell: bash
+        run: |
+          set -eux
+          if [ -d "${R_LIBS_USER}" ]; then
+            for pkg in "${R_LIBS_USER}"/*; do
+              [ -d "$pkg" ] || continue
+              rm -rf \
+                "$pkg/doc" \
+                "$pkg/docs" \
+                "$pkg/help" \
+                "$pkg/html" \
+                "$pkg/examples" \
+                "$pkg/example" \
+                "$pkg/demo" \
+                "$pkg/tests" \
+                "$pkg/test" \
+                "$pkg/vignettes" \
+                "$pkg/inst/doc" || true
+            done
+          fi
+
       - name: Restore CmdStan cache
         id: cmdstan-cache
         uses: actions/cache@v3
@@ -84,6 +113,22 @@ jobs:
           };
           set_cmdstan_path(target);
           cat("CmdStan version: ", cmdstan_version(), "\n")'
+      
+      - name: Prune CmdStan tree for CI
+        shell: bash
+        run: |
+          set -eux
+          if [ -d "${CMDSTAN_DIR}/cmdstan-2.36.0" ]; then
+            cd "${CMDSTAN_DIR}/cmdstan-2.36.0"
+            rm -rf \
+              examples \
+              src/test \
+              stan/src/test \
+              stan/src/doxygen \
+              stan/lib/stan_math/benchmarks \
+              stan/lib/stan_math/doxygen \
+              stan/lib/stan_math/test
+          fi
 
   # 2) Python matrix tests that reuse cached R libs + CmdStan
   build:
@@ -124,6 +169,13 @@ jobs:
           r-version: '4.5'
           rtools-version: '45'
           use-public-rspm: true
+
+      - name: Capture R_LIBS_USER from R
+        # windows silently rewrites R_LIBS_USER
+        shell: bash
+        run: |
+          echo "R_LIBS_USER=${R_LIBS_USER}" >> "$GITHUB_ENV"
+          echo "Using R_LIBS_USER=${R_LIBS_USER}"
 
       - name: Ensure R library dir exists
         shell: bash
