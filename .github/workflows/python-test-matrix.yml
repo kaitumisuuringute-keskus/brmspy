@@ -129,6 +129,7 @@ jobs:
         shell: bash
         run: |
           echo "R_LIBS_USER: ${R_LIBS_USER}"
+          echo "CMDSTAN_DIR: ${CMDSTAN_DIR}"
           mkdir -p "${R_LIBS_USER}"
 
       - name: Restore R library cache
@@ -145,6 +146,8 @@ jobs:
           key: cmdstan-2.36.0-${{ runner.os }}-v1
 
       - name: Sanity-check R / CmdStan / brms
+        env:
+          CMDSTAN_DIR: ${{ env.CMDSTAN_DIR }}
         run: >
           Rscript -e "library(cmdstanr);
           library(brms);
