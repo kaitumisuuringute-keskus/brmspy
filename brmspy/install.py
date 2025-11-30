@@ -13,7 +13,7 @@ from rpy2.robjects.vectors import StrVector
 from brmspy.binaries.use import install_and_activate_runtime
 from brmspy.helpers.rtools import _install_rtools_for_current_r
 from brmspy.helpers.singleton import _get_brms, _invalidate_singletons
-from build.lib.brmspy.helpers.rtools import _get_r_version
+from brmspy.helpers.rtools import _get_r_version
 
 def _parse_version_spec(spec: Optional[str]) -> Tuple[str, Optional[Version]]:
     """
