@@ -11,6 +11,9 @@ jobs:
       contains(github.event.release.tag_name, 'release-')
     runs-on: ubuntu-latest
     
+    env:
+      RSPM: https://cloud.r-project.org
+
     steps:
       - uses: actions/checkout@v4
 
@@ -23,7 +26,7 @@ jobs:
       - name: Set up R
         uses: r-lib/actions/setup-r@v2
         with:
-          r-version: 'release'
+          r-version: '4.5'
           use-public-rspm: true
 
       - name: Ensure R library dir exists
@@ -32,16 +35,44 @@ jobs:
           mkdir -p "${R_LIBS_USER}"
 
       - name: Restore R library cache
+        id: r-lib-cache
         uses: actions/cache@v3
         with:
           path: ${{ env.R_LIBS_USER }}
           key: r-lib-${{ runner.os }}-cmdstanr-brms-posterior-v1
 
+      - name: Install R packages (cmdstanr, brms, posterior) if cache miss
+        if: steps.r-lib-cache.outputs.cache-hit != 'true'
+        run: |
+          R -q -e "
+            options(repos = c(
+              'https://stan-dev.r-universe.dev',
+              CRAN = 'https://cloud.r-project.org'
+            ));
+            install.packages(c('cmdstanr', 'brms', 'posterior'));
+          "
+
       - name: Restore CmdStan cache
+        id: cmdstan-cache
         uses: actions/cache@v3
         with:
           path: ~/.cmdstan
-          key: cmdstan-2.34.1-v1
+          key: cmdstan-2.34.1-${{ runner.os }}-v1
+
+      - name: Install CmdStan if needed
+        if: steps.cmdstan-cache.outputs.cache-hit != 'true'
+        run: |
+          R -q -e "
+            library(cmdstanr);
+            cmdstan_dir <- path.expand('~/.cmdstan');
+            target <- file.path(cmdstan_dir, 'cmdstan-2.34.1');
+            if (!dir.exists(target)) {
+              dir.create(cmdstan_dir, recursive = TRUE, showWarnings = FALSE);
+              install_cmdstan(dir = cmdstan_dir, version = '2.34.1', cores = 2);
+            }
+            set_cmdstan_path(target);
+            cat('CmdStan version: ', cmdstan_version(), '\n');
+          "
 
       - name: Sanity-check R / CmdStan / brms
         run: |
