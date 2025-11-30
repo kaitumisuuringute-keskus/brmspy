@@ -600,9 +600,12 @@ def install_brms(
 
     if install_cmdstanr:
 
-        if platform.system() == "Windows" and _get_r_version() >= Version("4.5.0") and (not cmdstanr_version or cmdstanr_version == "latest"):
-            # cmdstanr <0.9 does not recognise rtools 45.
-            cmdstanr_version = ">=0.9.0"
+        if platform.system() == "Windows":
+            if _get_r_version() >= Version("4.5.0"):
+                print("R>=4.5 and OS is windows. Limiting cmdstanr version to >= 0.9")
+                if cmdstanr_version == "latest" or cmdstanr_version == "any" or not cmdstanr_version:
+                    # cmdstanr <0.9 does not recognise rtools 45.
+                    cmdstanr_version = ">=0.9.0"
 
         print("Installing cmdstanr...")
         _install_rpackage("cmdstanr", version=cmdstanr_version, repos_extra=["https://mc-stan.org/r-packages/", repo])

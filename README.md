@@ -35,6 +35,8 @@ install_prebuilt()  # Downloads pre-compiled cmdstanr + brms
 
 ### System Requirements
 
+R >= 4.0
+
 **Linux (x86_64):**
 - glibc >= 2.27 (Ubuntu 18.04+, Debian 10+, RHEL 8+)
 - g++ >= 9.0
