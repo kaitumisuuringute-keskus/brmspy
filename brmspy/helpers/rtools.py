@@ -73,7 +73,7 @@ def pick_rtools_for_r(r_ver: Version) -> str | None:
     - R 4.2.x: Rtools 42
     - R 4.3.x: Rtools 43
     - R 4.4.x: Rtools 44
-    - R 4.5.x+: Rtools 45
+    - R 4.5.x+: Rtools 44
     - R < 4.0.0: None (legacy, not supported)
     
     **Rtools Purpose:**
@@ -125,7 +125,7 @@ def pick_rtools_for_r(r_ver: Version) -> str | None:
     if r_ver < Version("4.6.0"):
         return "44"  # R 4.4.x
     
-    return "45"      # R 4.5.x and up
+    return "44"      # R 4.5.x and up
 
 
 RTOOLS_INSTALLERS = {

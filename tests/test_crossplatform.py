@@ -49,7 +49,29 @@ class TestCrossplatformInstall:
         with pytest.raises(ImportError):
             _get_brms()
 
-        brms.install_brms()
+        brms.install_brms(use_prebuilt_binaries=False)
+
+        assert rpackages.isinstalled("brms")
+        assert rpackages.isinstalled("cmdstanr")
+
+        _brms = _get_brms()
+        assert _brms is not None
+    
+    @pytest.mark.slow
+    def test_brms_install_prebuilt(self):
+        import rpy2.robjects.packages as rpackages
+        _remove_deps()
+        
+        assert not rpackages.isinstalled("brms")
+        assert not rpackages.isinstalled("cmdstanr")
+
+        # Keep brmspy after removal to ensure the library imports without brms installed
+        from brmspy import brms
+        from brmspy.helpers.singleton import _get_brms
+        with pytest.raises(ImportError):
+            _get_brms()
+
+        brms.install_brms(use_prebuilt_binaries=True)
 
         assert rpackages.isinstalled("brms")
         assert rpackages.isinstalled("cmdstanr")
