@@ -69,7 +69,7 @@ jobs:
     needs: create-release
     strategy:
       fail-fast: false
-      max-parallel: 1
+      max-parallel: 3
       matrix:
         r: ["4.4", "4.3", "4.2", "4.1", "4.0", "4.5"]
         os: [ubuntu-latest, macos-latest, windows-latest]
