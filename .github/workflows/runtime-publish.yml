@@ -69,9 +69,9 @@ jobs:
     needs: create-release
     strategy:
       fail-fast: false
-      max-parallel: 1
+      max-parallel: 3
       matrix:
-        r: ["4.5", "4.4", "4.3", "4.2", "4.1", "4.0"]
+        r: ["4.4", "4.3", "4.2", "4.1", "4.0", "4.5"]
         os: [ubuntu-latest, macos-latest, windows-latest]
 
     runs-on: ${{ matrix.os }}
@@ -184,6 +184,9 @@ jobs:
       - name: Install R dependencies
         if: runner.os != 'Linux'
         shell: bash
+        env:
+          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python -c "import brmspy; brmspy.install_brms()"
 
@@ -212,7 +215,7 @@ jobs:
         uses: actions/github-script@v7
         env:
           TAG: ${{ inputs.tag || 'runtime' }}
-          ASSET_NAME: "runtime-${{ inputs.runtime_version || '0.1.0' }}-${{ matrix.os }}.tar.gz"
+          ASSET_NAME: "${{ env.RUNTIME_FILENAME }}"
         with:
           script: |
             const { owner, repo } = context.repo;

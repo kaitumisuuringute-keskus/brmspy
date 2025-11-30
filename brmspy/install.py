@@ -1,7 +1,7 @@
 import os
 import shutil
 import subprocess
-from typing import Optional, Union, cast, Tuple
+from typing import Callable, Optional, Union, cast, Tuple
 from packaging.version import Version
 import multiprocessing
 import platform
@@ -14,6 +14,29 @@ from brmspy.binaries.use import install_and_activate_runtime
 from brmspy.helpers.rtools import _install_rtools_for_current_r
 from brmspy.helpers.singleton import _get_brms, _invalidate_singletons
 from brmspy.helpers.rtools import _get_r_version
+
+def _forward_github_token_to_r() -> None:
+    """Forward GITHUB_PAT / GITHUB_TOKEN from Python env to R's Sys.getenv."""
+    try:
+        kwargs = {}
+        pat = os.environ.get("GITHUB_PAT")
+        token = os.environ.get("GITHUB_TOKEN")
+
+        if not pat and not token:
+            return
+        
+        r_setenv = cast(Callable, ro.r["Sys.setenv"])
+
+        if pat:
+            kwargs["GITHUB_PAT"] = pat
+        elif token:
+            kwargs["GITHUB_TOKEN"] = token
+
+        if kwargs:
+            r_setenv(**kwargs)
+    except Exception as e:
+        print(f"{e}")
+        return
 
 def _parse_version_spec(spec: Optional[str]) -> Tuple[str, Optional[Version]]:
     """
@@ -531,6 +554,8 @@ def install_prebuilt(runtime_version="0.1.0", url: Optional[str] = None, bundle:
         install_prebuilt(url="https://example.com/runtime.tar.gz")
     ```
     """
+    _forward_github_token_to_r()
+
     from brmspy.binaries import env
     if not env.can_use_prebuilt():
         raise RuntimeError(
@@ -546,14 +571,17 @@ def install_prebuilt(runtime_version="0.1.0", url: Optional[str] = None, bundle:
         url = f"https://github.com/kaitumisuuringute-keskus/brmspy/releases/download/runtime/brmspy-runtime-{runtime_version}-{fingerprint}.tar.gz"
 
     try:
-        return install_and_activate_runtime(
+        result = install_and_activate_runtime(
             url=url,
             bundle=bundle,
             runtime_version=runtime_version
         )
+        _get_brms()
+        return result
     except Exception as e:
         print(f"{e}")
         return False
+    
 
 def install_brms(
     brms_version: str = "latest",
@@ -616,12 +644,13 @@ def install_brms(
         if install_prebuilt():
             print("\nSetup complete! You're ready to use brmspy.")
             return
+    
+    _forward_github_token_to_r()
 
     print("Installing brms...")
     _install_rpackage("brms", version=brms_version, repos_extra=[repo])
 
     if install_cmdstanr:
-
         if platform.system() == "Windows":
             if _get_r_version() >= Version("4.5.0"):
                 print("R>=4.5 and OS is windows. Limiting cmdstanr version to >= 0.9")
