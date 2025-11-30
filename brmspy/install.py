@@ -400,7 +400,26 @@ def _install_rpackage(
             print(f"Failed to install {package}.")
             raise e2
 
+def _install_rpackage_deps(package: str):
+    try:
+        ro.r(f"""
+            pkgs <- unique(unlist(
+                tools::package_dependencies(
+                    c("{package}"),
+                    recursive = TRUE,
+                    which = c("Depends", "Imports", "LinkingTo"),
+                    db = available.packages()
+                )
+            ))
 
+            to_install <- setdiff(pkgs, rownames(installed.packages()))
+            if (length(to_install)) {{
+                install.packages(to_install)
+            }}
+        """)
+    except Exception as e:
+        print(str(e))
+        return
 
 def _build_cmstanr():
     """
@@ -649,6 +668,7 @@ def install_brms(
 
     print("Installing brms...")
     _install_rpackage("brms", version=brms_version, repos_extra=[repo])
+    _install_rpackage_deps("brms")
 
     if install_cmdstanr:
         if platform.system() == "Windows":
@@ -664,12 +684,14 @@ def install_brms(
             'https://stan-dev.r-universe.dev',
             repo
         ])
+        _install_rpackage_deps("cmdstanr")
         print("Building cmdstanr...")
         _build_cmstanr()
 
     if install_rstan:
         print("Installing rstan...")
         _install_rpackage("rstan", version=rstan_version, repos_extra=[repo])
+        _install_rpackage_deps("rstan")
 
     _invalidate_singletons()
     # Import to mitigate lazy imports
