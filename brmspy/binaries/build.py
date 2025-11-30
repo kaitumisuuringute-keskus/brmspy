@@ -12,6 +12,7 @@ import rpy2.robjects as ro
 
 from brmspy.binaries.env import system_fingerprint
 
+
 def _generate_manifest_hash(manifest):
     """
     Generate deterministic SHA256 hash of runtime manifest.

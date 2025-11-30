@@ -15,6 +15,11 @@ from brmspy.helpers.rtools import _install_rtools_for_current_r
 from brmspy.helpers.singleton import _get_brms, _invalidate_singletons
 from brmspy.helpers.rtools import _get_r_version
 
+def _init():
+    # Set the CRAN mirror globally for this session. 
+    # This prevents 'build-manifest.R' or subsequent installs from prompting for a mirror.
+    ro.r('options(repos = c(CRAN = "https://cloud.r-project.org"))')
+
 def _forward_github_token_to_r() -> None:
     """Forward GITHUB_PAT / GITHUB_TOKEN from Python env to R's Sys.getenv."""
     try:
@@ -573,6 +578,8 @@ def install_prebuilt(runtime_version="0.1.0", url: Optional[str] = None, bundle:
         install_prebuilt(url="https://example.com/runtime.tar.gz")
     ```
     """
+    _init()
+
     _forward_github_token_to_r()
 
     from brmspy.binaries import env
@@ -659,6 +666,9 @@ def install_brms(
     brms.install_brms(use_prebuilt_binaries=True)
     ```
     """
+
+    _init()
+
     if use_prebuilt_binaries:
         if install_prebuilt():
             print("\nSetup complete! You're ready to use brmspy.")
