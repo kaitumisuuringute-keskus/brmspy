@@ -13,6 +13,9 @@ on:
         required: false
         type: string
         default: "runtime"
+  push: # TEMPORARY. REMOVE BEFORE MERGE
+    branches:
+      - dev
 
 jobs:
   # Create a single runtime release that all matrix jobs will attach assets to
