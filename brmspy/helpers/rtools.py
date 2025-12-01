@@ -73,7 +73,7 @@ def pick_rtools_for_r(r_ver: Version) -> str | None:
     - R 4.2.x: Rtools 42
     - R 4.3.x: Rtools 43
     - R 4.4.x: Rtools 44
-    - R 4.5.x+: Rtools 44
+    - R 4.5.x+: Rtools 45
     - R < 4.0.0: None (legacy, not supported)
     
     **Rtools Purpose:**
