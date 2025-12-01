@@ -5,6 +5,119 @@ on:
     types: [created]
 
 jobs:
+  # 1) Build & cache CmdStan + R packages once per OS
+  cmdstan:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+    runs-on: ${{ matrix.os }}
+
+    env:
+      RSPM: https://cloud.r-project.org
+      R_LIBS_USER: ${{ github.workspace }}/.r-lib
+      CMDSTAN_DIR: ${{ github.workspace }}/.cmdstan
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.5'
+          rtools-version: '45'
+          use-public-rspm: true
+      
+      - name: Capture R_LIBS_USER from R
+        shell: bash
+        run: |
+          echo "R_LIBS_USER=${R_LIBS_USER}" >> "$GITHUB_ENV"
+          echo "Using R_LIBS_USER=${R_LIBS_USER}"
+
+      - name: Ensure R library dir exists
+        shell: bash
+        run: mkdir -p "${R_LIBS_USER}"
+
+      # ---------------------------------------------------
+      # CHECK CACHES WITHOUT DOWNLOADING THEM
+      # This speeds cmdstan (cached) windows run up by 8x
+      # ---------------------------------------------------
+
+      - name: Check R library cache
+        id: r-lib-check
+        uses: actions/cache/restore@v3
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: r-lib-${{ runner.os }}-cmdstanr-brms-posterior-v1
+          lookup-only: true
+
+      - name: Check CmdStan cache
+        id: cmdstan-check
+        uses: actions/cache/restore@v3
+        with:
+          path: ${{ env.CMDSTAN_DIR }}
+          key: cmdstan-2.36.0-${{ runner.os }}-v1
+          lookup-only: true
+
+      # ---------------------------------------------------
+      # INSTALL ONLY IF CACHE MISS
+      # ---------------------------------------------------
+
+      - name: Install R packages (cmdstanr, brms, posterior)
+        if: steps.r-lib-check.outputs.cache-hit != 'true'
+        run: >
+          Rscript -e "options(repos = c('https://stan-dev.r-universe.dev',
+          CRAN = 'https://cloud.r-project.org'));
+          install.packages(c('cmdstanr','brms','posterior'))"
+
+      - name: Install CmdStan if needed
+        if: steps.cmdstan-check.outputs.cache-hit != 'true'
+        run: >
+          Rscript -e 'library(cmdstanr);
+          cmdstan_dir <- Sys.getenv("CMDSTAN_DIR");
+          target <- file.path(cmdstan_dir, "cmdstan-2.36.0");
+          if (!dir.exists(target)) {
+          dir.create(cmdstan_dir, recursive = TRUE, showWarnings = FALSE);
+          install_cmdstan(dir = cmdstan_dir, version = "2.36.0", cores = 2);
+          };
+          set_cmdstan_path(target);
+          cat("CmdStan version: ", cmdstan_version(), "\n")'
+
+      - name: Prune CmdStan tree for CI
+        if: steps.cmdstan-check.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          set -eux
+          if [ -d "${CMDSTAN_DIR}/cmdstan-2.36.0" ]; then
+            cd "${CMDSTAN_DIR}/cmdstan-2.36.0"
+            rm -rf \
+              examples \
+              src/test \
+              stan/src/test \
+              stan/src/doxygen \
+              stan/lib/stan_math/benchmarks \
+              stan/lib/stan_math/doxygen \
+              stan/lib/stan_math/test
+          fi
+
+      # ---------------------------------------------------
+      # SAVE CACHES ONLY IF WE JUST BUILT THEM
+      # ---------------------------------------------------
+
+      - name: Save R library cache
+        if: steps.r-lib-check.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v3
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: r-lib-${{ runner.os }}-cmdstanr-brms-posterior-v1
+
+      - name: Save CmdStan cache
+        if: steps.cmdstan-check.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v3
+        with:
+          path: ${{ env.CMDSTAN_DIR }}
+          key: cmdstan-2.36.0-${{ runner.os }}-v1
+
   deploy:
     if: >
       github.event.release.prerelease == false &&
@@ -20,7 +133,6 @@ jobs:
       R_LIBS_USER: ${{ github.workspace }}/.r-lib
       CMDSTAN_DIR: ${{ github.workspace }}/.cmdstan
       CMDSTAN: ${{ github.workspace }}/.cmdstan/cmdstan-2.36.0
-      
 
     steps:
       - uses: actions/checkout@v4
@@ -36,6 +148,12 @@ jobs:
         with:
           r-version: '4.5'
           use-public-rspm: true
+      
+      - name: Capture R_LIBS_USER from R
+        shell: bash
+        run: |
+          echo "R_LIBS_USER=${R_LIBS_USER}" >> "$GITHUB_ENV"
+          echo "Using R_LIBS_USER=${R_LIBS_USER}"
 
       - name: Ensure R library dir exists
         run: |
