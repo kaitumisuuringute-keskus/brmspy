@@ -216,3 +216,18 @@ def set_log_level(level: int):
     """
     logger = get_logger()
     logger.setLevel(level)
+
+
+import time
+
+class LogTime:
+    def __init__(self, name="process"):
+        self.name = name
+
+    def __enter__(self):
+        self.start = time.perf_counter()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        elapsed = time.perf_counter() - self.start
+        log(f"[{self.name}] took {elapsed:.4f} seconds")

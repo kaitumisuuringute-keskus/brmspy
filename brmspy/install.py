@@ -12,7 +12,7 @@ from rpy2.robjects.vectors import StrVector
 
 from brmspy.binaries.use import install_and_activate_runtime
 from brmspy.binaries.r import _forward_github_token_to_r, _get_r_pkg_installed, _get_r_pkg_version, _try_force_unload_package
-from brmspy.helpers.log import log
+from brmspy.helpers.log import log, LogTime
 from brmspy.helpers.rtools import _install_rtools_for_current_r
 from brmspy.helpers.singleton import _get_brms, _invalidate_singletons
 from brmspy.helpers.rtools import _get_r_version
@@ -414,38 +414,39 @@ def install_prebuilt(runtime_version="0.1.0", url: Optional[str] = None, bundle:
         install_prebuilt(url="https://example.com/runtime.tar.gz")
     ```
     """
-    _init()
+    with LogTime("install_prebuilt"):
+        _init()
 
-    _forward_github_token_to_r()
+        _forward_github_token_to_r()
 
-    from brmspy.binaries import env
+        from brmspy.binaries import env
 
-    if install_rtools:
-        _install_rtools_for_current_r()
+        if install_rtools:
+            _install_rtools_for_current_r()
 
-    if not env.can_use_prebuilt():
-        raise RuntimeError(
-            "Prebuilt binaries are not available for your system. "
-            "Please install brms manually or in install_brms set use_prebuilt_binaries=False."
-        )
+        if not env.can_use_prebuilt():
+            raise RuntimeError(
+                "Prebuilt binaries are not available for your system. "
+                "Please install brms manually or in install_brms set use_prebuilt_binaries=False."
+            )
 
-    fingerprint = env.system_fingerprint()
-    if url is None and bundle is None:
-        url = f"https://github.com/kaitumisuuringute-keskus/brmspy/releases/download/runtime/brmspy-runtime-{runtime_version}-{fingerprint}.tar.gz"
+        fingerprint = env.system_fingerprint()
+        if url is None and bundle is None:
+            url = f"https://github.com/kaitumisuuringute-keskus/brmspy/releases/download/runtime/brmspy-runtime-{runtime_version}-{fingerprint}.tar.gz"
 
-    try:
-        result = install_and_activate_runtime(
-            url=url,
-            bundle=bundle,
-            runtime_version=runtime_version,
-            activate=True,
-            require_attestation=True
-        )
-        _get_brms()
-        return result
-    except Exception as e:
-        log_warning(f"{e}")
-        return False
+        try:
+            result = install_and_activate_runtime(
+                url=url,
+                bundle=bundle,
+                runtime_version=runtime_version,
+                activate=True,
+                require_attestation=True
+            )
+            _get_brms()
+            return result
+        except Exception as e:
+            log_warning(f"{e}")
+            return False
     
 
 def install_brms(
@@ -510,48 +511,48 @@ def install_brms(
     brms.install_brms(use_prebuilt_binaries=True)
     ```
     """
+    with LogTime("install_brms"):
+        _init()
 
-    _init()
+        if use_prebuilt_binaries:
+            if install_prebuilt(install_rtools=install_rtools):
+                log("\nSetup complete! You're ready to use brmspy.")
+                return
 
-    if use_prebuilt_binaries:
-        if install_prebuilt(install_rtools=install_rtools):
-            log("\nSetup complete! You're ready to use brmspy.")
-            return
+        if install_rtools:
+            _install_rtools_for_current_r()
+        
+        _forward_github_token_to_r()
 
-    if install_rtools:
-        _install_rtools_for_current_r()
-    
-    _forward_github_token_to_r()
+        log("Installing brms...")
+        _install_rpackage("brms", version=brms_version, repos_extra=[repo])
+        _install_rpackage_deps("brms")
 
-    log("Installing brms...")
-    _install_rpackage("brms", version=brms_version, repos_extra=[repo])
-    _install_rpackage_deps("brms")
+        if install_cmdstanr:
+            if platform.system() == "Windows":
+                if _get_r_version() >= Version("4.5.0"):
+                    log("R>=4.5 and OS is windows. Limiting cmdstanr version to >= 0.9")
+                    if cmdstanr_version == "latest" or cmdstanr_version == "any" or not cmdstanr_version:
+                        # cmdstanr <0.9 does not recognise rtools 45.
+                        cmdstanr_version = ">= 0.9.0"
 
-    if install_cmdstanr:
-        if platform.system() == "Windows":
-            if _get_r_version() >= Version("4.5.0"):
-                log("R>=4.5 and OS is windows. Limiting cmdstanr version to >= 0.9")
-                if cmdstanr_version == "latest" or cmdstanr_version == "any" or not cmdstanr_version:
-                    # cmdstanr <0.9 does not recognise rtools 45.
-                    cmdstanr_version = ">= 0.9.0"
+            log("Installing cmdstanr...")
+            _install_rpackage("cmdstanr", version=cmdstanr_version, repos_extra=[
+                "https://mc-stan.org/r-packages/",
+                'https://stan-dev.r-universe.dev',
+                repo
+            ])
+            _install_rpackage_deps("cmdstanr")
+            log("Building cmdstanr...")
+            _build_cmstanr(tried_install_rtools=install_rtools)
 
-        log("Installing cmdstanr...")
-        _install_rpackage("cmdstanr", version=cmdstanr_version, repos_extra=[
-            "https://mc-stan.org/r-packages/",
-            'https://stan-dev.r-universe.dev',
-            repo
-        ])
-        _install_rpackage_deps("cmdstanr")
-        log("Building cmdstanr...")
-        _build_cmstanr(tried_install_rtools=install_rtools)
+        if install_rstan:
+            log("Installing rstan...")
+            _install_rpackage("rstan", version=rstan_version, repos_extra=[repo])
+            _install_rpackage_deps("rstan")
 
-    if install_rstan:
-        log("Installing rstan...")
-        _install_rpackage("rstan", version=rstan_version, repos_extra=[repo])
-        _install_rpackage_deps("rstan")
+        _invalidate_singletons()
+        # Import to mitigate lazy imports
+        _get_brms()
 
-    _invalidate_singletons()
-    # Import to mitigate lazy imports
-    _get_brms()
-
-    log("\nSetup complete! You're ready to use brmspy.")
+        log("\nSetup complete! You're ready to use brmspy.")
