@@ -124,35 +124,24 @@ def _forward_github_token_to_r() -> None:
 
 def _get_r_pkg_version(package: str) -> Optional[Version]:
     """
-    Get installed R package version.
-    
-    Queries R's package system via rpy2 to retrieve the installed
-    version of a package. Returns None if package is not installed.
-    
-    Parameters
-    ----------
-    package : str
-        R package name (e.g., "brms", "cmdstanr", "rstan")
-    
-    Returns
-    -------
-    Version or None
-        Package version if installed, None otherwise
-    
-    Examples
-    --------
-    ```python
-    _get_r_pkg_version("brms")
-    # <Version('2.21.0')>
-    
-    _get_r_pkg_version("nonexistent_package")
-    # None
-    ```
+    Get installed R package version without loading the package.
     """
     try:
-        # utils::packageVersion("pkg") -> "x.y.z"
-        v_str = cast(list, ro.r(f"as.character(utils::packageVersion('{package}'))"))[0]
+        # 1. packageDescription reads the DESCRIPTION file from disk.
+        # 2. fields='Version' extracts just the version string.
+        # 3. We wrap it in a check: if the package is missing, packageDescription 
+        #    returns NA (and warns). We force an error with stop() if it is NA
+        #    so the Python 'except' block catches it correctly.
+        expr = f"""
+        v <- utils::packageDescription('{package}', fields = 'Version')
+        if (is.na(v)) stop('Package not found')
+        v
+        """
+        
+        # ro.r returns a vector; [0] gets the string value
+        v_str =cast(List, ro.r(expr))[0]
         return Version(v_str)
+        
     except Exception:
         return None
 
