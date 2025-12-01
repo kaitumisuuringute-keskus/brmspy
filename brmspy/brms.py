@@ -50,10 +50,6 @@ try:
 except ImportError:
     log_warning("brmspy: brms and other required libraries are not installed. Please call brmspy.install_brms()")
 
-log_warning("brmspy <0.2 is still evolving; APIs may change.")
-log_warning("Feedback or a star on GitHub helps guide development:")
-log_warning("https://github.com/kaitumisuuringute-keskus/brmspy")
-
 __all__ = [
     'install_brms', 'get_brms_version', 'get_brms_data', 'make_stancode',
     'fit', 'formula', 'summary',

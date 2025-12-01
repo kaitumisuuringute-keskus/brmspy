@@ -11,7 +11,7 @@ import rpy2.robjects as ro
 from brmspy.binaries.env import system_fingerprint
 from brmspy.binaries.github import get_github_asset_sha256_from_url
 from brmspy.binaries.r import _get_r_pkg_installed, _try_force_unload_package
-from brmspy.helpers.log import log, log_warning
+from brmspy.helpers.log import greet, log, log_warning
 
 OFFICIAL_RELEASE_PATTERN = "https://github.com/kaitumisuuringute-keskus/brmspy/"
 HASH_FILENAME = "hash"
@@ -152,6 +152,8 @@ def activate_runtime(runtime_root: Union[str, Path]) -> None:
 
     # At this point, R is configured to use the prebuilt runtime.
     # Any further brms/cmdstanr calls in this process will use it.
+
+    greet()
 
 
 

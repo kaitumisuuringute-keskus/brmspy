@@ -231,3 +231,9 @@ class LogTime:
     def __exit__(self, exc_type, exc_val, exc_tb):
         elapsed = time.perf_counter() - self.start
         log(f"[{self.name}] took {elapsed:.2f} seconds")
+
+
+def greet():
+    log_warning("brmspy <0.2 is still evolving; APIs may change.")
+    log_warning("Feedback or a star on GitHub helps guide development:")
+    log_warning("https://github.com/kaitumisuuringute-keskus/brmspy")

@@ -12,7 +12,7 @@ from rpy2.robjects.vectors import StrVector
 
 from brmspy.binaries.use import install_and_activate_runtime
 from brmspy.binaries.r import _forward_github_token_to_r, _get_r_pkg_installed, _get_r_pkg_version, _try_force_unload_package
-from brmspy.helpers.log import log, LogTime
+from brmspy.helpers.log import greet, log, LogTime
 from brmspy.helpers.rtools import _install_rtools_for_current_r
 from brmspy.helpers.singleton import _get_brms, _invalidate_singletons
 from brmspy.helpers.rtools import _get_r_version
@@ -561,3 +561,5 @@ def install_brms(
         _get_brms()
 
         log("Setup complete! You're ready to use brmspy.")
+
+        greet()
