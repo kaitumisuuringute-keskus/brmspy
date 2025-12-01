@@ -3,19 +3,42 @@ import inspect
 from typing import Optional
 
 
-# Custom formatter that adds the [brmspy][method_name] prefix
+# ANSI color codes
+class Colors:
+    RESET = '\033[0m'
+    RED = '\033[91m'
+    YELLOW = '\033[93m'
+    BOLD = '\033[1m'
+
+
+# Custom formatter that adds the [brmspy][method_name] prefix with colors
 class BrmspyFormatter(logging.Formatter):
     """
     Custom formatter that formats log messages as [brmspy][method_name] msg.
+    Adds color coding for warnings (yellow) and errors (red) when terminal supports it.
     """
     
     def format(self, record):
         # Get method name from record or use the function name
         method_name = getattr(record, 'method_name', record.funcName)
         
+        # Determine prefix based on log level
+        if record.levelno >= logging.ERROR:
+            # Red color for errors and critical
+            level_label = 'ERROR' if record.levelno == logging.ERROR else 'CRITICAL'
+            prefix = f'{Colors.RED}{Colors.BOLD}[brmspy][{method_name}][{level_label}]{Colors.RESET}'
+        elif record.levelno == logging.WARNING:
+            # Yellow color for warnings
+            prefix = f'{Colors.YELLOW}[brmspy][{method_name}][WARNING]{Colors.RESET}'
+        else:
+            # No color for info and debug
+            prefix = f'[brmspy][{method_name}]'
+        
+        prefix = prefix.replace("[<module>]", "")
+        
         # Format the message with the custom prefix
         original_format = self._style._fmt
-        self._style._fmt = f'[brmspy][{method_name}] %(message)s'
+        self._style._fmt = f'{prefix} %(message)s'
         
         result = super().format(record)
         
@@ -102,16 +125,6 @@ def log(msg: str, method_name: Optional[str] = None, level: int = logging.INFO):
         The name of the method/function. If None, will auto-detect from call stack.
     level : int, optional
         Logging level (default: logging.INFO)
-    
-    Examples
-    --------
-    >>> from brmspy.helpers.log import log
-    >>> 
-    >>> def my_function():
-    ...     log("Starting process")  # Prints: [brmspy][my_function] Starting process
-    >>> 
-    >>> def custom_name():
-    ...     log("Custom name", method_name="custom")  # Prints: [brmspy][custom] Custom name
     """
     if method_name is None:
         method_name = _get_caller_name()
@@ -130,13 +143,6 @@ def log_info(msg: str, method_name: Optional[str] = None):
         The message to log
     method_name : str, optional
         The name of the method/function. If None, will auto-detect from call stack.
-    
-    Examples
-    --------
-    >>> from brmspy.helpers.log import log_info
-    >>> 
-    >>> def my_function():
-    ...     log_info("Processing data")  # Prints: [brmspy][my_function] Processing data
     """
     log(msg, method_name=method_name, level=logging.INFO)
 
@@ -151,13 +157,7 @@ def log_debug(msg: str, method_name: Optional[str] = None):
         The message to log
     method_name : str, optional
         The name of the method/function. If None, will auto-detect from call stack.
-    
-    Examples
-    --------
-    >>> from brmspy.helpers.log import log_debug
-    >>> 
-    >>> def my_function():
-    ...     log_debug("Debug info")  # Prints: [brmspy][my_function] Debug info
+
     """
     log(msg, method_name=method_name, level=logging.DEBUG)
 
@@ -172,13 +172,7 @@ def log_warning(msg: str, method_name: Optional[str] = None):
         The warning message to log
     method_name : str, optional
         The name of the method/function. If None, will auto-detect from call stack.
-    
-    Examples
-    --------
-    >>> from brmspy.helpers.log import log_warning
-    >>> 
-    >>> def my_function():
-    ...     log_warning("This might be an issue")  # Prints: [brmspy][my_function] This might be an issue
+
     """
     log(msg, method_name=method_name, level=logging.WARNING)
 
@@ -193,13 +187,6 @@ def log_error(msg: str, method_name: Optional[str] = None):
         The error message to log
     method_name : str, optional
         The name of the method/function. If None, will auto-detect from call stack.
-    
-    Examples
-    --------
-    >>> from brmspy.helpers.log import log_error
-    >>> 
-    >>> def my_function():
-    ...     log_error("Something went wrong")  # Prints: [brmspy][my_function] Something went wrong
     """
     log(msg, method_name=method_name, level=logging.ERROR)
 
@@ -214,13 +201,6 @@ def log_critical(msg: str, method_name: Optional[str] = None):
         The critical message to log
     method_name : str, optional
         The name of the method/function. If None, will auto-detect from call stack.
-    
-    Examples
-    --------
-    >>> from brmspy.helpers.log import log_critical
-    >>> 
-    >>> def my_function():
-    ...     log_critical("Critical failure")  # Prints: [brmspy][my_function] Critical failure
     """
     log(msg, method_name=method_name, level=logging.CRITICAL)
 
@@ -233,17 +213,6 @@ def set_log_level(level: int):
     ----------
     level : int
         Logging level (e.g., logging.DEBUG, logging.INFO, logging.WARNING)
-    
-    Examples
-    --------
-    >>> from brmspy.helpers.log import set_log_level
-    >>> import logging
-    >>> 
-    >>> # Enable debug logging
-    >>> set_log_level(logging.DEBUG)
-    >>> 
-    >>> # Disable all but error messages
-    >>> set_log_level(logging.ERROR)
     """
     logger = get_logger()
     logger.setLevel(level)
