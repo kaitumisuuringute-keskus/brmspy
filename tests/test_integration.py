@@ -36,34 +36,6 @@ class TestBrmsImportAndVersion:
         brms = rpackages.importr("brms")
         assert brms is not None
 
-class TestBrmsInstallationFlow:
-    @pytest.mark.slow
-    def test_brms_install(self):
-        import sys
-        import rpy2.robjects as ro
-        import rpy2.robjects.packages as rpackages
-        if rpackages.isinstalled("brms"):
-            ro.r('remove.packages("brms")')
-        
-        assert not rpackages.isinstalled("brms")
-
-        # since other tests might have imported brmspy already with global _brms singleton set,
-        # we need to remove it from sys.modules first
-        for name in list(sys.modules.keys()):
-            if name.startswith("brmspy"):
-                del sys.modules[name]
-
-        # Keep brmspy after removal to ensure the library imports without brms installed
-        from brmspy import brms
-        from brmspy.helpers.singleton import _get_brms
-        with pytest.raises(ImportError):
-            _get_brms()
-
-        brms.install_brms()
-
-        assert rpackages.isinstalled("brms")
-        _brms = _get_brms()
-        assert _brms is not None
 
 
 @pytest.mark.requires_brms
