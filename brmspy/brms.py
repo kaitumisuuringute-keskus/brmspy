@@ -3,10 +3,15 @@ import pandas as pd
 import numpy as np
 import re
 import warnings
-
+from packaging.version import Version
 import rpy2.robjects.packages as rpackages
 from rpy2.robjects import default_converter, pandas2ri, numpy2ri, ListVector, DataFrame, StrVector
 from rpy2.robjects.conversion import localconverter
+
+from brmspy.binaries.r import _get_r_pkg_version
+from brmspy.binaries.use import autoload_last_runtime
+from brmspy.helpers.log import log
+from brmspy.helpers.log import log_warning
 from .helpers.priors import _build_priors
 from .helpers.singleton import _get_base, _get_brms, _get_cmdstanr, _get_rstan, _invalidate_singletons
 from .helpers.conversion import (
@@ -22,14 +27,16 @@ from .types import (
 )
 from .install import install_brms
 
-# R imports must NOT be done lazily! 
+autoload_last_runtime()
+
+# R imports must NOT be done lazily!
 # Lazy imports with rpy2 within tqdm loops for example WILL cause segfaults!
 # This can lead to wild and unexpected behaviour, hence we do R imports when brms.py is imported
+
 try:
     _get_brms()
 except ImportError:
-    print("brmspy: brms and other required libraries are not installed. Please call brmspy.install_brms()")
-
+    log_warning("brmspy: brms and other required libraries are not installed. Please call brmspy.install_brms()")
 
 __all__ = [
     'install_brms', 'get_brms_version', 'get_brms_data', 'make_stancode',
@@ -40,14 +47,14 @@ __all__ = [
     "prior"
 ]
 
-def get_brms_version() -> str:
+def get_brms_version() -> typing.Optional[Version]:
     """
     Get installed brms R package version.
     
     Returns
     -------
     str
-        Version string (e.g., "2.23.0")
+        Version object or None
     
     Raises
     ------
@@ -63,25 +70,7 @@ def get_brms_version() -> str:
     print(f"brms version: {version}")
     ```
     """
-    brms = _get_brms()
-    utils = rpackages.importr("utils")
-    
-    # Get package version
-    version_info = utils.packageVersion("brms")
-    # Convert to string and clean up R output format
-    version_str = str(version_info[0]).strip()
-    
-    # R returns format like '[1]  2 22  0' - extract just the numbers
-    # and format as proper version string
-    import re
-    numbers = re.findall(r'\d+', version_str)
-    if len(numbers) >= 3:
-        return '.'.join(numbers[:3])
-    elif len(numbers) == 2:
-        return '.'.join(numbers)
-    else:
-        # Fallback - return cleaned string
-        return version_str.replace('[1]', '').strip()
+    return _get_r_pkg_version("brms")
 
 
 
@@ -488,9 +477,9 @@ def fit(
     # Set empty=TRUE if not sampling
     if not sample:
         brm_kwargs['empty'] = True
-        print("Creating empty r object (no sampling)...")
+        log("Creating empty r object (no sampling)...")
     else:
-        print(f"Fitting model with brms (backend: {backend})...")
+        log(f"Fitting model with brms (backend: {backend})...")
     
     # Call brms::brm() with all arguments
     fit = brms.brm(**brm_kwargs)
@@ -804,5 +793,4 @@ def summary(model: FitResult, **kwargs) -> pd.DataFrame:
     except Exception:
         # Fallback: just convert the whole summary to string
         summary_str = str(summary_r)
-        print(summary_str)
         return pd.DataFrame({'summary': [summary_str]})

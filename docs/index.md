@@ -2,6 +2,8 @@
 
 Python-first access to R's [brms](https://paul-buerkner.github.io/brms/)  with proper parameter names, ArviZ support, and cmdstanr performance. The easiest way to run brms models from Python.
 
+[Github repo and issues](https://github.com/kaitumisuuringute-keskus/brmspy)
+
 ## Key Features
 
 - **Proper parameter names**: Returns `b_Intercept`, `b_zAge`, `sd_patient__Intercept` instead of generic names like `b_dim_0`

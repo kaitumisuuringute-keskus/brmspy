@@ -15,6 +15,7 @@ from rpy2.robjects import vectors
 from rpy2.robjects.functions import SignatureTranslatedFunction
 
 from brmspy.helpers import singleton
+from brmspy.helpers.log import log_warning
 from brmspy.types import IDFit, PriorSpec
 
 
@@ -324,7 +325,7 @@ def brmsfit_to_idata(brmsfit_obj, model_data=None) -> IDFit:
         log_lik_dict['y'] = reshape_to_arviz(ll_mat)
         
     except Exception as e:
-        print(f"Warning: Could not extract posterior predictive/log_lik. {e}")
+        log_warning(f"Could not extract posterior predictive/log_lik. {e}")
         pass
 
     # =========================================================================
@@ -356,7 +357,7 @@ def brmsfit_to_idata(brmsfit_obj, model_data=None) -> IDFit:
             dims = {'y': ['obs_id']}
         
     except Exception as e:
-        print(f"Warning: Could not extract observed data. {e}")
+        log_warning(f"Could not extract observed data. {e}")
 
     # =========================================================================
     # CREATE INFERENCE DATA

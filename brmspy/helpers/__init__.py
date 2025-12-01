@@ -1,5 +1,5 @@
 from brmspy.helpers import (
-    conversion, priors, singleton
+    conversion, log, priors, singleton
 )
 
-__all__ = ['conversion', 'priors', 'singleton']
+__all__ = ['conversion', 'log', 'priors', 'singleton']

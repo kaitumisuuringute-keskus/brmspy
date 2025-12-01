@@ -8,9 +8,11 @@ from typing import Optional, Tuple, Union
 
 import rpy2.robjects as ro
 
+from brmspy.binaries.config import get_active_runtime, set_active_runtime
 from brmspy.binaries.env import system_fingerprint
 from brmspy.binaries.github import get_github_asset_sha256_from_url
-from brmspy.binaries.r import _get_r_pkg_installed, _try_force_unload_package
+from brmspy.binaries.r import _get_r_pkg_installed, _try_force_unload_package, _r_namespace_loaded, _r_package_attached
+from brmspy.helpers.log import greet, log, log_warning
 
 OFFICIAL_RELEASE_PATTERN = "https://github.com/kaitumisuuringute-keskus/brmspy/"
 HASH_FILENAME = "hash"
@@ -116,13 +118,11 @@ def activate_runtime(runtime_root: Union[str, Path]) -> None:
     rlib_posix = rlib_dir.as_posix()
     cmdstan_posix = cmdstan_dir.as_posix()
 
-    # Alternative, more error prone:
-        # Prepend Rlib to .libPaths()
-        #ro.r(f'.libPaths(c("{rlib_posix}", .libPaths()))')
 
-    _try_force_unload_package("brms", uninstall=False)
-    _try_force_unload_package("cmdstanr", uninstall=False)
-    _try_force_unload_package("rstan", uninstall=False)
+
+    for pkg in ("brms", "cmdstanr", "rstan"):
+        if _r_namespace_loaded(pkg) or _r_package_attached(pkg):
+            _try_force_unload_package(pkg, uninstall=False)
 
     # Replace libPaths
     ro.r(f'.libPaths(c("{rlib_posix}"))')
@@ -147,8 +147,17 @@ def activate_runtime(runtime_root: Union[str, Path]) -> None:
         '''
     )
 
+    # Save the activated runtime path for auto-activation on next import
+    try:
+        from brmspy.binaries.config import set_active_runtime
+        set_active_runtime(runtime_root)
+    except Exception as e:
+        log_warning(f"Failed to save runtime configuration: {e}")
+
     # At this point, R is configured to use the prebuilt runtime.
     # Any further brms/cmdstanr calls in this process will use it.
+
+    greet()
 
 
 
@@ -191,7 +200,7 @@ def _resolve_source(
         # Download into a temporary file
         with tempfile.NamedTemporaryFile(suffix=".tar.gz", delete=False) as tmp:
             tmp_path = Path(tmp.name)
-        print(f"[download] Fetching {url} to {tmp_path}")
+        log(f"Fetching {url} to {tmp_path}")
         urllib.request.urlretrieve(url, tmp_path)
         tmp_download = tmp_path
         bundle_path = tmp_path
@@ -253,14 +262,14 @@ def _maybe_reuse_existing_runtime(
         return None
 
     if stored_hash != expected_hash:
-        print(
-            f"[runtime] Existing runtime at {runtime_root} has hash "
+        log(
+            f"Existing runtime at {runtime_root} has hash "
             f"{stored_hash}, expected {expected_hash}. Reinstalling."
         )
         shutil.rmtree(runtime_root, ignore_errors=True)
         return None
 
-    print(f"[runtime] Reusing existing runtime at {runtime_root}")
+    log(f"Reusing existing runtime at {runtime_root}")
     if activate:
         activate_runtime(runtime_root)
     return runtime_root
@@ -276,7 +285,7 @@ def _install_from_archive(
     Extract an archive produced by the build script and install it to runtime_root.
     Archive is expected to contain top-level 'runtime/' directory.
     """
-    print(f"[extract] Extracting archive {archive_path}")
+    log(f"Extracting archive {archive_path}")
 
     temp_extract_root = base_dir / TMP_EXTRACT_DIR_NAME
     if temp_extract_root.exists():
@@ -297,16 +306,16 @@ def _install_from_archive(
         manifest = _load_manifest(runtime_tmp)
         mf_runtime_version = manifest.get("runtime_version")
         if mf_runtime_version and mf_runtime_version != runtime_version:
-            print(
-                f"[warn] manifest runtime_version={mf_runtime_version} "
+            log_warning(
+                f"manifest runtime_version={mf_runtime_version} "
                 f"!= expected={runtime_version}"
             )
 
         if runtime_root.exists():
-            print(f"[extract] Removing existing runtime at {runtime_root}")
+            log_warning(f"Removing existing runtime at {runtime_root}")
             shutil.rmtree(runtime_root, ignore_errors=True)
 
-        print(f"[extract] Moving runtime to {runtime_root}")
+        log(f"Moving runtime to {runtime_root}")
         shutil.move(str(runtime_tmp), str(runtime_root))
 
     finally:
@@ -329,8 +338,8 @@ def _install_from_directory(
     manifest = _load_manifest(src_dir)
     mf_runtime_version = manifest.get("runtime_version")
     if mf_runtime_version and mf_runtime_version != runtime_version:
-        print(
-            f"[warn] manifest runtime_version={mf_runtime_version} "
+        log_warning(
+            f"manifest runtime_version={mf_runtime_version} "
             f"!= expected={runtime_version}"
         )
 
@@ -342,10 +351,10 @@ def _install_from_directory(
         return runtime_root
 
     if runtime_root.exists():
-        print(f"[install] Removing existing runtime at {runtime_root}")
+        log_warning(f"Removing existing runtime at {runtime_root}")
         shutil.rmtree(runtime_root, ignore_errors=True)
 
-    print(f"[install] Moving runtime from {src_dir} to {runtime_root}")
+    log(f"Moving runtime from {src_dir} to {runtime_root}")
     shutil.move(str(src_dir), str(runtime_root))
 
     return runtime_root
@@ -463,8 +472,22 @@ def install_and_activate_runtime(
     _ = _load_manifest(runtime_root)
 
     if activate:
-        print(f"[activate] Activating runtime at {runtime_root}")
+        log(f"Activating runtime at {runtime_root}")
         activate_runtime(runtime_root)
 
     return runtime_root
 
+
+def autoload_last_runtime():
+    # Auto-activate saved prebuilt runtime if available
+    try:
+        runtime_path = get_active_runtime()
+        if runtime_path is not None and runtime_path.exists():
+            try:
+                activate_runtime(runtime_path)
+            except Exception as e:
+                log_warning(f"Failed to auto-activate saved runtime at {runtime_path}: {e}")
+                set_active_runtime(None)
+    except Exception:
+        # Silently skip if config module unavailable or other issues
+        pass

@@ -1,7 +1,10 @@
 import os
-from typing import Callable, List, Optional, cast
+from pathlib import Path
+from typing import Callable, List, Optional, Union, cast
 import rpy2.robjects as ro
 from packaging.version import Version
+
+from brmspy.helpers.log import log, log_warning
 
 
 def _try_force_unload_package(package: str, uninstall = True) -> None:
@@ -88,12 +91,12 @@ def _try_force_unload_package(package: str, uninstall = True) -> None:
     """
 
     try:
-        print(f"[brmspy] Attempting aggressive unload of R package '{package}'")
+        log(f"Attempting aggressive unload of R package '{package}'")
         ro.r(r_code)
-        print(f"[brmspy] Aggressive unload completed for '{package}'")
+        log(f"Aggressive unload completed for '{package}'")
     except Exception as e:
         # rpy2 / transport-level failure – log, but don't kill caller
-        print(f"[brmspy] Aggressive unload of '{package}' raised a Python/rpy2 exception: \n{e}")
+        log_warning(f"Aggressive unload of '{package}' raised a Python/rpy2 exception: \n{e}")
     
 
 
@@ -117,55 +120,70 @@ def _forward_github_token_to_r() -> None:
         if kwargs:
             r_setenv(**kwargs)
     except Exception as e:
-        print(f"{e}")
+        log_warning(f"{e}")
         return
 
 def _get_r_pkg_version(package: str) -> Optional[Version]:
     """
-    Get installed R package version.
-    
-    Queries R's package system via rpy2 to retrieve the installed
-    version of a package. Returns None if package is not installed.
-    
-    Parameters
-    ----------
-    package : str
-        R package name (e.g., "brms", "cmdstanr", "rstan")
-    
-    Returns
-    -------
-    Version or None
-        Package version if installed, None otherwise
-    
-    Examples
-    --------
-    ```python
-    _get_r_pkg_version("brms")
-    # <Version('2.21.0')>
-    
-    _get_r_pkg_version("nonexistent_package")
-    # None
-    ```
+    Get installed R package version without loading the package.
     """
     try:
-        # utils::packageVersion("pkg") -> "x.y.z"
-        v_str = cast(list, ro.r(f"as.character(utils::packageVersion('{package}'))"))[0]
+        # 1. packageDescription reads the DESCRIPTION file from disk.
+        # 2. fields='Version' extracts just the version string.
+        # 3. We wrap it in a check: if the package is missing, packageDescription 
+        #    returns NA (and warns). We force an error with stop() if it is NA
+        #    so the Python 'except' block catches it correctly.
+        expr = f"""
+        v <- utils::packageDescription('{package}', fields = 'Version')
+        if (is.na(v)) stop('Package not found')
+        v
+        """
+        
+        # ro.r returns a vector; [0] gets the string value
+        v_str =cast(List, ro.r(expr))[0]
         return Version(v_str)
+        
     except Exception:
         return None
 
-
-def _get_r_pkg_installed(package: str) -> bool:
+def _get_r_pkg_installed(package: str,
+                         lib_loc: Optional[Union[str, Path]] = None) -> bool:
     """
-    Return True if `pkg` is installed in any library in .libPaths(),
+    Return True if `package` is installed in the current R library paths,
     without loading the package/namespace.
+
+    Parameters
+    ----------
+    package :
+        R package name.
+    lib_loc :
+        Optional library path to restrict the search to. If None, uses
+        whatever `.libPaths()` is currently set to.
     """
+    from rpy2.robjects.packages import isinstalled
+
+    if lib_loc is not None:
+        lib_loc = str(lib_loc)
+
     try:
-      expr = f"""
-        suppressWarnings(suppressMessages(
-          "{package}" %in% rownames(installed.packages())
-        ))
-      """
-      return bool(cast(List, ro.r(expr))[0])
-    except:
-      return False
+        # rpy2.robjects.packages.isinstalled() already returns a Python bool
+        return isinstalled(package, lib_loc=lib_loc)
+    except Exception:
+        # Fail closed rather than blowing up the whole session
+        return False
+
+
+def _r_namespace_loaded(pkg: str) -> bool:
+    """
+    Return True if `pkg`'s namespace is loaded in this R session.
+    """
+    expr = f'"{pkg}" %in% loadedNamespaces()'
+    res = cast(List, ro.r(expr))
+    # res is an R logical vector; res[0] is a logical scalar, not a "TRUE"/"FALSE" string
+    return str(res[0]).lower().strip() == "true"
+
+
+def _r_package_attached(pkg: str) -> bool:
+    expr = f'paste0("package:", "{pkg}") %in% search()'
+    res = cast(List, ro.r(expr))
+    return str(res[0]).lower().strip() == "true"

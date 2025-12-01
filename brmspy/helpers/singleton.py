@@ -1,5 +1,7 @@
 import rpy2.robjects.packages as rpackages
 
+from brmspy.helpers.log import log
+
 _brms = None
 _cmdstanr = None
 _rstan = None
@@ -86,7 +88,7 @@ def _get_brms():
     """
     global _brms, _cmdstanr, _base, _posterior, _rstan
     if _brms is None:
-        print("brmspy: Importing R libraries...")
+        log("Importing R libraries...")
         try:
             try:
                 _cmdstanr = rpackages.importr("cmdstanr")
@@ -99,7 +101,7 @@ def _get_brms():
             _posterior = rpackages.importr("posterior")
             _brms = rpackages.importr("brms")
             _base = rpackages.importr("base")
-            print("brmspy: R libraries imported!")
+            log("R libraries imported!")
         except Exception as e:
             raise ImportError(
                 "brms R package not found. Install it using:\n\n"

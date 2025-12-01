@@ -23,13 +23,11 @@ class TestBrmsImportAndVersion:
     def test_get_brms_version(self):
         """Test that we can get brms version"""
         import brmspy
+        from packaging.version import Version
         
         version = brmspy.get_brms_version()
-        assert isinstance(version, str)
-        assert len(version) > 0
-        # Version should be like "2.21.0" or similar
-        assert version.count('.') >= 1
-    
+        assert isinstance(version, Version)
+
     def test_brms_import_successful(self):
         """Test that brms can be imported via rpy2"""
         import rpy2.robjects.packages as rpackages
