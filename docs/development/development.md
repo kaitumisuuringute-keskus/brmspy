@@ -276,7 +276,7 @@ Update in:
 1. **Update versions** and CHANGELOG.md
 2. **Test:** `pytest`
 4. **Build:** `make build`
-5. **Create GitHub Release** (tag: `release-0.1.9`)
+5. **Create GitHub Release** (tag: `release-0...`)
 6. **CI automatically** tests and publishes to PyPI
 
 ### Building Runtimes
