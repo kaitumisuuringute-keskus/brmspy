@@ -1,3 +1,24 @@
+## 0.1.10 - Windows stability & CI improvements
+
+**Windows Support**
+
+*   Implemented aggressive R package unloading (detach, unloadNamespace, DLL unload) prior to installation to prevent file locking errors.
+*   Refined RTools detection logic; relaxed system `g++` version requirements when valid RTools installations are detected.
+*   Changed `install_rtools` default to `False` in `install_brms()` to prevent unintended system PATH modifications.
+*   Fixed PowerShell command syntax generation for internal system calls.
+*   Windows prebuilt binaries currently requires R4.5, more versions are coming.
+
+**Build and CI**
+
+*   Expanded continuous integration test matrix to cover Windows, macOS, and Ubuntu on Python 3.12.
+*   Optimized GitHub Actions caching strategy for R libraries and CmdStan, significantly reducing Windows workflow runtime.
+*   Fixed artifact pruning logic in runtime builder workflows to prevent test breakages.
+
+**Bug Fixes**
+
+*   Ensured `jsonlite` dependency is explicitly resolved during build manifest generation.
+*   Fixed workflow path referencing and quoting issues in installation scripts.
+
 ## 0.1.9 - Prebuilt runtimes, windows toolchain
 
 **New Features**
