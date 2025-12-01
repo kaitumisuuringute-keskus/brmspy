@@ -3,11 +3,12 @@ import pandas as pd
 import numpy as np
 import re
 import warnings
-
+from packaging.version import Version
 import rpy2.robjects.packages as rpackages
 from rpy2.robjects import default_converter, pandas2ri, numpy2ri, ListVector, DataFrame, StrVector
 from rpy2.robjects.conversion import localconverter
 
+from brmspy.binaries.r import _get_r_pkg_version
 from brmspy.helpers.log import log
 from brmspy.helpers.log import log_warning
 from .helpers.priors import _build_priors
@@ -59,14 +60,14 @@ __all__ = [
     "prior"
 ]
 
-def get_brms_version() -> str:
+def get_brms_version() -> typing.Optional[Version]:
     """
     Get installed brms R package version.
     
     Returns
     -------
     str
-        Version string (e.g., "2.23.0")
+        Version object or None
     
     Raises
     ------
@@ -82,25 +83,7 @@ def get_brms_version() -> str:
     print(f"brms version: {version}")
     ```
     """
-    brms = _get_brms()
-    utils = rpackages.importr("utils")
-    
-    # Get package version
-    version_info = utils.packageVersion("brms")
-    # Convert to string and clean up R output format
-    version_str = str(version_info[0]).strip()
-    
-    # R returns format like '[1]  2 22  0' - extract just the numbers
-    # and format as proper version string
-    import re
-    numbers = re.findall(r'\d+', version_str)
-    if len(numbers) >= 3:
-        return '.'.join(numbers[:3])
-    elif len(numbers) == 2:
-        return '.'.join(numbers)
-    else:
-        # Fallback - return cleaned string
-        return version_str.replace('[1]', '').strip()
+    return _get_r_pkg_version("brms")
 
 
 
