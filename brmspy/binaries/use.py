@@ -122,7 +122,6 @@ def activate_runtime(runtime_root: Union[str, Path]) -> None:
                 f"manifest={mf_fp}, system={expected_fp}"
             )
     except ImportError:
-        # If envdetect isn't available here, you can skip this check
         pass
 
     rlib_posix = rlib_dir.as_posix()

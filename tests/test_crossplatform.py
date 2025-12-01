@@ -14,13 +14,12 @@ import pandas as pd
 import numpy as np
 import warnings
 
-def _fit_minimal_model():
-    import brmspy
+def _fit_minimal_model(brms):
     # run a very small model to verify the installation
-    epilepsy = brmspy.get_brms_data("epilepsy")
+    epilepsy = brms.get_brms_data("epilepsy")
     
     # Fit model (with reduced iterations for testing)
-    model = brmspy.fit(
+    model = brms.fit(
         formula="count ~ zAge + zBase * Trt + (1|patient)",
         data=epilepsy,
         family="poisson",
@@ -84,7 +83,7 @@ class TestCrossplatformInstall:
         _brms = _get_brms()
         assert _brms is not None
 
-        _fit_minimal_model()
+        _fit_minimal_model(brms)
     
     @pytest.mark.slow
     def test_brms_install_prebuilt(self):
@@ -108,4 +107,4 @@ class TestCrossplatformInstall:
         _brms = _get_brms()
         assert _brms is not None
 
-        _fit_minimal_model()
+        _fit_minimal_model(brms)

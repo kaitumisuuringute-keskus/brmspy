@@ -19,6 +19,8 @@ jobs:
       RSPM: https://cloud.r-project.org
       R_LIBS_USER: ${{ github.workspace }}/.r-lib
       CMDSTAN_DIR: ${{ github.workspace }}/.cmdstan
+      CMDSTAN: ${{ github.workspace }}/.cmdstan/cmdstan-2.36.0
+      
 
     steps:
       - uses: actions/checkout@v4
@@ -85,10 +87,6 @@ jobs:
           python -m pip install -e ".[dev]"
 
       - name: Test with pytest
-        env:
-          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-          CMDSTAN_DIR: ${{ env.CMDSTAN_DIR }} # not used in here atm
-          R_LIBS_USER: ${{ env.R_LIBS_USER }}
         run: python -m pytest tests/ -v
 
       - name: Build and publish
