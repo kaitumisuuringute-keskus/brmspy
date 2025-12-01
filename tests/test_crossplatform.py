@@ -14,6 +14,33 @@ import pandas as pd
 import numpy as np
 import warnings
 
+def _fit_minimal_model():
+    import brmspy
+    # run a very small model to verify the installation
+    epilepsy = brmspy.get_brms_data("epilepsy")
+    
+    # Fit model (with reduced iterations for testing)
+    model = brmspy.fit(
+        formula="count ~ zAge + zBase * Trt + (1|patient)",
+        data=epilepsy,
+        family="poisson",
+        iter=100,
+        warmup=50,
+        chains=2,
+        silent=2,
+        refresh=0
+    )
+    
+    # Check it worked - now returns arviz InferenceData by default
+    import arviz as az
+    assert isinstance(model.idata, az.InferenceData)
+    
+    # Check key parameters exist
+    param_names = list(model.idata.posterior.data_vars)
+    assert any('b_zAge' in p for p in param_names)
+    assert any('b_zBase' in p for p in param_names)
+
+
 def _remove_deps():
     import rpy2.robjects as ro
     import rpy2.robjects.packages as rpackages
@@ -56,6 +83,8 @@ class TestCrossplatformInstall:
 
         _brms = _get_brms()
         assert _brms is not None
+
+        _fit_minimal_model()
     
     @pytest.mark.slow
     def test_brms_install_prebuilt(self):
@@ -78,3 +107,5 @@ class TestCrossplatformInstall:
 
         _brms = _get_brms()
         assert _brms is not None
+
+        _fit_minimal_model()
