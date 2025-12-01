@@ -1,5 +1,4 @@
-# .github/workflows/ci.yml
-name: crossplatform-tests
+name: r-dependencies-tests
 
 on:
   push:
@@ -46,3 +45,15 @@ jobs:
           BRMSPY_CROSSPLATFORM_TESTS: "1"
           GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
+
+      - name: Test with pytest
+        env:
+          GBRMSPY_CROSSPLATFORM_TESTS: "1"
+          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          python -m pytest -v -q -m crossplatform 
+          --cov=brmspy 
+          --cov-report=term 
+          --cov-report=xml 
+          --cov-report=json 
+          --cov-config=.coveragerc-r-dependencies

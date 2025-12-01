@@ -9,7 +9,7 @@ This is an early development version of the library, use with caution.
 [![Documentation](https://img.shields.io/badge/docs-mkdocs-blue.svg)](https://kaitumisuuringute-keskus.github.io/brmspy/)
 [![Coverage](https://kaitumisuuringute-keskus.github.io/brmspy/badges/coverage.svg)](https://github.com/kaitumisuuringute-keskus/brmspy/actions)
 [![python-test-matrix](https://github.com/kaitumisuuringute-keskus/brmspy/actions/workflows/python-test-matrix.yml/badge.svg)](https://github.com/kaitumisuuringute-keskus/brmspy/actions/workflows/python-test-matrix.yml)
-[![crossplatform-tests](https://github.com/kaitumisuuringute-keskus/brmspy/actions/workflows/crossplatform-tests.yml/badge.svg)](https://github.com/kaitumisuuringute-keskus/brmspy/actions/workflows/crossplatform-tests.yml)
+[![r-dependencies-tests](https://github.com/kaitumisuuringute-keskus/brmspy/actions/workflows/r-dependencies-tests.yml/badge.svg)](https://github.com/kaitumisuuringute-keskus/brmspy/actions/workflows/r-dependencies-tests.yml)
 
 ## Installation
 

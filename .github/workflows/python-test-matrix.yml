@@ -255,7 +255,8 @@ jobs:
           python -m pytest tests/ -v --cov=brmspy 
           --cov-report=term 
           --cov-report=xml 
-          --cov-report=json
+          --cov-report=json 
+          --cov-config=.coveragerc-main
       
       - name: Update Coverage Badge
         if: github.event_name == 'push' &&

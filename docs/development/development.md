@@ -143,7 +143,7 @@ All workflows in `.github/workflows/`:
 - Parallel execution
 - Coverage reporting
 
-### 2. Cross-Platform Tests (`crossplatform-tests.yml`)
+### 2. R Dependencies Tests (`r-dependencies-tests.yml`)
 
 **Trigger:** Push/PR to master  
 **Purpose:** Test on Linux, macOS, Windows

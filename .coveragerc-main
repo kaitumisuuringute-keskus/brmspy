@@ -1,0 +1,5 @@
+[run]
+source = brmspy
+omit =
+    brmspy/binaries/*
+    brmspy/install.py
