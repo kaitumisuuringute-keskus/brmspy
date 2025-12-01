@@ -2,6 +2,7 @@
 
 * Added configurable logger to replace scattered print statements
 * If a prebuilt runtime is activated, it will continue in the next python session (activated runtimes path is stored and autoloaded on library import).
+* Made activate_runtime agressive unloading conditional (slightly faster activation)
 
 ## 0.1.10 - Windows stability & CI improvements
 
