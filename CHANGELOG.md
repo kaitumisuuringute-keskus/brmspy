@@ -1,8 +1,10 @@
-## 0.1.11 
+## 0.1.11 - Persistent Runtimes, Modern Packaging, and Stability
 
-* Added configurable logger to replace scattered print statements
-* If a prebuilt runtime is activated, it will continue in the next python session (activated runtimes path is stored and autoloaded on library import).
-* Made activate_runtime agressive unloading conditional (slightly faster activation)
+*   **Persistent Runtimes**: If a prebuilt runtime is activated, the path is now saved to `{HOME}/.brmspy/config.json` and automatically loaded on the next library import.
+*   **Configurable Logging**: Replaced scattered print statements with a centralized logger.
+*   **Optimized Activation**: Made `activate_runtime` aggressive unloading conditional, resulting in slightly faster runtime activation.
+
+
 
 ## 0.1.10 - Windows stability & CI improvements
 
@@ -24,6 +26,8 @@
 
 *   Ensured `jsonlite` dependency is explicitly resolved during build manifest generation.
 *   Fixed workflow path referencing and quoting issues in installation scripts.
+
+
 
 ## 0.1.9 - Prebuilt runtimes, windows toolchain
 
@@ -61,6 +65,7 @@
 *   Added dedicated cross-platform CI workflow (Windows, macOS, Ubuntu) to ensure installation stability across operating systems.
 
 
+
 ## 0.1.7 - Automatic r imports after installation and import failure warning
 
 * Fixed an issue where the library could refuse import in case of missing R deps
@@ -95,6 +100,7 @@
 
 * Minor internal cleanups and defensive guards around lazy globals (`_brms`, etc.) to ensure they initialize exactly once and never re-import.
 * Slightly reduced memory churn on repeated calls by eliminating redundant converter/namespace setup.
+
 
 
 ## 0.1.5 – Better priors, kwargs parsing, formula helper, typed ArviZ
