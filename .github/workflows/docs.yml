@@ -21,7 +21,7 @@ jobs:
       
       - name: Install dependencies
         run: |
-          pip install mkdocs-material mkdocstrings[python] "mkdocs-shadcn@git+https://github.com/asiffer/mkdocs-shadcn@30-search-indexing-broken"
+          pip install mkdocs-material mkdocstrings[python] mkdocs-material "mkdocs-shadcn@git+https://github.com/asiffer/mkdocs-shadcn@30-search-indexing-broken"
       
       - name: Build docs
         run: mkdocs build --site-dir site

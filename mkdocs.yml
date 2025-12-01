@@ -7,7 +7,7 @@ repo_name: kaitumisuuringute-keskus/brmspy
 repo_url: https://github.com/kaitumisuuringute-keskus/brmspy
 
 theme:
-  name: shadcn
+  name: material
   features:
     - navigation.instant
     - navigation.tracking
@@ -18,6 +18,32 @@ theme:
     - search.suggest
     - search.highlight
     - content.code.copy
+
+  font:
+    text: system-ui
+    code: JetBrains Mono
+  
+  palette:
+    - scheme: default        # light mode: white + neutral gray + black
+      primary: black         # used for links, accents
+      accent: gray
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate          # dark mode: near-black + muted gray
+      primary: black
+      accent: gray
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  
+  # Use simple, thin borders + flat feel
+  shadows:
+    elevation:
+      dp1: "0 0 0 1px rgba(15,23,42,.06)"
+      dp2: "0 0 0 1px rgba(15,23,42,.08)"
+      dp3: "0 0 0 1px rgba(15,23,42,.12)"
+
 
 plugins:
   - search
@@ -56,6 +82,7 @@ nav:
     - Install: api/install.md
     - Types: api/types.md
   - Examples:
+    - Google colab: examples/google-colab-example.md
     - Quick Start: examples/quickstart.md
     - Advanced Usage: examples/advanced.md
   - Helpers:
@@ -71,3 +98,5 @@ nav:
 
 extra_javascript:
   - static/plausible.js
+extra_css:
+  - static/shadcn-ish.css
