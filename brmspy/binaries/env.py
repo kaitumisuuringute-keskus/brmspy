@@ -409,11 +409,6 @@ def windows_can_use_prebuilt() -> bool:
     parse_gxx_version : Parse g++ version from command output
     toolchain_is_compatible : Master toolchain check for all platforms
     """
-    has_rtools = _windows_has_rtools(silent=True)
-
-    if not has_rtools:
-        rtools_tag = _install_rtools_for_current_r()
-
     return _windows_has_rtools(silent=True)
 
 

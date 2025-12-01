@@ -324,7 +324,7 @@ def _install_rpackage_deps(package: str):
         print(str(e))
         return
 
-def _build_cmstanr():
+def _build_cmstanr(tried_install_rtools: bool = False):
     """
     Build and configure CmdStan compiler via cmdstanr.
     
@@ -385,23 +385,22 @@ def _build_cmstanr():
             ro.r("cmdstanr::check_cmdstan_toolchain(fix = TRUE)")
         except Exception as e:
             print(f"Toolchain check failed: {e}")
-            tag = _install_rtools_for_current_r()
-            if not tag:
-                print(
-                    "brmspy: Rtools auto-install failed or disabled. "
+            if tried_install_rtools:
+                raise Exception(
+                    "brmspy: Rtools auto-install failed. "
                     "Please install the matching Rtools version manually: "
                     "https://cran.r-project.org/bin/windows/Rtools/"
                 )
-                return
-            if tag != "45":
-                # cmdstanr does an invalid mapping of r4.5 -> 44
-                # only check if tag isnt 45
-                print(f"brmspy: Installed Rtools{tag}, re-checking toolchain...")
-                ro.r("cmdstanr::check_cmdstan_toolchain(fix = TRUE)")
+            else:
+                raise Exception(
+                    "brmspy: Rtools missing and install_rtools = False. "
+                    "Please set install_rtools = True or install the matching Rtools version manually: "
+                    "https://cran.r-project.org/bin/windows/Rtools/"
+                )
 
     ro.r(f"cmdstanr::install_cmdstan(cores = {cores}, overwrite = FALSE)")
 
-def install_prebuilt(runtime_version="0.1.0", url: Optional[str] = None, bundle: Optional[str] = None):
+def install_prebuilt(runtime_version="0.1.0", url: Optional[str] = None, bundle: Optional[str] = None, install_rtools: bool = False):
     """
     Install prebuilt brmspy runtime bundle for fast setup.
     
@@ -421,6 +420,9 @@ def install_prebuilt(runtime_version="0.1.0", url: Optional[str] = None, bundle:
         Custom URL for runtime bundle. If None, uses GitHub releases
     bundle : str, optional
         Local path to runtime bundle (.tar.gz or directory)
+    install_rtools: bool, default=False
+        Installs RTools (windows only) if they cant be found. 
+        WARNING: Modifies system path and runs the full rtools installer.
     
     Returns
     -------
@@ -481,6 +483,10 @@ def install_prebuilt(runtime_version="0.1.0", url: Optional[str] = None, bundle:
     _forward_github_token_to_r()
 
     from brmspy.binaries import env
+
+    if install_rtools:
+        _install_rtools_for_current_r()
+
     if not env.can_use_prebuilt():
         raise RuntimeError(
             "Prebuilt binaries are not available for your system. "
@@ -513,7 +519,8 @@ def install_brms(
     install_rstan: bool = False,
     cmdstanr_version: str = "latest",
     rstan_version: str = "latest",
-    use_prebuilt_binaries = False
+    use_prebuilt_binaries: bool = False,
+    install_rtools: bool = False
 ):
     """
     Install brms R package, optionally cmdstanr and CmdStan compiler, or rstan.
@@ -537,6 +544,10 @@ def install_brms(
         Ignores system R libraries and uses the latest brms and cmdstanr available 
         for your system. Requires R>=4 and might not be compatible with some older
         systems or missing toolchains. Can reduce setup time by 50x.
+    install_rtools: bool, default=False
+        Installs RTools (windows only) if they cant be found. 
+        WARNING: Modifies system path and runs the full rtools installer. 
+        Use with caution!
     
     Examples
     --------
@@ -567,9 +578,12 @@ def install_brms(
     _init()
 
     if use_prebuilt_binaries:
-        if install_prebuilt():
+        if install_prebuilt(install_rtools=install_rtools):
             print("\nSetup complete! You're ready to use brmspy.")
             return
+
+    if install_rtools:
+        _install_rtools_for_current_r()
     
     _forward_github_token_to_r()
 
@@ -593,7 +607,7 @@ def install_brms(
         ])
         _install_rpackage_deps("cmdstanr")
         print("Building cmdstanr...")
-        _build_cmstanr()
+        _build_cmstanr(tried_install_rtools=install_rtools)
 
     if install_rstan:
         print("Installing rstan...")
