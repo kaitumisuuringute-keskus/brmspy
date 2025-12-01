@@ -147,6 +147,13 @@ def activate_runtime(runtime_root: Union[str, Path]) -> None:
         '''
     )
 
+    # Save the activated runtime path for auto-activation on next import
+    try:
+        from brmspy.binaries.config import set_active_runtime
+        set_active_runtime(runtime_root)
+    except Exception as e:
+        log_warning(f"Failed to save runtime configuration: {e}")
+
     # At this point, R is configured to use the prebuilt runtime.
     # Any further brms/cmdstanr calls in this process will use it.
 
@@ -467,13 +474,6 @@ def install_and_activate_runtime(
     if activate:
         log(f"Activating runtime at {runtime_root}")
         activate_runtime(runtime_root)
-        
-        # Save the activated runtime path for auto-activation on next import
-        try:
-            from brmspy.binaries.config import set_active_runtime
-            set_active_runtime(runtime_root)
-        except Exception as e:
-            log_warning(f"Failed to save runtime configuration: {e}")
 
     return runtime_root
 

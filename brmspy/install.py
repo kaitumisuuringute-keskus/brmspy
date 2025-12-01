@@ -443,10 +443,6 @@ def install_prebuilt(runtime_version="0.1.0", url: Optional[str] = None, bundle:
                 require_attestation=True
             )
             
-            # Save the activated runtime path for auto-activation on next import
-            from brmspy.binaries.config import set_active_runtime
-            set_active_runtime(result)
-            
             _get_brms()
             return result
         except Exception as e:
