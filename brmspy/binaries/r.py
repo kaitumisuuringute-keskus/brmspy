@@ -160,9 +160,12 @@ def _get_r_pkg_installed(package: str) -> bool:
     Return True if `pkg` is installed in any library in .libPaths(),
     without loading the package/namespace.
     """
-    expr = f"""
-      suppressWarnings(suppressMessages(
-        "{package}" %in% rownames(installed.packages())
-      ))
-    """
-    return bool(cast(List, ro.r(expr))[0])
+    try:
+      expr = f"""
+        suppressWarnings(suppressMessages(
+          "{package}" %in% rownames(installed.packages())
+        ))
+      """
+      return bool(cast(List, ro.r(expr))[0])
+    except:
+      return False
