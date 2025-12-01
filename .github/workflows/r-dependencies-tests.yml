@@ -45,7 +45,6 @@ jobs:
           GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
         run: >
           python -m pytest -v -q -m crossplatform 
-          --cov=brmspy 
           --cov-report=term 
           --cov-report=xml 
           --cov-report=json 
