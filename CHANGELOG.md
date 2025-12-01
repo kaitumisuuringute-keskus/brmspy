@@ -1,6 +1,7 @@
 ## 0.1.11 
 
 * Added configurable logger to replace scattered print statements
+* If a prebuilt runtime is activated, it will continue in the next python session (activated runtimes path is stored and autoloaded on library import).
 
 ## 0.1.10 - Windows stability & CI improvements
 

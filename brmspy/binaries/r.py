@@ -163,11 +163,7 @@ def _get_r_pkg_installed(package: str) -> bool:
     without loading the package/namespace.
     """
     try:
-      expr = f"""
-        suppressWarnings(suppressMessages(
-          "{package}" %in% rownames(installed.packages())
-        ))
-      """
+      expr = f"length(find.package('{package}', quiet = TRUE)) > 0"
       return bool(cast(List, ro.r(expr))[0])
     except:
       return False
