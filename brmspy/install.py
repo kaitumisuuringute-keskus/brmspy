@@ -11,7 +11,7 @@ from rpy2.robjects.packages import importr
 from rpy2.robjects.vectors import StrVector
 
 from brmspy.binaries.use import install_and_activate_runtime
-from brmspy.binaries.r import _try_force_unload_package
+from brmspy.binaries.r import _forward_github_token_to_r, _get_r_pkg_installed, _get_r_pkg_version, _try_force_unload_package
 from brmspy.helpers.rtools import _install_rtools_for_current_r
 from brmspy.helpers.singleton import _get_brms, _invalidate_singletons
 from brmspy.helpers.rtools import _get_r_version
@@ -20,76 +20,6 @@ def _init():
     # Set the CRAN mirror globally for this session. 
     # This prevents 'build-manifest.R' or subsequent installs from prompting for a mirror.
     ro.r('options(repos = c(CRAN = "https://cloud.r-project.org"))')
-
-def _forward_github_token_to_r() -> None:
-    """Forward GITHUB_PAT / GITHUB_TOKEN from Python env to R's Sys.getenv."""
-    try:
-        kwargs = {}
-        pat = os.environ.get("GITHUB_PAT")
-        token = os.environ.get("GITHUB_TOKEN")
-
-        if not pat and not token:
-            return
-        
-        r_setenv = cast(Callable, ro.r["Sys.setenv"])
-
-        if pat:
-            kwargs["GITHUB_PAT"] = pat
-        elif token:
-            kwargs["GITHUB_TOKEN"] = token
-
-        if kwargs:
-            r_setenv(**kwargs)
-    except Exception as e:
-        print(f"{e}")
-        return
-
-def _get_r_pkg_version(package: str) -> Optional[Version]:
-    """
-    Get installed R package version.
-    
-    Queries R's package system via rpy2 to retrieve the installed
-    version of a package. Returns None if package is not installed.
-    
-    Parameters
-    ----------
-    package : str
-        R package name (e.g., "brms", "cmdstanr", "rstan")
-    
-    Returns
-    -------
-    Version or None
-        Package version if installed, None otherwise
-    
-    Examples
-    --------
-    ```python
-    _get_r_pkg_version("brms")
-    # <Version('2.21.0')>
-    
-    _get_r_pkg_version("nonexistent_package")
-    # None
-    ```
-    """
-    try:
-        # utils::packageVersion("pkg") -> "x.y.z"
-        v_str = cast(list, ro.r(f"as.character(utils::packageVersion('{package}'))"))[0]
-        return Version(v_str)
-    except Exception:
-        return None
-
-
-def _get_r_pkg_installed(package: str) -> bool:
-    """
-    Return True if `pkg` is installed in any library in .libPaths(),
-    without loading the package/namespace.
-    """
-    expr = f"""
-      suppressWarnings(suppressMessages(
-        "{package}" %in% rownames(installed.packages())
-      ))
-    """
-    return bool(cast(List, ro.r(expr))[0])
 
 
 def _get_linux_repo():
@@ -411,6 +341,10 @@ def install_prebuilt(runtime_version="0.1.0", url: Optional[str] = None, bundle:
     
     This reduces setup time from ~30 minutes to ~1 minute by avoiding
     compilation. Available for specific platform/R version combinations.
+
+    This function reconfigures the running embedded R session to use an isolated 
+    library environment from downloaded binaries. It does not mix or break the 
+    default library tree already installed in the system.
     
     Parameters
     ----------
