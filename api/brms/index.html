@@ -1613,7 +1613,7 @@ model = brms.fit(&quot;y ~ zAge + (1|patient)&quot;, data=df, priors=priors)
 
 
 <h3 id="brmspy.brms.install_brms" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">install_brms</span><span class="p">(</span><span class="n">brms_version</span><span class="o">=</span><span class="s1">&#39;latest&#39;</span><span class="p">,</span> <span class="n">repo</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">install_cmdstanr</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">install_rstan</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cmdstanr_version</span><span class="o">=</span><span class="s1">&#39;latest&#39;</span><span class="p">,</span> <span class="n">rstan_version</span><span class="o">=</span><span class="s1">&#39;latest&#39;</span><span class="p">,</span> <span class="n">use_prebuilt_binaries</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">install_brms</span><span class="p">(</span><span class="n">brms_version</span><span class="o">=</span><span class="s1">&#39;latest&#39;</span><span class="p">,</span> <span class="n">repo</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">install_cmdstanr</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">install_rstan</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cmdstanr_version</span><span class="o">=</span><span class="s1">&#39;latest&#39;</span><span class="p">,</span> <span class="n">rstan_version</span><span class="o">=</span><span class="s1">&#39;latest&#39;</span><span class="p">,</span> <span class="n">use_prebuilt_binaries</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">install_rtools</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 <a href="#brmspy.brms.install_brms" class="headerlink" title="Permanent link">&para;</a></h3>
 
@@ -1735,6 +1735,7 @@ model = brms.fit(&quot;y ~ zAge + (1|patient)&quot;, data=df, priors=priors)
                 <code>use_prebuilt_binaries</code>
             </td>
             <td>
+                  <code><span title="bool">bool</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1742,6 +1743,24 @@ model = brms.fit(&quot;y ~ zAge + (1|patient)&quot;, data=df, priors=priors)
 Ignores system R libraries and uses the latest brms and cmdstanr available 
 for your system. Requires R&gt;=4 and might not be compatible with some older
 systems or missing toolchains. Can reduce setup time by 50x.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>install_rtools</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Installs RTools (windows only) if they cant be found. 
+WARNING: Modifies system path and runs the full rtools installer. 
+Use with caution!</p>
               </div>
             </td>
             <td>

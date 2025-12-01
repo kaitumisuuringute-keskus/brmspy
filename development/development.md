@@ -143,7 +143,7 @@ All workflows in `.github/workflows/`:
 - Parallel execution
 - Coverage reporting
 
-### 2. Cross-Platform Tests (`crossplatform-tests.yml`)
+### 2. R Dependencies Tests (`r-dependencies-tests.yml`)
 
 **Trigger:** Push/PR to master  
 **Purpose:** Test on Linux, macOS, Windows
@@ -276,7 +276,7 @@ Update in:
 1. **Update versions** and CHANGELOG.md
 2. **Test:** `pytest`
 4. **Build:** `make build`
-5. **Create GitHub Release** (tag: `release-0.1.9`)
+5. **Create GitHub Release** (tag: `release-0...`)
 6. **CI automatically** tests and publishes to PyPI
 
 ### Building Runtimes
