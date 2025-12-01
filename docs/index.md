@@ -29,8 +29,22 @@ brms.install_brms() # requires R to be installed already
 For faster installation (~20-60 seconds vs 20-30 minutes), use prebuilt runtime bundles:
 
 ```python
-from brmspy import install_prebuilt
-install_prebuilt()  # Downloads pre-compiled cmdstanr + brms
+from brmspy import brms
+brms.install_brms(use_prebuilt_binaries=True)
+```
+
+## Windows RTools
+
+In case you don't have RTools installed, you can use the flag install_rtools = True. This is
+disabled by default, because the flag runs the full rtools installer and modifies system path. 
+Use with caution!
+
+```python
+from brmspy import brms
+brms.install_brms(
+    use_prebuilt_binaries=True,
+    install_rtools=True # works for both prebuilt and compiled binaries.
+)
 ```
 
 #### System Requirements

@@ -1,0 +1,4 @@
+[run]
+include =
+    brmspy/install.py
+    brmspy/binaries/*

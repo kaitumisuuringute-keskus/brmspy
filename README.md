@@ -8,8 +8,8 @@ This is an early development version of the library, use with caution.
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Documentation](https://img.shields.io/badge/docs-mkdocs-blue.svg)](https://kaitumisuuringute-keskus.github.io/brmspy/)
 [![Coverage](https://kaitumisuuringute-keskus.github.io/brmspy/badges/coverage.svg)](https://github.com/kaitumisuuringute-keskus/brmspy/actions)
-[![Tests](https://github.com/kaitumisuuringute-keskus/brmspy/workflows/python-test-matrix/badge.svg)](https://github.com/kaitumisuuringute-keskus/brmspy/actions)
-[![Cross-Platform Tests](https://github.com/kaitumisuuringute-keskus/brmspy/actions/workflows/crossplatform-tests/badge.svg)](https://github.com/kaitumisuuringute-keskus/brmspy/actions)
+[![python-test-matrix](https://github.com/kaitumisuuringute-keskus/brmspy/actions/workflows/python-test-matrix.yml/badge.svg)](https://github.com/kaitumisuuringute-keskus/brmspy/actions/workflows/python-test-matrix.yml)
+[![r-dependencies-tests](https://github.com/kaitumisuuringute-keskus/brmspy/actions/workflows/r-dependencies-tests.yml/badge.svg)](https://github.com/kaitumisuuringute-keskus/brmspy/actions/workflows/r-dependencies-tests.yml)
 
 ## Installation
 
@@ -29,8 +29,22 @@ brms.install_brms() # requires R to be installed already
 For faster installation (~20-60 seconds vs 20-30 minutes), use prebuilt runtime bundles:
 
 ```python
-from brmspy import install_prebuilt
-install_prebuilt()  # Downloads pre-compiled cmdstanr + brms
+from brmspy import brms
+brms.install_brms(use_prebuilt_binaries=True)
+```
+
+## Windows RTools
+
+In case you don't have RTools installed, you can use the flag install_rtools = True. This is
+disabled by default, because the flag runs the full rtools installer and modifies system path. 
+Use with caution!
+
+```python
+from brmspy import brms
+brms.install_brms(
+    use_prebuilt_binaries=True,
+    install_rtools=True # works for both prebuilt and compiled binaries.
+)
 ```
 
 ### System Requirements

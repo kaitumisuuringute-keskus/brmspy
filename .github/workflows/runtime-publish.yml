@@ -173,7 +173,6 @@ jobs:
         with:
           r-version: ${{ matrix.r }}
           use-public-rspm: true
-          cache-version: 2
           # Windows only – ignored on macOS / Linux
           rtools-version: >
             ${{ fromJson('{
@@ -184,6 +183,13 @@ jobs:
               "4.4": "44",
               "4.5": "45"
             }')[matrix.r] }}
+      
+      - name: Capture R_LIBS_USER from R
+        # windows silently rewrites R_LIBS_USER
+        shell: bash
+        run: |
+          echo "R_LIBS_USER=${R_LIBS_USER}" >> "$GITHUB_ENV"
+          echo "Using R_LIBS_USER=${R_LIBS_USER}"
 
       - name: Install Python package
         if: runner.os != 'Linux'

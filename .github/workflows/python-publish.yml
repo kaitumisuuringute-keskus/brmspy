@@ -18,6 +18,9 @@ jobs:
     env:
       RSPM: https://cloud.r-project.org
       R_LIBS_USER: ${{ github.workspace }}/.r-lib
+      CMDSTAN_DIR: ${{ github.workspace }}/.cmdstan
+      CMDSTAN: ${{ github.workspace }}/.cmdstan/cmdstan-2.36.0
+      
 
     steps:
       - uses: actions/checkout@v4
@@ -37,56 +40,35 @@ jobs:
       - name: Ensure R library dir exists
         run: |
           echo "R_LIBS_USER: ${R_LIBS_USER}"
+          echo "CMDSTAN_DIR: ${CMDSTAN_DIR}"
           mkdir -p "${R_LIBS_USER}"
 
       - name: Restore R library cache
         id: r-lib-cache
         uses: actions/cache@v3
         with:
+          fail-on-cache-miss: true
           path: ${{ env.R_LIBS_USER }}
           key: r-lib-${{ runner.os }}-cmdstanr-brms-posterior-v1
-
-      - name: Install R packages (cmdstanr, brms, posterior) if cache miss
-        if: steps.r-lib-cache.outputs.cache-hit != 'true'
-        run: |
-          R -q -e "
-            options(repos = c(
-              'https://stan-dev.r-universe.dev',
-              CRAN = 'https://cloud.r-project.org'
-            ));
-            install.packages(c('cmdstanr', 'brms', 'posterior'));
-          "
 
       - name: Restore CmdStan cache
         id: cmdstan-cache
         uses: actions/cache@v3
         with:
-          path: ~/.cmdstan
-          key: cmdstan-2.34.1-${{ runner.os }}-v1
-
-      - name: Install CmdStan if needed
-        if: steps.cmdstan-cache.outputs.cache-hit != 'true'
-        run: |
-          R -q -e "
-            library(cmdstanr);
-            cmdstan_dir <- path.expand('~/.cmdstan');
-            target <- file.path(cmdstan_dir, 'cmdstan-2.34.1');
-            if (!dir.exists(target)) {
-              dir.create(cmdstan_dir, recursive = TRUE, showWarnings = FALSE);
-              install_cmdstan(dir = cmdstan_dir, version = '2.34.1', cores = 2);
-            }
-            set_cmdstan_path(target);
-            cat('CmdStan version: ', cmdstan_version(), '\n');
-          "
+          fail-on-cache-miss: true
+          path: ${{ env.CMDSTAN_DIR }}
+          key: cmdstan-2.36.0-${{ runner.os }}-v1
 
       - name: Sanity-check R / CmdStan / brms
+        env:
+          CMDSTAN_DIR: ${{ env.CMDSTAN_DIR }}
         run: |
           R -q -e "
             library(cmdstanr);
             library(brms);
             library(posterior);
-            cmdstan_dir <- path.expand('~/.cmdstan');
-            target <- file.path(cmdstan_dir, 'cmdstan-2.34.1');
+            cmdstan_dir <- Sys.getenv('CMDSTAN_DIR');
+            target <- file.path(cmdstan_dir, 'cmdstan-2.36.0');
             set_cmdstan_path(target);
             cat('R version: ', R.version.string, '\n');
             cat('cmdstanr version: ', as.character(packageVersion('cmdstanr')), '\n');
@@ -95,6 +77,10 @@ jobs:
           "
 
       - name: Install Python dependencies
+        env:
+          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+          CMDSTAN_DIR: ${{ env.CMDSTAN_DIR }} # not used in here atm
+          R_LIBS_USER: ${{ env.R_LIBS_USER }}
         run: |
           python -m pip install --upgrade pip
           python -m pip install build twine pytest arviz tqdm

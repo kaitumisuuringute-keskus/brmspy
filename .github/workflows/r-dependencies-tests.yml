@@ -1,5 +1,4 @@
-# .github/workflows/ci.yml
-name: crossplatform-tests
+name: r-dependencies-tests
 
 on:
   push:
@@ -39,10 +38,13 @@ jobs:
           python -m pip install -e ".[dev]"
         shell: bash
 
-      - name: Run tests
-        run: |
-          pytest -q -m crossplatform
+
+      - name: Test with pytest
         env:
           BRMSPY_CROSSPLATFORM_TESTS: "1"
           GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
+        run: >
+          python -m pytest -v -m crossplatform 
+          --cov-report=term 
+          --cov-report=xml 
+          --cov-report=json

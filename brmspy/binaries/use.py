@@ -4,9 +4,19 @@ import tempfile
 import urllib.request
 import shutil
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Tuple, Union
 
 import rpy2.robjects as ro
+
+from brmspy.binaries.env import system_fingerprint
+from brmspy.binaries.github import get_github_asset_sha256_from_url
+from brmspy.binaries.r import _try_force_unload_package
+
+OFFICIAL_RELEASE_PATTERN = "https://github.com/kaitumisuuringute-keskus/brmspy/"
+HASH_FILENAME = "hash"
+MANIFEST_FILENAME = "manifest.json"
+RUNTIME_SUBDIR_NAME = "runtime"
+TMP_EXTRACT_DIR_NAME = "_tmp_extract"
 
 def activate_runtime(runtime_root: Union[str, Path]) -> None:
     """
@@ -113,7 +123,6 @@ def activate_runtime(runtime_root: Union[str, Path]) -> None:
                 f"manifest={mf_fp}, system={expected_fp}"
             )
     except ImportError:
-        # If envdetect isn't available here, you can skip this check
         pass
 
     rlib_posix = rlib_dir.as_posix()
@@ -122,6 +131,10 @@ def activate_runtime(runtime_root: Union[str, Path]) -> None:
     # Alternative, more error prone:
         # Prepend Rlib to .libPaths()
         #ro.r(f'.libPaths(c("{rlib_posix}", .libPaths()))')
+
+    _try_force_unload_package("brms", uninstall=False)
+    _try_force_unload_package("cmdstanr", uninstall=False)
+    _try_force_unload_package("rstan", uninstall=False)
 
     # Replace libPaths
     ro.r(f'.libPaths(c("{rlib_posix}"))')
@@ -150,235 +163,182 @@ def activate_runtime(runtime_root: Union[str, Path]) -> None:
     # Any further brms/cmdstanr calls in this process will use it.
 
 
-def install_and_activate_runtime(
-    url: Optional[str] = None,
-    bundle: Optional[Union[str, Path]] = None,
-    runtime_version: str = "0.1.0",
-    base_dir: Optional[Union[str, Path]] = None,
-    activate: bool = True,
-) -> Path:
+
+
+def _ensure_base_dir(base_dir: Optional[Union[str, Path]]) -> Path:
+    if base_dir is None:
+        base_dir = Path.home() / ".brmspy" / "runtime"
+    base_dir = Path(base_dir).expanduser().resolve()
+    base_dir.mkdir(parents=True, exist_ok=True)
+    return base_dir
+
+
+def _runtime_root_for_system(base_dir: Path, runtime_version: str) -> Path:
     """
-    Download, install, and optionally activate a prebuilt brms runtime bundle.
-    
-    Flexible installation function that can download from URL, extract from
-    local archive, or use an already-extracted runtime directory. Installs
-    to a fingerprint-specific directory and optionally activates immediately.
-    
-    Parameters
-    ----------
-    url : str, optional
-        URL to download runtime bundle archive (.tar.gz, .tar.bz2, etc.)
-        Mutually exclusive with `bundle`
-    bundle : str or Path, optional
-        Local path to runtime bundle, either:
-        - Archive file (.tar.gz, .tar.bz2, etc.) to extract
-        - Directory containing extracted runtime
-        Mutually exclusive with `url`
-    runtime_version : str, default="0.1.0"
-        Expected runtime version for validation
-    base_dir : str or Path, optional
-        Base directory for runtime installation
-        Default: ~/.brmspy/runtime/
-        Runtime will be installed to: {base_dir}/{fingerprint}/
-    activate : bool, default=True
-        If True, call `activate_runtime()` after installation
-    
+    Canonical installation path for a runtime:
+    {base_dir}/{system_fingerprint}-{runtime_version}
+    """
+    sys_fp = system_fingerprint()
+    return base_dir / f"{sys_fp}-{runtime_version}"
+
+
+def _resolve_source(
+    url: Optional[str], bundle: Optional[Union[str, Path]]
+) -> Tuple[Path, Optional[Path]]:
+    """
+    Resolve the source into a local path.
+
     Returns
     -------
-    Path
-        Path to installed runtime root directory
-    
-    Raises
-    ------
-    ValueError
-        If both or neither of `url` and `bundle` are provided
-    RuntimeError
-        If bundle structure is invalid or extraction fails
-    
-    Notes
-    -----
-    **Installation Process:**
-    
-    1. **Source Resolution:**
-       - If `url`: Downloads to temporary file
-       - If `bundle` (archive): Uses local archive
-       - If `bundle` (directory): Assumes already extracted
-    
-    2. **Extraction (for archives):**
-       - Extracts to temporary directory under base_dir
-       - Expects archive structure: runtime/{manifest.json,Rlib/,cmdstan/}
-       - Reads fingerprint from manifest.json
-    
-    3. **Installation:**
-       - Moves runtime to: {base_dir}/{fingerprint}/
-       - If fingerprint directory exists, removes it first
-       - Cleans up temporary files
-    
-    4. **Validation:**
-       - Verifies manifest.json exists and contains fingerprint
-       - Optionally warns if runtime_version mismatch
-    
-    5. **Activation (if requested):**
-       - Calls `activate_runtime()` to configure R session
-    
-    **Directory Structure:**
-    
-    After installation:
-    ```
-    ~/.brmspy/runtime/
-    ├── linux-x86_64-r4.3/
-    │   ├── manifest.json
-    │   ├── Rlib/
-    │   │   ├── brms/
-    │   │   ├── cmdstanr/
-    │   │   └── ... (other R packages)
-    │   └── cmdstan/
-    │       ├── bin/
-    │       └── ... (CmdStan files)
-    └── macos-arm64-r4.4/
-        └── ... (another runtime)
-    ```
-    
-    Examples
-    --------
-
-    ```python
-    from brmspy.binaries.use import install_and_activate_runtime
-    
-    # Install from URL (e.g., GitHub Releases)
-    url = "https://github.com/user/repo/releases/download/v1.0/runtime.tar.gz"
-    runtime_path = install_and_activate_runtime(url=url)
-    print(f"Installed to: {runtime_path}")
-    
-    # Now brms is ready to use
-    from brmspy import fit
-    result = fit("y ~ x", data={"y": [1, 2, 3], "x": [1, 2, 3]})
-    ```
-
-    ```python
-    # Install from local archive without activating
-    from pathlib import Path
-    
-    bundle_file = Path("/tmp/runtime-linux-x86_64-r4.3.tar.gz")
-    runtime_path = install_and_activate_runtime(
-        bundle=bundle_file,
-        activate=False  # Don't activate yet
-    )
-    
-    # Later, manually activate
-    from brmspy.binaries.use import activate_runtime
-    activate_runtime(runtime_path)
-    ```
-
-    ```python
-    # Use already-extracted runtime directory
-    extracted_dir = Path("/path/to/extracted/runtime")
-    runtime_path = install_and_activate_runtime(
-        bundle=extracted_dir,
-        base_dir=Path.home() / "custom_runtimes"
-    )
-    ```
-
-    ```python
-    # Download and install with custom base directory
-    runtime_path = install_and_activate_runtime(
-        url="https://example.com/runtime.tar.gz",
-        base_dir="/opt/brmspy/runtimes",
-        runtime_version="1.0.0"
-    )
-    ```
-
-    See Also
-    --------
-    activate_runtime : Activate an installed runtime
-    brmspy.binaries.env.system_fingerprint : Get system fingerprint
-    brmspy.binaries.build.pack_runtime : Create runtime bundles
+    (bundle_path, tmp_download)
+      bundle_path : Path to archive or directory
+      tmp_download : Path to temp file that should be cleaned up (or None)
     """
     if (url is None) == (bundle is None):
         raise ValueError("Exactly one of `url` or `bundle` must be provided.")
 
-    if base_dir is None:
-        base_dir = Path.home() / ".brmspy" / "runtime"
-    else:
-        base_dir = Path(base_dir).expanduser().resolve()
-    base_dir.mkdir(parents=True, exist_ok=True)
-
     tmp_download: Optional[Path] = None
 
-    # 1) Resolve source (URL → temp file, or local path)
     if url is not None:
         # Download into a temporary file
         with tempfile.NamedTemporaryFile(suffix=".tar.gz", delete=False) as tmp:
             tmp_path = Path(tmp.name)
         print(f"[download] Fetching {url} to {tmp_path}")
         urllib.request.urlretrieve(url, tmp_path)
-        bundle_path = tmp_path
         tmp_download = tmp_path
-    elif bundle:
-        bundle_path = Path(bundle).expanduser().resolve()
+        bundle_path = tmp_path
     else:
-        raise Exception("url is none and bundle is none")
+        bundle_path = Path(bundle).expanduser().resolve()  # type: ignore[arg-type]
 
-    # 2) If the bundle is already a directory with manifest.json, just use it
-    if bundle_path.is_dir():
-        manifest_path = bundle_path / "manifest.json"
-        if not manifest_path.is_file():
-            raise RuntimeError(
-                f"Directory {bundle_path} does not look like a runtime root "
-                f"(missing manifest.json)."
-            )
-        runtime_root = bundle_path
+    return bundle_path, tmp_download
 
-    else:
-        # 3) Assume a tar.* archive containing a top-level "runtime/" directory
-        #    (as produced by the build script).
-        print(f"[extract] Extracting archive {bundle_path}")
-        with tarfile.open(bundle_path, mode="r:*") as tf:
-            # Extract to a temp directory under base_dir first
-            temp_extract_root = base_dir / "_tmp_extract"
-            if temp_extract_root.exists():
-                shutil.rmtree(temp_extract_root)
-            temp_extract_root.mkdir(parents=True, exist_ok=True)
 
+def _is_runtime_dir(path: Path) -> bool:
+    """
+    Minimal structural check for a runtime directory.
+    """
+    if not path.is_dir():
+        return False
+    manifest = path / MANIFEST_FILENAME
+    return manifest.is_file()
+
+
+def _load_manifest(runtime_root: Path) -> dict:
+    manifest_path = runtime_root / MANIFEST_FILENAME
+    if not manifest_path.is_file():
+        raise RuntimeError(f"Missing {MANIFEST_FILENAME} in {runtime_root}")
+    with manifest_path.open("r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _read_stored_hash(runtime_root: Path) -> Optional[str]:
+    hash_path = runtime_root / HASH_FILENAME
+    if not hash_path.is_file():
+        return None
+    return hash_path.read_text(encoding="utf-8").strip()
+
+
+def _write_stored_hash(runtime_root: Path, hash_value: str) -> None:
+    hash_path = runtime_root / HASH_FILENAME
+    hash_path.write_text(hash_value.strip() + "\n", encoding="utf-8")
+
+
+def _maybe_reuse_existing_runtime(
+    runtime_root: Path,
+    expected_hash: Optional[str],
+    activate: bool,
+) -> Optional[Path]:
+    """
+    If a runtime already exists and its stored hash matches `expected_hash`,
+    reuse it and optionally activate it.
+    """
+    if not runtime_root.exists():
+        return None
+    if not _is_runtime_dir(runtime_root):
+        return None
+    if expected_hash is None:
+        # No attested hash to compare against; let caller decide what to do.
+        return None
+
+    stored_hash = _read_stored_hash(runtime_root)
+    if stored_hash is None:
+        return None
+
+    if stored_hash != expected_hash:
+        print(
+            f"[runtime] Existing runtime at {runtime_root} has hash "
+            f"{stored_hash}, expected {expected_hash}. Reinstalling."
+        )
+        shutil.rmtree(runtime_root, ignore_errors=True)
+        return None
+
+    print(f"[runtime] Reusing existing runtime at {runtime_root}")
+    if activate:
+        activate_runtime(runtime_root)
+    return runtime_root
+
+
+def _install_from_archive(
+    archive_path: Path,
+    runtime_root: Path,
+    runtime_version: str,
+    base_dir: Path,
+) -> Path:
+    """
+    Extract an archive produced by the build script and install it to runtime_root.
+    Archive is expected to contain top-level 'runtime/' directory.
+    """
+    print(f"[extract] Extracting archive {archive_path}")
+
+    temp_extract_root = base_dir / TMP_EXTRACT_DIR_NAME
+    if temp_extract_root.exists():
+        shutil.rmtree(temp_extract_root)
+    temp_extract_root.mkdir(parents=True, exist_ok=True)
+
+    try:
+        with tarfile.open(archive_path, mode="r:*") as tf:
             tf.extractall(path=temp_extract_root)
 
-        # Expect temp_extract_root / "runtime"
-        runtime_tmp = temp_extract_root / "runtime"
-        manifest_path = runtime_tmp / "manifest.json"
-        if not manifest_path.is_file():
+        runtime_tmp = temp_extract_root / RUNTIME_SUBDIR_NAME
+        if not runtime_tmp.is_dir():
             raise RuntimeError(
-                f"Extracted archive does not contain runtime/manifest.json "
+                f"Extracted archive does not contain '{RUNTIME_SUBDIR_NAME}/' "
                 f"under {temp_extract_root}"
             )
 
-        with manifest_path.open("r", encoding="utf-8") as f:
-            manifest = json.load(f)
-
-        fingerprint = manifest.get("fingerprint")
-        if not fingerprint:
-            raise RuntimeError("manifest.json is missing 'fingerprint' field.")
-
-        # Final runtime_root = base_dir / fingerprint
-        runtime_root = base_dir / fingerprint
+        manifest = _load_manifest(runtime_tmp)
+        mf_runtime_version = manifest.get("runtime_version")
+        if mf_runtime_version and mf_runtime_version != runtime_version:
+            print(
+                f"[warn] manifest runtime_version={mf_runtime_version} "
+                f"!= expected={runtime_version}"
+            )
 
         if runtime_root.exists():
             print(f"[extract] Removing existing runtime at {runtime_root}")
-            shutil.rmtree(runtime_root)
+            shutil.rmtree(runtime_root, ignore_errors=True)
 
         print(f"[extract] Moving runtime to {runtime_root}")
         shutil.move(str(runtime_tmp), str(runtime_root))
 
-        # Clean temporary extraction dir
+    finally:
         shutil.rmtree(temp_extract_root, ignore_errors=True)
 
-    # Clean up downloaded temp file if any
-    if tmp_download is not None and tmp_download.exists():
-        tmp_download.unlink()
+    return runtime_root
 
-    # Optional: sanity check that manifest runtime_version matches expectation
-    manifest_path = runtime_root / "manifest.json"
-    with manifest_path.open("r", encoding="utf-8") as f:
-        manifest = json.load(f)
+
+def _install_from_directory(
+    src_dir: Path,
+    runtime_root: Path,
+    runtime_version: str,
+) -> Path:
+    """
+    Install a runtime from an already-extracted directory.
+
+    If src_dir is already the canonical runtime_root, just validate it.
+    Otherwise move/copy into runtime_root.
+    """
+    manifest = _load_manifest(src_dir)
     mf_runtime_version = manifest.get("runtime_version")
     if mf_runtime_version and mf_runtime_version != runtime_version:
         print(
@@ -386,9 +346,137 @@ def install_and_activate_runtime(
             f"!= expected={runtime_version}"
         )
 
-    # 4) Hook it into R if requested
+    src_dir = src_dir.resolve()
+    runtime_root = runtime_root.resolve()
+
+    if src_dir == runtime_root:
+        # Already in place
+        return runtime_root
+
+    if runtime_root.exists():
+        print(f"[install] Removing existing runtime at {runtime_root}")
+        shutil.rmtree(runtime_root, ignore_errors=True)
+
+    print(f"[install] Moving runtime from {src_dir} to {runtime_root}")
+    shutil.move(str(src_dir), str(runtime_root))
+
+    return runtime_root
+
+
+
+def install_and_activate_runtime(
+    url: Optional[str] = None,
+    bundle: Optional[Union[str, Path]] = None,
+    runtime_version: str = "0.1.0",
+    base_dir: Optional[Union[str, Path]] = None,
+    activate: bool = True,
+    expected_hash: Optional[str] = None,
+    require_attestation: bool = True,
+) -> Path:
+    """
+    Download, install, and optionally activate a prebuilt brms runtime bundle.
+
+    This is the high-level orchestration function. It:
+
+      1. Resolves the source (URL → temp file, or local archive/dir)
+      2. Determines the canonical runtime_root for this system+version
+      3. Optionally reuses an existing runtime if the stored hash matches
+      4. Installs from archive or directory into runtime_root
+      5. Stores the expected hash (if provided) for fast future reuse
+      6. Optionally activates the runtime in the current R session
+
+    Parameters
+    ----------
+    url : str, optional
+        URL to download runtime bundle archive (.tar.gz, .tar.bz2, etc.).
+        Mutually exclusive with `bundle`.
+    bundle : str or Path, optional
+        Local path to runtime bundle, either:
+        - Archive file (.tar.gz, .tar.bz2, etc.) to extract, or
+        - Directory containing an extracted runtime (with manifest.json).
+        Mutually exclusive with `url`.
+    runtime_version : str, default="0.1.0"
+        Logical runtime version used in the canonical runtime path
+        {base_dir}/{system_fingerprint}-{runtime_version}.
+    base_dir : str or Path, optional
+        Base directory for runtime installation.
+        Default: ~/.brmspy/runtime/
+    activate : bool, default=True
+        If True, call `activate_runtime()` after installation/reuse.
+    expected_hash : str, optional
+        Attested hash (e.g. sha256 from GitHub release assets). If provided,
+        the installer will:
+        - Reuse an existing runtime only if its stored hash matches this value.
+        - Store the hash into {runtime_root}/hash after (re)install.
+        If NOT provided, but the binary is an official kaitumisuuringute-keskus/brmspy 
+        one, the expected_hash will be automatically fetched
+    require_attestation : bool, default=True
+        If True, `expected_hash` must be provided; otherwise a ValueError is
+        raised. This lets callers enforce that only attested runtimes are used.
+
+    Returns
+    -------
+    Path
+        Path to the installed (or reused) runtime root directory.
+    """
+
+    if url and url.startswith(OFFICIAL_RELEASE_PATTERN) and not expected_hash:
+        auto_hash = get_github_asset_sha256_from_url(url, require_digest=True)
+        if expected_hash is not None and expected_hash != auto_hash:
+            raise ValueError(
+                "Expected hash does not match attested GitHub digest for "
+                f"{url!r}: expected {expected_hash}, got {auto_hash}"
+            )
+        expected_hash = auto_hash
+
+    if require_attestation and expected_hash is None:
+        raise ValueError(
+            "require_attestation=True but no expected_hash was provided."
+        )
+
+    base_dir_path = _ensure_base_dir(base_dir)
+    runtime_root = _runtime_root_for_system(base_dir_path, runtime_version)
+
+    # Fast path: reuse if hash matches
+    reused = _maybe_reuse_existing_runtime(
+        runtime_root=runtime_root,
+        expected_hash=expected_hash,
+        activate=activate,
+    )
+    if reused is not None:
+        return reused
+
+    # Resolve source and install
+    bundle_path, tmp_download = _resolve_source(url, bundle)
+    try:
+        if bundle_path.is_dir():
+            runtime_root = _install_from_directory(
+                src_dir=bundle_path,
+                runtime_root=runtime_root,
+                runtime_version=runtime_version,
+            )
+        else:
+            runtime_root = _install_from_archive(
+                archive_path=bundle_path,
+                runtime_root=runtime_root,
+                runtime_version=runtime_version,
+                base_dir=base_dir_path,
+            )
+    finally:
+        # Clean up downloaded temp file if any
+        if tmp_download is not None and tmp_download.exists():
+            tmp_download.unlink()
+
+    # Store attested hash for future quick startups
+    if expected_hash is not None:
+        _write_stored_hash(runtime_root, expected_hash)
+
+    # Final sanity check (manifest present etc.)
+    _ = _load_manifest(runtime_root)
+
     if activate:
         print(f"[activate] Activating runtime at {runtime_root}")
         activate_runtime(runtime_root)
 
     return runtime_root
+

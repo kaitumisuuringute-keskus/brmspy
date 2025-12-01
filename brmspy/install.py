@@ -1,7 +1,7 @@
 import os
 import shutil
 import subprocess
-from typing import Callable, Optional, Union, cast, Tuple
+from typing import Callable, List, Optional, Union, cast, Tuple
 from packaging.version import Version
 import multiprocessing
 import platform
@@ -11,6 +11,7 @@ from rpy2.robjects.packages import importr
 from rpy2.robjects.vectors import StrVector
 
 from brmspy.binaries.use import install_and_activate_runtime
+from brmspy.binaries.r import _try_force_unload_package
 from brmspy.helpers.rtools import _install_rtools_for_current_r
 from brmspy.helpers.singleton import _get_brms, _invalidate_singletons
 from brmspy.helpers.rtools import _get_r_version
@@ -42,82 +43,6 @@ def _forward_github_token_to_r() -> None:
     except Exception as e:
         print(f"{e}")
         return
-
-def _parse_version_spec(spec: Optional[str]) -> Tuple[str, Optional[Version]]:
-    """
-    Parse version specification string into operator and Version object.
-    
-    Supports:
-      - None / "" / "any" / "*"  -> no constraint ("any")
-      - "2.21.0"                 -> exact, equivalent to "==2.21.0"
-      - "==2.21.0"               -> exact version
-      - ">=2.20.0"               -> minimum version
-      - "<=2.23.0"               -> maximum version
-    """
-    if spec is None:
-        return "any", None
-
-    spec = spec.strip()
-    if not spec:
-        return "any", None
-
-    lower = spec.lower()
-    if lower in ("any", "*"):
-        return "any", None
-
-    for op in ("<=", ">=", "=="):
-        if spec.startswith(op):
-            ver = spec[len(op):].strip()
-            return op, Version(ver)
-
-    # bare version => '=='
-    return "==", Version(spec)
-
-def _satisfies(installed: Version, op: str, required: Optional[Version]) -> bool:
-    """
-    Check if installed version satisfies version constraint.
-    
-    Evaluates version requirements using packaging.Version comparison.
-    Used to determine if package upgrade is needed.
-    
-    Parameters
-    ----------
-    installed : Version
-        Currently installed package version
-    op : str
-        Comparison operator: "any", "==", ">=", or "<="
-    required : Version or None
-        Required version, or None if op is "any"
-    
-    Returns
-    -------
-    bool
-        True if installed version satisfies constraint
-    
-    Examples
-    --------
-    ```python
-    from packaging.version import Version
-    
-    _satisfies(Version("2.21.0"), ">=", Version("2.20.0"))
-    # True
-    
-    _satisfies(Version("2.19.0"), ">=", Version("2.20.0"))
-    # False
-    
-    _satisfies(Version("2.21.0"), "any", None)
-    # True
-    ```
-    """
-    if op == "any" or required is None:
-        return True
-    if op == "==":
-        return installed == required
-    if op == ">=":
-        return installed >= required
-    if op == "<=":
-        return installed <= required
-    raise ValueError(f"Unsupported version operator: {op!r}")
 
 def _get_r_pkg_version(package: str) -> Optional[Version]:
     """
@@ -152,55 +77,19 @@ def _get_r_pkg_version(package: str) -> Optional[Version]:
         return Version(v_str)
     except Exception:
         return None
-    
-def _install_exact_version(package: str, version: Version, repos) -> None:
-    """
-    Install specific R package version using remotes::install_version().
-    
-    Pins installation to exact version, useful for reproducibility.
-    Requires the remotes R package, which is auto-installed if missing.
-    
-    Parameters
-    ----------
-    package : str
-        R package name
-    version : Version
-        Exact version to install
-    repos : list of str
-        Repository URLs for package installation
-    
-    Raises
-    ------
-    Exception
-        If installation fails or package version unavailable
-    
-    Notes
-    -----
-    Uses remotes::install_version() which downloads packages from CRAN
-    archives. Historical versions may not always be available, especially
-    for very recent or very old packages.
-    
-    Examples
-    --------
-    ```python
-    from packaging.version import Version
-    
-    _install_exact_version(
-        "brms",
-        Version("2.21.0"),
-        ["https://cloud.r-project.org"]
-    )
-    ```
-    """
-    # ensure remotes is available
-    ro.r('if (!requireNamespace("remotes", quietly = TRUE)) '
-         'install.packages("remotes", repos="https://cloud.r-project.org")')
 
-    # pass repos vector from Python into R
-    ro.globalenv[".brmspy_repos"] = StrVector(repos)
-    ro.r(f'remotes::install_version("{package}", '
-         f'version="{version}", repos=.brmspy_repos)')
-    del ro.globalenv[".brmspy_repos"]
+
+def _get_r_pkg_installed(package: str) -> bool:
+    """
+    Return True if `pkg` is installed in any library in .libPaths(),
+    without loading the package/namespace.
+    """
+    expr = f"""
+      suppressWarnings(suppressMessages(
+        "{package}" %in% rownames(installed.packages())
+      ))
+    """
+    return bool(cast(List, ro.r(expr))[0])
 
 
 def _get_linux_repo():
@@ -292,6 +181,8 @@ def _install_rpackage(
     system = platform.system()
     cores = multiprocessing.cpu_count()
 
+    already_installed = _get_r_pkg_installed(package)
+
     repos: list[str] = ["https://cloud.r-project.org"]  # good default mirror
 
     if system == "Linux":
@@ -334,6 +225,8 @@ def _install_rpackage(
         v_escaped = version.replace('"', '\\"')
 
         try:
+            if already_installed and system == "Windows":
+                _try_force_unload_package(package)
             ro.r(
                 f'remotes::install_version('
                 f'package = "{package}", '
@@ -359,9 +252,10 @@ def _install_rpackage(
     # ------------------------------------------------------------------
     # BRANCH 2: no version spec -> "latest" from repos via install.packages
     # ------------------------------------------------------------------
+    installed_version = None
     try:
-        importr(package)
-        installed_version = _get_r_pkg_version(package)
+        if already_installed:
+            installed_version = _get_r_pkg_version(package)
     except Exception:
         installed_version = None
 
@@ -373,6 +267,8 @@ def _install_rpackage(
 
     try:
         # Primary Attempt (Fast Binary / P3M)
+        if already_installed and system == "Windows":
+            _try_force_unload_package(package)
         utils.install_packages(
             StrVector((package,)),
             repos=StrVector(repos),
@@ -391,6 +287,8 @@ def _install_rpackage(
             f"Falling back to source compilation. ({e})"
         )
         try:
+            if already_installed and system == "Windows":
+                _try_force_unload_package(package)
             utils.install_packages(
                 StrVector((package,)),
                 repos=StrVector(repos),
@@ -426,7 +324,7 @@ def _install_rpackage_deps(package: str):
         print(str(e))
         return
 
-def _build_cmstanr():
+def _build_cmstanr(tried_install_rtools: bool = False):
     """
     Build and configure CmdStan compiler via cmdstanr.
     
@@ -487,23 +385,22 @@ def _build_cmstanr():
             ro.r("cmdstanr::check_cmdstan_toolchain(fix = TRUE)")
         except Exception as e:
             print(f"Toolchain check failed: {e}")
-            tag = _install_rtools_for_current_r()
-            if not tag:
-                print(
-                    "brmspy: Rtools auto-install failed or disabled. "
+            if tried_install_rtools:
+                raise Exception(
+                    "brmspy: Rtools auto-install failed. "
                     "Please install the matching Rtools version manually: "
                     "https://cran.r-project.org/bin/windows/Rtools/"
                 )
-                return
-            if tag != "45":
-                # cmdstanr does an invalid mapping of r4.5 -> 44
-                # only check if tag isnt 45
-                print(f"brmspy: Installed Rtools{tag}, re-checking toolchain...")
-                ro.r("cmdstanr::check_cmdstan_toolchain(fix = TRUE)")
+            else:
+                raise Exception(
+                    "brmspy: Rtools missing and install_rtools = False. "
+                    "Please set install_rtools = True or install the matching Rtools version manually: "
+                    "https://cran.r-project.org/bin/windows/Rtools/"
+                )
 
     ro.r(f"cmdstanr::install_cmdstan(cores = {cores}, overwrite = FALSE)")
 
-def install_prebuilt(runtime_version="0.1.0", url: Optional[str] = None, bundle: Optional[str] = None):
+def install_prebuilt(runtime_version="0.1.0", url: Optional[str] = None, bundle: Optional[str] = None, install_rtools: bool = False):
     """
     Install prebuilt brmspy runtime bundle for fast setup.
     
@@ -523,6 +420,9 @@ def install_prebuilt(runtime_version="0.1.0", url: Optional[str] = None, bundle:
         Custom URL for runtime bundle. If None, uses GitHub releases
     bundle : str, optional
         Local path to runtime bundle (.tar.gz or directory)
+    install_rtools: bool, default=False
+        Installs RTools (windows only) if they cant be found. 
+        WARNING: Modifies system path and runs the full rtools installer.
     
     Returns
     -------
@@ -583,14 +483,15 @@ def install_prebuilt(runtime_version="0.1.0", url: Optional[str] = None, bundle:
     _forward_github_token_to_r()
 
     from brmspy.binaries import env
+
+    if install_rtools:
+        _install_rtools_for_current_r()
+
     if not env.can_use_prebuilt():
         raise RuntimeError(
             "Prebuilt binaries are not available for your system. "
             "Please install brms manually or in install_brms set use_prebuilt_binaries=False."
         )
-    
-    if platform.system() == "Windows":
-        rtools_tag = _install_rtools_for_current_r()
 
     fingerprint = env.system_fingerprint()
     if url is None and bundle is None:
@@ -600,7 +501,9 @@ def install_prebuilt(runtime_version="0.1.0", url: Optional[str] = None, bundle:
         result = install_and_activate_runtime(
             url=url,
             bundle=bundle,
-            runtime_version=runtime_version
+            runtime_version=runtime_version,
+            activate=True,
+            require_attestation=True
         )
         _get_brms()
         return result
@@ -616,7 +519,8 @@ def install_brms(
     install_rstan: bool = False,
     cmdstanr_version: str = "latest",
     rstan_version: str = "latest",
-    use_prebuilt_binaries = False
+    use_prebuilt_binaries: bool = False,
+    install_rtools: bool = False
 ):
     """
     Install brms R package, optionally cmdstanr and CmdStan compiler, or rstan.
@@ -640,6 +544,10 @@ def install_brms(
         Ignores system R libraries and uses the latest brms and cmdstanr available 
         for your system. Requires R>=4 and might not be compatible with some older
         systems or missing toolchains. Can reduce setup time by 50x.
+    install_rtools: bool, default=False
+        Installs RTools (windows only) if they cant be found. 
+        WARNING: Modifies system path and runs the full rtools installer. 
+        Use with caution!
     
     Examples
     --------
@@ -670,9 +578,12 @@ def install_brms(
     _init()
 
     if use_prebuilt_binaries:
-        if install_prebuilt():
+        if install_prebuilt(install_rtools=install_rtools):
             print("\nSetup complete! You're ready to use brmspy.")
             return
+
+    if install_rtools:
+        _install_rtools_for_current_r()
     
     _forward_github_token_to_r()
 
@@ -696,7 +607,7 @@ def install_brms(
         ])
         _install_rpackage_deps("cmdstanr")
         print("Building cmdstanr...")
-        _build_cmstanr()
+        _build_cmstanr(tried_install_rtools=install_rtools)
 
     if install_rstan:
         print("Installing rstan...")

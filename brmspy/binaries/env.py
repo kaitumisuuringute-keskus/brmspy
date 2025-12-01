@@ -2,6 +2,8 @@ import platform
 import subprocess
 from typing import Optional, Tuple, Set, cast
 
+from brmspy.helpers.rtools import _install_rtools_for_current_r, _parse_gxx_version, _windows_has_rtools
+
 
 # ----- Helpers: OS / arch -----
 
@@ -196,47 +198,6 @@ def extract_glibc_version(ldd_output: str) -> Optional[Tuple[int, int]]:
     return None
 
 
-def parse_gxx_version(version_output: str) -> Optional[Tuple[int, int]]:
-    """
-    Parse g++ compiler version from command output.
-    
-    Extracts g++ version number from the output of `g++ --version`.
-    Used to verify minimum compiler requirement for building Stan models.
-    
-    Parameters
-    ----------
-    version_output : str
-        Output from `g++ --version` command
-    
-    Returns
-    -------
-    tuple of (int, int) or None
-        (major, minor) version, or None if parsing fails
-    
-    Examples
-    --------
-
-    ```python
-    import subprocess
-    
-    out = subprocess.check_output(["g++", "--version"], text=True)
-    version = parse_gxx_version(out)
-    if version and version >= (9, 0):
-        print("g++ 9+ available")
-    ```
-
-    See Also
-    --------
-    linux_can_use_prebuilt : Linux compatibility check
-    windows_can_use_prebuilt : Windows (MinGW) compatibility check
-    """
-    for line in version_output.splitlines():
-        for token in line.split():
-            if token[0].isdigit() and "." in token:
-                parts = token.split(".")
-                if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit():
-                    return int(parts[0]), int(parts[1])
-    return None
 
 
 def parse_clang_version(version_output: str) -> Optional[Tuple[int, int]]:
@@ -321,21 +282,23 @@ def linux_can_use_prebuilt() -> bool:
     See Also
     --------
     extract_glibc_version : Parse glibc version from ldd
-    parse_gxx_version : Parse g++ version
+    _parse_gxx_version : Parse g++ version
     toolchain_is_compatible : Master toolchain check for all platforms
     """
     try:
         out = subprocess.check_output(["ldd", "--version"], text=True)
         glibc = extract_glibc_version(out)
         if glibc is None or glibc < (2, 27):
+            print(f"[brmspy prebuilt binaries failure] glibc missing or version too old. Found {glibc}, requirement is >= 2.27")
             return False
     except Exception:
         return False
 
     try:
         out = subprocess.check_output(["g++", "--version"], text=True)
-        version = parse_gxx_version(out)
+        version = _parse_gxx_version(out)
         if version is None or version < (9, 0):
+            print(f"[brmspy prebuilt binaries failure] g++ missing or version too old. Found {version}, requirement is >= 9.0")
             return False
     except Exception:
         return False
@@ -389,17 +352,21 @@ def macos_can_use_prebuilt() -> bool:
         # Check that Xcode CLI tools are installed
         subprocess.check_output(["xcode-select", "-p"], text=True)
     except Exception:
+        print(f"[brmspy prebuilt binaries failure] xcode cli tools not found")
         return False
 
     try:
         out = subprocess.check_output(["clang", "--version"], text=True)
         version = parse_clang_version(out)
         if version is None or version < (11, 0):
+            print(f"[brmspy prebuilt binaries failure] clang missing or version too old. Found {version}, requirement is >= 11.0")
             return False
     except Exception:
         return False
 
     return True
+
+
 
 
 def windows_can_use_prebuilt() -> bool:
@@ -442,20 +409,7 @@ def windows_can_use_prebuilt() -> bool:
     parse_gxx_version : Parse g++ version from command output
     toolchain_is_compatible : Master toolchain check for all platforms
     """
-    try:
-        out = subprocess.check_output(["g++", "--version"], text=True, shell=True)
-    except Exception:
-        return False
-
-    # Very rough: we expect mingw in the banner
-    if "mingw" not in out.lower():
-        return False
-
-    version = parse_gxx_version(out)
-    if version is None or version < (9, 0):
-        return False
-
-    return True
+    return _windows_has_rtools(silent=True)
 
 
 # ----- Platform & toolchain gates -----
@@ -502,18 +456,20 @@ def supported_platform() -> bool:
     can_use_prebuilt : Complete prebuilt eligibility check
     """
     os_name, arch = _normalized_os_arch()
+    supported_os = ("linux", "macos", "windows")
+    supported_os_arch = {
+        "windows": {"x86_64"},
+        "linux": {"x86_64"},
+        "macos": {"arm64"}
+    }
 
-    if os_name not in ("linux", "macos", "windows"):
+    if os_name not in supported_os:
+        print(f"[brmspy prebuilt binaries failure] OS '{os_name}' not supported. Requirements: {supported_os}")
         return False
-
-    if os_name == "windows" and arch != "x86_64":
-        return False
-
-    if os_name == "linux" and arch != "x86_64":
-        # You can relax this later if you build Linux ARM prebuilts.
-        return False
-
-    if os_name == "macos" and arch not in ("x86_64", "arm64"):
+    
+    supported_archs = supported_os_arch.get(os_name, 'UNK')
+    if arch not in supported_archs:
+        print(f"[brmspy prebuilt binaries failure] Architecture '{arch}' not supported for OS '{os_name}'. Requirements: {supported_archs}")
         return False
 
     return True

@@ -1,4 +1,4 @@
-pkgs_root <- c("brms", "cmdstanr")
+pkgs_root <- c("brms", "cmdstanr", "jsonlite")
 
 missing_root <- pkgs_root[!vapply(pkgs_root, requireNamespace, logical(1), quietly = TRUE)]
 if (length(missing_root) > 0) {
