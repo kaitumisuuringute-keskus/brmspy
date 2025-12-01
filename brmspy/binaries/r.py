@@ -1,5 +1,7 @@
+import os
+from typing import Callable, List, Optional, cast
 import rpy2.robjects as ro
-
+from packaging.version import Version
 
 
 def _try_force_unload_package(package: str, uninstall = True) -> None:
@@ -93,3 +95,74 @@ def _try_force_unload_package(package: str, uninstall = True) -> None:
         # rpy2 / transport-level failure – log, but don't kill caller
         print(f"[brmspy] Aggressive unload of '{package}' raised a Python/rpy2 exception: \n{e}")
     
+
+
+def _forward_github_token_to_r() -> None:
+    """Forward GITHUB_PAT / GITHUB_TOKEN from Python env to R's Sys.getenv."""
+    try:
+        kwargs = {}
+        pat = os.environ.get("GITHUB_PAT")
+        token = os.environ.get("GITHUB_TOKEN")
+
+        if not pat and not token:
+            return
+        
+        r_setenv = cast(Callable, ro.r["Sys.setenv"])
+
+        if pat:
+            kwargs["GITHUB_PAT"] = pat
+        elif token:
+            kwargs["GITHUB_TOKEN"] = token
+
+        if kwargs:
+            r_setenv(**kwargs)
+    except Exception as e:
+        print(f"{e}")
+        return
+
+def _get_r_pkg_version(package: str) -> Optional[Version]:
+    """
+    Get installed R package version.
+    
+    Queries R's package system via rpy2 to retrieve the installed
+    version of a package. Returns None if package is not installed.
+    
+    Parameters
+    ----------
+    package : str
+        R package name (e.g., "brms", "cmdstanr", "rstan")
+    
+    Returns
+    -------
+    Version or None
+        Package version if installed, None otherwise
+    
+    Examples
+    --------
+    ```python
+    _get_r_pkg_version("brms")
+    # <Version('2.21.0')>
+    
+    _get_r_pkg_version("nonexistent_package")
+    # None
+    ```
+    """
+    try:
+        # utils::packageVersion("pkg") -> "x.y.z"
+        v_str = cast(list, ro.r(f"as.character(utils::packageVersion('{package}'))"))[0]
+        return Version(v_str)
+    except Exception:
+        return None
+
+
+def _get_r_pkg_installed(package: str) -> bool:
+    """
+    Return True if `pkg` is installed in any library in .libPaths(),
+    without loading the package/namespace.
+    """
+    expr = f"""
+      suppressWarnings(suppressMessages(
+        "{package}" %in% rownames(installed.packages())
+      ))
+    """
+    return bool(cast(List, ro.r(expr))[0])

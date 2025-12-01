@@ -10,7 +10,7 @@ import rpy2.robjects as ro
 
 from brmspy.binaries.env import system_fingerprint
 from brmspy.binaries.github import get_github_asset_sha256_from_url
-from brmspy.binaries.r import _try_force_unload_package
+from brmspy.binaries.r import _get_r_pkg_installed, _try_force_unload_package
 
 OFFICIAL_RELEASE_PATTERN = "https://github.com/kaitumisuuringute-keskus/brmspy/"
 HASH_FILENAME = "hash"
@@ -43,15 +43,15 @@ def activate_runtime(runtime_root: Union[str, Path]) -> None:
     -----
     **Important Limitations:**
     
-    This function reconfigures the running embedded R session but does NOT
-    fully restart R (rpy2 cannot do that). For a truly clean environment:
-    - Call this function BEFORE loading any R packages
-    - Or restart the Python process after installation
+    This function reconfigures the running embedded R session to use an isolated 
+    library environment from downloaded binaries. It does not mix or break the 
+    default library tree already installed in the system.
     
     **What this function does:**
     
     1. Validates runtime bundle structure (manifest, Rlib, cmdstan directories)
     2. Optionally verifies system fingerprint matches bundle fingerprint
+    3. Unloads brms, cmdstanr and rstan (if they are loaded)
     3. Replaces R's .libPaths() with runtime Rlib directory
     4. Sets cmdstanr::set_cmdstan_path() to runtime cmdstan directory
     5. Performs sanity checks (brms and cmdstanr load successfully)
@@ -77,18 +77,6 @@ def activate_runtime(runtime_root: Union[str, Path]) -> None:
     from brmspy import fit
     
     result = fit("y ~ x", data={"y": [1, 2, 3], "x": [1, 2, 3]})
-    ```
-
-    ```python
-    # Activate runtime before any R operations (recommended)
-    import sys
-    from brmspy.binaries.use import activate_runtime
-    
-    # Do this FIRST, before importing brmspy or using rpy2
-    activate_runtime("/path/to/runtime")
-    
-    # Now safe to use brmspy
-    from brmspy import fit
     ```
 
     See Also
@@ -132,9 +120,12 @@ def activate_runtime(runtime_root: Union[str, Path]) -> None:
         # Prepend Rlib to .libPaths()
         #ro.r(f'.libPaths(c("{rlib_posix}", .libPaths()))')
 
-    _try_force_unload_package("brms", uninstall=False)
-    _try_force_unload_package("cmdstanr", uninstall=False)
-    _try_force_unload_package("rstan", uninstall=False)
+    if _get_r_pkg_installed("brms"):
+        _try_force_unload_package("brms", uninstall=False)
+    if _get_r_pkg_installed("cmdstanr"):
+        _try_force_unload_package("cmdstanr", uninstall=False)
+    if _get_r_pkg_installed("rstan"):
+        _try_force_unload_package("rstan", uninstall=False)
 
     # Replace libPaths
     ro.r(f'.libPaths(c("{rlib_posix}"))')
