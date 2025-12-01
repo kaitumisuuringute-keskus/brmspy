@@ -4,6 +4,8 @@ Python-first access to R's [brms](https://paul-buerkner.github.io/brms/)  with p
 
 This is an early development version of the library, use with caution.
 
+[Github repo](https://github.com/kaitumisuuringute-keskus/brmspy)
+
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Documentation](https://img.shields.io/badge/docs-mkdocs-blue.svg)](https://kaitumisuuringute-keskus.github.io/brmspy/)

@@ -30,6 +30,9 @@ try:
 except ImportError:
     print("brmspy: brms and other required libraries are not installed. Please call brmspy.install_brms()")
 
+print("brmspy <0.2 is still evolving; APIs may change.")
+print("Feedback or a star on GitHub helps guide development:")
+print("https://github.com/kaitumisuuringute-keskus/brmspy")
 
 __all__ = [
     'install_brms', 'get_brms_version', 'get_brms_data', 'make_stancode',
