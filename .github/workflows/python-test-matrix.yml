@@ -157,6 +157,7 @@ jobs:
       RSPM: https://cloud.r-project.org
       R_LIBS_USER: ${{ github.workspace }}/.r-lib
       CMDSTAN_DIR: ${{ github.workspace }}/.cmdstan 
+      CMDSTAN: ${{ github.workspace }}/.cmdstan/cmdstan-2.36.0
 
     steps:
       - uses: actions/checkout@v4

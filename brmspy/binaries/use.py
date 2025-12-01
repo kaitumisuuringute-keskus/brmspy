@@ -416,8 +416,14 @@ def install_and_activate_runtime(
         Path to the installed (or reused) runtime root directory.
     """
 
-    if url and url.startswith(OFFICIAL_RELEASE_PATTERN):
-        expected_hash = get_github_asset_sha256_from_url(url, require_digest=True)
+    if url and url.startswith(OFFICIAL_RELEASE_PATTERN) and not expected_hash:
+        auto_hash = get_github_asset_sha256_from_url(url, require_digest=True)
+        if expected_hash is not None and expected_hash != auto_hash:
+            raise ValueError(
+                "Expected hash does not match attested GitHub digest for "
+                f"{url!r}: expected {expected_hash}, got {auto_hash}"
+            )
+        expected_hash = auto_hash
 
     if require_attestation and expected_hash is None:
         raise ValueError(

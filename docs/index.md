@@ -29,8 +29,8 @@ brms.install_brms() # requires R to be installed already
 For faster installation (~20-60 seconds vs 20-30 minutes), use prebuilt runtime bundles:
 
 ```python
-from brmspy import install_prebuilt
-install_prebuilt()  # Downloads pre-compiled cmdstanr + brms
+from brmspy import brms
+brms.install_brms(use_prebuilt_binaries=True)
 ```
 
 #### System Requirements
