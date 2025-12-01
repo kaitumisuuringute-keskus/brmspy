@@ -144,7 +144,7 @@ def get_active_runtime() -> Optional[Path]:
     return Path(runtime_str).expanduser().resolve()
 
 
-def set_active_runtime(runtime_path: Path) -> None:
+def set_active_runtime(runtime_path: Optional[Path]) -> None:
     """
     Save path to active prebuilt runtime.
     
@@ -168,10 +168,14 @@ def set_active_runtime(runtime_path: Path) -> None:
     set_active_runtime(runtime)
     ```
     """
-    runtime_path = Path(runtime_path).expanduser().resolve()
+    
     
     config = load_config()
-    config['active_runtime'] = str(runtime_path)
+    if runtime_path:
+        runtime_path = Path(runtime_path).expanduser().resolve()
+        config['active_runtime'] = str(runtime_path)
+    else:
+        config['active_runtime'] = None
     save_config(config)
 
 

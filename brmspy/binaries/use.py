@@ -8,6 +8,7 @@ from typing import Optional, Tuple, Union
 
 import rpy2.robjects as ro
 
+from brmspy.binaries.config import get_active_runtime, set_active_runtime
 from brmspy.binaries.env import system_fingerprint
 from brmspy.binaries.github import get_github_asset_sha256_from_url
 from brmspy.binaries.r import _get_r_pkg_installed, _try_force_unload_package
@@ -480,3 +481,17 @@ def install_and_activate_runtime(
 
     return runtime_root
 
+
+def autoload_last_runtime():
+    # Auto-activate saved prebuilt runtime if available
+    try:
+        runtime_path = get_active_runtime()
+        if runtime_path is not None and runtime_path.exists():
+            try:
+                activate_runtime(runtime_path)
+            except Exception as e:
+                log_warning(f"Failed to auto-activate saved runtime at {runtime_path}: {e}")
+                set_active_runtime(None)
+    except Exception:
+        # Silently skip if config module unavailable or other issues
+        pass

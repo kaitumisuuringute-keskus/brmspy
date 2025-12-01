@@ -9,6 +9,7 @@ from rpy2.robjects import default_converter, pandas2ri, numpy2ri, ListVector, Da
 from rpy2.robjects.conversion import localconverter
 
 from brmspy.binaries.r import _get_r_pkg_version
+from brmspy.binaries.use import autoload_last_runtime
 from brmspy.helpers.log import log
 from brmspy.helpers.log import log_warning
 from .helpers.priors import _build_priors
@@ -26,21 +27,7 @@ from .types import (
 )
 from .install import install_brms
 
-# Auto-activate saved prebuilt runtime if available
-try:
-    from brmspy.binaries.config import get_active_runtime
-    from brmspy.binaries.use import activate_runtime
-    
-    runtime_path = get_active_runtime()
-    if runtime_path is not None and runtime_path.exists():
-        try:
-            activate_runtime(runtime_path)
-        except Exception as e:
-            log_warning(f"Failed to auto-activate saved runtime at {runtime_path}: {e}")
-except Exception:
-    # Silently skip if config module unavailable or other issues
-    pass
-
+autoload_last_runtime()
 
 # R imports must NOT be done lazily!
 # Lazy imports with rpy2 within tqdm loops for example WILL cause segfaults!
