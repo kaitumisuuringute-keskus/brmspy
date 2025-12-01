@@ -153,6 +153,6 @@ def _get_r_pkg_installed(package: str) -> bool:
     """
     try:
       expr = f"length(find.package('{package}', quiet = TRUE)) > 0"
-      return bool(cast(List, ro.r(expr))[0])
+      return str(cast(List, ro.r(expr))[0]).lower().strip() == "true"
     except:
       return False
