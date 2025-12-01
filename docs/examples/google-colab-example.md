@@ -5,7 +5,7 @@ This example runs in Google Colab environment. Dependency installation takes <50
 The notebook can be run [HERE](https://colab.research.google.com/drive/1uq6S3exG1zy-JX1lD69ehG4ZHOu9eXY6)
 
 ```python
-!pip install "brmspy>=0.1.10"
+!pip install brmspy
 ```
 
 ```python

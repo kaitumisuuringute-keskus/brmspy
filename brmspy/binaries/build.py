@@ -11,6 +11,7 @@ from typing import List, cast
 import rpy2.robjects as ro
 
 from brmspy.binaries.env import system_fingerprint
+from brmspy.helpers.log import log
 
 
 def _generate_manifest_hash(manifest):
@@ -268,7 +269,7 @@ def stage_runtime_tree(base_dir: Path, metadata: dict, runtime_version: str) -> 
         if not src.exists():
             raise RuntimeError(f"Package directory not found: {src}")
 
-        print(f"[Rlib] Copying {name} from {src} to {dest}")
+        log(f"[Rlib] Copying {name} from {src} to {dest}")
         # Python 3.8+: dirs_exist_ok=True
         shutil.copytree(src, dest, dirs_exist_ok=True)
 
@@ -277,7 +278,7 @@ def stage_runtime_tree(base_dir: Path, metadata: dict, runtime_version: str) -> 
     if not cmdstan_path.exists():
         raise RuntimeError(f"cmdstan_path does not exist on disk: {cmdstan_path}")
 
-    print(f"[cmdstan] Copying CmdStan from {cmdstan_path} to {cmdstan_dir}")
+    log(f"[cmdstan] Copying CmdStan from {cmdstan_path} to {cmdstan_dir}")
     shutil.copytree(cmdstan_path, cmdstan_dir, dirs_exist_ok=True)
 
     # ---- Write manifest.json ----
@@ -299,7 +300,7 @@ def stage_runtime_tree(base_dir: Path, metadata: dict, runtime_version: str) -> 
     manifest_path = runtime_root / "manifest.json"
     with manifest_path.open("w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2)
-    print(f"[manifest] Wrote {manifest_path}")
+    log(f"[manifest] Wrote {manifest_path}")
 
     return runtime_root
 
@@ -365,7 +366,7 @@ def pack_runtime(runtime_root: Path, out_dir: Path, runtime_version: str) -> Pat
 
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"[tar] Creating archive {archive_path}")
+    log(f"[tar] Creating archive {archive_path}")
     with tarfile.open(archive_path, "w:gz") as tf:
         # Add the runtime root directory contents under "runtime/"
         tf.add(runtime_root, arcname="runtime")
@@ -444,16 +445,16 @@ def main():
     # This prevents 'build-manifest.R' or subsequent installs from prompting for a mirror.
     ro.r('options(repos = c(CRAN = "https://cloud.r-project.org"))')
 
-    print("[meta] Collecting R / brms / cmdstanr metadata via rpy2...")
+    log("[meta] Collecting R / brms / cmdstanr metadata via rpy2...")
     metadata = collect_runtime_metadata()
 
-    print("[stage] Staging runtime tree...")
+    log("[stage] Staging runtime tree...")
     runtime_root = stage_runtime_tree(base_dir, metadata, runtime_version)
 
-    print("[pack] Packing runtime to tar.gz...")
+    log("[pack] Packing runtime to tar.gz...")
     archive_path = pack_runtime(runtime_root, out_dir, runtime_version)
 
-    print(f"[done] Runtime bundle created: {archive_path}")
+    log(f"[done] Runtime bundle created: {archive_path}")
 
 
 if __name__ == "__main__":

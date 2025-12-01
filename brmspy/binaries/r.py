@@ -3,6 +3,8 @@ from typing import Callable, List, Optional, cast
 import rpy2.robjects as ro
 from packaging.version import Version
 
+from brmspy.helpers.log import log, log_warning
+
 
 def _try_force_unload_package(package: str, uninstall = True) -> None:
     """
@@ -88,12 +90,12 @@ def _try_force_unload_package(package: str, uninstall = True) -> None:
     """
 
     try:
-        print(f"[brmspy] Attempting aggressive unload of R package '{package}'")
+        log(f"Attempting aggressive unload of R package '{package}'")
         ro.r(r_code)
-        print(f"[brmspy] Aggressive unload completed for '{package}'")
+        log(f"Aggressive unload completed for '{package}'")
     except Exception as e:
         # rpy2 / transport-level failure – log, but don't kill caller
-        print(f"[brmspy] Aggressive unload of '{package}' raised a Python/rpy2 exception: \n{e}")
+        log_warning(f"Aggressive unload of '{package}' raised a Python/rpy2 exception: \n{e}")
     
 
 
@@ -117,7 +119,7 @@ def _forward_github_token_to_r() -> None:
         if kwargs:
             r_setenv(**kwargs)
     except Exception as e:
-        print(f"{e}")
+        log_warning(f"{e}")
         return
 
 def _get_r_pkg_version(package: str) -> Optional[Version]:

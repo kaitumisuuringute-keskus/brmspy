@@ -7,6 +7,8 @@ from urllib import request
 from packaging.version import Version
 from rpy2 import robjects as ro
 
+from brmspy.helpers.log import log, log_warning
+
 def _get_r_version() -> Version:
     """
     Get current R version from active R installation via rpy2.
@@ -192,9 +194,9 @@ def _silent_install_exe(url: str, label: str) -> None:
     """
     tmp_dir = tempfile.gettempdir()
     exe_path = os.path.join(tmp_dir, f"{label}.exe")
-    print(f"brmspy: downloading {label} from {url}")
+    log(f"downloading {label} from {url}")
     request.urlretrieve(url, exe_path)
-    print(f"brmspy: running {label} installer silently...")
+    log(f"running {label} installer silently...")
     subprocess.run(
         [
             exe_path,
@@ -262,19 +264,19 @@ def _windows_has_rtools(silent=False) -> bool:
         out = subprocess.check_output(["g++", "--version"], text=True, shell=True)
     except Exception:
         if not silent:
-            print(f"[brmspy prebuilt binaries failure] g++ not found")
+            log_warning(f"g++ not found")
         return False
 
     # Very rough: we expect mingw in the banner
     if "mingw" not in out.lower():
         if not silent:
-            print(f"[brmspy prebuilt binaries failure] mingw not found in g++ banner")
+            log_warning(f"mingw not found in g++ banner")
         return False
 
     version = _parse_gxx_version(out)
     if version is None or version < (9, 0):
         if not silent:
-            print(f"[brmspy prebuilt binaries failure] g++ version too old. Found {version}, requirement is >= 9.0")
+            log_warning(f"g++ version too old. Found {version}, requirement is >= 9.0")
         return False
     return True
 
@@ -359,12 +361,12 @@ def _install_rtools_for_current_r() -> Optional[str]:
         return tag
 
     if tag is None:
-        print(f"brmspy: R {r_ver} is too old/new for automatic Rtools handling.")
+        log_warning(f"R {r_ver} is too old/new for automatic Rtools handling.")
         return None
 
     url = RTOOLS_INSTALLERS.get(tag)
     if not url:
-        print(f"brmspy: no installer URL configured for Rtools{tag}")
+        log_warning(f"no installer URL configured for Rtools{tag}")
         return None
 
     _silent_install_exe(url, f"rtools{tag}")
@@ -381,7 +383,7 @@ def _install_rtools_for_current_r() -> Optional[str]:
     for p in candidates:
         if os.path.isdir(p):
             new_paths.append(p)
-            print(f"brmspy: found Rtools bin: {p}")
+            log(f"found Rtools bin: {p}")
 
     if new_paths:
         # Update Python environment (for subprocesses)

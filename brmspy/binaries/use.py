@@ -11,6 +11,7 @@ import rpy2.robjects as ro
 from brmspy.binaries.env import system_fingerprint
 from brmspy.binaries.github import get_github_asset_sha256_from_url
 from brmspy.binaries.r import _get_r_pkg_installed, _try_force_unload_package
+from brmspy.helpers.log import log, log_warning
 
 OFFICIAL_RELEASE_PATTERN = "https://github.com/kaitumisuuringute-keskus/brmspy/"
 HASH_FILENAME = "hash"
@@ -191,7 +192,7 @@ def _resolve_source(
         # Download into a temporary file
         with tempfile.NamedTemporaryFile(suffix=".tar.gz", delete=False) as tmp:
             tmp_path = Path(tmp.name)
-        print(f"[download] Fetching {url} to {tmp_path}")
+        log(f"Fetching {url} to {tmp_path}")
         urllib.request.urlretrieve(url, tmp_path)
         tmp_download = tmp_path
         bundle_path = tmp_path
@@ -253,14 +254,14 @@ def _maybe_reuse_existing_runtime(
         return None
 
     if stored_hash != expected_hash:
-        print(
-            f"[runtime] Existing runtime at {runtime_root} has hash "
+        log(
+            f"Existing runtime at {runtime_root} has hash "
             f"{stored_hash}, expected {expected_hash}. Reinstalling."
         )
         shutil.rmtree(runtime_root, ignore_errors=True)
         return None
 
-    print(f"[runtime] Reusing existing runtime at {runtime_root}")
+    log(f"Reusing existing runtime at {runtime_root}")
     if activate:
         activate_runtime(runtime_root)
     return runtime_root
@@ -276,7 +277,7 @@ def _install_from_archive(
     Extract an archive produced by the build script and install it to runtime_root.
     Archive is expected to contain top-level 'runtime/' directory.
     """
-    print(f"[extract] Extracting archive {archive_path}")
+    log(f"Extracting archive {archive_path}")
 
     temp_extract_root = base_dir / TMP_EXTRACT_DIR_NAME
     if temp_extract_root.exists():
@@ -297,16 +298,16 @@ def _install_from_archive(
         manifest = _load_manifest(runtime_tmp)
         mf_runtime_version = manifest.get("runtime_version")
         if mf_runtime_version and mf_runtime_version != runtime_version:
-            print(
-                f"[warn] manifest runtime_version={mf_runtime_version} "
+            log_warning(
+                f"manifest runtime_version={mf_runtime_version} "
                 f"!= expected={runtime_version}"
             )
 
         if runtime_root.exists():
-            print(f"[extract] Removing existing runtime at {runtime_root}")
+            log_warning(f"Removing existing runtime at {runtime_root}")
             shutil.rmtree(runtime_root, ignore_errors=True)
 
-        print(f"[extract] Moving runtime to {runtime_root}")
+        log(f"Moving runtime to {runtime_root}")
         shutil.move(str(runtime_tmp), str(runtime_root))
 
     finally:
@@ -329,8 +330,8 @@ def _install_from_directory(
     manifest = _load_manifest(src_dir)
     mf_runtime_version = manifest.get("runtime_version")
     if mf_runtime_version and mf_runtime_version != runtime_version:
-        print(
-            f"[warn] manifest runtime_version={mf_runtime_version} "
+        log_warning(
+            f"manifest runtime_version={mf_runtime_version} "
             f"!= expected={runtime_version}"
         )
 
@@ -342,10 +343,10 @@ def _install_from_directory(
         return runtime_root
 
     if runtime_root.exists():
-        print(f"[install] Removing existing runtime at {runtime_root}")
+        log_warning(f"Removing existing runtime at {runtime_root}")
         shutil.rmtree(runtime_root, ignore_errors=True)
 
-    print(f"[install] Moving runtime from {src_dir} to {runtime_root}")
+    log(f"Moving runtime from {src_dir} to {runtime_root}")
     shutil.move(str(src_dir), str(runtime_root))
 
     return runtime_root
@@ -463,7 +464,7 @@ def install_and_activate_runtime(
     _ = _load_manifest(runtime_root)
 
     if activate:
-        print(f"[activate] Activating runtime at {runtime_root}")
+        log(f"Activating runtime at {runtime_root}")
         activate_runtime(runtime_root)
 
     return runtime_root

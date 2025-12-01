@@ -7,6 +7,9 @@ import warnings
 import rpy2.robjects.packages as rpackages
 from rpy2.robjects import default_converter, pandas2ri, numpy2ri, ListVector, DataFrame, StrVector
 from rpy2.robjects.conversion import localconverter
+
+from brmspy.helpers.log import log
+from brmspy.helpers.log import log_warning
 from .helpers.priors import _build_priors
 from .helpers.singleton import _get_base, _get_brms, _get_cmdstanr, _get_rstan, _invalidate_singletons
 from .helpers.conversion import (
@@ -28,11 +31,11 @@ from .install import install_brms
 try:
     _get_brms()
 except ImportError:
-    print("brmspy: brms and other required libraries are not installed. Please call brmspy.install_brms()")
+    log_warning("brmspy: brms and other required libraries are not installed. Please call brmspy.install_brms()")
 
-print("brmspy <0.2 is still evolving; APIs may change.")
-print("Feedback or a star on GitHub helps guide development:")
-print("https://github.com/kaitumisuuringute-keskus/brmspy")
+log_warning("brmspy <0.2 is still evolving; APIs may change.")
+log_warning("Feedback or a star on GitHub helps guide development:")
+log_warning("https://github.com/kaitumisuuringute-keskus/brmspy")
 
 __all__ = [
     'install_brms', 'get_brms_version', 'get_brms_data', 'make_stancode',
@@ -491,9 +494,9 @@ def fit(
     # Set empty=TRUE if not sampling
     if not sample:
         brm_kwargs['empty'] = True
-        print("Creating empty r object (no sampling)...")
+        log("Creating empty r object (no sampling)...")
     else:
-        print(f"Fitting model with brms (backend: {backend})...")
+        log(f"Fitting model with brms (backend: {backend})...")
     
     # Call brms::brm() with all arguments
     fit = brms.brm(**brm_kwargs)
@@ -807,5 +810,4 @@ def summary(model: FitResult, **kwargs) -> pd.DataFrame:
     except Exception:
         # Fallback: just convert the whole summary to string
         summary_str = str(summary_r)
-        print(summary_str)
         return pd.DataFrame({'summary': [summary_str]})

@@ -9,6 +9,8 @@ from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 
+from brmspy.helpers.log import log_warning
+
 
 @dataclass
 class GitHubReleaseAssetMetadata:
@@ -72,7 +74,7 @@ def _github_get_json(api_url: str, token: Optional[str] = None) -> dict:
         except HTTPError as e:
             if e.code in (401, 403):
                 # Invalid / insufficient token – retry anonymously.
-                print("[github] Auth token rejected, retrying without credentials")
+                log_warning("[github] Auth token rejected, retrying without credentials")
                 return request(use_auth=False)
             raise
     else:

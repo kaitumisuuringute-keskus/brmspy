@@ -12,9 +12,11 @@ from rpy2.robjects.vectors import StrVector
 
 from brmspy.binaries.use import install_and_activate_runtime
 from brmspy.binaries.r import _forward_github_token_to_r, _get_r_pkg_installed, _get_r_pkg_version, _try_force_unload_package
+from brmspy.helpers.log import log
 from brmspy.helpers.rtools import _install_rtools_for_current_r
 from brmspy.helpers.singleton import _get_brms, _invalidate_singletons
 from brmspy.helpers.rtools import _get_r_version
+from brmspy.helpers.log import log_error, log_warning
 
 def _init():
     # Set the CRAN mirror globally for this session. 
@@ -137,8 +139,8 @@ def _install_rpackage(
     # BRANCH 1: version *specified* -> delegate entirely to remotes
     # ------------------------------------------------------------------
     if version is not None:
-        print(
-            f"brmspy: Installing {package} "
+        log(
+            f"Installing {package} "
             f"(version spec: {version!r}) via remotes::install_version()..."
         )
 
@@ -173,8 +175,8 @@ def _install_rpackage(
                 f"{package} did not appear after remotes::install_version('{version}')."
             )
 
-        print(
-            f"brmspy: Installed {package} via remotes::install_version "
+        log(
+            f"Installed {package} via remotes::install_version "
             f"(installed: {installed_version})."
         )
         return
@@ -190,10 +192,10 @@ def _install_rpackage(
         installed_version = None
 
     if installed_version is not None:
-        print(f"brmspy: {package} {installed_version} already installed.")
+        log(f"{package} {installed_version} already installed.")
         return
 
-    print(f"brmspy: Installing {package} on {system} (Repos: {len(repos)})...")
+    log(f"Installing {package} on {system} (Repos: {len(repos)})...")
 
     try:
         # Primary Attempt (Fast Binary / P3M)
@@ -210,9 +212,9 @@ def _install_rpackage(
             raise RuntimeError(
                 f"{package} did not appear after install (type={preferred_type})."
             )
-        print(f"brmspy: Installed {package} via {preferred_type} path.")
+        log(f"Installed {package} via {preferred_type} path.")
     except Exception as e:
-        print(
+        log_warning(
             f"{preferred_type} install failed for {package}. "
             f"Falling back to source compilation. ({e})"
         )
@@ -228,9 +230,9 @@ def _install_rpackage(
             installed_version = _get_r_pkg_version(package)
             if installed_version is None:
                 raise RuntimeError(f"{package} did not appear after source install.")
-            print(f"brmspy: Installed {package} from source.")
+            log(f"brmspy: Installed {package} from source.")
         except Exception as e2:
-            print(f"Failed to install {package}.")
+            log_error(f"Failed to install {package}.")
             raise e2
 
 def _install_rpackage_deps(package: str):
@@ -251,7 +253,7 @@ def _install_rpackage_deps(package: str):
             }}
         """)
     except Exception as e:
-        print(str(e))
+        log_warning(str(e))
         return
 
 def _build_cmstanr(tried_install_rtools: bool = False):
@@ -310,11 +312,11 @@ def _build_cmstanr(tried_install_rtools: bool = False):
     ro.r("library(cmdstanr)")
 
     if platform.system() == "Windows":
-        print("brmspy: Checking Windows toolchain (Rtools/cmdstanr)...")
+        log("Checking Windows toolchain (Rtools/cmdstanr)...")
         try:
             ro.r("cmdstanr::check_cmdstan_toolchain(fix = TRUE)")
         except Exception as e:
-            print(f"Toolchain check failed: {e}")
+            log_error(f"Toolchain check failed: {e}")
             if tried_install_rtools:
                 raise Exception(
                     "brmspy: Rtools auto-install failed. "
@@ -442,7 +444,7 @@ def install_prebuilt(runtime_version="0.1.0", url: Optional[str] = None, bundle:
         _get_brms()
         return result
     except Exception as e:
-        print(f"{e}")
+        log_warning(f"{e}")
         return False
     
 
@@ -513,7 +515,7 @@ def install_brms(
 
     if use_prebuilt_binaries:
         if install_prebuilt(install_rtools=install_rtools):
-            print("\nSetup complete! You're ready to use brmspy.")
+            log("\nSetup complete! You're ready to use brmspy.")
             return
 
     if install_rtools:
@@ -521,30 +523,30 @@ def install_brms(
     
     _forward_github_token_to_r()
 
-    print("Installing brms...")
+    log("Installing brms...")
     _install_rpackage("brms", version=brms_version, repos_extra=[repo])
     _install_rpackage_deps("brms")
 
     if install_cmdstanr:
         if platform.system() == "Windows":
             if _get_r_version() >= Version("4.5.0"):
-                print("R>=4.5 and OS is windows. Limiting cmdstanr version to >= 0.9")
+                log("R>=4.5 and OS is windows. Limiting cmdstanr version to >= 0.9")
                 if cmdstanr_version == "latest" or cmdstanr_version == "any" or not cmdstanr_version:
                     # cmdstanr <0.9 does not recognise rtools 45.
                     cmdstanr_version = ">= 0.9.0"
 
-        print("Installing cmdstanr...")
+        log("Installing cmdstanr...")
         _install_rpackage("cmdstanr", version=cmdstanr_version, repos_extra=[
             "https://mc-stan.org/r-packages/",
             'https://stan-dev.r-universe.dev',
             repo
         ])
         _install_rpackage_deps("cmdstanr")
-        print("Building cmdstanr...")
+        log("Building cmdstanr...")
         _build_cmstanr(tried_install_rtools=install_rtools)
 
     if install_rstan:
-        print("Installing rstan...")
+        log("Installing rstan...")
         _install_rpackage("rstan", version=rstan_version, repos_extra=[repo])
         _install_rpackage_deps("rstan")
 
@@ -552,4 +554,4 @@ def install_brms(
     # Import to mitigate lazy imports
     _get_brms()
 
-    print("\nSetup complete! You're ready to use brmspy.")
+    log("\nSetup complete! You're ready to use brmspy.")

@@ -1,3 +1,7 @@
+## 0.1.11 
+
+* Added configurable logger to replace scattered print statements
+
 ## 0.1.10 - Windows stability & CI improvements
 
 **Windows Support**
