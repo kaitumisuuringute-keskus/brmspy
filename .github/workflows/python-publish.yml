@@ -121,8 +121,17 @@ jobs:
 
   deploy:
     if: >
-      github.event.release.prerelease == false &&
-      contains(github.event.release.tag_name, 'release-')
+      (
+        github.event_name == 'release' &&
+        github.event.release.prerelease == false &&
+        contains(github.event.release.tag_name, 'release-')
+      )
+      ||
+      (
+        github.event_name == 'workflow_dispatch' &&
+        github.ref == 'refs/heads/master'
+      )
+    needs: cmdstan
     runs-on: ubuntu-latest
 
     defaults:
