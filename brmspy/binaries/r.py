@@ -1,5 +1,6 @@
 import os
-from typing import Callable, List, Optional, cast
+from pathlib import Path
+from typing import Callable, List, Optional, Union, cast
 import rpy2.robjects as ro
 from packaging.version import Version
 
@@ -145,8 +146,33 @@ def _get_r_pkg_version(package: str) -> Optional[Version]:
     except Exception:
         return None
 
+def _get_r_pkg_installed(package: str,
+                         lib_loc: Optional[Union[str, Path]] = None) -> bool:
+    """
+    Return True if `package` is installed in the current R library paths,
+    without loading the package/namespace.
 
-def _get_r_pkg_installed(package: str) -> bool:
+    Parameters
+    ----------
+    package :
+        R package name.
+    lib_loc :
+        Optional library path to restrict the search to. If None, uses
+        whatever `.libPaths()` is currently set to.
+    """
+    from rpy2.robjects.packages import isinstalled
+    
+    if lib_loc is not None:
+        lib_loc = str(lib_loc)
+
+    try:
+        # rpy2.robjects.packages.isinstalled() already returns a Python bool
+        return isinstalled(package, lib_loc=lib_loc)
+    except Exception:
+        # Fail closed rather than blowing up the whole session
+        return False
+
+def _get_r_pkg_installed_old(package: str) -> bool:
     """
     Return True if `pkg` is installed in any library in .libPaths(),
     without loading the package/namespace.

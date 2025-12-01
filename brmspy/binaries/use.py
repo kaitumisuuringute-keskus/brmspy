@@ -123,8 +123,10 @@ def activate_runtime(runtime_root: Union[str, Path]) -> None:
         #ro.r(f'.libPaths(c("{rlib_posix}", .libPaths()))')
     if _get_r_pkg_installed("brms"):
         _try_force_unload_package("brms", uninstall=False)
+
     if _get_r_pkg_installed("cmdstanr"):
         _try_force_unload_package("cmdstanr", uninstall=False)
+
     if _get_r_pkg_installed("rstan"):
         _try_force_unload_package("rstan", uninstall=False)
 
