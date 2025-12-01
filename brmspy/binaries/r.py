@@ -161,7 +161,7 @@ def _get_r_pkg_installed(package: str,
         whatever `.libPaths()` is currently set to.
     """
     from rpy2.robjects.packages import isinstalled
-    
+
     if lib_loc is not None:
         lib_loc = str(lib_loc)
 
@@ -172,13 +172,18 @@ def _get_r_pkg_installed(package: str,
         # Fail closed rather than blowing up the whole session
         return False
 
-def _get_r_pkg_installed_old(package: str) -> bool:
+
+def _r_namespace_loaded(pkg: str) -> bool:
     """
-    Return True if `pkg` is installed in any library in .libPaths(),
-    without loading the package/namespace.
+    Return True if `pkg`'s namespace is loaded in this R session.
     """
-    try:
-      expr = f"length(find.package('{package}', quiet = TRUE)) > 0"
-      return str(cast(List, ro.r(expr))[0]).lower().strip() == "true"
-    except:
-      return False
+    expr = f'"{pkg}" %in% loadedNamespaces()'
+    res = cast(List, ro.r(expr))
+    # res is an R logical vector; res[0] is a logical scalar, not a "TRUE"/"FALSE" string
+    return str(res[0]).lower().strip() == "true"
+
+
+def _r_package_attached(pkg: str) -> bool:
+    expr = f'paste0("package:", "{pkg}") %in% search()'
+    res = cast(List, ro.r(expr))
+    return str(res[0]).lower().strip() == "true"

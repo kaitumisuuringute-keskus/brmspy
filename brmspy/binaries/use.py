@@ -11,7 +11,7 @@ import rpy2.robjects as ro
 from brmspy.binaries.config import get_active_runtime, set_active_runtime
 from brmspy.binaries.env import system_fingerprint
 from brmspy.binaries.github import get_github_asset_sha256_from_url
-from brmspy.binaries.r import _get_r_pkg_installed, _try_force_unload_package
+from brmspy.binaries.r import _get_r_pkg_installed, _try_force_unload_package, _r_namespace_loaded, _r_package_attached
 from brmspy.helpers.log import greet, log, log_warning
 
 OFFICIAL_RELEASE_PATTERN = "https://github.com/kaitumisuuringute-keskus/brmspy/"
@@ -118,17 +118,11 @@ def activate_runtime(runtime_root: Union[str, Path]) -> None:
     rlib_posix = rlib_dir.as_posix()
     cmdstan_posix = cmdstan_dir.as_posix()
 
-    # Alternative, more error prone:
-        # Prepend Rlib to .libPaths()
-        #ro.r(f'.libPaths(c("{rlib_posix}", .libPaths()))')
-    if _get_r_pkg_installed("brms"):
-        _try_force_unload_package("brms", uninstall=False)
 
-    if _get_r_pkg_installed("cmdstanr"):
-        _try_force_unload_package("cmdstanr", uninstall=False)
 
-    if _get_r_pkg_installed("rstan"):
-        _try_force_unload_package("rstan", uninstall=False)
+    for pkg in ("brms", "cmdstanr", "rstan"):
+        if _r_namespace_loaded(pkg) or _r_package_attached(pkg):
+            _try_force_unload_package(pkg, uninstall=False)
 
     # Replace libPaths
     ro.r(f'.libPaths(c("{rlib_posix}"))')
