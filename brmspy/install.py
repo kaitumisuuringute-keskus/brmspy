@@ -15,7 +15,7 @@ from brmspy.helpers.rtools import _install_rtools_for_current_r
 from brmspy.helpers.singleton import _get_brms, _invalidate_singletons
 from brmspy.helpers.rtools import _get_r_version
 
-def try_force_unload_package(package: str) -> None:
+def _try_force_unload_package(package: str) -> None:
     """
     Try to unload and remove an R package as aggressively as possible.
 
@@ -46,10 +46,11 @@ def try_force_unload_package(package: str) -> None:
       }}
 
       .unload_pkg <- function(pkg) {{
-        search_name <- paste0("package:", pkg)
+        
 
         # 1) Detach from search path
         log_step("detach_search", quote({{
+          search_name <- paste0("package:", pkg)
           if (search_name %in% search()) {{
             detach(search_name, unload = TRUE, character.only = TRUE)
           }}
@@ -130,82 +131,6 @@ def _forward_github_token_to_r() -> None:
     except Exception as e:
         print(f"{e}")
         return
-
-def _parse_version_spec(spec: Optional[str]) -> Tuple[str, Optional[Version]]:
-    """
-    Parse version specification string into operator and Version object.
-    
-    Supports:
-      - None / "" / "any" / "*"  -> no constraint ("any")
-      - "2.21.0"                 -> exact, equivalent to "==2.21.0"
-      - "==2.21.0"               -> exact version
-      - ">=2.20.0"               -> minimum version
-      - "<=2.23.0"               -> maximum version
-    """
-    if spec is None:
-        return "any", None
-
-    spec = spec.strip()
-    if not spec:
-        return "any", None
-
-    lower = spec.lower()
-    if lower in ("any", "*"):
-        return "any", None
-
-    for op in ("<=", ">=", "=="):
-        if spec.startswith(op):
-            ver = spec[len(op):].strip()
-            return op, Version(ver)
-
-    # bare version => '=='
-    return "==", Version(spec)
-
-def _satisfies(installed: Version, op: str, required: Optional[Version]) -> bool:
-    """
-    Check if installed version satisfies version constraint.
-    
-    Evaluates version requirements using packaging.Version comparison.
-    Used to determine if package upgrade is needed.
-    
-    Parameters
-    ----------
-    installed : Version
-        Currently installed package version
-    op : str
-        Comparison operator: "any", "==", ">=", or "<="
-    required : Version or None
-        Required version, or None if op is "any"
-    
-    Returns
-    -------
-    bool
-        True if installed version satisfies constraint
-    
-    Examples
-    --------
-    ```python
-    from packaging.version import Version
-    
-    _satisfies(Version("2.21.0"), ">=", Version("2.20.0"))
-    # True
-    
-    _satisfies(Version("2.19.0"), ">=", Version("2.20.0"))
-    # False
-    
-    _satisfies(Version("2.21.0"), "any", None)
-    # True
-    ```
-    """
-    if op == "any" or required is None:
-        return True
-    if op == "==":
-        return installed == required
-    if op == ">=":
-        return installed >= required
-    if op == "<=":
-        return installed <= required
-    raise ValueError(f"Unsupported version operator: {op!r}")
 
 def _get_r_pkg_version(package: str) -> Optional[Version]:
     """
@@ -649,9 +574,6 @@ def install_prebuilt(runtime_version="0.1.0", url: Optional[str] = None, bundle:
             "Prebuilt binaries are not available for your system. "
             "Please install brms manually or in install_brms set use_prebuilt_binaries=False."
         )
-    
-    if platform.system() == "Windows":
-        rtools_tag = _install_rtools_for_current_r()
 
     fingerprint = env.system_fingerprint()
     if url is None and bundle is None:
@@ -661,7 +583,9 @@ def install_prebuilt(runtime_version="0.1.0", url: Optional[str] = None, bundle:
         result = install_and_activate_runtime(
             url=url,
             bundle=bundle,
-            runtime_version=runtime_version
+            runtime_version=runtime_version,
+            activate=True,
+            require_attestation=True
         )
         _get_brms()
         return result

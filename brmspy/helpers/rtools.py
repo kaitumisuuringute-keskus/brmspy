@@ -2,7 +2,7 @@ import os
 import platform
 import subprocess
 import tempfile
-from typing import Optional, cast
+from typing import Optional, Tuple, cast
 from urllib import request
 from packaging.version import Version
 from rpy2 import robjects as ro
@@ -206,6 +206,78 @@ def _silent_install_exe(url: str, label: str) -> None:
     )
 
 
+def _parse_gxx_version(version_output: str) -> Optional[Tuple[int, int]]:
+    """
+    Parse g++ compiler version from command output.
+    
+    Extracts g++ version number from the output of `g++ --version`.
+    Used to verify minimum compiler requirement for building Stan models.
+    
+    Parameters
+    ----------
+    version_output : str
+        Output from `g++ --version` command
+    
+    Returns
+    -------
+    tuple of (int, int) or None
+        (major, minor) version, or None if parsing fails
+    
+    Examples
+    --------
+
+    ```python
+    import subprocess
+    
+    out = subprocess.check_output(["g++", "--version"], text=True)
+    version = parse_gxx_version(out)
+    if version and version >= (9, 0):
+        print("g++ 9+ available")
+    ```
+
+    See Also
+    --------
+    linux_can_use_prebuilt : Linux compatibility check
+    windows_can_use_prebuilt : Windows (MinGW) compatibility check
+    """
+    for line in version_output.splitlines():
+        for token in line.split():
+            if token[0].isdigit() and "." in token:
+                parts = token.split(".")
+                if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit():
+                    return int(parts[0]), int(parts[1])
+    return None
+
+def _windows_has_rtools(silent=False) -> bool:
+    # If Rtools is already found, skip (cmdstanr check)
+    try:
+        # Check if 'make' is available. If yes, we probably have Rtools.
+        make_path = str(cast(list, ro.r('Sys.which("make")'))[0])
+        if make_path and "rtools" in make_path.lower():
+            return True
+    except Exception:
+        pass
+
+    try:
+        out = subprocess.check_output(["g++", "--version"], text=True, shell=True)
+    except Exception:
+        if not silent:
+            print(f"[brmspy prebuilt binaries failure] g++ not found")
+        return False
+
+    # Very rough: we expect mingw in the banner
+    if "mingw" not in out.lower():
+        if not silent:
+            print(f"[brmspy prebuilt binaries failure] mingw not found in g++ banner")
+        return False
+
+    version = _parse_gxx_version(out)
+    if version is None or version < (9, 0):
+        if not silent:
+            print(f"[brmspy prebuilt binaries failure] g++ version too old. Found {version}, requirement is >= 9.0")
+        return False
+    return True
+
 def _install_rtools_for_current_r() -> Optional[str]:
     """
     Auto-detect R version and install matching Rtools if needed (Windows only).
@@ -283,15 +355,8 @@ def _install_rtools_for_current_r() -> Optional[str]:
     r_ver = _get_r_version()
     tag = pick_rtools_for_r(r_ver)
     
-    # If Rtools is already found, skip (cmdstanr check)
-    try:
-        # Check if 'make' is available. If yes, we probably have Rtools.
-        make_path = str(cast(list, ro.r('Sys.which("make")'))[0])
-        if make_path:
-            print(f"brmspy: Rtools seems present (make found at {make_path}). Skipping install.")
-            return tag
-    except Exception:
-        pass
+    if _windows_has_rtools():
+        return tag
 
     if tag is None:
         print(f"brmspy: R {r_ver} is too old/new for automatic Rtools handling.")
