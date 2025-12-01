@@ -38,13 +38,6 @@ jobs:
           python -m pip install -e ".[dev]"
         shell: bash
 
-      - name: Run tests
-        run: |
-          pytest -q -m crossplatform
-        env:
-          BRMSPY_CROSSPLATFORM_TESTS: "1"
-          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
 
       - name: Test with pytest
         env:

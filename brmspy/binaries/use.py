@@ -10,6 +10,7 @@ import rpy2.robjects as ro
 
 from brmspy.binaries.env import system_fingerprint
 from brmspy.binaries.github import get_github_asset_sha256_from_url
+from brmspy.binaries.r import _try_force_unload_package
 
 OFFICIAL_RELEASE_PATTERN = "https://github.com/kaitumisuuringute-keskus/brmspy/"
 HASH_FILENAME = "hash"
@@ -130,6 +131,10 @@ def activate_runtime(runtime_root: Union[str, Path]) -> None:
     # Alternative, more error prone:
         # Prepend Rlib to .libPaths()
         #ro.r(f'.libPaths(c("{rlib_posix}", .libPaths()))')
+
+    _try_force_unload_package("brms", uninstall=False)
+    _try_force_unload_package("cmdstanr", uninstall=False)
+    _try_force_unload_package("rstan", uninstall=False)
 
     # Replace libPaths
     ro.r(f'.libPaths(c("{rlib_posix}"))')
