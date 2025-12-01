@@ -44,7 +44,7 @@ jobs:
           GBRMSPY_CROSSPLATFORM_TESTS: "1"
           GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
         run: >
-          python -m pytest -v -q -m crossplatform 
+          python -m pytest -v -m crossplatform 
           --cov-report=term 
           --cov-report=xml 
           --cov-report=json
