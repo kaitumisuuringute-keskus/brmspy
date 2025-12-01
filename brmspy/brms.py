@@ -25,9 +25,26 @@ from .types import (
 )
 from .install import install_brms
 
-# R imports must NOT be done lazily! 
+# Auto-activate saved prebuilt runtime if available
+try:
+    from brmspy.binaries.config import get_active_runtime
+    from brmspy.binaries.use import activate_runtime
+    
+    runtime_path = get_active_runtime()
+    if runtime_path is not None and runtime_path.exists():
+        try:
+            activate_runtime(runtime_path)
+        except Exception as e:
+            log_warning(f"Failed to auto-activate saved runtime at {runtime_path}: {e}")
+except Exception:
+    # Silently skip if config module unavailable or other issues
+    pass
+
+
+# R imports must NOT be done lazily!
 # Lazy imports with rpy2 within tqdm loops for example WILL cause segfaults!
 # This can lead to wild and unexpected behaviour, hence we do R imports when brms.py is imported
+
 try:
     _get_brms()
 except ImportError:

@@ -442,6 +442,11 @@ def install_prebuilt(runtime_version="0.1.0", url: Optional[str] = None, bundle:
                 activate=True,
                 require_attestation=True
             )
+            
+            # Save the activated runtime path for auto-activation on next import
+            from brmspy.binaries.config import set_active_runtime
+            set_active_runtime(result)
+            
             _get_brms()
             return result
         except Exception as e:
@@ -516,7 +521,7 @@ def install_brms(
 
         if use_prebuilt_binaries:
             if install_prebuilt(install_rtools=install_rtools):
-                log("\nSetup complete! You're ready to use brmspy.")
+                log("Setup complete! You're ready to use brmspy.")
                 return
 
         if install_rtools:
@@ -555,4 +560,4 @@ def install_brms(
         # Import to mitigate lazy imports
         _get_brms()
 
-        log("\nSetup complete! You're ready to use brmspy.")
+        log("Setup complete! You're ready to use brmspy.")

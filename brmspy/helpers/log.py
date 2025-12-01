@@ -230,4 +230,4 @@ class LogTime:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         elapsed = time.perf_counter() - self.start
-        log(f"[{self.name}] took {elapsed:.4f} seconds")
+        log(f"[{self.name}] took {elapsed:.2f} seconds")

@@ -14,6 +14,12 @@ activate_runtime
     Activate an already-installed runtime bundle
 system_fingerprint
     Get system identifier for runtime bundle selection
+get_active_runtime
+    Get path to currently saved active runtime
+set_active_runtime
+    Save a runtime path as active for auto-activation
+clear_active_runtime
+    Clear saved runtime configuration
 
 Modules
 -------
@@ -137,9 +143,17 @@ from brmspy.binaries.use import (
     activate_runtime
 )
 from brmspy.binaries.env import system_fingerprint
+from brmspy.binaries.config import (
+    get_active_runtime,
+    set_active_runtime,
+    clear_active_runtime
+)
 
 __all__ = [
     'install_and_activate_runtime',
     'activate_runtime',
-    'system_fingerprint'
+    'system_fingerprint',
+    'get_active_runtime',
+    'set_active_runtime',
+    'clear_active_runtime'
 ]
