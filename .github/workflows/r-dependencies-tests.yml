@@ -47,5 +47,4 @@ jobs:
           python -m pytest -v -q -m crossplatform 
           --cov-report=term 
           --cov-report=xml 
-          --cov-report=json 
-          --cov-config=.coveragerc-r-dependencies
+          --cov-report=json
