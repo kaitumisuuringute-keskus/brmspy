@@ -1,13 +1,40 @@
 ## 0.1.12 - RDS loading/saving, families functions, default priors functions
 
-- `save_rds()` - Save brmsfit or another robject
-- `load_rds_fit()` - Load saved brmsfit object as FitResult (with idata)
-- `load_rds_raw()` - Load r object
-- Added `fit` alias `brm`
-- Added families module that implements the following brms functions: `brmsfamily`, `family` and wrappers for families with kwargs: `student() bernoulli() beta_binomial() negbinomial() geometric() lognormal() shifted_lognormal() skew_normal() exponential() weibull() frechet() gen_extreme_value() exgaussian() wiener() Beta() dirichlet() logistic_normal() von_mises() asym_laplace() cox() hurdle_poisson() hurdle_negbinomial() hurdle_gamma() hurdle_lognormal() hurdle_cumulative() zero_inflated_beta() zero_one_inflated_beta() zero_inflated_poisson() zero_inflated_negbinomial() zero_inflated_binomial() zero_inflated_beta_binomial() categorical() multinomial() cumulative() sratio() cratio() acat()`.
-- Separated brms functions wrappers into logically coupled files in brmspy/brms_functions/... (brm, diagnosis, families, formula, io, prediction, prior, stan)
-- Added a generic type `RListVectorExtension` that function return types implement. This allows automatically grabbing the R object from function return types in `py_to_r` and `kwargs_r`
-- Added `default_prior` and `get_prior` for inspecting priors of a formula and data.
+### New Features
+
+* Added `save_rds()` for saving `brmsfit` or generic R objects.
+* Added `load_rds_fit()` for loading saved `brmsfit` objects and returning a `FitResult` with attached `InferenceData`.
+* Added `load_rds_raw()` for loading arbitrary R objects from RDS files.
+* Added `fit` alias `brm`.
+
+### Families
+
+* Added `brmspy.families` module with Python wrappers for `brmsfamily()` and `family()`.
+* Implemented keyword-argument wrappers for the following families:
+  `student`, `bernoulli`, `beta_binomial`, `negbinomial`, `geometric`,
+  `lognormal`, `shifted_lognormal`, `skew_normal`, `exponential`, `weibull`,
+  `frechet`, `gen_extreme_value`, `exgaussian`, `wiener`,
+  `Beta`, `dirichlet`, `logistic_normal`, `von_mises`, `asym_laplace`, `cox`,
+  `hurdle_poisson`, `hurdle_negbinomial`, `hurdle_gamma`, `hurdle_lognormal`,
+  `hurdle_cumulative`, `zero_inflated_beta`, `zero_one_inflated_beta`,
+  `zero_inflated_poisson`, `zero_inflated_negbinomial`,
+  `zero_inflated_binomial`, `zero_inflated_beta_binomial`,
+  `categorical`, `multinomial`, `cumulative`, `sratio`, `cratio`, `acat`.
+
+### Priors
+
+* Added `default_prior()` for retrieving default priors for a model formula and dataset.
+* Added `get_prior()` for inspecting prior structure before fitting.
+
+### API Organization
+
+* Reorganized brms wrappers into modular files under `brmspy/brms_functions/`
+  (`brm`, `diagnosis`, `families`, `formula`, `io`, `prediction`, `prior`, `stan`).
+
+### Internal / Typing
+
+* Added `RListVectorExtension` protocol for return types that wrap R list-like structures.
+  Enables automatic extraction of underlying R objects in `py_to_r` and `kwargs_r`.
 
 
 ## 0.1.11 - Persistent Runtimes, Modern Packaging, and Stability
