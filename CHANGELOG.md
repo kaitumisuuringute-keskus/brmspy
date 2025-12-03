@@ -1,3 +1,10 @@
+## 0.1.12 - RDS loading/saving
+
+- `brms.save_rds()` - Save brmsfit or another robject
+- `brms.load_rds_fit()` - Load saved brmsfit object as FitResult (with idata)
+- `brms.load_rds_raw()` - Load r object
+- Added `brms.fit` alias `brms.brm`
+
 ## 0.1.11 - Persistent Runtimes, Modern Packaging, and Stability
 
 *   **Persistent Runtimes**: If a prebuilt runtime is activated, the path is now saved to `{HOME}/.brmspy/config.json` and automatically loaded on the next library import.

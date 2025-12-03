@@ -114,6 +114,10 @@ az.plot_posterior(model.idata)
 
 ### Data Functions
 - `brms.get_brms_data()` - Load example datasets from brms
+- `brms.save_rds()` - Save brmsfit or another robject
+- `brms.load_rds_fit()` - Load saved brmsfit object as FitResult (with idata)
+- `brms.load_rds_raw()` - Load r object
+
 
 ### Model Functions
 - `brms.formula()` - Define formula with kwargs

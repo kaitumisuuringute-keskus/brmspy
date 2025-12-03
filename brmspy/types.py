@@ -366,7 +366,18 @@ class IDLogLik(az.InferenceData):
 # ---------------------
 
 @dataclass
-class GenericResult:
+class RListVectorExtension:
+    """Generic result container with R objects.
+    
+    Attributes
+    ----------
+    r : robjects.ListVector
+        R object from brms
+    """
+    r: robjects.ListVector
+
+@dataclass
+class GenericResult(RListVectorExtension):
     """Generic result container with arviz and R objects.
     
     Attributes
@@ -377,10 +388,9 @@ class GenericResult:
         R object from brms
     """
     idata: az.InferenceData
-    r: robjects.ListVector
 
 @dataclass
-class FitResult:
+class FitResult(RListVectorExtension):
     """Result from fit() function.
     
     Attributes
@@ -392,10 +402,9 @@ class FitResult:
         brmsfit R object from brms::brm()
     """
     idata: IDFit
-    r: robjects.ListVector
 
 @dataclass
-class PosteriorEpredResult:
+class PosteriorEpredResult(RListVectorExtension):
     """Result from posterior_epred() function.
     
     Attributes
@@ -406,10 +415,9 @@ class PosteriorEpredResult:
         R matrix from brms::posterior_epred()
     """
     idata: IDEpred
-    r: robjects.ListVector
 
 @dataclass
-class PosteriorPredictResult:
+class PosteriorPredictResult(RListVectorExtension):
     """Result from posterior_predict() function.
     
     Attributes
@@ -420,10 +428,9 @@ class PosteriorPredictResult:
         R matrix from brms::posterior_predict()
     """
     idata: IDPredict
-    r: robjects.ListVector
 
 @dataclass
-class LogLikResult:
+class LogLikResult(RListVectorExtension):
     """
     Result from log_lik() function.
     
@@ -455,10 +462,9 @@ class LogLikResult:
 
     """
     idata: IDLogLik
-    r: robjects.ListVector
 
 @dataclass
-class PosteriorLinpredResult:
+class PosteriorLinpredResult(RListVectorExtension):
     """
     Result from posterior_linpred() function.
     
@@ -487,10 +493,9 @@ class PosteriorLinpredResult:
     ```
     """
     idata: IDLinpred
-    r: robjects.ListVector
 
 @dataclass
-class FormulaResult:
+class FormulaResult(RListVectorExtension):
     """
     Result from formula() function.
     
@@ -518,5 +523,4 @@ class FormulaResult:
     model = brms.fit(f, data=df, chains=4)
     ```
     """
-    r: robjects.ListVector
     dict: Dict
