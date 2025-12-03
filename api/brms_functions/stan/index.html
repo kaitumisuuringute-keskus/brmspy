@@ -12,31 +12,31 @@
         <meta name="author" content="Remi Sebastian Kits">
       
       
-        <link rel="canonical" href="https://kaitumisuuringute-keskus.github.io/brmspy/binaries/use/">
+        <link rel="canonical" href="https://kaitumisuuringute-keskus.github.io/brmspy/api/brms_functions/stan/">
       
       
-        <link rel="prev" href="../env/">
+        <link rel="prev" href="../prior/">
       
       
-        <link rel="next" href="../../development/development/">
+        <link rel="next" href="../../helpers/conversion/">
       
       
         
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
     
     
       
-        <title>Use - brmspy</title>
+        <title>stan - brmspy</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.618322db.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -55,11 +55,11 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../../../assets/_mkdocstrings.css">
     
-      <link rel="stylesheet" href="../../static/shadcn-ish.css">
+      <link rel="stylesheet" href="../../../static/shadcn-ish.css">
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -84,7 +84,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#brmspy.binaries.use" class="md-skip">
+        <a href="#brmspy.brms_functions.stan" class="md-skip">
           Skip to content
         </a>
       
@@ -98,7 +98,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="brmspy" class="md-header__button md-logo" aria-label="brmspy" data-md-component="logo">
+    <a href="../../.." title="brmspy" class="md-header__button md-logo" aria-label="brmspy" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -118,7 +118,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Use
+              stan
             
           </span>
         </div>
@@ -231,7 +231,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../.." class="md-tabs__link">
+      <a href="../../.." class="md-tabs__link">
         
   
   
@@ -248,11 +248,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../api/brms/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../brms/" class="md-tabs__link">
           
   
   
@@ -272,7 +274,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../examples/google-colab-example/" class="md-tabs__link">
+        <a href="../../../examples/google-colab-example/" class="md-tabs__link">
           
   
   
@@ -288,13 +290,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../build/" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../../binaries/build/" class="md-tabs__link">
           
   
   
@@ -312,7 +312,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../development/development/" class="md-tabs__link">
+      <a href="../../../development/development/" class="md-tabs__link">
         
   
   
@@ -347,7 +347,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="brmspy" class="md-nav__button md-logo" aria-label="brmspy" data-md-component="logo">
+    <a href="../../.." title="brmspy" class="md-nav__button md-logo" aria-label="brmspy" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -377,7 +377,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href="../../.." class="md-nav__link">
         
   
   
@@ -401,28 +401,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
-        
-          
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
             
   
   
@@ -440,7 +443,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -458,7 +461,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/brms/" class="md-nav__link">
+      <a href="../../brms/" class="md-nav__link">
         
   
   
@@ -486,7 +489,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/install/" class="md-nav__link">
+      <a href="../../install/" class="md-nav__link">
         
   
   
@@ -514,7 +517,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/types/" class="md-nav__link">
+      <a href="../../types/" class="md-nav__link">
         
   
   
@@ -539,28 +542,31 @@
                 
   
   
+    
   
   
+  
     
     
     
     
       
       
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
         
           
+          
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_4" >
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="">
             
   
   
@@ -578,7 +584,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -596,7 +602,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/brms_functions/brm/" class="md-nav__link">
+      <a href="../brm/" class="md-nav__link">
         
   
   
@@ -624,7 +630,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/brms_functions/diagnosis/" class="md-nav__link">
+      <a href="../diagnosis/" class="md-nav__link">
         
   
   
@@ -652,7 +658,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/brms_functions/families/" class="md-nav__link">
+      <a href="../families/" class="md-nav__link">
         
   
   
@@ -680,7 +686,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/brms_functions/formula/" class="md-nav__link">
+      <a href="../formula/" class="md-nav__link">
         
   
   
@@ -708,7 +714,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/brms_functions/io/" class="md-nav__link">
+      <a href="../io/" class="md-nav__link">
         
   
   
@@ -736,7 +742,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/brms_functions/prediction/" class="md-nav__link">
+      <a href="../prediction/" class="md-nav__link">
         
   
   
@@ -764,7 +770,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/brms_functions/prior/" class="md-nav__link">
+      <a href="../prior/" class="md-nav__link">
         
   
   
@@ -789,10 +795,35 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../api/brms_functions/stan/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    stan
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -808,6 +839,74 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#brmspy.brms_functions.stan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        stan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#brmspy.brms_functions.stan-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Classes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#brmspy.brms_functions.stan-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Functions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#brmspy.brms_functions.stan.make_stancode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        make_stancode
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -834,10 +933,13 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
@@ -846,7 +948,7 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_5" >
         
           
-          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="">
             
   
   
@@ -882,7 +984,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/helpers/conversion/" class="md-nav__link">
+      <a href="../../helpers/conversion/" class="md-nav__link">
         
   
   
@@ -910,7 +1012,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/helpers/priors/" class="md-nav__link">
+      <a href="../../helpers/priors/" class="md-nav__link">
         
   
   
@@ -938,7 +1040,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/helpers/rtools/" class="md-nav__link">
+      <a href="../../helpers/rtools/" class="md-nav__link">
         
   
   
@@ -966,7 +1068,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/helpers/singleton/" class="md-nav__link">
+      <a href="../../helpers/singleton/" class="md-nav__link">
         
   
   
@@ -1063,7 +1165,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/google-colab-example/" class="md-nav__link">
+      <a href="../../../examples/google-colab-example/" class="md-nav__link">
         
   
   
@@ -1091,7 +1193,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/quickstart/" class="md-nav__link">
+      <a href="../../../examples/quickstart/" class="md-nav__link">
         
   
   
@@ -1119,7 +1221,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/advanced/" class="md-nav__link">
+      <a href="../../../examples/advanced/" class="md-nav__link">
         
   
   
@@ -1151,31 +1253,28 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
             
   
   
@@ -1193,7 +1292,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1211,7 +1310,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../build/" class="md-nav__link">
+      <a href="../../../binaries/build/" class="md-nav__link">
         
   
   
@@ -1239,7 +1338,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../env/" class="md-nav__link">
+      <a href="../../../binaries/env/" class="md-nav__link">
         
   
   
@@ -1264,35 +1363,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Use
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../../binaries/use/" class="md-nav__link">
         
   
   
@@ -1308,74 +1382,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#brmspy.binaries.use" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        use
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#brmspy.binaries.use-functions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Functions
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Functions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#brmspy.binaries.use.activate_runtime" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        activate_runtime
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#brmspy.binaries.use.install_and_activate_runtime" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        install_and_activate_runtime
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1395,7 +1401,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development/development/" class="md-nav__link">
+      <a href="../../../development/development/" class="md-nav__link">
         
   
   
@@ -1440,10 +1446,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#brmspy.binaries.use" class="md-nav__link">
+  <a href="#brmspy.brms_functions.stan" class="md-nav__link">
     <span class="md-ellipsis">
       
-        use
+        stan
       
     </span>
   </a>
@@ -1451,7 +1457,18 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#brmspy.binaries.use-functions" class="md-nav__link">
+  <a href="#brmspy.brms_functions.stan-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Classes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#brmspy.brms_functions.stan-functions" class="md-nav__link">
     <span class="md-ellipsis">
       
         Functions
@@ -1463,21 +1480,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#brmspy.binaries.use.activate_runtime" class="md-nav__link">
+  <a href="#brmspy.brms_functions.stan.make_stancode" class="md-nav__link">
     <span class="md-ellipsis">
       
-        activate_runtime
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#brmspy.binaries.use.install_and_activate_runtime" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        install_and_activate_runtime
+        make_stancode
       
     </span>
   </a>
@@ -1509,13 +1515,13 @@
   
 
 
-  <h1>Use</h1>
+  <h1>stan</h1>
 
 <div class="doc doc-object doc-module">
 
 
 
-<a id="brmspy.binaries.use"></a>
+<a id="brmspy.brms_functions.stan"></a>
     <div class="doc doc-contents first">
 
 
@@ -1535,24 +1541,24 @@
 
 
 
-
-<h2 id="brmspy.binaries.use-functions">Functions<a href="#brmspy.binaries.use-functions" class="headerlink" title="Permanent link">&para;</a></h2>
+<h2 id="brmspy.brms_functions.stan-classes">Classes<a href="#brmspy.brms_functions.stan-classes" class="headerlink" title="Permanent link">&para;</a></h2>
+<h2 id="brmspy.brms_functions.stan-functions">Functions<a href="#brmspy.brms_functions.stan-functions" class="headerlink" title="Permanent link">&para;</a></h2>
 
 <div class="doc doc-object doc-function">
 
 
-<h3 id="brmspy.binaries.use.activate_runtime" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">activate_runtime</span><span class="p">(</span><span class="n">runtime_root</span><span class="p">)</span></code>
+<h3 id="brmspy.brms_functions.stan.make_stancode" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">make_stancode</span><span class="p">(</span><span class="n">formula</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">priors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">family</span><span class="o">=</span><span class="s1">&#39;poisson&#39;</span><span class="p">,</span> <span class="n">sample_prior</span><span class="o">=</span><span class="s1">&#39;no&#39;</span><span class="p">,</span> <span class="n">formula_args</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
-<a href="#brmspy.binaries.use.activate_runtime" class="headerlink" title="Permanent link">&para;</a></h3>
+<a href="#brmspy.brms_functions.stan.make_stancode" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
     <div class="doc doc-contents ">
 
-        <p>Activate a prebuilt brms runtime bundle in the current R session.</p>
-<p>Configures the embedded R session (via rpy2) to use libraries and
-CmdStan from a prebuilt runtime bundle. Updates R's library paths
-and sets cmdstanr's CmdStan path, then performs sanity checks.</p>
+        <p>Generate Stan code using brms::make_stancode().</p>
+<p>Useful for inspecting the generated Stan model before fitting,
+understanding the model structure, or using the code with other
+Stan interfaces.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1568,252 +1574,106 @@ and sets cmdstanr's CmdStan path, then performs sanity checks.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                <code>runtime_root</code>
+                <code>formula</code>
             </td>
             <td>
-                  <code><span title="str">str</span> or <span title="pathlib.Path">Path</span></code>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="FormulaResult
+
+
+  
+      dataclass
+   (brmspy.types.FormulaResult)" href="../../types/#brmspy.types.FormulaResult">FormulaResult</a></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Path to runtime bundle root directory containing:
-- manifest.json: Bundle metadata and fingerprint
-- Rlib/: R package library with brms, cmdstanr, etc.
-- cmdstan/: CmdStan installation</p>
+                <p>brms formula specification</p>
               </div>
             </td>
             <td>
                 <em>required</em>
             </td>
           </tr>
-      </tbody>
-    </table>
-
-
-<p><span class="doc-section-title">Raises:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="RuntimeError">RuntimeError</span></code>
+                <code>data</code>
+            </td>
+            <td>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If required directories/files are missing or validation fails</p>
+                <p>Model data</p>
               </div>
             </td>
+            <td>
+                <em>required</em>
+            </td>
           </tr>
-      </tbody>
-    </table>
-
-
-<details class="note" open>
-  <summary>Notes</summary>
-  <p><strong>Important Limitations:</strong></p>
-<p>This function reconfigures the running embedded R session to use an isolated 
-library environment from downloaded binaries. It does not mix or break the 
-default library tree already installed in the system.</p>
-<p><strong>What this function does:</strong></p>
-<ol>
-<li>Validates runtime bundle structure (manifest, Rlib, cmdstan directories)</li>
-<li>Optionally verifies system fingerprint matches bundle fingerprint</li>
-<li>Unloads brms, cmdstanr and rstan (if they are loaded)</li>
-<li>Replaces R's .libPaths() with runtime Rlib directory</li>
-<li>Sets cmdstanr::set_cmdstan_path() to runtime cmdstan directory</li>
-<li>Performs sanity checks (brms and cmdstanr load successfully)</li>
-</ol>
-<p><strong>Fingerprint Validation:</strong></p>
-<p>If available, validates that the runtime bundle's fingerprint (from
-manifest.json) matches the current system fingerprint. This prevents
-incompatible bundles (e.g., Linux bundle on macOS) from being activated.</p>
-</details>
-
-<p><span class="doc-section-title">Examples:</span></p>
-    <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">brmspy.binaries.use</span><span class="w"> </span><span class="kn">import</span> <span class="n">activate_runtime</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Activate a previously installed runtime</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">runtime_path</span> <span class="o">=</span> <span class="n">Path</span><span class="o">.</span><span class="n">home</span><span class="p">()</span> <span class="o">/</span> <span class="s2">&quot;.brmspy&quot;</span> <span class="o">/</span> <span class="s2">&quot;runtime&quot;</span> <span class="o">/</span> <span class="s2">&quot;linux-x86_64-r4.3&quot;</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">activate_runtime</span><span class="p">(</span><span class="n">runtime_path</span><span class="p">)</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1"># Now brms and cmdstanr use the prebuilt bundle</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="kn">from</span><span class="w"> </span><span class="nn">brmspy</span><span class="w"> </span><span class="kn">import</span> <span class="n">fit</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="n">result</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="s2">&quot;y ~ x&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]})</span>
-</code></pre></div>
-
-
-<details class="see-also" open>
-  <summary>See Also</summary>
-  <p>install_and_activate_runtime : Download, install, and activate runtime
-brmspy.binaries.env.system_fingerprint : Get current system identifier</p>
-</details>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="brmspy.binaries.use.install_and_activate_runtime" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">install_and_activate_runtime</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bundle</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">runtime_version</span><span class="o">=</span><span class="s1">&#39;0.1.0&#39;</span><span class="p">,</span> <span class="n">base_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">activate</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">expected_hash</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">require_attestation</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
-
-<a href="#brmspy.binaries.use.install_and_activate_runtime" class="headerlink" title="Permanent link">&para;</a></h3>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Download, install, and optionally activate a prebuilt brms runtime bundle.</p>
-<p>This is the high-level orchestration function. It:</p>
-<ol>
-<li>Resolves the source (URL → temp file, or local archive/dir)</li>
-<li>Determines the canonical runtime_root for this system+version</li>
-<li>Optionally reuses an existing runtime if the stored hash matches</li>
-<li>Installs from archive or directory into runtime_root</li>
-<li>Stores the expected hash (if provided) for fast future reuse</li>
-<li>Optionally activates the runtime in the current R session</li>
-</ol>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
           <tr class="doc-section-item">
             <td>
-                <code>url</code>
+                <code>priors</code>
+            </td>
+            <td>
+                  <code>list of PriorSpec</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Prior specifications from prior() function</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>family</code>
             </td>
             <td>
                   <code><span title="str">str</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>URL to download runtime bundle archive (.tar.gz, .tar.bz2, etc.).
-Mutually exclusive with <code>bundle</code>.</p>
+                <p>Distribution family (gaussian, poisson, binomial, etc.)</p>
               </div>
             </td>
             <td>
-                  <code>None</code>
+                  <code>&#34;poisson&#34;</code>
             </td>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>bundle</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> or <span title="pathlib.Path">Path</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Local path to runtime bundle, either:
-- Archive file (.tar.gz, .tar.bz2, etc.) to extract, or
-- Directory containing an extracted runtime (with manifest.json).
-Mutually exclusive with <code>url</code>.</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>runtime_version</code>
+                <code>sample_prior</code>
             </td>
             <td>
                   <code><span title="str">str</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Logical runtime version used in the canonical runtime path
-{base_dir}/{system_fingerprint}-{runtime_version}.</p>
+                <p>Whether to sample from prior:
+- "no": No prior samples
+- "yes": Include prior samples alongside posterior
+- "only": Sample from prior only (no data)</p>
               </div>
             </td>
             <td>
-                  <code>&#34;0.1.0&#34;</code>
+                  <code>&#34;no&#34;</code>
             </td>
           </tr>
           <tr class="doc-section-item">
             <td>
-                <code>base_dir</code>
+                <code>formula_args</code>
             </td>
             <td>
-                  <code><span title="str">str</span> or <span title="pathlib.Path">Path</span></code>
+                  <code><span title="dict">dict</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Base directory for runtime installation.
-Default: ~/.brmspy/runtime/</p>
+                <p>Additional arguments passed to formula()</p>
               </div>
             </td>
             <td>
                   <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>activate</code>
-            </td>
-            <td>
-                  <code><span title="bool">bool</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If True, call <code>activate_runtime()</code> after installation/reuse.</p>
-              </div>
-            </td>
-            <td>
-                  <code>True</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>expected_hash</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Attested hash (e.g. sha256 from GitHub release assets). If provided,
-the installer will:
-- Reuse an existing runtime only if its stored hash matches this value.
-- Store the hash into {runtime_root}/hash after (re)install.
-If NOT provided, but the binary is an official kaitumisuuringute-keskus/brmspy 
-one, the expected_hash will be automatically fetched</p>
-              </div>
-            </td>
-            <td>
-                  <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>require_attestation</code>
-            </td>
-            <td>
-                  <code><span title="bool">bool</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If True, <code>expected_hash</code> must be provided; otherwise a ValueError is
-raised. This lets callers enforce that only attested runtimes are used.</p>
-              </div>
-            </td>
-            <td>
-                  <code>True</code>
             </td>
           </tr>
       </tbody>
@@ -1831,16 +1691,57 @@ raised. This lets callers enforce that only attested runtimes are used.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="pathlib.Path">Path</span></code>
+                  <code><span title="str">str</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Path to the installed (or reused) runtime root directory.</p>
+                <p>Complete Stan program code as string</p>
               </div>
             </td>
           </tr>
       </tbody>
     </table>
+
+
+<details class="see-also" open>
+  <summary>See Also</summary>
+  <p>brms::make_stancode : R documentation
+    https://paulbuerkner.com/brms/reference/make_stancode.html
+fit : Fit model instead of just generating code
+make_standata : Generate Stan data block</p>
+</details>
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <p>Generate Stan code for simple model:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">brmspy</span><span class="w"> </span><span class="kn">import</span> <span class="n">brms</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">epilepsy</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">get_brms_data</span><span class="p">(</span><span class="s2">&quot;epilepsy&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">stan_code</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">make_stancode</span><span class="p">(</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">formula</span><span class="o">=</span><span class="s2">&quot;count ~ zAge + zBase * Trt + (1|patient)&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">data</span><span class="o">=</span><span class="n">epilepsy</span><span class="p">,</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">family</span><span class="o">=</span><span class="s2">&quot;poisson&quot;</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="nb">print</span><span class="p">(</span><span class="n">stan_code</span><span class="p">[:</span><span class="mi">500</span><span class="p">])</span>  <span class="c1"># Print first 500 characters</span>
+</code></pre></div>
+<p>With custom priors:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>    <span class="kn">from</span><span class="w"> </span><span class="nn">brmspy</span><span class="w"> </span><span class="kn">import</span> <span class="n">prior</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">stan_code</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">make_stancode</span><span class="p">(</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>        <span class="n">formula</span><span class="o">=</span><span class="s2">&quot;count ~ zAge&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>        <span class="n">data</span><span class="o">=</span><span class="n">epilepsy</span><span class="p">,</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>        <span class="n">priors</span><span class="o">=</span><span class="p">[</span><span class="n">prior</span><span class="p">(</span><span class="s2">&quot;normal(0, 1)&quot;</span><span class="p">,</span> <span class="n">class_</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">)],</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>        <span class="n">family</span><span class="o">=</span><span class="s2">&quot;poisson&quot;</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="p">)</span>
+</code></pre></div>
+<p>For prior predictive checks (sample_prior="only"):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>stan_code = brms.make_stancode(
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    formula=&quot;count ~ zAge&quot;,
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    data=epilepsy,
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    family=&quot;poisson&quot;,
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    sample_prior=&quot;only&quot;
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>)
+</code></pre></div>
 
 
     </div>
@@ -1909,12 +1810,12 @@ raised. This lets callers enforce that only attested runtimes are used.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.e71a0d61.min.js"></script>
       
-        <script src="../../static/plausible.js"></script>
+        <script src="../../../static/plausible.js"></script>
       
     
   </body>
