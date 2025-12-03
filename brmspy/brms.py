@@ -19,6 +19,8 @@ from brmspy.brms_functions.diagnosis import summary
 from brmspy.brms_functions.formula import formula
 from brmspy.brms_functions.prediction import posterior_epred, posterior_linpred, posterior_predict, log_lik
 from brmspy.brms_functions.stan import make_stancode
+from brmspy.brms_functions import families
+from brmspy.brms_functions.families import family, brmsfamily
 
 autoload_last_runtime()
 
@@ -52,6 +54,9 @@ __all__ = [
 
     # diagnosis
     'summary',
+
+    # families
+    'families', 'family', 'brmsfamily',
 
     # types
     'FitResult', 'FormulaResult', 'PosteriorEpredResult', 'PosteriorPredictResult',

@@ -205,6 +205,8 @@ from brmspy.brms import (
 
     save_rds, read_rds_fit, read_rds_raw,
 
+    families, family, brmsfamily,
+
     FitResult,
     PosteriorEpredResult,
     PosteriorPredictResult,
@@ -237,6 +239,9 @@ __all__ = [
 
     # prediction
     "posterior_predict", "posterior_epred", "posterior_linpred", "log_lik",
+
+    # families
+    'families', 'family', 'brmsfamily',
 
     # diagnosis
     'summary',
