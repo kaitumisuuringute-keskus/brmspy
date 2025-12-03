@@ -1,0 +1,5 @@
+::: brmspy.brms_functions.io
+    options:
+      show_root_heading: false
+      show_source: false
+      heading_level: 2

@@ -559,3 +559,31 @@ def install_brms(
         log("Setup complete! You're ready to use brmspy.")
 
         greet()
+
+
+
+def get_brms_version() -> Optional[Version]:
+    """
+    Get installed brms R package version.
+    
+    Returns
+    -------
+    str
+        Version object or None
+    
+    Raises
+    ------
+    ImportError
+        If brms is not installed
+    
+    Examples
+    --------
+
+    ```python
+    from brmspy import brms
+    version = brms.get_brms_version()
+    print(f"brms version: {version}")
+    ```
+    """
+    return _get_r_pkg_version("brms")
+

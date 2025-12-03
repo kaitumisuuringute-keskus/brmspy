@@ -178,7 +178,7 @@ Complete workflow with model diagnostics:
 ```
 """
 
-__version__ = "0.1.11"
+__version__ = "0.1.12"
 __author__ = "Remi Sebastian Kits, Adam Haber"
 __license__ = "Apache-2.0"
 
@@ -191,9 +191,9 @@ from brmspy.binaries import (
 )
 from brmspy.brms import (
     get_brms_data,
-    fit,
+    fit, brm,
     formula,
-    install_brms,
+    install_brms, install_prebuilt,
     get_brms_version,
     make_stancode,
     posterior_epred,
@@ -201,7 +201,11 @@ from brmspy.brms import (
     posterior_linpred,
     log_lik,
     summary,
-    prior,
+    prior, get_prior, default_prior,
+
+    save_rds, read_rds_fit, read_rds_raw,
+
+    families, family, brmsfamily,
 
     FitResult,
     PosteriorEpredResult,
@@ -218,40 +222,49 @@ from brmspy.brms import (
     PriorSpec
 )
 __all__ = [
-    "get_brms_data",
-    "fit",
-    "formula",
-    "posterior_predict",
-    "posterior_epred",
-    "posterior_linpred",
-    "log_lik",
-    "get_brms_version",
-    "make_stancode",
-    "summary",
-    "prior",
+    # R env
+    'install_brms', 'get_brms_version', 'install_prebuilt',
 
-    # installation
-    "install_brms",
+    # IO
+    'get_brms_data', 'save_rds', 'read_rds_raw', 'read_rds_fit',
+
+    # brm
+    'fit', 'brm',
+
+    # formula
+    'formula', 
+
+    # priors
+    'prior', 'get_prior', 'default_prior',
+
+    # prediction
+    "posterior_predict", "posterior_epred", "posterior_linpred", "log_lik",
+
+    # families
+    'families', 'family', 'brmsfamily',
+
+    # diagnosis
+    'summary',
+
+    # types
+    'FitResult', 'FormulaResult', 'PosteriorEpredResult', 'PosteriorPredictResult',
+    'PosteriorLinpredResult', 'LogLikResult', 'GenericResult',
+
+    'IDLinpred',
+    'IDEpred',
+    'IDFit',
+    'IDLogLik',
+    'IDPredict',
+    'PriorSpec',
+
+    # stan
+    'make_stancode',
+    
+
+    # Extras
     "system_fingerprint",
     "activate_runtime",
     "install_and_activate_runtime",
 
-
-    # return types
-    "FitResult",
-    "PosteriorEpredResult",
-    "PosteriorPredictResult",
-    "PosteriorLinpredResult",
-    "LogLikResult",
-    "GenericResult",
-    "FormulaResult",
-
-    # InferenceData types
-    "IDLinpred",
-    "IDEpred",
-    "IDFit",
-    "IDLogLik",
-    "IDPredict",
-    
     "__version__",
 ]

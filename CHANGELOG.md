@@ -1,3 +1,15 @@
+## 0.1.12 - RDS loading/saving, families functions, default priors functions
+
+- `save_rds()` - Save brmsfit or another robject
+- `load_rds_fit()` - Load saved brmsfit object as FitResult (with idata)
+- `load_rds_raw()` - Load r object
+- Added `fit` alias `brm`
+- Added families module that implements the following brms functions: `brmsfamily`, `family` and wrappers for families with kwargs: `student() bernoulli() beta_binomial() negbinomial() geometric() lognormal() shifted_lognormal() skew_normal() exponential() weibull() frechet() gen_extreme_value() exgaussian() wiener() Beta() dirichlet() logistic_normal() von_mises() asym_laplace() cox() hurdle_poisson() hurdle_negbinomial() hurdle_gamma() hurdle_lognormal() hurdle_cumulative() zero_inflated_beta() zero_one_inflated_beta() zero_inflated_poisson() zero_inflated_negbinomial() zero_inflated_binomial() zero_inflated_beta_binomial() categorical() multinomial() cumulative() sratio() cratio() acat()`.
+- Separated brms functions wrappers into logically coupled files in brmspy/brms_functions/... (brm, diagnosis, families, formula, io, prediction, prior, stan)
+- Added a generic type `RListVectorExtension` that function return types implement. This allows automatically grabbing the R object from function return types in `py_to_r` and `kwargs_r`
+- Added `default_prior` and `get_prior` for inspecting priors of a formula and data.
+
+
 ## 0.1.11 - Persistent Runtimes, Modern Packaging, and Stability
 
 *   **Persistent Runtimes**: If a prebuilt runtime is activated, the path is now saved to `{HOME}/.brmspy/config.json` and automatically loaded on the next library import.

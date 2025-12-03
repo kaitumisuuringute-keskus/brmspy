@@ -30,6 +30,11 @@ idata = model.idata
 ```
 
 ```python
+brms.save_rds(model, "epilepsy_fixed_effects.rds")
+# load later using: brms.load_rds_fit("epilepsy_fixed_effects.rds")
+```
+
+```python
 import arviz as az
 summary = az.summary(
     idata,

@@ -106,7 +106,8 @@ az.plot_posterior(model.idata)
 
 ## API Reference
 
-[Documentation](https://kaitumisuuringute-keskus.github.io/brmspy/)
+[brmspy documentation](https://kaitumisuuringute-keskus.github.io/brmspy/)
+[brms documentation](https://paulbuerkner.com/brms/reference/index.html)
 
 ### Setup Functions
 - `brms.install_brms()` - Install brms, cmdstanr, and CmdStan
@@ -114,12 +115,26 @@ az.plot_posterior(model.idata)
 
 ### Data Functions
 - `brms.get_brms_data()` - Load example datasets from brms
+- `brms.save_rds()` - Save brmsfit or another robject
+- `brms.load_rds_fit()` - Load saved brmsfit object as FitResult (with idata)
+- `brms.load_rds_raw()` - Load r object
+
 
 ### Model Functions
 - `brms.formula()` - Define formula with kwargs
-- `brms.fit()` - Fit Bayesian regression model
+- `brms.fit()` or `brms.brm()` - Fit Bayesian regression model
 - `brms.summary()` - Generate summary statistics as DataFrame
 - `brms.make_stancode()` - Generate Stan code for model
+
+### Prior functions
+- `brms.prior()` - Define a prior with same syntax as r-s `prior_string`
+- `brms.get_prior()` - Get pd.DataFrame describing default priors
+- `brms.default_prior()` - Get pd.DataFrame describing default priors
+
+### Families functions
+- `brms.family()` - Get family object of FitResult
+- `brms.brmsfamily()` - Construct family object from kwargs
+- `brms.families.gaussian()`, `...bernoulli()`, `...beta_binomial()`, etc - Wrappers around brmsfamily for faster family object construction 
 
 ### Prediction Functions
 - `brms.posterior_epred()` - Expected value predictions (without noise)
