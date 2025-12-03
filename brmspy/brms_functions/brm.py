@@ -12,6 +12,7 @@ from ..helpers.conversion import (
 from ..types import (
     FitResult, FormulaResult, IDFit, PriorSpec
 )
+from rpy2.robjects import ListVector
 
 
 _formula_fn = formula
@@ -22,7 +23,7 @@ def fit(
     formula: typing.Union[FormulaResult, str],
     data: typing.Union[dict, pd.DataFrame],
     priors: typing.Optional[typing.Sequence[PriorSpec]] = None,
-    family: str = "gaussian",
+    family: typing.Union[str, ListVector] = "gaussian",
     sample_prior: str = "no",
     sample: bool = True,
     backend: str = "cmdstanr",

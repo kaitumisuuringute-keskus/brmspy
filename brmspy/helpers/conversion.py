@@ -879,9 +879,11 @@ def py_to_r(obj):
     kwargs_r : Convert keyword arguments dict for R function calls
     brmspy.brms.fit : Uses this for converting data to R
     """
+    if obj is None:
+        return ro.NULL
+
     with localconverter(default_converter + pandas2ri.converter + numpy2ri.converter) as cv:
-        if obj is None:
-            return ro.NULL
+        
 
         if isinstance(obj, pd.DataFrame):
             return cv.py2rpy(obj)

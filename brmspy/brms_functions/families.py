@@ -92,34 +92,43 @@ def brmsfamily(
 
     """
     r_brmsfamily = cast(Callable, ro.r('brms::brmsfamily'))
-    kwargs = kwargs_r(kwargs)
 
-    return r_brmsfamily(
-        family=family,
-        link=link,
-        link_sigma=link_sigma,
-        link_shape=link_shape,
-        link_nu=link_nu,
-        link_phi=link_phi,
-        link_kappa=link_kappa,
-        link_beta=link_beta,
-        link_zi=link_zi,
-        link_hu=link_hu,
-        link_zoi=link_zoi,
-        link_coi=link_coi,
-        link_disc=link_disc,
-        link_bs=link_bs,
-        link_ndt=link_ndt,
-        link_bias=link_bias,
-        link_xi=link_xi,
-        link_alpha=link_alpha,
-        link_quantile=link_quantile,
-        threshold=threshold,
-        refcat=refcat,
+    collected_args = {
+        "family": family,
+        "link": link,
+        "link_sigma": link_sigma,
+        "link_shape": link_shape,
+        "link_nu": link_nu,
+        "link_phi": link_phi,
+        "link_kappa": link_kappa,
+        "link_beta": link_beta,
+        "link_zi": link_zi,
+        "link_hu": link_hu,
+        "link_zoi": link_zoi,
+        "link_coi": link_coi,
+        "link_disc": link_disc,
+        "link_bs": link_bs,
+        "link_ndt": link_ndt,
+        "link_bias": link_bias,
+        "link_xi": link_xi,
+        "link_alpha": link_alpha,
+        "link_quantile": link_quantile,
+        "threshold": threshold,
+        "refcat": refcat,
         **kwargs
-    )
+    }
+    collected_args = kwargs_r(collected_args)
+
+    return r_brmsfamily(**collected_args)
 
 def family(fit: Union[FitResult, ListVector], **kwargs) -> ListVector:
+    """Extract family object from a fitted model.
+    
+    Parameters
+    ----------
+    fit : FitResult or ListVector
+        Fitted brms model
+    """
     if isinstance(fit, FitResult):
         r_fit = fit.r
     else:
@@ -140,6 +149,17 @@ def student(
     link_nu: str = "logm1",
     **kwargs
 ) -> ListVector:
+    """Student's t distribution for robust regression.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the mean
+    link_sigma : str
+        Link function for sigma parameter
+    link_nu : str
+        Link function for degrees of freedom parameter
+    """
     return brmsfamily(
         family="student",
         link=link,
@@ -153,6 +173,13 @@ def bernoulli(
     link: str = "logit",
     **kwargs
 ) -> ListVector:
+    """Bernoulli distribution for binary 0/1 outcomes.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the probability parameter
+    """
     return brmsfamily(
         family="bernoulli",
         link=link,
@@ -165,6 +192,15 @@ def beta_binomial(
     link_phi: str = "log",
     **kwargs
 ) -> ListVector:
+    """Beta-binomial distribution for overdispersed binomial data.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the probability parameter
+    link_phi : str
+        Link function for the precision parameter
+    """
     return brmsfamily(
         family="beta_binomial",
         link=link,
@@ -178,6 +214,15 @@ def negbinomial(
     link_shape: str = "log",
     **kwargs
 ) -> ListVector:
+    """Negative binomial distribution for overdispersed count data.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the mean
+    link_shape : str
+        Link function for the shape parameter
+    """
     return brmsfamily(
         family="negbinomial",
         link=link,
@@ -204,6 +249,13 @@ def geometric(
     link: str = "log",
     **kwargs
 ) -> ListVector:
+    """Geometric distribution for count data (negative binomial with shape=1).
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the mean
+    """
     return brmsfamily(
         family="geometric",
         link=link,
@@ -244,6 +296,15 @@ def lognormal(
     link_sigma: str = "log",
     **kwargs
 ) -> ListVector:
+    """Lognormal distribution for positive continuous data.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the mean on log scale
+    link_sigma : str
+        Link function for sigma parameter
+    """
     return brmsfamily(
         family="lognormal",
         link=link,
@@ -258,6 +319,17 @@ def shifted_lognormal(
     link_ndt: str = "log",
     **kwargs
 ) -> ListVector:
+    """Shifted lognormal distribution with non-decision time parameter.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the mean
+    link_sigma : str
+        Link function for sigma parameter
+    link_ndt : str
+        Link function for non-decision time parameter
+    """
     return brmsfamily(
         family="shifted_lognormal",
         link=link,
@@ -273,6 +345,17 @@ def skew_normal(
     link_alpha: str = "identity",
     **kwargs
 ) -> ListVector:
+    """Skew normal distribution for asymmetric continuous data.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the mean
+    link_sigma : str
+        Link function for sigma parameter
+    link_alpha : str
+        Link function for skewness parameter
+    """
     return brmsfamily(
         family="skew_normal",
         link=link,
@@ -286,6 +369,13 @@ def exponential(
     link: str = "log",
     **kwargs
 ) -> ListVector:
+    """Exponential distribution for time-to-event data.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the rate parameter
+    """
     return brmsfamily(
         family="exponential",
         link=link,
@@ -298,6 +388,15 @@ def weibull(
     link_shape: str = "log",
     **kwargs
 ) -> ListVector:
+    """Weibull distribution for survival and reliability analysis.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the scale parameter
+    link_shape : str
+        Link function for the shape parameter
+    """
     return brmsfamily(
         family="weibull",
         link=link,
@@ -311,6 +410,15 @@ def frechet(
     link_nu: str = "logm1",
     **kwargs
 ) -> ListVector:
+    """Frechet distribution for extreme value analysis.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the scale parameter
+    link_nu : str
+        Link function for the shape parameter
+    """
     return brmsfamily(
         family="frechet",
         link=link,
@@ -325,6 +433,17 @@ def gen_extreme_value(
     link_xi: str = "log1p",
     **kwargs
 ) -> ListVector:
+    """Generalized extreme value distribution for extreme events.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the location parameter
+    link_sigma : str
+        Link function for the scale parameter
+    link_xi : str
+        Link function for the shape parameter
+    """
     return brmsfamily(
         family="gen_extreme_value",
         link=link,
@@ -340,6 +459,17 @@ def exgaussian(
     link_beta: str = "log",
     **kwargs
 ) -> ListVector:
+    """Ex-Gaussian distribution for reaction time data.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the mean
+    link_sigma : str
+        Link function for Gaussian SD parameter
+    link_beta : str
+        Link function for exponential rate parameter
+    """
     return brmsfamily(
         family="exgaussian",
         link=link,
@@ -356,6 +486,19 @@ def wiener(
     link_bias: str = "logit",
     **kwargs
 ) -> ListVector:
+    """Wiener diffusion model for two-choice reaction time data.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for drift rate
+    link_bs : str
+        Link function for boundary separation
+    link_ndt : str
+        Link function for non-decision time
+    link_bias : str
+        Link function for initial bias
+    """
     return brmsfamily(
         family="wiener",
         link=link,
@@ -371,6 +514,15 @@ def Beta(
     link_phi: str = "log",
     **kwargs
 ) -> ListVector:
+    """Beta distribution for data between 0 and 1.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the mean
+    link_phi : str
+        Link function for the precision parameter
+    """
     return brmsfamily(
         family="beta",
         link=link,
@@ -385,6 +537,17 @@ def xbeta(
     link_kappa: str = "log",
     **kwargs
 ) -> ListVector:
+    """Extended beta distribution with additional shape parameter.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the mean
+    link_phi : str
+        Link function for precision parameter
+    link_kappa : str
+        Link function for kappa shape parameter
+    """
     return brmsfamily(
         family="xbeta",
         link=link,
@@ -400,6 +563,17 @@ def dirichlet(
     refcat: Optional[str] = None,
     **kwargs
 ) -> ListVector:
+    """Dirichlet distribution for compositional data.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the mean
+    link_phi : str
+        Link function for the precision parameter
+    refcat : str, optional
+        Reference category
+    """
     return brmsfamily(
         family="dirichlet",
         link=link,
@@ -430,6 +604,17 @@ def logistic_normal(
     refcat: Optional[str] = None,
     **kwargs
 ) -> ListVector:
+    """Logistic-normal distribution for compositional data.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the mean
+    link_sigma : str
+        Link function for sigma parameter
+    refcat : str, optional
+        Reference category
+    """
     return brmsfamily(
         family="logistic_normal",
         link=link,
@@ -444,6 +629,15 @@ def von_mises(
     link_kappa: str = "log",
     **kwargs
 ) -> ListVector:
+    """Von Mises distribution for circular/directional data.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the mean direction
+    link_kappa : str
+        Link function for concentration parameter
+    """
     return brmsfamily(
         family="von_mises",
         link=link,
@@ -458,6 +652,17 @@ def asym_laplace(
     link_quantile: str = "logit",
     **kwargs
 ) -> ListVector:
+    """Asymmetric Laplace distribution for quantile regression.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the location
+    link_sigma : str
+        Link function for sigma parameter
+    link_quantile : str
+        Link function for the quantile parameter
+    """
     return brmsfamily(
         family="asym_laplace",
         link=link,
@@ -489,6 +694,13 @@ def cox(
     link: str = "log",
     **kwargs
 ) -> ListVector:
+    """Cox proportional hazards model for survival data.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the hazard rate
+    """
     # original R wrapper doesn't pass slink; brmsfamily doesn't need it
     return brmsfamily(
         family="cox",
@@ -502,6 +714,15 @@ def hurdle_poisson(
     link_hu: str = "logit",
     **kwargs
 ) -> ListVector:
+    """Hurdle Poisson distribution for zero-inflated count data.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the mean
+    link_hu : str
+        Link function for hurdle parameter
+    """
     return brmsfamily(
         family="hurdle_poisson",
         link=link,
@@ -516,6 +737,17 @@ def hurdle_negbinomial(
     link_hu: str = "logit",
     **kwargs
 ) -> ListVector:
+    """Hurdle negative binomial for overdispersed zero-inflated count data.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the mean
+    link_shape : str
+        Link function for shape parameter
+    link_hu : str
+        Link function for hurdle parameter
+    """
     return brmsfamily(
         family="hurdle_negbinomial",
         link=link,
@@ -531,6 +763,17 @@ def hurdle_gamma(
     link_hu: str = "logit",
     **kwargs
 ) -> ListVector:
+    """Hurdle Gamma distribution for zero-inflated positive continuous data.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the mean
+    link_shape : str
+        Link function for shape parameter
+    link_hu : str
+        Link function for hurdle parameter
+    """
     return brmsfamily(
         family="hurdle_gamma",
         link=link,
@@ -546,6 +789,17 @@ def hurdle_lognormal(
     link_hu: str = "logit",
     **kwargs
 ) -> ListVector:
+    """Hurdle lognormal for zero-inflated positive continuous data.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the mean
+    link_sigma : str
+        Link function for sigma parameter
+    link_hu : str
+        Link function for hurdle parameter
+    """
     return brmsfamily(
         family="hurdle_lognormal",
         link=link,
@@ -562,6 +816,19 @@ def hurdle_cumulative(
     threshold: str = "flexible",
     **kwargs
 ) -> ListVector:
+    """Hurdle cumulative for zero-inflated ordinal data.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the ordinal response
+    link_hu : str
+        Link function for hurdle parameter
+    link_disc : str
+        Link function for discrimination parameter
+    threshold : str
+        Type of threshold structure
+    """
     return brmsfamily(
         family="hurdle_cumulative",
         link=link,
@@ -578,6 +845,17 @@ def zero_inflated_beta(
     link_zi: str = "logit",
     **kwargs
 ) -> ListVector:
+    """Zero-inflated beta for data between 0 and 1 with excess zeros.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the mean
+    link_phi : str
+        Link function for precision parameter
+    link_zi : str
+        Link function for zero-inflation parameter
+    """
     return brmsfamily(
         family="zero_inflated_beta",
         link=link,
@@ -594,6 +872,19 @@ def zero_one_inflated_beta(
     link_coi: str = "logit",
     **kwargs
 ) -> ListVector:
+    """Zero-one-inflated beta for data between 0 and 1 with excess zeros and ones.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the mean
+    link_phi : str
+        Link function for precision parameter
+    link_zoi : str
+        Link function for zero-or-one inflation parameter
+    link_coi : str
+        Link function for conditional one inflation parameter
+    """
     return brmsfamily(
         family="zero_one_inflated_beta",
         link=link,
@@ -609,6 +900,15 @@ def zero_inflated_poisson(
     link_zi: str = "logit",
     **kwargs
 ) -> ListVector:
+    """Zero-inflated Poisson for count data with excess zeros.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the mean
+    link_zi : str
+        Link function for zero-inflation parameter
+    """
     return brmsfamily(
         family="zero_inflated_poisson",
         link=link,
@@ -623,6 +923,17 @@ def zero_inflated_negbinomial(
     link_zi: str = "logit",
     **kwargs
 ) -> ListVector:
+    """Zero-inflated negative binomial for overdispersed count data with excess zeros.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the mean
+    link_shape : str
+        Link function for shape parameter
+    link_zi : str
+        Link function for zero-inflation parameter
+    """
     return brmsfamily(
         family="zero_inflated_negbinomial",
         link=link,
@@ -637,6 +948,15 @@ def zero_inflated_binomial(
     link_zi: str = "logit",
     **kwargs
 ) -> ListVector:
+    """Zero-inflated binomial for binary count data with excess zeros.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for probability parameter
+    link_zi : str
+        Link function for zero-inflation parameter
+    """
     return brmsfamily(
         family="zero_inflated_binomial",
         link=link,
@@ -651,6 +971,17 @@ def zero_inflated_beta_binomial(
     link_zi: str = "logit",
     **kwargs
 ) -> ListVector:
+    """Zero-inflated beta-binomial for overdispersed binomial data with excess zeros.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for probability parameter
+    link_phi : str
+        Link function for precision parameter
+    link_zi : str
+        Link function for zero-inflation parameter
+    """
     return brmsfamily(
         family="zero_inflated_beta_binomial",
         link=link,
@@ -665,6 +996,15 @@ def categorical(
     refcat: Optional[str] = None,
     **kwargs
 ) -> ListVector:
+    """Categorical distribution for unordered multi-category outcomes.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for category probabilities
+    refcat : str, optional
+        Reference category
+    """
     return brmsfamily(
         family="categorical",
         link=link,
@@ -678,6 +1018,15 @@ def multinomial(
     refcat: Optional[str] = None,
     **kwargs
 ) -> ListVector:
+    """Multinomial distribution for count data across multiple categories.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for category probabilities
+    refcat : str, optional
+        Reference category
+    """
     return brmsfamily(
         family="multinomial",
         link=link,
@@ -692,6 +1041,17 @@ def dirichlet_multinomial(
     refcat: Optional[str] = None,
     **kwargs
 ) -> ListVector:
+    """Dirichlet-multinomial for overdispersed categorical count data.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for category probabilities
+    link_phi : str
+        Link function for precision parameter
+    refcat : str, optional
+        Reference category
+    """
     return brmsfamily(
         family="dirichlet_multinomial",
         link=link,
@@ -707,6 +1067,17 @@ def cumulative(
     threshold: str = "flexible",
     **kwargs
 ) -> ListVector:
+    """Cumulative (proportional odds) model for ordinal outcomes.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for cumulative probabilities
+    link_disc : str
+        Link function for discrimination parameter
+    threshold : str
+        Type of threshold structure
+    """
     return brmsfamily(
         family="cumulative",
         link=link,
@@ -722,6 +1093,17 @@ def sratio(
     threshold: str = "flexible",
     **kwargs
 ) -> ListVector:
+    """Sequential (stopping) ratio model for ordinal outcomes.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for sequential ratios
+    link_disc : str
+        Link function for discrimination parameter
+    threshold : str
+        Type of threshold structure
+    """
     return brmsfamily(
         family="sratio",
         link=link,
@@ -737,6 +1119,17 @@ def cratio(
     threshold: str = "flexible",
     **kwargs
 ) -> ListVector:
+    """Continuation ratio model for ordinal outcomes.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for continuation ratios
+    link_disc : str
+        Link function for discrimination parameter
+    threshold : str
+        Type of threshold structure
+    """
     return brmsfamily(
         family="cratio",
         link=link,
@@ -752,6 +1145,17 @@ def acat(
     threshold: str = "flexible",
     **kwargs
 ) -> ListVector:
+    """Adjacent category model for ordinal outcomes.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for adjacent category ratios
+    link_disc : str
+        Link function for discrimination parameter
+    threshold : str
+        Type of threshold structure
+    """
     return brmsfamily(
         family="acat",
         link=link,
@@ -765,6 +1169,15 @@ def gaussian(
     link_sigma: str = "log",
     **kwargs,
 ) -> ListVector:
+    """Gaussian (normal) distribution for continuous data.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the mean
+    link_sigma : str
+        Link function for the standard deviation
+    """
     return brmsfamily(
         family="gaussian",
         link=link,
@@ -777,6 +1190,13 @@ def poisson(
     link: str = "log",
     **kwargs,
 ) -> ListVector:
+    """Poisson distribution for count data.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the rate parameter
+    """
     return brmsfamily(
         family="poisson",
         link=link,
@@ -788,6 +1208,13 @@ def binomial(
     link: str = "logit",
     **kwargs,
 ) -> ListVector:
+    """Binomial distribution for binary count data.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the probability parameter
+    """
     return brmsfamily(
         family="binomial",
         link=link,
@@ -800,6 +1227,15 @@ def Gamma(
     link_shape: str = "log",
     **kwargs,
 ) -> ListVector:
+    """Gamma distribution for positive continuous data.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the mean
+    link_shape : str
+        Link function for the shape parameter
+    """
     return brmsfamily(
         family="Gamma",
         link=link,
@@ -813,6 +1249,15 @@ def inverse_gaussian(
     link_shape: str = "log",
     **kwargs,
 ) -> ListVector:
+    """Inverse Gaussian distribution for positive continuous data.
+    
+    Parameters
+    ----------
+    link : str
+        Link function for the mean
+    link_shape : str
+        Link function for the shape parameter
+    """
     return brmsfamily(
         family="inverse.gaussian",
         link=link,
