@@ -201,7 +201,7 @@ from brmspy.brms import (
     posterior_linpred,
     log_lik,
     summary,
-    prior,
+    prior, get_prior, default_prior,
 
     save_rds, read_rds_fit, read_rds_raw,
 
@@ -235,7 +235,7 @@ __all__ = [
     'formula', 
 
     # priors
-    'prior',
+    'prior', 'get_prior', 'default_prior',
 
     # prediction
     "posterior_predict", "posterior_epred", "posterior_linpred", "log_lik",

@@ -5,7 +5,7 @@ from typing import Any, Callable, Optional, Union, cast
 
 import pandas as pd
 
-from brmspy.helpers.conversion import kwargs_r, r_to_py
+from brmspy.helpers.conversion import kwargs_r, py_to_r, r_to_py
 from brmspy.types import FormulaResult, PriorSpec, RListVectorExtension
 import rpy2.robjects as ro
 
@@ -269,13 +269,12 @@ def default_prior(object: Union[RListVectorExtension, ro.ListVector, FormulaResu
     """
     r_get_prior = cast(Callable, ro.r('brms::get_prior'))
     collected_args = kwargs_r({
-        "object": object,
         "data": data,
         "family": family,
         **kwargs
     })
 
-    df_r = r_get_prior(**collected_args)
+    df_r = r_get_prior(py_to_r(object), **collected_args)
     df = pd.DataFrame(r_to_py(df_r))
 
     return df

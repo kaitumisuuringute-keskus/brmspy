@@ -13,7 +13,7 @@ from brmspy.types import (
 )
 from brmspy.install import install_brms, install_prebuilt, get_brms_version
 from brmspy.brms_functions.io import get_brms_data, read_rds_fit, read_rds_raw, save_rds
-from brmspy.brms_functions.prior import prior
+from brmspy.brms_functions.prior import prior, get_prior, default_prior
 from brmspy.brms_functions.brm import brm, fit
 from brmspy.brms_functions.diagnosis import summary
 from brmspy.brms_functions.formula import formula
@@ -47,7 +47,7 @@ __all__ = [
     'formula', 
 
     # priors
-    'prior',
+    'prior', 'get_prior', 'default_prior',
 
     # prediction
     "posterior_predict", "posterior_epred", "posterior_linpred", "log_lik",
