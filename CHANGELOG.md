@@ -1,4 +1,4 @@
-## 0.1.12 - RDS loading/saving
+## 0.1.12 - RDS loading/saving, families functions, default priors functions
 
 - `save_rds()` - Save brmsfit or another robject
 - `load_rds_fit()` - Load saved brmsfit object as FitResult (with idata)
@@ -8,6 +8,7 @@
 - Separated brms functions wrappers into logically coupled files in brmspy/brms_functions/... (brm, diagnosis, families, formula, io, prediction, prior, stan)
 - Added a generic type `RListVectorExtension` that function return types implement. This allows automatically grabbing the R object from function return types in `py_to_r` and `kwargs_r`
 - Added `default_prior` and `get_prior` for inspecting priors of a formula and data.
+
 
 ## 0.1.11 - Persistent Runtimes, Modern Packaging, and Stability
 
