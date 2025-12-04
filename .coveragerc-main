@@ -3,3 +3,4 @@ source = brmspy
 omit =
     brmspy/binaries/*
     brmspy/install.py
+    brms/helpers/rtools.py
