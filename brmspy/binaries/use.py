@@ -11,7 +11,7 @@ import rpy2.robjects as ro
 from brmspy.binaries.config import get_active_runtime, set_active_runtime
 from brmspy.binaries.env import system_fingerprint
 from brmspy.binaries.github import get_github_asset_sha256_from_url
-from brmspy.binaries.r import _get_r_pkg_installed, _try_force_unload_package, _r_namespace_loaded, _r_package_attached
+from brmspy.binaries.r import _try_force_unload_package, _r_namespace_loaded, _r_package_attached
 from brmspy.helpers.log import greet, log, log_warning
 
 OFFICIAL_RELEASE_PATTERN = "https://github.com/kaitumisuuringute-keskus/brmspy/"

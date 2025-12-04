@@ -4,7 +4,6 @@ import pandas as pd
 import xarray as xr
 import numpy as np
 
-from brmspy.helpers.log import log_warning
 from brmspy.helpers.robject_iter import iterate_robject_to_dataclass
 from ..helpers.conversion import (
     kwargs_r,

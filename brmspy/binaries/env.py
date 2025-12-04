@@ -3,7 +3,7 @@ import subprocess
 from typing import Optional, Tuple, Set, cast
 
 from brmspy.helpers.log import log_warning
-from brmspy.helpers.rtools import _install_rtools_for_current_r, _parse_gxx_version, _windows_has_rtools
+from brmspy.helpers.rtools import _parse_gxx_version, _windows_has_rtools
 
 
 # ----- Helpers: OS / arch -----
