@@ -75,7 +75,8 @@ def iterate_robject_to_dataclass(
     names: List[str],
     get: Callable[[str], Any],
     target_dataclass: type[Any],
-    iteration_params: Optional[Dict[str, IterConf]] = None,
+    r: Optional[ro.ListVector],
+    iteration_params: Optional[Dict[str, IterConf]] = None
 ):
     """
     Generic helper to iterate over R summary-like objects and convert them
@@ -130,6 +131,9 @@ def iterate_robject_to_dataclass(
 
         except Exception as e:
             log_warning(f"Failed to parse {param} into python object: {e}")
+
+    if r:
+        out['r'] = r
 
     # Build the dataclass instance
     return target_dataclass(**out)

@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Iterable, Optional, Union, cast
+from typing import Callable, Dict, Iterable, Optional, Sequence, Union, cast
 import pandas as pd
 import pandas as pd
 import xarray as xr
@@ -13,6 +13,7 @@ from ..helpers.conversion import (
 )
 from ..types import (
     FitResult,
+    LooCompareResult,
     LooResult,
     SummaryResult
 )
@@ -131,7 +132,7 @@ def summary(model: FitResult, **kwargs) -> SummaryResult:
 
     names = summary_r.names
     get = lambda param: r_to_py(cast(Callable, ro.r(_get_methods_r.get(param, _default_get_r)(param)))(summary_r))
-    out = iterate_robject_to_dataclass(names=names, get=get, target_dataclass=SummaryResult)
+    out = iterate_robject_to_dataclass(names=names, get=get, target_dataclass=SummaryResult, r=summary_r)
 
     return cast(SummaryResult, out)
 
@@ -758,6 +759,88 @@ def loo(
 
     names = obj_r.names
     get = lambda param: r_to_py(cast(Callable, ro.r(_get_methods_r.get(param, _default_get_r)(param)))(obj_r))
-    out = iterate_robject_to_dataclass(names=names, get=get, target_dataclass=LooResult)
+    out = iterate_robject_to_dataclass(names=names, get=get, target_dataclass=LooResult, r=obj_r)
 
     return cast(LooResult, out)
+
+
+def loo_compare(
+    *objects: Union["FitResult", ro.ListVector],
+    criterion: str = "loo",
+    model_names: Optional[Sequence[str]] = None,
+) -> LooCompareResult:
+    """
+    Compare multiple models using approximate LOO cross-validation.
+
+    This function wraps ``brms::loo()`` and ``loo::loo_compare()``:
+
+    1. For each model, call ``brms::loo()`` to obtain a ``loo`` object.
+    2. Call ``loo::loo_compare()`` on the resulting ``loo`` objects.
+    3. Return the comparison matrix as a :class:`pandas.DataFrame`.
+
+    Currently only the ``'loo'`` criterion is supported.
+
+    Parameters
+    ----------
+    *objects : FitResult or rpy2.robjects.ListVector
+        Two or more fitted models to compare. Typically the
+        :class:`FitResult` objects returned by :func:`brmspy.brms.fit`.
+    criterion : {'loo'}, default 'loo'
+        Information criterion to use. For now only ``'loo'`` is supported.
+    model_names : sequence of str, optional
+        Optional model names to use as row labels in the comparison
+        table. If omitted, row names are taken from the R side and may
+        be less informative when called via Python.
+
+    Returns
+    -------
+    LooCompareResult
+        Object holding:
+
+        * ``table``: a :class:`pandas.DataFrame` with one row per model
+          and columns such as ``elpd_diff`` and ``se_diff``.
+        * ``criterion``: the criterion actually used (currently always
+          ``'loo'``).
+
+    Examples
+    --------
+    ```python
+    comp = loo_compare(fit1, fit2, model_names=["pl-only", "pl+subject"])
+    print(comp)
+    ```
+    """
+    if len(objects) < 2:
+        raise ValueError("loo_compare requires at least two models to compare.")
+
+    if criterion.lower() != "loo":
+        raise NotImplementedError("Only criterion='loo' is supported at the moment.")
+
+    r_brms_loo = cast(Callable, ro.r("brms::loo"))
+    r_loo_compare = cast(Callable, ro.r("loo::loo_compare"))
+    r_get_ic = cast(Callable, ro.r("function(x) attr(x, 'ic')"))
+    r_as_df = cast(Callable, ro.r("as.data.frame"))
+
+    r_models = [py_to_r(obj) for obj in objects]
+    r_loos = [r_brms_loo(m) for m in r_models]
+
+    ic = r_to_py(r_get_ic(r_loos[0]))
+    crit_str = str(ic)
+
+    res_r = r_loo_compare(*r_loos)
+
+    if model_names is None:
+        # We must set defaults, otherwise grazy long strings will be used
+        model_names = [f"model_{i+1}" for i in range(len(objects))]
+
+    if model_names is not None:
+        if len(model_names) != len(r_loos):
+            raise ValueError(
+                f"len(model_names) ({len(model_names)}) "
+                f"does not match number of models ({len(r_loos)})"
+            )
+        set_rownames = cast(Callable, ro.r("function(x, nm) { rownames(x) <- nm; x }"))
+        res_r = set_rownames(res_r, py_to_r(list(model_names)))
+
+    res_df = cast(pd.DataFrame, r_to_py(r_as_df(res_r)))
+
+    return LooCompareResult(table=res_df, criterion=crit_str, r=res_r)

@@ -1,11 +1,12 @@
 """Result types for brmspy functions."""
 
 from dataclasses import dataclass
-from typing import Any, Dict, Mapping, Optional
+from typing import Any, Callable, Dict, Mapping, Optional, cast
 import rpy2.robjects as robjects
 import arviz as az
 import xarray as xr
 import pandas as pd
+
 
 @dataclass(frozen=True)
 class PriorSpec:
@@ -417,7 +418,7 @@ def _indent_block(text: str, prefix: str = "  ") -> str:
     return "\n".join(prefix + line for line in str(text).splitlines())
 
 @dataclass
-class SummaryResult:
+class SummaryResult(RListVectorExtension):
     formula: str
     data_name: str
     group: str
@@ -519,7 +520,7 @@ class SummaryResult:
     
 
 @dataclass
-class LooResult:
+class LooResult(RListVectorExtension):
     estimates: pd.DataFrame
     pointwise: pd.DataFrame
     diagnostics: pd.DataFrame
@@ -551,4 +552,17 @@ class LooResult:
                 lines.append(f"  Bad (0.7 ≤ k < 1):    {((k_vals >= 0.7) & (k_vals < 1)).sum():>5} observations")
                 lines.append(f"  Very bad (k ≥ 1):     {(k_vals >= 1).sum():>5} observations")
                 
+        return "\n".join(lines)
+    
+
+@dataclass
+class LooCompareResult(RListVectorExtension):
+    table: pd.DataFrame
+    criterion: str
+    r: robjects.ListVector
+
+    def __repr__(self) -> str:
+        header = f"Model comparison ({self.criterion.upper()})"
+        lines = [header, "=" * len(header)]
+        lines.append(self.table.to_string())
         return "\n".join(lines)

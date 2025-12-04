@@ -90,6 +90,7 @@ nav:
       - prediction: api/brms_functions/prediction.md
       - prior: api/brms_functions/prior.md
       - stan: api/brms_functions/stan.md
+      - generic: api/brms_functions/generic.md
     - Helpers:
       - Conversion: api/helpers/conversion.md
       - Priors: api/helpers/priors.md
