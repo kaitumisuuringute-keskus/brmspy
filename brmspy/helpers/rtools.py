@@ -404,3 +404,4 @@ def _install_rtools_for_current_r() -> Optional[str]:
         """)
 
     return tag
+

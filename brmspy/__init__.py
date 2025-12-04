@@ -178,7 +178,7 @@ Complete workflow with model diagnostics:
 ```
 """
 
-__version__ = "0.1.12"
+__version__ = "0.1.13"
 __author__ = "Remi Sebastian Kits, Adam Haber"
 __license__ = "Apache-2.0"
 
@@ -200,8 +200,11 @@ from brmspy.brms import (
     posterior_predict,
     posterior_linpred,
     log_lik,
-    summary,
+    summary, fixef, ranef,
+    prior_summary, posterior_summary, loo, loo_compare, validate_newdata,
     prior, get_prior, default_prior,
+
+    call,
 
     save_rds, read_rds_fit, read_rds_raw,
 
@@ -244,7 +247,11 @@ __all__ = [
     'families', 'family', 'brmsfamily',
 
     # diagnosis
-    'summary',
+    'summary', 'fixef', 'ranef', 'prior_summary', 'posterior_summary',
+    'loo', 'loo_compare', 'validate_newdata',
+
+    # generic helper
+    'call',
 
     # types
     'FitResult', 'FormulaResult', 'PosteriorEpredResult', 'PosteriorPredictResult',

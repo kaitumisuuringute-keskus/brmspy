@@ -18,6 +18,8 @@ from brmspy.helpers import singleton
 from brmspy.helpers.log import log_warning
 from brmspy.types import IDFit, PriorSpec, RListVectorExtension
 
+from collections.abc import Mapping, Sequence
+
 
 
 def _coerce_stan_types(stan_code: str, stan_data: dict) -> dict:
@@ -799,7 +801,7 @@ def brms_log_lik_to_idata(r_log_lik_obj, brmsfit_obj, newdata=None, var_name="lo
 
 
 
-from collections.abc import Mapping, Sequence
+
 
 def py_to_r(obj):
     """
@@ -907,6 +909,23 @@ def py_to_r(obj):
                 # R lists are usually named or indexed; use 1-based index names
                 converted = {str(i + 1): py_to_r(el) for i, el in enumerate(obj)}
                 return ListVector(converted)
+            
+            # Homogeneous scalar lists → atomic R vectors (c(...))
+            # Strings
+            if all(isinstance(el, str) for el in obj):
+                return ro.StrVector(list(obj))
+
+            # Booleans
+            if all(isinstance(el, bool) for el in obj):
+                return ro.BoolVector(list(obj))
+
+            # Integers (avoid treating bools as ints)
+            if all(isinstance(el, (int, np.integer)) and not isinstance(el, bool) for el in obj):
+                return ro.IntVector(list(obj))
+
+            # Numeric (mix of ints/floats/bools) → R "numeric" (double) vector
+            if all(isinstance(el, (int, float, np.integer, np.floating, bool)) for el in obj):
+                return ro.FloatVector([float(el) for el in obj])
 
             # mixed / other lists: let rpy2 decide (vectors, lists, etc.)
             return cv.py2rpy(obj)
@@ -996,11 +1015,33 @@ def r_to_py(obj):
     """
     if obj is ro.NULL:
         return None
+    
+    if isinstance(obj, ro.Matrix):
+        if len(obj.dim) != 2:
+            raise Exception("Matrix with dims != 2. Unimplemented conversion")
+        if obj.colnames != ro.NULL:
+          colnames = [str(el) for el in obj.colnames]
+        else:
+          colnames = None
+        if obj.rownames != ro.NULL:
+          rownames = [str(el) for el in obj.rownames]
+        else:
+          rownames = None
+        return pd.DataFrame(
+            data=np.asarray(obj),
+            columns=colnames,
+            index=rownames
+        )
+
+    if isinstance(obj, ro.DataFrame):
+        with localconverter(pandas2ri.converter) as cv:
+            return cv.rpy2py(obj)
 
     # 1) Atomic vectors -------------------------------------------------------
+    obj_any = typing.cast(typing.Any, obj)
     if isinstance(obj, vectors.Vector) and not isinstance(obj, ListVector):
         # length 1 → scalar
-        if len(obj) == 1:
+        if obj_any.__len__ and len(obj_any) == 1:
             # Try default R→Python conversion
             with localconverter(default_converter) as cv:
                 py = cv.rpy2py(obj[0])
@@ -1041,7 +1082,7 @@ def r_to_py(obj):
             return cv.rpy2py(obj)
     except Exception:
         return str(obj)
-    
+
 def kwargs_r(kwargs: typing.Optional[typing.Dict]) -> typing.Dict:
     """
     Convert Python keyword arguments to R-compatible format.

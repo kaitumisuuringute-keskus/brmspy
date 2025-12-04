@@ -119,28 +119,39 @@ az.plot_posterior(model.idata)
 - `brms.load_rds_fit()` - Load saved brmsfit object as FitResult (with idata)
 - `brms.load_rds_raw()` - Load r object
 
-
 ### Model Functions
 - `brms.formula()` - Define formula with kwargs
 - `brms.fit()` or `brms.brm()` - Fit Bayesian regression model
-- `brms.summary()` - Generate summary statistics as DataFrame
 - `brms.make_stancode()` - Generate Stan code for model
 
-### Prior functions
+### Diagnostics Functions
+- `brms.summary()` - Comprehensive model summary as SummaryResult dataclass
+- `brms.fixef()` - Extract population-level (fixed) effects
+- `brms.ranef()` - Extract group-level (random) effects as xarray
+- `brms.posterior_summary()` - Summary statistics for all parameters
+- `brms.prior_summary()` - Extract prior specifications used in model
+- `brms.loo()` - Leave-one-out cross-validation with PSIS
+- `brms.loo_compare()` - Compare multiple models using LOO-CV
+- `brms.validate_newdata()` - Validate new data for predictions
+
+### Prior Functions
 - `brms.prior()` - Define a prior with same syntax as r-s `prior_string`
 - `brms.get_prior()` - Get pd.DataFrame describing default priors
 - `brms.default_prior()` - Get pd.DataFrame describing default priors
 
-### Families functions
+### Families Functions
 - `brms.family()` - Get family object of FitResult
 - `brms.brmsfamily()` - Construct family object from kwargs
-- `brms.families.gaussian()`, `...bernoulli()`, `...beta_binomial()`, etc - Wrappers around brmsfamily for faster family object construction 
+- `brms.families.gaussian()`, `...bernoulli()`, `...beta_binomial()`, etc - Wrappers around brmsfamily for faster family object construction
 
 ### Prediction Functions
 - `brms.posterior_epred()` - Expected value predictions (without noise)
 - `brms.posterior_predict()` - Posterior predictive samples (with noise)
 - `brms.posterior_linpred()` - Linear predictor values
 - `brms.log_lik()` - Log-likelihood values
+
+### Generic Function Access
+- `brms.call()` - Call any brms/R function by name with automatic type conversion
 
 
 ## Usage

@@ -83,13 +83,14 @@ nav:
     - Types: api/types.md
     - BRMS functions:
       - brm: api/brms_functions/brm.md
-      - diagnosis: api/brms_functions/diagnosis.md
+      - diagnostics: api/brms_functions/diagnostics.md
       - families: api/brms_functions/families.md
       - formula: api/brms_functions/formula.md
       - io: api/brms_functions/io.md
       - prediction: api/brms_functions/prediction.md
       - prior: api/brms_functions/prior.md
       - stan: api/brms_functions/stan.md
+      - generic: api/brms_functions/generic.md
     - Helpers:
       - Conversion: api/helpers/conversion.md
       - Priors: api/helpers/priors.md
@@ -105,6 +106,7 @@ nav:
     - Env: binaries/env.md
     - Use: binaries/use.md
   - Development: development/development.md
+  - Changelog: changelog.md
 
 extra_javascript:
   - static/plausible.js

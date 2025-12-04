@@ -27,16 +27,30 @@ python -c "import brmspy; brmspy.install_brms()"
 ```
 brmspy/
 ├── brmspy/                    # Main package
-│   ├── brms.py               # Core API (fit, predict, etc.)
-│   ├── types.py              # Type definitions
+│   ├── brms.py               # Core API exports
+│   ├── types.py              # Type definitions and result dataclasses
 │   ├── install.py            # R dependency installation
+│   ├── brms_functions/       # Modular brms function wrappers
+│   │   ├── brm.py            # Model fitting (fit, brm)
+│   │   ├── diagnostics.py    # Model diagnostics (summary, loo, etc.)
+│   │   ├── families.py       # Family specifications
+│   │   ├── formula.py        # Formula construction
+│   │   ├── generic.py        # Generic function caller
+│   │   ├── io.py             # Data I/O (save_rds, read_rds, etc.)
+│   │   ├── prediction.py     # Predictions (posterior_predict, etc.)
+│   │   ├── prior.py          # Prior specifications
+│   │   └── stan.py           # Stan code generation
 │   ├── binaries/             # Prebuilt runtime system
 │   │   ├── build.py          # Create runtime bundles
 │   │   ├── env.py            # Platform detection
+│   │   ├── github.py         # GitHub releases integration
+│   │   ├── r.py              # R installation utilities
 │   │   └── use.py            # Install runtimes
 │   └── helpers/              # Internal utilities
 │       ├── conversion.py     # Python ↔ R ↔ ArviZ
+│       ├── log.py            # Logging utilities
 │       ├── priors.py         # Prior builders
+│       ├── robject_iter.py   # R object iteration
 │       ├── rtools.py         # Windows Rtools
 │       └── singleton.py      # R package caching
 ├── .github/workflows/        # CI/CD pipelines
@@ -47,10 +61,21 @@ brmspy/
 
 ### Core Components
 
-**brmspy/brms.py** - High-level API for model fitting and predictions  
-**brmspy/types.py** - Type definitions and result dataclasses  
-**brmspy/install.py** - R dependency management  
-**brmspy/binaries/** - Prebuilt runtime bundle system  
+**brmspy/brms.py** - Main module that exports all public functions
+**brmspy/types.py** - Type definitions and result dataclasses (FitResult, SummaryResult, LooResult, etc.)
+**brmspy/install.py** - R dependency management and installation
+**brmspy/brms_functions/** - Modular organization of brms function wrappers:
+  - **brm.py** - Model fitting functions
+  - **diagnostics.py** - 8 diagnostic functions (summary, fixef, ranef, loo, loo_compare, validate_newdata, etc.)
+  - **prediction.py** - Prediction functions (posterior_predict, posterior_epred, posterior_linpred, log_lik)
+  - **prior.py** - Prior specification functions
+  - **families.py** - Family specifications and wrappers
+  - **formula.py** - Formula construction helpers
+  - **generic.py** - Generic function caller for unwrapped brms functions
+  - **io.py** - Data I/O functions
+  - **stan.py** - Stan code generation
+
+**brmspy/binaries/** - Prebuilt runtime bundle system
 **brmspy/helpers/** - Internal conversion and utility functions
 
 ### Data Flow
@@ -237,12 +262,23 @@ docker push ghcr.io/{owner}/brmspy-runtime-builder:{tag}
 
 ```
 tests/
-├── conftest.py              # Pytest fixtures
-├── test_basic.py           # Basic tests
-├── test_integration.py     # End-to-end tests
-├── test_predictions.py     # Prediction tests
-└── test_crossplatform.py   # Cross-platform tests
+├── conftest.py              # Pytest fixtures (sample_dataframe, etc.)
+├── test_basic.py            # Basic functionality tests
+├── test_crossplatform.py    # Cross-platform compatibility tests
+├── test_diagnostics.py      # Diagnostics functions tests (14 tests)
+├── test_families.py         # Family specifications tests
+├── test_generic.py          # Generic function caller tests
+├── test_integration.py      # End-to-end integration tests
+├── test_io.py               # I/O functions tests
+├── test_predictions.py      # Prediction functions tests
+└── test_priors.py           # Prior specification tests
 ```
+
+**Test Coverage:**
+- **14 diagnostics tests** covering summary, fixef, ranef, posterior_summary, prior_summary, loo, loo_compare, validate_newdata
+- **2 generic function tests** for call() wrapper
+- All tests use `iter=100, warmup=50` for fast CI execution
+- Tests marked with `@pytest.mark.slow` and `@pytest.mark.requires_brms`
 
 ### Running Tests
 

@@ -11,7 +11,7 @@
   --md-code-bg-color: #f8fafc;   /* slate-50 */
   --md-border-color: #e5e7eb;    /* gray-200 */
 
-  --md-typeset-a-color: #020617;
+  --md-typeset-a-color: #3231d9;
 }
 
 /* Dark mode – shadcn “black app” */
@@ -26,7 +26,7 @@
   --md-code-bg-color: #09090c;
   --md-border-color: #262c34;      /* gray-800 */
 
-  --md-typeset-a-color: #f9fafb;
+  --md-typeset-a-color: #678db2;
 }
 
 /* Global layout tweaks to feel more like shadcn cards */
