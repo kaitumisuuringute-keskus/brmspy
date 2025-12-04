@@ -26,6 +26,28 @@
   * Native xarray integration enables easy slicing and MCMC analysis
   * Comprehensive docstring with coord selection examples
 
+* **`posterior_summary()` All Parameters**: New function for comprehensive parameter extraction:
+  * Returns pandas DataFrame with all model parameters (fixed, random, auxiliary)
+  * More comprehensive than `fixef()` or `ranef()` alone
+  * Supports variable selection and regex patterns
+  * Configurable credible intervals and robust estimates
+  * Complete docstring with filtering examples
+
+* **`prior_summary()` Prior Specifications**: New function for documenting model priors:
+  * Returns pandas DataFrame with all prior distributions used in model
+  * Option to show all priors (including defaults) or only user-specified
+  * Useful for reproducibility and model documentation
+  * Complete docstring with comparison examples
+
+* **`loo()` Leave-One-Out Cross-Validation**: New function for model comparison and validation:
+  * Computes efficient LOO-CV using Pareto smoothed importance sampling (PSIS)
+  * Returns `LooResult` dataclass with LOO metrics (elpd_loo, p_loo, looic) and standard errors
+  * Pareto k diagnostics for identifying problematic observations
+  * Support for moment matching and refitting for high Pareto k values
+  * Pretty-print support via `__repr__()` with formatted metrics and diagnostics
+  * Memory-efficient pointwise computation option for large datasets
+  * Comprehensive docstring with model comparison examples
+
 ### Type System Improvements
 
 * **DataFrame Detection**: `r_to_py()` now correctly detects R DataFrames and preserves:
@@ -33,17 +55,26 @@
   * Column names
   * Proper type conversion for all data types
 
+* **LooResult Dataclass**: Added `__repr__()` for formatted LOO-CV output:
+  * Displays ELPD LOO, p_loo, and LOOIC with standard errors
+  * Summary of Pareto k diagnostic categories
+  * Human-readable format for notebooks and interactive use
+
 ### Testing
 
-* Added 6 comprehensive tests for diagnostics functions:
+* Added 10 comprehensive tests for diagnostics functions:
   * `summary()`: structure validation, component access, pretty printing
   * `fixef()`: summary statistics and parameter extraction
   * `ranef()`: both summary mode and raw posterior draws mode
+  * `posterior_summary()`: all parameters extraction
+  * `prior_summary()`: prior specifications with custom priors
+  * `loo()`: basic LOO-CV computation and Pareto k diagnostics
 * All tests optimized with reduced iterations (`iter=100, warmup=50`) for faster CI execution
 
 ### API
 
-* Exported `fixef` and `ranef` from `brmspy` module for public use
+* Exported `fixef`, `ranef`, `posterior_summary`, `prior_summary`, and `loo` from `brmspy` module
+* Added `LooResult` to public types for model comparison workflows
 
 
 ## 0.1.12 - RDS loading/saving, families functions, default priors functions

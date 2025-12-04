@@ -1019,10 +1019,18 @@ def r_to_py(obj):
     if isinstance(obj, ro.Matrix):
         if len(obj.dim) != 2:
             raise Exception("Matrix with dims != 2. Unimplemented conversion")
+        if obj.colnames != ro.NULL:
+          colnames = [str(el) for el in obj.colnames]
+        else:
+          colnames = None
+        if obj.rownames != ro.NULL:
+          rownames = [str(el) for el in obj.rownames]
+        else:
+          rownames = None
         return pd.DataFrame(
             data=np.asarray(obj),
-            columns=obj.colnames,
-            index=obj.rownames
+            columns=colnames,
+            index=rownames
         )
 
     if isinstance(obj, ro.DataFrame):

@@ -516,3 +516,39 @@ class SummaryResult:
     def __repr__(self) -> str:
         # For interactive use, repr == pretty summary
         return self.__str__()
+    
+
+@dataclass
+class LooResult:
+    estimates: pd.DataFrame
+    pointwise: pd.DataFrame
+    diagnostics: pd.DataFrame
+    psis_object: Optional[Any]
+    elpd_loo: float
+    p_loo: float
+    looic: float
+    se_elpd_loo: float
+    se_p_loo: float
+    se_looic: float
+    
+    def __repr__(self) -> str:
+        """Pretty print LOO-CV results."""
+        lines = []
+        lines.append("LOO-CV Results")
+        lines.append("=" * 50)
+        lines.append(f"ELPD LOO:  {self.elpd_loo:>10.2f}  (SE: {self.se_elpd_loo:.2f})")
+        lines.append(f"p_loo:     {self.p_loo:>10.2f}  (SE: {self.se_p_loo:.2f})")
+        lines.append(f"LOOIC:     {self.looic:>10.2f}  (SE: {self.se_looic:.2f})")
+        lines.append("")
+        
+        # Show Pareto k diagnostic summary if available
+        if isinstance(self.diagnostics, pd.DataFrame) and not self.diagnostics.empty:
+            if 'pareto_k' in self.diagnostics.columns:
+                k_vals = self.diagnostics['pareto_k']
+                lines.append("Pareto k Diagnostics:")
+                lines.append(f"  Good (k < 0.5):       {(k_vals < 0.5).sum():>5} observations")
+                lines.append(f"  OK (0.5 ≤ k < 0.7):   {((k_vals >= 0.5) & (k_vals < 0.7)).sum():>5} observations")
+                lines.append(f"  Bad (0.7 ≤ k < 1):    {((k_vals >= 0.7) & (k_vals < 1)).sum():>5} observations")
+                lines.append(f"  Very bad (k ≥ 1):     {(k_vals >= 1).sum():>5} observations")
+                
+        return "\n".join(lines)

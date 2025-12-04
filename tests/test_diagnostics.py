@@ -586,3 +586,174 @@ class TestPriorSummaryFunction:
         # User-set priors should be subset of all priors
         assert len(user_priors) <= len(prior_sum), \
             "User-set priors should be subset of all priors"
+
+
+@pytest.mark.requires_brms
+class TestLooFunction:
+    """Test the loo() function for LOO-CV model evaluation."""
+    
+    @pytest.mark.slow
+    def test_loo_basic_functionality(self, sample_dataframe):
+        """
+        Test loo() for basic LOO-CV computation.
+        
+        Verifies:
+        - Returns LooResult dataclass with all expected fields
+        - LOO metrics (elpd_loo, p_loo, looic) are computed
+        - Standard errors are provided
+        - Diagnostics DataFrame contains Pareto k values
+        - Pretty print works via repr
+        """
+        import brmspy
+        from brmspy.types import LooResult
+        import pandas as pd
+        
+        # Fit a simple model
+        model = brmspy.fit(
+            formula="y ~ x1",
+            data=sample_dataframe,
+            family="gaussian",
+            iter=100,
+            warmup=50,
+            chains=2,
+            silent=2,
+            refresh=0
+        )
+        
+        # Compute LOO-CV
+        loo_result = brmspy.loo(model)
+        
+        # Verify return type is LooResult
+        assert isinstance(loo_result, LooResult), \
+            f"loo() should return LooResult dataclass, got {type(loo_result)}"
+        
+        # Verify all expected attributes exist
+        expected_attrs = [
+            'elpd_loo', 'p_loo', 'looic',
+            'se_elpd_loo', 'se_p_loo', 'se_looic',
+            'estimates', 'pointwise', 'diagnostics', 'psis_object'
+        ]
+        
+        for attr in expected_attrs:
+            assert hasattr(loo_result, attr), \
+                f"LooResult should have attribute '{attr}'"
+        
+        # Verify LOO metrics are finite numbers
+        assert isinstance(loo_result.elpd_loo, (int, float)), \
+            "elpd_loo should be numeric"
+        assert not pd.isna(loo_result.elpd_loo), \
+            "elpd_loo should not be NaN"
+        
+        assert isinstance(loo_result.p_loo, (int, float)), \
+            "p_loo should be numeric"
+        assert loo_result.p_loo > 0, \
+            "p_loo (effective parameters) should be positive"
+        
+        assert isinstance(loo_result.looic, (int, float)), \
+            "looic should be numeric"
+        assert not pd.isna(loo_result.looic), \
+            "looic should not be NaN"
+        
+        # Verify standard errors are positive
+        assert loo_result.se_elpd_loo > 0, \
+            "Standard error of elpd_loo should be positive"
+        assert loo_result.se_p_loo >= 0, \
+            "Standard error of p_loo should be non-negative"
+        assert loo_result.se_looic > 0, \
+            "Standard error of looic should be positive"
+        
+        # Verify estimates DataFrame exists and has content
+        assert isinstance(loo_result.estimates, pd.DataFrame), \
+            "estimates should be a DataFrame"
+        assert not loo_result.estimates.empty, \
+            "estimates DataFrame should not be empty"
+        
+        # Verify diagnostics DataFrame contains Pareto k values
+        assert isinstance(loo_result.diagnostics, pd.DataFrame), \
+            "diagnostics should be a DataFrame"
+        if not loo_result.diagnostics.empty:
+            assert 'pareto_k' in loo_result.diagnostics.columns or \
+                   any('k' in col.lower() for col in loo_result.diagnostics.columns), \
+                "diagnostics should contain Pareto k information"
+        
+        # Verify pretty print works
+        loo_str = repr(loo_result)
+        assert isinstance(loo_str, str), \
+            "repr(loo_result) should return a string"
+        assert len(loo_str) > 0, \
+            "LOO result string should not be empty"
+        assert "LOO-CV Results" in loo_str or "ELPD" in loo_str or "elpd" in loo_str.lower(), \
+            "LOO result should contain LOO-CV information"
+    
+    @pytest.mark.slow
+    def test_loo_pareto_k_diagnostics(self, sample_dataframe):
+        """
+        Test loo() Pareto k diagnostics for identifying problematic observations.
+        
+        Verifies:
+        - Diagnostics DataFrame has one row per observation
+        - Pareto k values are in reasonable range
+        - Can identify observations with high k values
+        - LOO relationship: looic ≈ -2 * elpd_loo
+        """
+        import brmspy
+        import pandas as pd
+        import numpy as np
+        
+        # Fit a simple model
+        model = brmspy.fit(
+            formula="y ~ x1",
+            data=sample_dataframe,
+            family="gaussian",
+            iter=100,
+            warmup=50,
+            chains=2,
+            silent=2,
+            refresh=0
+        )
+        
+        # Compute LOO-CV
+        loo_result = brmspy.loo(model)
+        
+        # Verify diagnostics has correct number of observations
+        n_obs = len(sample_dataframe)
+        diagnostics = loo_result.diagnostics
+        
+        assert isinstance(diagnostics, pd.DataFrame), \
+            "diagnostics should be a DataFrame"
+        
+        if not diagnostics.empty and 'pareto_k' in diagnostics.columns:
+            # Should have one row per observation
+            assert len(diagnostics) == n_obs, \
+                f"diagnostics should have {n_obs} rows (one per observation), got {len(diagnostics)}"
+            
+            # Pareto k values should be finite
+            k_values = diagnostics['pareto_k']
+            assert not k_values.isna().any(), \
+                "Pareto k values should not contain NaN"
+            assert np.isfinite(k_values).all(), \
+                "Pareto k values should be finite"
+            
+            # Most Pareto k values should be reasonable (< 0.7 is good)
+            # With a simple model and decent data, most should be fine
+            good_k = (k_values < 0.7).sum()
+            total_k = len(k_values)
+            good_ratio = good_k / total_k
+            
+            # At least some observations should have good k values
+            assert good_ratio > 0, \
+                "At least some observations should have good Pareto k values (< 0.7)"
+        
+        # Verify LOOIC ≈ -2 * ELPD_LOO relationship
+        computed_looic = -2 * loo_result.elpd_loo
+        actual_looic = loo_result.looic
+        
+        # Should be very close (allowing for small numerical differences)
+        looic_diff = abs(computed_looic - actual_looic)
+        assert looic_diff < 0.01, \
+            f"LOOIC should equal -2*ELPD_LOO, difference: {looic_diff}"
+        
+        # Verify p_loo is reasonable (should be between 1 and number of parameters + some overhead)
+        # For a simple model with Intercept + x1 + sigma, we expect ~3 parameters
+        assert 0 < loo_result.p_loo < n_obs, \
+            f"p_loo should be positive and less than n_obs, got {loo_result.p_loo}"

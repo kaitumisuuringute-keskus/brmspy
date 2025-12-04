@@ -3,7 +3,7 @@ from brmspy.binaries.use import autoload_last_runtime
 from brmspy.helpers.log import log_warning
 from brmspy.helpers.singleton import _get_brms
 from brmspy.types import (
-    FitResult, FormulaResult, GenericResult, LogLikResult, PosteriorEpredResult, PosteriorLinpredResult, PosteriorPredictResult,
+    FitResult, FormulaResult, GenericResult, LogLikResult, LooResult, PosteriorEpredResult, PosteriorLinpredResult, PosteriorPredictResult,
     RListVectorExtension,
     IDLinpred,
     IDEpred,
@@ -16,7 +16,7 @@ from brmspy.install import install_brms, install_prebuilt, get_brms_version
 from brmspy.brms_functions.io import get_brms_data, read_rds_fit, read_rds_raw, save_rds
 from brmspy.brms_functions.prior import prior, get_prior, default_prior
 from brmspy.brms_functions.brm import brm, fit
-from brmspy.brms_functions.diagnostics import summary, fixef, ranef, posterior_summary, prior_summary
+from brmspy.brms_functions.diagnostics import summary, fixef, ranef, posterior_summary, prior_summary, loo
 from brmspy.brms_functions.formula import formula
 from brmspy.brms_functions.prediction import posterior_epred, posterior_linpred, posterior_predict, log_lik
 from brmspy.brms_functions.stan import make_stancode
@@ -54,14 +54,14 @@ __all__ = [
     "posterior_predict", "posterior_epred", "posterior_linpred", "log_lik",
 
     # diagnosis
-    'summary', 'fixef', 'ranef', 'posterior_summary', 'prior_summary',
+    'summary', 'fixef', 'ranef', 'posterior_summary', 'prior_summary', 'loo',
 
     # families
     'families', 'family', 'brmsfamily',
 
     # types
     'FitResult', 'FormulaResult', 'PosteriorEpredResult', 'PosteriorPredictResult',
-    'PosteriorLinpredResult', 'LogLikResult', 'GenericResult', 'RListVectorExtension',
+    'PosteriorLinpredResult', 'LogLikResult', 'LooResult', 'GenericResult', 'RListVectorExtension',
 
     'IDLinpred',
     'IDEpred',
