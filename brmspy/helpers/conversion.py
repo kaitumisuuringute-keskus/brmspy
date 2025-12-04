@@ -327,7 +327,6 @@ def brmsfit_to_idata(brmsfit_obj, model_data=None) -> IDFit:
         
     except Exception as e:
         log_warning(f"Could not extract posterior predictive/log_lik. {e}")
-        pass
 
     # =========================================================================
     # GROUP 4: OBSERVED DATA

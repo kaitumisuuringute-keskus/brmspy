@@ -5,4 +5,4 @@ source = brmspy
 include =
     brmspy/binaries/*
     brmspy/install.py
-    brms/helpers/rtools.py
+    brmspy/helpers/rtools.py
