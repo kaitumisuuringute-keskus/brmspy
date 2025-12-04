@@ -3,6 +3,7 @@
 - `r_to_py` now supports proper detectiong of r DataFrames and their conversion (indexes and column names are correctly kept)
 - Added `Summary` dataclass that accurately describes the format returned by summary()
 - Extended `summary` to return the whole summary and added `__repr__` for pretty and quick summaries
+- Added `fixef` for getting population fixed effect summary pd.DataFrame
 
 
 ## 0.1.12 - RDS loading/saving, families functions, default priors functions

@@ -205,3 +205,82 @@ class TestSummaryFunction:
         summary_repr = repr(summary)
         assert summary_repr == summary_str, \
             "repr(summary) should equal str(summary)"
+
+
+@pytest.mark.requires_brms
+class TestFixefFunction:
+    """Test the fixef() function for extracting population-level effects."""
+    
+    @pytest.mark.slow
+    def test_fixef_basic_functionality(self, sample_dataframe):
+        """
+        Test fixef() function for extracting fixed effects.
+        
+        Verifies:
+        - Returns a DataFrame with summary statistics
+        - Contains expected parameters (Intercept, x1)
+        - Has expected columns (Estimate, Est.Error, credible intervals)
+        - Values are reasonable and numeric
+        - Can extract specific parameters with pars argument
+        """
+        import brmspy
+        import pandas as pd
+        
+        # Fit a simple model
+        model = brmspy.fit(
+            formula="y ~ x1",
+            data=sample_dataframe,
+            family="gaussian",
+            iter=200,
+            warmup=100,
+            chains=2,
+            silent=2,
+            refresh=0
+        )
+        
+        # Get fixed effects (default: summary=True)
+        fixed_effects = brmspy.fixef(model)
+        
+        # Verify return type is DataFrame
+        assert isinstance(fixed_effects, pd.DataFrame), \
+            f"fixef() should return pandas DataFrame, got {type(fixed_effects)}"
+        
+        # Verify DataFrame is not empty
+        assert not fixed_effects.empty, \
+            "Fixed effects DataFrame should not be empty"
+        
+        # Verify expected parameters are present
+        param_names = fixed_effects.index.tolist()
+        assert any('Intercept' in str(p) for p in param_names), \
+            "Fixed effects should include Intercept parameter"
+        assert any('x1' in str(p) for p in param_names), \
+            "Fixed effects should include x1 parameter"
+        
+        # Verify expected columns exist
+        columns = fixed_effects.columns.tolist()
+        assert any('Estimate' in str(col) for col in columns), \
+            "Fixed effects should have Estimate column"
+        assert any('Error' in str(col) or 'Est.Error' in str(col) for col in columns), \
+            "Fixed effects should have error/uncertainty column"
+        
+        # Verify credible interval columns exist (default probs=(0.025, 0.975))
+        # Column names might be like 'Q2.5', 'Q97.5', 'l-95% CI', 'u-95% CI', etc.
+        assert len(columns) >= 3, \
+            "Fixed effects should have at least 3 columns (estimate, error, intervals)"
+        
+        # Verify all values are numeric (no NaNs or invalid data)
+        assert fixed_effects.select_dtypes(include=['number']).shape == fixed_effects.shape, \
+            "All fixed effects values should be numeric"
+        
+        # Verify no NaN values
+        assert not fixed_effects.isna().any().any(), \
+            "Fixed effects should not contain NaN values"
+        
+        # Test extracting specific parameters with pars argument
+        x1_only = brmspy.fixef(model, pars=["x1"])
+        assert isinstance(x1_only, pd.DataFrame), \
+            "fixef() with pars should return DataFrame"
+        assert len(x1_only) == 1, \
+            "fixef() with pars=['x1'] should return only 1 parameter"
+        assert 'x1' in str(x1_only.index[0]), \
+            "Extracted parameter should be x1"
