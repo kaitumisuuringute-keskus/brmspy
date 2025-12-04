@@ -17,6 +17,7 @@ from brmspy.brms_functions.io import get_brms_data, read_rds_fit, read_rds_raw, 
 from brmspy.brms_functions.prior import prior, get_prior, default_prior
 from brmspy.brms_functions.brm import brm, fit
 from brmspy.brms_functions.diagnostics import summary, fixef, ranef, posterior_summary, prior_summary, loo
+from brmspy.brms_functions.generic import call
 from brmspy.brms_functions.formula import formula
 from brmspy.brms_functions.prediction import posterior_epred, posterior_linpred, posterior_predict, log_lik
 from brmspy.brms_functions.stan import make_stancode
@@ -55,6 +56,9 @@ __all__ = [
 
     # diagnosis
     'summary', 'fixef', 'ranef', 'posterior_summary', 'prior_summary', 'loo',
+    
+    # generic
+    'call',
 
     # families
     'families', 'family', 'brmsfamily',

@@ -71,9 +71,24 @@
   * `loo()`: basic LOO-CV computation and Pareto k diagnostics
 * All tests optimized with reduced iterations (`iter=100, warmup=50`) for faster CI execution
 
+### Generic Function Access
+
+* **`call()` Universal Function Wrapper**: New generic function for calling any brms or R function:
+  * Call brms functions by name without dedicated Python wrappers
+  * Automatic bidirectional type conversion (Python ↔ R)
+  * Tries `brms::function_name` first, falls back to base R
+  * Useful for accessing newer brms features or utility functions
+  * Complete docstring with examples for various use cases
+
+* **`sanitised_name()` Helper Function**: Sanitizes function names for safe R execution:
+  * Converts Python-style names to valid R identifiers
+  * Preserves namespace separators (e.g., `brms::loo`)
+  * Handles invalid characters and numeric prefixes
+  * Complete docstring with sanitization examples
+
 ### API
 
-* Exported `fixef`, `ranef`, `posterior_summary`, `prior_summary`, and `loo` from `brmspy` module
+* Exported `fixef`, `ranef`, `posterior_summary`, `prior_summary`, `loo`, and `call` from `brmspy` module
 * Added `LooResult` to public types for model comparison workflows
 
 
