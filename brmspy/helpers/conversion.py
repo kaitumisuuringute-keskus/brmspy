@@ -1002,9 +1002,10 @@ def r_to_py(obj):
             return cv.rpy2py(obj)
 
     # 1) Atomic vectors -------------------------------------------------------
+    obj_any = typing.cast(typing.Any, obj)
     if isinstance(obj, vectors.Vector) and not isinstance(obj, ListVector):
         # length 1 → scalar
-        if len(obj) == 1:
+        if obj_any.__len__ and len(obj_any) == 1:
             # Try default R→Python conversion
             with localconverter(default_converter) as cv:
                 py = cv.rpy2py(obj[0])

@@ -127,19 +127,47 @@ class Summary:
 
 def summary(model: FitResult, **kwargs) -> Summary:
     """
-    Generate summary statistics for fitted model.
+    Generate comprehensive summary statistics for fitted brms model.
+    
+    Returns a [`Summary`](brmspy/brms_functions/diagnostics.py:27) dataclass containing model information,
+    parameter estimates, and diagnostic information. The Summary object provides
+    pretty printing via `str()` or `print()` and structured access to all components.
     
     [BRMS documentation and parameters](https://paulbuerkner.com/brms/reference/summary.brmsfit.html)
     
     Parameters
     ----------
     model : FitResult
-        Fitted model from fit()
+        Fitted model from [`fit()`](brmspy/brms_functions/brm.py:1)
     **kwargs
-        Additional arguments to summary(), e.g., probs=c(0.025, 0.975)
+        Additional arguments passed to brms::summary(), such as:
+        - probs: Quantiles for credible intervals, e.g., `probs=(0.025, 0.975)`
+        - robust: Use robust estimates (median, MAD), default False
     
     Returns
     -------
+    Summary
+        A dataclass containing:
+        
+        - **formula** (str): Model formula as string
+        - **data_name** (str): Name of the data object used
+        - **group** (str): Grouping structure information
+        - **nobs** (int): Number of observations
+        - **ngrps** (Dict[str, int]): Number of groups per grouping variable
+        - **autocor** (Optional[dict]): Autocorrelation structure if present
+        - **prior** (pd.DataFrame): Prior specifications used
+        - **algorithm** (str): Sampling algorithm (e.g., "sampling")
+        - **sampler** (str): Sampler specification (e.g., "sample(hmc)")
+        - **total_ndraws** (int): Total number of post-warmup draws
+        - **chains** (float): Number of chains
+        - **iter** (float): Iterations per chain
+        - **warmup** (float): Warmup iterations per chain
+        - **thin** (float): Thinning interval
+        - **has_rhat** (bool): Whether Rhat diagnostics are reported
+        - **fixed** (pd.DataFrame): Population-level (fixed) effects estimates
+        - **spec_pars** (pd.DataFrame): Family-specific parameters (e.g., sigma)
+        - **cor_pars** (pd.DataFrame): Correlation parameters if present
+        - **random** (dict): Group-level (random) effects by grouping variable
     
     See Also
     --------
@@ -148,12 +176,47 @@ def summary(model: FitResult, **kwargs) -> Summary:
     
     Examples
     --------
-    ```python
-    from brmspy import brms
+    Basic usage with pretty printing:
     
-    model = brms.fit("y ~ x", data=data, chains=4)
-    df_fixed_effects = brms.summary(model)['fixed']
-    print(df_fixed_effects)
+    ```python
+    import brmspy
+    
+    model = brmspy.fit("y ~ x", data=data, chains=4)
+    summary = brmspy.summary(model)
+    
+    # Pretty print full summary
+    print(summary)
+    ```
+    
+    Access specific components:
+    
+    ```python
+    # Get population-level effects as DataFrame
+    fixed_effects = summary.fixed
+    print(fixed_effects)
+    
+    # Get family-specific parameters (e.g., sigma)
+    spec_params = summary.spec_pars
+    print(spec_params)
+    
+    # Access random effects (if present)
+    random_effects = summary.random
+    for group_name, group_df in random_effects.items():
+        print(f"Random effects for {group_name}:")
+        print(group_df)
+    
+    # Check model metadata
+    print(f"Formula: {summary.formula}")
+    print(f"Total draws: {summary.total_ndraws}")
+    print(f"Rhat reported: {summary.has_rhat}")
+    ```
+    
+    Custom credible intervals:
+    
+    ```python
+    # Use 90% credible intervals instead of default 95%
+    summary_90 = brmspy.summary(model, probs=(0.05, 0.95))
+    print(summary_90.fixed)
     ```
     """
     
