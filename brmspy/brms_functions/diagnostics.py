@@ -14,123 +14,20 @@ from ..helpers.conversion import (
     r_to_py
 )
 from ..types import (
-    FitResult
+    FitResult,
+    SummaryResult
 )
 import rpy2.robjects as ro
 
 
-def _indent_block(text: str, prefix: str = "  ") -> str:
-    return "\n".join(prefix + line for line in str(text).splitlines())
 
 
-@dataclass
-class Summary:
-    formula: str
-    data_name: str
-    group: str
-    nobs: int
-    ngrps: Dict[str, int]
-    autocor: Optional[dict]
-    prior: pd.DataFrame
-    algorithm: str
-    sampler: str
-    total_ndraws: int
-    chains: float
-    iter: float
-    warmup: float
-    thin: float
-    has_rhat: bool
-    fixed: pd.DataFrame
-    spec_pars: pd.DataFrame
-    cor_pars: pd.DataFrame
-    random: dict
-
-    def __str__(self) -> str:
-        lines = []
-
-        # Header (roughly analogous to brms::summary header)
-        lines.append("Summary of brmsfit (Python)")
-        lines.append("")
-        lines.append(f"Formula: {self.formula}")
-        lines.append(
-            f"   Data: {self.data_name} (Number of observations: {self.nobs})"
-        )
-        lines.append(
-            "  Draws: "
-            f"{self.chains:g} chains, each with iter = {self.iter:g}; "
-            f"warmup = {self.warmup:g}; thin = {self.thin:g};"
-        )
-        lines.append(
-            f"         total post-warmup draws = {self.total_ndraws}"
-        )
-
-        # Group-level info
-        if self.ngrps:
-            lines.append("")
-            lines.append("Group-Level Effects:")
-            grp_parts = [f"{name} ({n})" for name, n in self.ngrps.items()]
-            lines.append("  Groups: " + ", ".join(grp_parts))
-
-            if self.random:
-                # brms usually has a list of data.frames here; we try to mirror that
-                if isinstance(self.random, dict):
-                    for gname, val in self.random.items():
-                        lines.append(f" ~{gname}")
-                        if isinstance(val, pd.DataFrame):
-                            lines.append(_indent_block(val.to_string(), "  "))
-                        else:
-                            lines.append(_indent_block(str(val), "  "))
-                else:
-                    lines.append(_indent_block(str(self.random), "  "))
-
-        # Population-level effects
-        if isinstance(self.fixed, pd.DataFrame) and not self.fixed.empty:
-            lines.append("")
-            lines.append("Population-Level Effects:")
-            lines.append(_indent_block(self.fixed.to_string(), "  "))
-
-        # Family-specific parameters (spec_pars)
-        if isinstance(self.spec_pars, pd.DataFrame) and not self.spec_pars.empty:
-            lines.append("")
-            lines.append("Family Specific Parameters:")
-            lines.append(_indent_block(self.spec_pars.to_string(), "  "))
-
-        # Correlation parameters (cor_pars)
-        if isinstance(self.cor_pars, pd.DataFrame) and not self.cor_pars.empty:
-            lines.append("")
-            lines.append("Correlation Parameters:")
-            lines.append(_indent_block(self.cor_pars.to_string(), "  "))
-
-        # Prior info (optional but often useful)
-        if isinstance(self.prior, pd.DataFrame) and not self.prior.empty:
-            lines.append("")
-            lines.append("Prior:")
-            lines.append(_indent_block(self.prior.to_string(), "  "))
-
-        # Extra diagnostics / meta info
-        lines.append("")
-        lines.append("Algorithm & Diagnostics:")
-        lines.append(f"  Algorithm: {self.algorithm}")
-        lines.append(f"  Sampler:   {self.sampler}")
-        lines.append(f"  Rhat:      {'reported' if self.has_rhat else 'not reported'}")
-        if self.autocor is not None:
-            lines.append(f"  Autocor:   {self.autocor}")
-        else:
-            lines.append("  Autocor:   None")
-
-        return "\n".join(lines)
-
-    def __repr__(self) -> str:
-        # For interactive use, repr == pretty summary
-        return self.__str__()
-
-
-def summary(model: FitResult, **kwargs) -> Summary:
+def summary(model: FitResult, **kwargs) -> SummaryResult:
     """
     Generate comprehensive summary statistics for fitted brms model.
     
-    Returns a [`Summary`](brmspy/brms_functions/diagnostics.py:27) dataclass containing model information,
-    parameter estimates, and diagnostic information. The Summary object provides
+    Returns a `SummaryResult` dataclass containing model information,
+    parameter estimates, and diagnostic information. The SummaryResult object provides
     pretty printing via `str()` or `print()` and structured access to all components.
     
     [BRMS documentation and parameters](https://paulbuerkner.com/brms/reference/summary.brmsfit.html)
@@ -146,7 +43,7 @@ def summary(model: FitResult, **kwargs) -> Summary:
     
     Returns
     -------
-    Summary
+    SummaryResult
         A dataclass containing:
         
         - **formula** (str): Model formula as string
@@ -235,9 +132,9 @@ def summary(model: FitResult, **kwargs) -> Summary:
 
     names = summary_r.names
     get = lambda param: r_to_py(cast(Callable, ro.r(_get_methods_r.get(param, _default_get_r)(param)))(summary_r))
-    out = iterate_robject_to_dataclass(names=names, get=get, target_dataclass=Summary)
+    out = iterate_robject_to_dataclass(names=names, get=get, target_dataclass=SummaryResult)
 
-    return cast(Summary, out)
+    return cast(SummaryResult, out)
 
 
 def fixef(
