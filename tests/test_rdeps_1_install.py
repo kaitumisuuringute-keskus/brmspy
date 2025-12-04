@@ -55,6 +55,9 @@ def _remove_deps():
     for name in list(sys.modules.keys()):
         if name.startswith("brmspy"):
             del sys.modules[name]
+    
+    from brmspy.helpers.singleton import _invalidate_singletons
+    _invalidate_singletons()
 
 
 @pytest.mark.crossplatform
@@ -104,3 +107,7 @@ class TestCrossplatformInstall:
         assert _brms is not None
 
         _fit_minimal_model(brms)
+
+        from brmspy.binaries.use import deactivate_runtime
+
+        deactivate_runtime()

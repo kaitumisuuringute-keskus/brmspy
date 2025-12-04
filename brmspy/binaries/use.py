@@ -4,21 +4,36 @@ import tempfile
 import urllib.request
 import shutil
 from pathlib import Path
-from typing import Optional, Tuple, Union
+from typing import Callable, Optional, Tuple, Union, cast
 
 import rpy2.robjects as ro
 
-from brmspy.binaries.config import get_active_runtime, set_active_runtime
+from brmspy.binaries.config import get_active_runtime, _set_active_runtime, _clear_active_runtime_config_only
 from brmspy.binaries.env import system_fingerprint
 from brmspy.binaries.github import get_github_asset_sha256_from_url
 from brmspy.binaries.r import _try_force_unload_package, _r_namespace_loaded, _r_package_attached
 from brmspy.helpers.log import greet, log, log_warning
+from brmspy.helpers.singleton import _invalidate_singletons
 
 OFFICIAL_RELEASE_PATTERN = "https://github.com/kaitumisuuringute-keskus/brmspy/"
 HASH_FILENAME = "hash"
 MANIFEST_FILENAME = "manifest.json"
 RUNTIME_SUBDIR_NAME = "runtime"
 TMP_EXTRACT_DIR_NAME = "_tmp_extract"
+
+_default_libpath: Optional[ro.Sexp] = None
+_default_cmdstan_path: Optional[ro.Sexp] = None
+
+def _store_default_renv():
+    global _default_libpath, _default_cmdstan_path
+    # In case we are on base system, store base libpath
+    if get_active_runtime() is None:
+        _default_libpath = cast(ro.Sexp, ro.r('.libPaths()'))
+        _default_cmdstan_path = None
+        try:
+            _default_cmdstan_path = cast(ro.Sexp, ro.r("cmdstanr::cmdstan_path()"))
+        except:
+            pass
 
 def activate_runtime(runtime_root: Union[str, Path]) -> None:
     """
@@ -115,6 +130,10 @@ def activate_runtime(runtime_root: Union[str, Path]) -> None:
     except ImportError:
         pass
 
+    # In case we are on base system, store base libpath
+    _store_default_renv()
+    _invalidate_singletons()
+
     rlib_posix = rlib_dir.as_posix()
     cmdstan_posix = cmdstan_dir.as_posix()
 
@@ -149,8 +168,8 @@ def activate_runtime(runtime_root: Union[str, Path]) -> None:
 
     # Save the activated runtime path for auto-activation on next import
     try:
-        from brmspy.binaries.config import set_active_runtime
-        set_active_runtime(runtime_root)
+        from brmspy.binaries.config import _set_active_runtime
+        _set_active_runtime(runtime_root)
     except Exception as e:
         log_warning(f"Failed to save runtime configuration: {e}")
 
@@ -158,6 +177,28 @@ def activate_runtime(runtime_root: Union[str, Path]) -> None:
     # Any further brms/cmdstanr calls in this process will use it.
 
     greet()
+
+def deactivate_runtime():
+    global _default_libpath, _default_cmdstan_path
+    if _default_libpath is None or get_active_runtime() is None:
+        return
+    
+    for pkg in ("brms", "cmdstanr", "rstan"):
+        if _r_namespace_loaded(pkg) or _r_package_attached(pkg):
+            _try_force_unload_package(pkg, uninstall=False)
+
+    # Replace libPaths
+    r_libpaths = cast(Callable, ro.r('.libPaths'))
+    r_libpaths(_default_libpath)
+
+    if _default_cmdstan_path is None:
+        ro.r('cmdstanr::set_cmdstan_path(path=NULL)')
+    else:
+        r_set_cmdstan_path = cast(Callable, ro.r('cmdstanr::set_cmdstan_path'))
+        r_set_cmdstan_path(_default_cmdstan_path)
+    
+    _clear_active_runtime_config_only()
+    _invalidate_singletons()
 
 
 
@@ -487,7 +528,7 @@ def autoload_last_runtime():
                 activate_runtime(runtime_path)
             except Exception as e:
                 log_warning(f"Failed to auto-activate saved runtime at {runtime_path}: {e}")
-                set_active_runtime(None)
+                _set_active_runtime(None)
     except Exception:
         # Silently skip if config module unavailable or other issues
         pass

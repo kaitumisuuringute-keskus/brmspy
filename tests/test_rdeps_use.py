@@ -534,14 +534,14 @@ class TestAutoloadLastRuntime:
     def test_autoload_last_runtime_nonexistent_path(self, tmp_path, monkeypatch):
         """Handle nonexistent runtime path gracefully (lines 485-490)"""
         from brmspy.binaries.use import autoload_last_runtime
-        from brmspy.binaries.config import set_active_runtime
+        from brmspy.binaries.config import _set_active_runtime
         
         test_home = tmp_path / "test_home"
         monkeypatch.setattr(Path, "home", lambda: test_home)
         
         # Set nonexistent runtime
         nonexistent = tmp_path / "nonexistent_runtime"
-        set_active_runtime(nonexistent)
+        _set_active_runtime(nonexistent)
         
         # Should not raise exception
         autoload_last_runtime()

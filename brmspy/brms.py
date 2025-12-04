@@ -23,6 +23,7 @@ from brmspy.brms_functions.prediction import posterior_epred, posterior_linpred,
 from brmspy.brms_functions.stan import make_stancode
 from brmspy.brms_functions import families
 from brmspy.brms_functions.families import family, brmsfamily
+from brmspy.binaries.use import deactivate_runtime, get_active_runtime
 
 autoload_last_runtime()
 
@@ -37,7 +38,7 @@ except ImportError:
 
 __all__ = [
     # R env
-    'install_brms', 'get_brms_version', 'install_prebuilt',
+    'install_brms', 'get_brms_version', 'install_prebuilt', 'deactivate_runtime', 'get_active_runtime',
 
     # IO
     'get_brms_data', 'save_rds', 'read_rds_raw', 'read_rds_fit',

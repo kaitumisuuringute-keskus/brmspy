@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from typing import Optional
 
+
 from brmspy.helpers.log import log_warning
 
 
@@ -32,7 +33,7 @@ def _get_config_path() -> Path:
     return config_dir / "config.json"
 
 
-def load_config() -> dict:
+def _load_config() -> dict:
     """
     Load brmspy configuration from disk.
     
@@ -49,9 +50,9 @@ def load_config() -> dict:
     Examples
     --------
     ```python
-    from brmspy.binaries.config import load_config
+    from brmspy.binaries.config import _load_config
     
-    config = load_config()
+    config = _load_config()
     runtime_path = config.get('active_runtime')
     ```
     """
@@ -68,7 +69,7 @@ def load_config() -> dict:
         return {}
 
 
-def save_config(config: dict) -> None:
+def _save_config(config: dict) -> None:
     """
     Save brmspy configuration to disk.
     
@@ -85,10 +86,10 @@ def save_config(config: dict) -> None:
     Examples
     --------
     ```python
-    from brmspy.binaries.config import save_config
+    from brmspy.binaries.config import _save_config
     
     config = {'active_runtime': '/path/to/runtime'}
-    save_config(config)
+    _save_config(config)
     ```
     """
     config_path = _get_config_path()
@@ -135,7 +136,7 @@ def get_active_runtime() -> Optional[Path]:
         print("No active runtime configured")
     ```
     """
-    config = load_config()
+    config = _load_config()
     runtime_str = config.get('active_runtime')
     
     if runtime_str is None:
@@ -144,7 +145,7 @@ def get_active_runtime() -> Optional[Path]:
     return Path(runtime_str).expanduser().resolve()
 
 
-def set_active_runtime(runtime_path: Optional[Path]) -> None:
+def _set_active_runtime(runtime_path: Optional[Path]) -> None:
     """
     Save path to active prebuilt runtime.
     
@@ -162,24 +163,29 @@ def set_active_runtime(runtime_path: Optional[Path]) -> None:
     --------
     ```python
     from pathlib import Path
-    from brmspy.binaries.config import set_active_runtime
+    from brmspy.binaries.config import _set_active_runtime
     
     runtime = Path.home() / ".brmspy" / "runtime" / "linux-x86_64-r4.3-0.1.0"
-    set_active_runtime(runtime)
+    _set_active_runtime(runtime)
     ```
     """
     
     
-    config = load_config()
+    config = _load_config()
     if runtime_path:
         runtime_path = Path(runtime_path).expanduser().resolve()
         config['active_runtime'] = str(runtime_path)
     else:
         config['active_runtime'] = None
-    save_config(config)
+    _save_config(config)
 
+def _clear_active_runtime_config_only() -> None:
+    config = _load_config()
+    if 'active_runtime' in config:
+        del config['active_runtime']
+        _save_config(config)
 
-def clear_active_runtime() -> None:
+def _clear_active_runtime() -> None:
     """
     Clear active prebuilt runtime configuration.
     
@@ -191,13 +197,11 @@ def clear_active_runtime() -> None:
     Examples
     --------
     ```python
-    from brmspy.binaries.config import clear_active_runtime
+    from brmspy.binaries.config import _clear_active_runtime
     
-    # Disable auto-activation
-    clear_active_runtime()
+    _clear_active_runtime()
     ```
     """
-    config = load_config()
-    if 'active_runtime' in config:
-        del config['active_runtime']
-        save_config(config)
+    from brmspy.binaries.use import deactivate_runtime
+    deactivate_runtime()
+    _clear_active_runtime_config_only()

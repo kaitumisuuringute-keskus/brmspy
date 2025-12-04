@@ -187,7 +187,8 @@ from brmspy import brms
 from brmspy.binaries import (
     system_fingerprint,
     activate_runtime,
-    install_and_activate_runtime
+    install_and_activate_runtime,
+    deactivate_runtime
 )
 from brmspy.brms import (
     get_brms_data,
@@ -226,7 +227,7 @@ from brmspy.brms import (
 )
 __all__ = [
     # R env
-    'install_brms', 'get_brms_version', 'install_prebuilt',
+    'install_brms', 'get_brms_version', 'install_prebuilt', 'deactivate_runtime',
 
     # IO
     'get_brms_data', 'save_rds', 'read_rds_raw', 'read_rds_fit',
