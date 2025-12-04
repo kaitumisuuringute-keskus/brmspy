@@ -1,10 +1,12 @@
 from dataclasses import dataclass
 from types import UnionType
-from typing import Any, Callable, Dict, Optional, TypedDict, Union, cast, get_origin
+from typing import Any, Callable, Dict, Iterable, Optional, TypedDict, Union, cast, get_origin
 import typing
 import pandas as pd
 from rpy2.robjects import default_converter, pandas2ri
 import pandas as pd
+import xarray as xr
+import numpy as np
 
 from brmspy.helpers.log import log_warning
 from brmspy.helpers.robject_iter import iterate_robject_to_dataclass
@@ -257,3 +259,143 @@ def fixef(
     r_fixef = cast(Callable, ro.r('fixef'))
     r_df = r_fixef(obj_r, **kwargs)
     return cast(pd.DataFrame, r_to_py(r_df))
+
+
+
+def ranef(
+  object: Union[FitResult, ro.ListVector],
+  summary: bool = True,
+  robust: bool = False,
+  probs = (0.025, 0.975),
+  pars = None,
+  groups = None,
+  **kwargs
+) -> Dict[str, xr.DataArray]:
+    """
+    Extract group-level (random) effects as xarray DataArrays.
+
+    This is a wrapper around ``brms::ranef()``. For ``summary=True`` (default),
+    each grouping factor is returned as a 3D array with dimensions
+    ``("group", "stat", "coef")``. For ``summary=False``, each factor is
+    returned as ``("draw", "group", "coef")`` with one slice per posterior draw.
+
+    Parameters
+    ----------
+    object : FitResult or rpy2.robjects.ListVector
+        Fitted model returned by :func:`brmspy.brms.fit` or an R ``brmsfit``
+        object / summary list.
+    summary : bool, default True
+        If True, return posterior summaries for the group-level effects
+        (means, errors, intervals). If False, return per-draw random effects.
+    robust : bool, default False
+        If True, use robust summaries (median and MAD) instead of mean and SD.
+        Passed through to ``brms::ranef()`` when ``summary=True``.
+    probs : tuple of float, default (0.025, 0.975)
+        Central posterior interval probabilities, as in ``brms::ranef()``.
+        Only used when ``summary=True``.
+    pars : str or sequence of str, optional
+        Subset of group-level parameters to include. Passed to ``brms::ranef()``.
+    groups : str or sequence of str, optional
+        Subset of grouping factors to include. Passed to ``brms::ranef()``.
+    **kwargs
+        Additional keyword arguments forwarded to ``brms::ranef()``.
+
+    Returns
+    -------
+    dict[str, xarray.DataArray]
+        Mapping from grouping-factor name (e.g. ``"patient"``) to a
+        ``DataArray``:
+
+        * ``summary=True``: dims ``("group", "stat", "coef")``,
+          with ``stat`` typically containing
+          ``["Estimate", "Est.Error", "Q2.5", "Q97.5"]``.
+        * ``summary=False``: dims ``("draw", "group", "coef")``,
+          where ``draw`` indexes posterior samples.
+
+    Examples
+    --------
+    Compute summary random effects and inspect all coefficients for a single
+    group level:
+
+    ```python
+    from brmspy import brms
+    from brmspy.brms import ranef
+
+    fit = brms.fit("count ~ zAge + zBase * Trt + (1 + zBase + Trt | patient)",
+                   data=data, family="poisson")
+
+    re = ranef(fit)  # summary=True by default
+    patient_re = re["patient"].sel(group="1", stat="Estimate")
+    ```
+
+    Extract per-draw random effects for downstream MCMC analysis:
+
+    ```python
+    re_draws = ranef(fit, summary=False)
+    patient_draws = re_draws["patient"]       # dims: ("draw", "group", "coef")
+    first_draw = patient_draws.sel(draw=0)
+    ```
+    """
+    obj_r = py_to_r(object)
+    kwargs = kwargs_r({
+        "summary": summary,
+        "robust": robust,
+        "probs": probs,
+        "pars": pars,
+        **kwargs
+    })
+
+    r_ranef = cast(Callable, ro.r('ranef'))
+    r_list = r_ranef(obj_r, **kwargs)
+
+    out: Dict[str, xr.DataArray] = {}
+
+    for name in r_list.names:
+        # R 3D array for this grouping factor
+        r_arr = cast(Callable, ro.r(f"function(x) x${name}"))(r_list)
+        dims = list(r_arr.do_slot("dim"))  # length-3
+
+        # dimnames is a list of length 3, some entries may be NULL
+        dimnames_r = r_arr.do_slot("dimnames")
+        dimnames: list[Optional[list[str]]] = []
+        for dn in dimnames_r:
+            if dn == ro.NULL:
+                dimnames.append(None)
+            else:
+                dimnames.append(list(cast(Iterable, r_to_py(dn))))
+
+        p_arr = np.asarray(r_arr).reshape(dims)
+
+        if summary:
+            # brms: 1=group levels, 2=stats, 3=coefs
+            groups_dn, stats_dn, coefs_dn = dimnames
+
+            da = xr.DataArray(
+                p_arr,
+                dims=("group", "stat", "coef"),
+                coords={
+                    "group": groups_dn,
+                    "stat": stats_dn,
+                    "coef": coefs_dn,
+                },
+            )
+        else:
+            # brms: 1=draws, 2=group levels, 3=coefs
+            draws_dn, groups_dn, coefs_dn = dimnames
+            n_draws = dims[0]
+            if draws_dn is None:
+                # brms does not name draws, so create a simple index
+                draws_dn = list(range(n_draws))
+
+            da = xr.DataArray(
+                p_arr,
+                dims=("draw", "group", "coef"),
+                coords={
+                    "draw": draws_dn,
+                    "group": groups_dn,
+                    "coef": coefs_dn,
+                },
+            )
+
+        out[name] = da
+    return out
