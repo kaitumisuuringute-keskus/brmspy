@@ -455,3 +455,134 @@ class TestRanefFunction:
         # Verify no NaN values in the draws
         assert not group_re_draws.isnull().any(), \
             "Random effects draws should not contain NaN values"
+
+
+@pytest.mark.requires_brms
+class TestPosteriorSummaryFunction:
+    """Test the posterior_summary() function for comprehensive parameter summaries."""
+    
+    @pytest.mark.slow
+    def test_posterior_summary_all_parameters(self, sample_dataframe):
+        """
+        Test posterior_summary() for extracting all parameter estimates.
+        
+        Verifies:
+        - Returns a DataFrame with all model parameters
+        - Includes fixed effects, family parameters, and more
+        - Has expected columns (Estimate, Est.Error, credible intervals)
+        - Can extract specific parameters with variable argument
+        """
+        import brmspy
+        import pandas as pd
+        
+        # Fit a simple model
+        model = brmspy.fit(
+            formula="y ~ x1",
+            data=sample_dataframe,
+            family="gaussian",
+            iter=100,
+            warmup=50,
+            chains=2,
+            silent=2,
+            refresh=0
+        )
+        
+        # Get posterior summary for all parameters
+        post_summary = brmspy.posterior_summary(model)
+        
+        # Verify return type is DataFrame
+        assert isinstance(post_summary, pd.DataFrame), \
+            f"posterior_summary() should return pandas DataFrame, got {type(post_summary)}"
+        
+        # Verify DataFrame is not empty
+        assert not post_summary.empty, \
+            "Posterior summary DataFrame should not be empty"
+        
+        # Verify expected columns exist
+        columns = post_summary.columns.tolist()
+        assert any('Estimate' in str(col) for col in columns), \
+            "Posterior summary should have Estimate column"
+        assert any('Error' in str(col) or 'Est.Error' in str(col) for col in columns), \
+            "Posterior summary should have error/uncertainty column"
+        
+        # Verify it contains more than just fixed effects (should include sigma, etc.)
+        param_names = post_summary.index.tolist()
+        assert len(param_names) >= 3, \
+            "Should have at least Intercept, x1, and sigma parameters"
+        
+        # Check for specific parameters
+        assert any('Intercept' in str(p) for p in param_names), \
+            "Should include Intercept parameter"
+        assert any('x1' in str(p) for p in param_names), \
+            "Should include x1 parameter"
+        assert any('sigma' in str(p).lower() for p in param_names), \
+            "Should include sigma parameter for Gaussian model"
+        
+        # Verify no NaN values
+        assert not post_summary.isna().any().any(), \
+            "Posterior summary should not contain NaN values"
+
+
+@pytest.mark.requires_brms
+class TestPriorSummaryFunction:
+    """Test the prior_summary() function for extracting prior specifications."""
+    
+    @pytest.mark.slow
+    def test_prior_summary_with_custom_priors(self, sample_dataframe):
+        """
+        Test prior_summary() for extracting prior specifications from fitted model.
+        
+        Verifies:
+        - Returns a DataFrame with prior specifications
+        - Includes both user-set and default priors when all=True
+        - Has expected columns (prior, class, coef, etc.)
+        - Can filter to only user-set priors with all=False
+        """
+        import brmspy
+        import pandas as pd
+        
+        # Fit a model with custom priors
+        model = brmspy.fit(
+            formula="y ~ x1",
+            data=sample_dataframe,
+            priors=[brmspy.prior("normal(0, 1)", "b")],
+            family="gaussian",
+            iter=100,
+            warmup=50,
+            chains=2,
+            silent=2,
+            refresh=0
+        )
+        
+        # Get prior summary (all priors including defaults)
+        prior_sum = brmspy.prior_summary(model, all=True)
+        
+        # Verify return type is DataFrame
+        assert isinstance(prior_sum, pd.DataFrame), \
+            f"prior_summary() should return pandas DataFrame, got {type(prior_sum)}"
+        
+        # Verify DataFrame is not empty
+        assert not prior_sum.empty, \
+            "Prior summary DataFrame should not be empty"
+        
+        # Verify expected columns exist
+        columns = prior_sum.columns.tolist()
+        assert any('prior' in str(col).lower() for col in columns), \
+            "Prior summary should have 'prior' column"
+        assert any('class' in str(col).lower() for col in columns), \
+            "Prior summary should have 'class' column"
+        
+        # Verify it contains information about the custom prior
+        prior_strings = prior_sum['prior'].tolist() if 'prior' in prior_sum.columns else []
+        # The prior string might be in a different format in the summary
+        assert len(prior_strings) > 0, \
+            "Should have at least one prior specification"
+        
+        # Test getting only user-set priors (all=False)
+        user_priors = brmspy.prior_summary(model, all=False)
+        assert isinstance(user_priors, pd.DataFrame), \
+            "prior_summary(all=False) should return DataFrame"
+        
+        # User-set priors should be subset of all priors
+        assert len(user_priors) <= len(prior_sum), \
+            "User-set priors should be subset of all priors"

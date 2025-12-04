@@ -1,14 +1,9 @@
-from dataclasses import dataclass
-from types import UnionType
-from typing import Any, Callable, Dict, Iterable, Optional, TypedDict, Union, cast, get_origin
-import typing
+from typing import Callable, Dict, Iterable, Optional, Union, cast
 import pandas as pd
-from rpy2.robjects import default_converter, pandas2ri
 import pandas as pd
 import xarray as xr
 import numpy as np
 
-from brmspy.helpers.log import log_warning
 from brmspy.helpers.robject_iter import iterate_robject_to_dataclass
 from ..helpers.conversion import (
     kwargs_r,
@@ -399,3 +394,192 @@ def ranef(
 
         out[name] = da
     return out
+
+
+def posterior_summary(
+    object: Union[FitResult, ro.ListVector],
+    variable = None,
+    probs = (0.025, 0.975),
+    robust = False,
+    **kwargs
+) -> pd.DataFrame:
+    """
+    Extract posterior summary statistics for all or selected model parameters.
+    
+    Provides a DataFrame with estimates, standard errors, and credible intervals
+    for all parameters in a brms model, including fixed effects, random effects,
+    and auxiliary parameters. More comprehensive than [`fixef()`](brmspy/brms_functions/diagnostics.py:137)
+    or [`ranef()`](brmspy/brms_functions/diagnostics.py:260) as it covers all parameter types.
+    
+    [BRMS documentation](https://paulbuerkner.com/brms/reference/posterior_summary.brmsfit.html)
+    
+    Parameters
+    ----------
+    object : FitResult or ro.ListVector
+        Fitted model from [`fit()`](brmspy/brms_functions/brm.py:1) or R brmsfit object
+    variable : str or list of str, optional
+        Specific variable name(s) to extract. If None, returns all parameters.
+        Supports regex patterns for flexible selection.
+    probs : tuple of float, default=(0.025, 0.975)
+        Quantiles for credible intervals, e.g., (0.025, 0.975) for 95% intervals.
+    robust : bool, default=False
+        If True, use median and MAD instead of mean and SD for summary statistics.
+    **kwargs
+        Additional arguments passed to brms::posterior_summary()
+    
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with parameters as rows and columns for Estimate, Est.Error,
+        and quantiles (e.g., Q2.5, Q97.5). Includes all model parameters:
+        population-level effects, group-level effects, and auxiliary parameters.
+    
+    See Also
+    --------
+    brms::posterior_summary : R documentation
+        https://paulbuerkner.com/brms/reference/posterior_summary.brmsfit.html
+    [`fixef()`](brmspy/brms_functions/diagnostics.py:137) : Extract only population-level effects
+    [`ranef()`](brmspy/brms_functions/diagnostics.py:260) : Extract only group-level effects
+    
+    Examples
+    --------
+    Get summary for all parameters:
+    
+    ```python
+    import brmspy
+    
+    model = brmspy.fit("y ~ x1 + (1|group)", data=data, chains=4)
+    
+    # Get all parameter summaries
+    all_params = brmspy.posterior_summary(model)
+    print(all_params)
+    ```
+    
+    Extract specific parameters:
+    
+    ```python
+    # Get summary for specific parameters
+    intercept = brmspy.posterior_summary(model, variable="b_Intercept")
+    print(intercept)
+    
+    # Multiple parameters
+    fixed_only = brmspy.posterior_summary(model, variable=["b_Intercept", "b_x1"])
+    print(fixed_only)
+    ```
+    
+    Custom credible intervals with robust estimates:
+    
+    ```python
+    # 90% intervals with median/MAD
+    robust_summary = brmspy.posterior_summary(
+        model,
+        probs=(0.05, 0.95),
+        robust=True
+    )
+    print(robust_summary)
+    ```
+    """
+    obj_r = py_to_r(object)
+    kwargs = kwargs_r({
+        "variable": variable,
+        "probs": probs,
+        "robust": robust,
+        **kwargs
+    })
+
+    r_fixef = cast(Callable, ro.r('brms::posterior_summary'))
+    r_df = r_fixef(obj_r, **kwargs)
+    return cast(pd.DataFrame, r_to_py(r_df))
+
+def prior_summary(
+    object: Union[FitResult, ro.ListVector],
+    all = True,
+    **kwargs
+) -> pd.DataFrame:
+    """
+    Extract prior specifications used in a fitted brms model.
+    
+    Returns a DataFrame containing all prior distributions that were used
+    (either explicitly set or defaults) when fitting the model. Useful for
+    documenting model specifications and understanding which priors were applied.
+    
+    [BRMS documentation](https://paulbuerkner.com/brms/reference/prior_summary.brmsfit.html)
+    
+    Parameters
+    ----------
+    object : FitResult or ro.ListVector
+        Fitted model from [`fit()`](brmspy/brms_functions/brm.py:1) or R brmsfit object
+    all : bool, default=True
+        If True, return all priors including default priors.
+        If False, return only explicitly set priors.
+    **kwargs
+        Additional arguments passed to brms::prior_summary()
+    
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with columns describing prior specifications:
+        - prior: Prior distribution formula
+        - class: Parameter class (b, sd, Intercept, etc.)
+        - coef: Specific coefficient (if applicable)
+        - group: Grouping factor (if applicable)
+        - resp: Response variable (for multivariate models)
+        - dpar: Distributional parameter (if applicable)
+        - nlpar: Non-linear parameter (if applicable)
+        - lb/ub: Bounds for truncated priors
+        - source: Origin of prior (default, user, etc.)
+    
+    See Also
+    --------
+    brms::prior_summary : R documentation
+        https://paulbuerkner.com/brms/reference/prior_summary.brmsfit.html
+    [`get_prior()`](brmspy/brms_functions/prior.py:1) : Get prior structure before fitting
+    [`default_prior()`](brmspy/brms_functions/prior.py:1) : Get default priors for a model
+    
+    Examples
+    --------
+    Get all priors used in a model:
+    
+    ```python
+    import brmspy
+    
+    model = brmspy.fit(
+        "y ~ x1 + (1|group)",
+        data=data,
+        priors=[brmspy.prior("normal(0, 1)", "b")],
+        chains=4
+    )
+    
+    # Get all priors (including defaults)
+    priors = brmspy.prior_summary(model)
+    print(priors)
+    ```
+    
+    Get only explicitly set priors:
+    
+    ```python
+    # Get only user-specified priors
+    user_priors = brmspy.prior_summary(model, all=False)
+    print(user_priors)
+    ```
+    
+    Compare with what would be used before fitting:
+    
+    ```python
+    # Before fitting - check default priors
+    default_priors = brmspy.get_prior("y ~ x1", data=data)
+    
+    # After fitting - see what was actually used
+    used_priors = brmspy.prior_summary(model)
+    ```
+    """
+    obj_r = py_to_r(object)
+    kwargs = kwargs_r({
+        "all": all,
+        **kwargs
+    })
+
+    r_fixef = cast(Callable, ro.r('brms::prior_summary'))
+    r_df = r_fixef(obj_r, **kwargs)
+    return cast(pd.DataFrame, r_to_py(r_df))
+
