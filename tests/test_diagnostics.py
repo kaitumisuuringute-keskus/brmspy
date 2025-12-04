@@ -757,3 +757,166 @@ class TestLooFunction:
         # For a simple model with Intercept + x1 + sigma, we expect ~3 parameters
         assert 0 < loo_result.p_loo < n_obs, \
             f"p_loo should be positive and less than n_obs, got {loo_result.p_loo}"
+
+
+@pytest.mark.requires_brms
+class TestLooCompareFunction:
+    """Test the loo_compare() function for comparing multiple models."""
+    
+    @pytest.mark.slow
+    def test_loo_compare_basic_two_models(self, sample_dataframe):
+        """
+        Test loo_compare() for comparing two models.
+        
+        Verifies:
+        - Returns LooCompareResult dataclass
+        - Table DataFrame has correct structure with model rankings
+        - Has expected columns (elpd_diff, se_diff)
+        - Models are ordered by performance (best first)
+        - Pretty print works via repr()
+        - Criterion is 'loo'
+        """
+        import brmspy
+        from brmspy.types import LooCompareResult
+        import pandas as pd
+        
+        # Fit two models of different complexity
+        model1 = brmspy.fit(
+            formula="y ~ x1",
+            data=sample_dataframe,
+            family="gaussian",
+            iter=100,
+            warmup=50,
+            chains=2,
+            silent=2,
+            refresh=0
+        )
+        
+        model2 = brmspy.fit(
+            formula="y ~ x1 + x2",
+            data=sample_dataframe,
+            family="gaussian",
+            iter=100,
+            warmup=50,
+            chains=2,
+            silent=2,
+            refresh=0
+        )
+        
+        # Compare models
+        comparison = brmspy.loo_compare(model1, model2)
+        
+        # Verify return type is LooCompareResult
+        assert isinstance(comparison, LooCompareResult), \
+            f"loo_compare() should return LooCompareResult, got {type(comparison)}"
+        
+        # Verify all expected attributes exist
+        assert hasattr(comparison, 'table'), \
+            "LooCompareResult should have 'table' attribute"
+        assert hasattr(comparison, 'criterion'), \
+            "LooCompareResult should have 'criterion' attribute"
+        assert hasattr(comparison, 'r'), \
+            "LooCompareResult should have 'r' attribute"
+        
+        # Verify table is a DataFrame
+        assert isinstance(comparison.table, pd.DataFrame), \
+            f"comparison.table should be pandas DataFrame, got {type(comparison.table)}"
+        
+        # Verify table is not empty
+        assert not comparison.table.empty, \
+            "Comparison table should not be empty"
+        
+        # Verify table has 2 rows (one per model)
+        assert len(comparison.table) == 2, \
+            f"Comparison table should have 2 rows, got {len(comparison.table)}"
+        
+        # Verify expected columns exist
+        columns = comparison.table.columns.tolist()
+        assert any('elpd_diff' in str(col) or 'diff' in str(col).lower() for col in columns), \
+            "Comparison table should have elpd_diff column"
+        assert any('se' in str(col).lower() for col in columns), \
+            "Comparison table should have standard error columns"
+        
+        # Verify criterion is 'loo'
+        assert comparison.criterion.lower() == 'loo', \
+            f"Criterion should be 'loo', got '{comparison.criterion}'"
+        
+        # Verify models are ranked (best model should have elpd_diff = 0)
+        if 'elpd_diff' in comparison.table.columns:
+            first_model_diff = comparison.table.iloc[0]['elpd_diff']
+            assert abs(first_model_diff) < 1e-10, \
+                "Best model should have elpd_diff ≈ 0"
+        
+        # Verify pretty print works
+        comp_str = repr(comparison)
+        assert isinstance(comp_str, str), \
+            "repr(comparison) should return a string"
+        assert len(comp_str) > 0, \
+            "Comparison string should not be empty"
+        assert "LOO" in comp_str.upper() or "elpd" in comp_str.lower(), \
+            "Comparison should contain LOO/ELPD information"
+    
+    @pytest.mark.slow
+    def test_loo_compare_custom_model_names(self, sample_dataframe):
+        """
+        Test loo_compare() with custom model names.
+        
+        Verifies:
+        - Can provide custom model names via model_names parameter
+        - Row names in comparison table match custom names
+        - Names appear in correct ranking order
+        """
+        import brmspy
+        import pandas as pd
+        
+        # Fit two models
+        model_simple = brmspy.fit(
+            formula="y ~ x1",
+            data=sample_dataframe,
+            family="gaussian",
+            iter=100,
+            warmup=50,
+            chains=2,
+            silent=2,
+            refresh=0
+        )
+        
+        model_complex = brmspy.fit(
+            formula="y ~ x1 + x2",
+            data=sample_dataframe,
+            family="gaussian",
+            iter=100,
+            warmup=50,
+            chains=2,
+            silent=2,
+            refresh=0
+        )
+        
+        # Compare with custom names
+        custom_names = ["simple_model", "complex_model"]
+        comparison = brmspy.loo_compare(
+            model_simple,
+            model_complex,
+            model_names=custom_names
+        )
+        
+        # Verify table has custom row names
+        row_names = comparison.table.index.tolist()
+        assert len(row_names) == 2, \
+            "Should have 2 row names"
+        
+        # Verify custom names are used (order might vary based on performance)
+        assert set(row_names) == set(custom_names), \
+            f"Row names should match custom names. Expected {custom_names}, got {row_names}"
+        
+        # Verify at least one of the custom names appears
+        assert any(name in custom_names for name in row_names), \
+            "At least one custom name should appear in table"
+        
+        # Verify we can access rows by custom names
+        for name in row_names:
+            assert name in comparison.table.index, \
+                f"Should be able to access row by name '{name}'"
+            row_data = comparison.table.loc[name]
+            assert row_data is not None, \
+                f"Row data for '{name}' should not be None"

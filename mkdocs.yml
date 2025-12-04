@@ -83,7 +83,7 @@ nav:
     - Types: api/types.md
     - BRMS functions:
       - brm: api/brms_functions/brm.md
-      - diagnosis: api/brms_functions/diagnosis.md
+      - diagnostics: api/brms_functions/diagnostics.md
       - families: api/brms_functions/families.md
       - formula: api/brms_functions/formula.md
       - io: api/brms_functions/io.md

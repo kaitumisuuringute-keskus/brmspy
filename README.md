@@ -131,6 +131,7 @@ az.plot_posterior(model.idata)
 - `brms.posterior_summary()` - Summary statistics for all parameters
 - `brms.prior_summary()` - Extract prior specifications used in model
 - `brms.loo()` - Leave-one-out cross-validation with PSIS
+- `brms.loo_compare()` - Compare multiple models using LOO-CV
 
 ### Prior Functions
 - `brms.prior()` - Define a prior with same syntax as r-s `prior_string`

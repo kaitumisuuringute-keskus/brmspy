@@ -48,6 +48,15 @@
   * Memory-efficient pointwise computation option for large datasets
   * Comprehensive docstring with model comparison examples
 
+* **`loo_compare()` Model Comparison**: New function for comparing multiple models using LOO-CV:
+  * Compare 2 or more models using approximate leave-one-out cross-validation
+  * Returns `LooCompareResult` dataclass with comparison table ranked by performance
+  * Table includes `elpd_diff` (difference from best model) and standard errors
+  * Support for custom model names via `model_names` parameter
+  * Pretty-print support via `__repr__()` showing formatted comparison table
+  * Best model always listed first with elpd_diff = 0
+  * Comprehensive docstring with usage examples
+
 ### Type System Improvements
 
 * **DataFrame Detection**: `r_to_py()` now correctly detects R DataFrames and preserves:
@@ -62,13 +71,14 @@
 
 ### Testing
 
-* Added 10 comprehensive tests for diagnostics functions:
+* Added 12 comprehensive tests for diagnostics functions:
   * `summary()`: structure validation, component access, pretty printing
   * `fixef()`: summary statistics and parameter extraction
   * `ranef()`: both summary mode and raw posterior draws mode
   * `posterior_summary()`: all parameters extraction
   * `prior_summary()`: prior specifications with custom priors
   * `loo()`: basic LOO-CV computation and Pareto k diagnostics
+  * `loo_compare()`: model comparison with default and custom model names
 * All tests optimized with reduced iterations (`iter=100, warmup=50`) for faster CI execution
 
 ### Generic Function Access
@@ -88,8 +98,8 @@
 
 ### API
 
-* Exported `fixef`, `ranef`, `posterior_summary`, `prior_summary`, `loo`, and `call` from `brmspy` module
-* Added `LooResult` to public types for model comparison workflows
+* Exported `fixef`, `ranef`, `posterior_summary`, `prior_summary`, `loo`, `loo_compare`, and `call` from `brmspy` module
+* Added `LooResult` and `LooCompareResult` to public types for model comparison workflows
 
 
 ## 0.1.12 - RDS loading/saving, families functions, default priors functions
