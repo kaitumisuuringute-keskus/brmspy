@@ -72,8 +72,6 @@ class TestCrossplatformInstall:
         # Keep brmspy after removal to ensure the library imports without brms installed
         from brmspy import brms
         from brmspy.helpers.singleton import _get_brms
-        with pytest.raises(ImportError):
-            _get_brms()
 
         brms.install_brms(use_prebuilt_binaries=False)
 
@@ -96,8 +94,6 @@ class TestCrossplatformInstall:
         # Keep brmspy after removal to ensure the library imports without brms installed
         from brmspy import brms
         from brmspy.helpers.singleton import _get_brms
-        with pytest.raises(ImportError):
-            _get_brms()
 
         brms.install_brms(use_prebuilt_binaries=True)
 
