@@ -1,4 +1,5 @@
 ## 0.1.13 - Enhanced Diagnostics & Type-Safe Summaries
+*25.12.04*
 
 ### Diagnostics Functions
 
@@ -114,6 +115,7 @@
 
 
 ## 0.1.12 - RDS loading/saving, families functions, default priors functions
+*25.12.03*
 
 ### New Features
 
@@ -153,6 +155,7 @@
 
 
 ## 0.1.11 - Persistent Runtimes, Modern Packaging, and Stability
+*25.12.01*
 
 *   **Persistent Runtimes**: If a prebuilt runtime is activated, the path is now saved to `{HOME}/.brmspy/config.json` and automatically loaded on the next library import.
 *   **Configurable Logging**: Replaced scattered print statements with a centralized logger.
@@ -161,6 +164,7 @@
 
 
 ## 0.1.10 - Windows stability & CI improvements
+*25.12.01*
 
 **Windows Support**
 
@@ -184,6 +188,7 @@
 
 
 ## 0.1.9 - Prebuilt runtimes, windows toolchain
+*25.11.30*
 
 **New Features**
 
@@ -203,6 +208,7 @@
 
 
 ## 0.1.8 - Rstan support, version pinning, and cross-platform fixes
+*25.11.29*
 
 **Features**
 
@@ -221,11 +227,13 @@
 
 
 ## 0.1.7 - Automatic r imports after installation and import failure warning
+*25.11.29*
 
 * Fixed an issue where the library could refuse import in case of missing R deps
 * R libraries are now automatically imported after installation
 
 ## 0.1.6 - Fix segfaults, stabilize R imports, faster cold starts
+*25.11.29*
 
 ### Core stability
 
@@ -258,6 +266,7 @@
 
 
 ## 0.1.5 – Better priors, kwargs parsing, formula helper, typed ArviZ
+*25.11.28*
 
 **API & types**
 
