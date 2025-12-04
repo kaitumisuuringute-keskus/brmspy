@@ -18,6 +18,8 @@
         <link rel="prev" href="../../binaries/use/">
       
       
+        <link rel="next" href="../../changelog/">
+      
       
         
       
@@ -323,6 +325,25 @@
   
 
       
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../changelog/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
     </ul>
   </div>
 </nav>
@@ -622,14 +643,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/brms_functions/diagnosis/" class="md-nav__link">
+      <a href="../../api/brms_functions/diagnostics/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    diagnosis
+    diagnostics
   
 
     
@@ -798,6 +819,34 @@
     
   
     stan
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/brms_functions/generic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    generic
   
 
     
@@ -1914,6 +1963,33 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -2530,28 +2606,52 @@
 <h3 id="directory-structure">Directory Structure<a class="headerlink" href="#directory-structure" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>brmspy/
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>├── brmspy/                    # Main package
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>│   ├── brms.py               # Core API (fit, predict, etc.)
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>│   ├── types.py              # Type definitions
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>│   ├── brms.py               # Core API exports
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>│   ├── types.py              # Type definitions and result dataclasses
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>│   ├── install.py            # R dependency installation
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>│   ├── binaries/             # Prebuilt runtime system
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>│   │   ├── build.py          # Create runtime bundles
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>│   │   ├── env.py            # Platform detection
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>│   │   └── use.py            # Install runtimes
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>│   └── helpers/              # Internal utilities
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>│       ├── conversion.py     # Python ↔ R ↔ ArviZ
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>│       ├── priors.py         # Prior builders
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>│       ├── rtools.py         # Windows Rtools
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>│       └── singleton.py      # R package caching
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>├── .github/workflows/        # CI/CD pipelines
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>├── .runtime_builder/         # Docker for Linux builds
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>├── docs/                     # mkdocs documentation
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>└── tests/                    # Test suite
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>│   ├── brms_functions/       # Modular brms function wrappers
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>│   │   ├── brm.py            # Model fitting (fit, brm)
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>│   │   ├── diagnostics.py    # Model diagnostics (summary, loo, etc.)
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>│   │   ├── families.py       # Family specifications
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>│   │   ├── formula.py        # Formula construction
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>│   │   ├── generic.py        # Generic function caller
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>│   │   ├── io.py             # Data I/O (save_rds, read_rds, etc.)
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>│   │   ├── prediction.py     # Predictions (posterior_predict, etc.)
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>│   │   ├── prior.py          # Prior specifications
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>│   │   └── stan.py           # Stan code generation
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>│   ├── binaries/             # Prebuilt runtime system
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>│   │   ├── build.py          # Create runtime bundles
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>│   │   ├── env.py            # Platform detection
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>│   │   ├── github.py         # GitHub releases integration
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>│   │   ├── r.py              # R installation utilities
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>│   │   └── use.py            # Install runtimes
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>│   └── helpers/              # Internal utilities
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>│       ├── conversion.py     # Python ↔ R ↔ ArviZ
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>│       ├── log.py            # Logging utilities
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>│       ├── priors.py         # Prior builders
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>│       ├── robject_iter.py   # R object iteration
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>│       ├── rtools.py         # Windows Rtools
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>│       └── singleton.py      # R package caching
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>├── .github/workflows/        # CI/CD pipelines
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>├── .runtime_builder/         # Docker for Linux builds
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>├── docs/                     # mkdocs documentation
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>└── tests/                    # Test suite
 </code></pre></div>
 <h3 id="core-components">Core Components<a class="headerlink" href="#core-components" title="Permanent link">&para;</a></h3>
-<p><strong>brmspy/brms.py</strong> - High-level API for model fitting and predictions<br />
-<strong>brmspy/types.py</strong> - Type definitions and result dataclasses<br />
-<strong>brmspy/install.py</strong> - R dependency management<br />
-<strong>brmspy/binaries/</strong> - Prebuilt runtime bundle system<br />
+<p><strong>brmspy/brms.py</strong> - Main module that exports all public functions
+<strong>brmspy/types.py</strong> - Type definitions and result dataclasses (FitResult, SummaryResult, LooResult, etc.)
+<strong>brmspy/install.py</strong> - R dependency management and installation
+<strong>brmspy/brms_functions/</strong> - Modular organization of brms function wrappers:
+  - <strong>brm.py</strong> - Model fitting functions
+  - <strong>diagnostics.py</strong> - 8 diagnostic functions (summary, fixef, ranef, loo, loo_compare, validate_newdata, etc.)
+  - <strong>prediction.py</strong> - Prediction functions (posterior_predict, posterior_epred, posterior_linpred, log_lik)
+  - <strong>prior.py</strong> - Prior specification functions
+  - <strong>families.py</strong> - Family specifications and wrappers
+  - <strong>formula.py</strong> - Formula construction helpers
+  - <strong>generic.py</strong> - Generic function caller for unwrapped brms functions
+  - <strong>io.py</strong> - Data I/O functions
+  - <strong>stan.py</strong> - Stan code generation</p>
+<p><strong>brmspy/binaries/</strong> - Prebuilt runtime bundle system
 <strong>brmspy/helpers/</strong> - Internal conversion and utility functions</p>
 <h3 id="data-flow">Data Flow<a class="headerlink" href="#data-flow" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Python Code
@@ -2682,12 +2782,22 @@
 <h2 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h2>
 <h3 id="test-structure">Test Structure<a class="headerlink" href="#test-structure" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>tests/
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>├── conftest.py              # Pytest fixtures
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>├── test_basic.py           # Basic tests
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>├── test_integration.py     # End-to-end tests
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>├── test_predictions.py     # Prediction tests
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>└── test_crossplatform.py   # Cross-platform tests
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>├── conftest.py              # Pytest fixtures (sample_dataframe, etc.)
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>├── test_basic.py            # Basic functionality tests
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>├── test_crossplatform.py    # Cross-platform compatibility tests
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>├── test_diagnostics.py      # Diagnostics functions tests (14 tests)
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>├── test_families.py         # Family specifications tests
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>├── test_generic.py          # Generic function caller tests
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>├── test_integration.py      # End-to-end integration tests
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>├── test_io.py               # I/O functions tests
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>├── test_predictions.py      # Prediction functions tests
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>└── test_priors.py           # Prior specification tests
 </code></pre></div>
+<p><strong>Test Coverage:</strong>
+- <strong>14 diagnostics tests</strong> covering summary, fixef, ranef, posterior_summary, prior_summary, loo, loo_compare, validate_newdata
+- <strong>2 generic function tests</strong> for call() wrapper
+- All tests use <code>iter=100, warmup=50</code> for fast CI execution
+- Tests marked with <code>@pytest.mark.slow</code> and <code>@pytest.mark.requires_brms</code></p>
 <h3 id="running-tests">Running Tests<a class="headerlink" href="#running-tests" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>pytest<span class="w"> </span>tests/<span class="w"> </span>-v<span class="w">                    </span><span class="c1"># All tests</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>pytest<span class="w"> </span>tests/<span class="w"> </span>-v<span class="w"> </span>--cov<span class="o">=</span>brmspy<span class="w">      </span><span class="c1"># With coverage</span>
