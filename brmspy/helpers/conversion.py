@@ -996,6 +996,10 @@ def r_to_py(obj):
     """
     if obj is ro.NULL:
         return None
+    
+    if isinstance(obj, ro.DataFrame):
+        with localconverter(pandas2ri.converter) as cv:
+            return cv.rpy2py(obj)
 
     # 1) Atomic vectors -------------------------------------------------------
     if isinstance(obj, vectors.Vector) and not isinstance(obj, ListVector):
@@ -1041,7 +1045,7 @@ def r_to_py(obj):
             return cv.rpy2py(obj)
     except Exception:
         return str(obj)
-    
+
 def kwargs_r(kwargs: typing.Optional[typing.Dict]) -> typing.Dict:
     """
     Convert Python keyword arguments to R-compatible format.

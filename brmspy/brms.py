@@ -4,6 +4,7 @@ from brmspy.helpers.log import log_warning
 from brmspy.helpers.singleton import _get_brms
 from brmspy.types import (
     FitResult, FormulaResult, GenericResult, LogLikResult, PosteriorEpredResult, PosteriorLinpredResult, PosteriorPredictResult,
+    RListVectorExtension,
     IDLinpred,
     IDEpred,
     IDFit,
@@ -15,7 +16,7 @@ from brmspy.install import install_brms, install_prebuilt, get_brms_version
 from brmspy.brms_functions.io import get_brms_data, read_rds_fit, read_rds_raw, save_rds
 from brmspy.brms_functions.prior import prior, get_prior, default_prior
 from brmspy.brms_functions.brm import brm, fit
-from brmspy.brms_functions.diagnosis import summary
+from brmspy.brms_functions.diagnostics import summary
 from brmspy.brms_functions.formula import formula
 from brmspy.brms_functions.prediction import posterior_epred, posterior_linpred, posterior_predict, log_lik
 from brmspy.brms_functions.stan import make_stancode
@@ -60,7 +61,7 @@ __all__ = [
 
     # types
     'FitResult', 'FormulaResult', 'PosteriorEpredResult', 'PosteriorPredictResult',
-    'PosteriorLinpredResult', 'LogLikResult', 'GenericResult',
+    'PosteriorLinpredResult', 'LogLikResult', 'GenericResult', 'RListVectorExtension',
 
     'IDLinpred',
     'IDEpred',
