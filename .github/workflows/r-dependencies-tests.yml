@@ -77,7 +77,7 @@ jobs:
       - name: Download coverage artifacts
         uses: actions/download-artifact@v4
         with:
-          # Grab all coverage-* artifacts from this workflow run
+          # pull all coverage-* artifacts from this workflow run
           pattern: coverage-*
           merge-multiple: true
 
@@ -89,7 +89,7 @@ jobs:
           echo "Coverage data files:"
           ls -la .coverage* || echo "No .coverage* files found"
 
-      - name: Combine coverage
+      - name: Combine coverage and generate reports
         run: |
           python -m pip install --upgrade pip
           python -m pip install coverage
@@ -97,8 +97,23 @@ jobs:
           # Combine all .coverage.* into a single .coverage
           coverage combine
 
-          # Emit unified coverage.json in repo root
+          # Machine-readable reports
           coverage json -o coverage.json
+          coverage xml -o coverage.xml
+
+          # Human-readable summary (similar to pytest-cov's table)
+          echo "==== Combined coverage report ===="
+          coverage report
+          echo "=================================="
+
+      - name: Upload merged coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-rdeps-merged
+          path: |
+            .coverage
+            coverage.json
+            coverage.xml
 
       - name: Update coverage badge
         uses: ./.github/actions/cover-badge
