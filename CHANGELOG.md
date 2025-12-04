@@ -1,9 +1,49 @@
-## 0.1.13 - 
+## 0.1.13 - Enhanced Diagnostics & Type-Safe Summaries
 
-- `r_to_py` now supports proper detectiong of r DataFrames and their conversion (indexes and column names are correctly kept)
-- Added `Summary` dataclass that accurately describes the format returned by summary()
-- Extended `summary` to return the whole summary and added `__repr__` for pretty and quick summaries
-- Added `fixef` for getting population fixed effect summary pd.DataFrame
+### Diagnostics Functions
+
+* **`summary()` Complete Rewrite**: Now returns a `SummaryResult` dataclass instead of a single DataFrame, providing structured access to all model components:
+  * Population-level effects (`summary.fixed`)
+  * Family-specific parameters (`summary.spec_pars`)
+  * Random effects (`summary.random`)
+  * Prior specifications (`summary.prior`)
+  * Model metadata (formula, chains, draws, diagnostics)
+  * Pretty-print support via `__str__()` and `__repr__()` for human-readable output in notebooks
+  * Comprehensive docstring with all fields, types, and usage examples
+
+* **`fixef()` Population-Level Effects**: New function for extracting fixed effects with full control:
+  * Returns pandas DataFrame with parameter estimates and uncertainty
+  * Supports `summary=True` (default) for statistics or `summary=False` for raw posterior samples
+  * Configurable credible intervals via `probs` parameter
+  * Robust estimates (median/MAD) via `robust=True`
+  * Parameter subsetting with `pars` argument
+  * Complete docstring with examples for common use cases
+
+* **`ranef()` Group-Level Effects**: New function for extracting random effects as xarray DataArrays:
+  * Returns dict mapping grouping factors to multidimensional arrays
+  * `summary=True` (default): 3D arrays with dimensions `(group, stat, coef)` containing estimates and intervals
+  * `summary=False`: 3D arrays with dimensions `(draw, group, coef)` for full posterior draws
+  * Native xarray integration enables easy slicing and MCMC analysis
+  * Comprehensive docstring with coord selection examples
+
+### Type System Improvements
+
+* **DataFrame Detection**: `r_to_py()` now correctly detects R DataFrames and preserves:
+  * Row indexes (rownames from R)
+  * Column names
+  * Proper type conversion for all data types
+
+### Testing
+
+* Added 6 comprehensive tests for diagnostics functions:
+  * `summary()`: structure validation, component access, pretty printing
+  * `fixef()`: summary statistics and parameter extraction
+  * `ranef()`: both summary mode and raw posterior draws mode
+* All tests optimized with reduced iterations (`iter=100, warmup=50`) for faster CI execution
+
+### API
+
+* Exported `fixef` and `ranef` from `brmspy` module for public use
 
 
 ## 0.1.12 - RDS loading/saving, families functions, default priors functions
