@@ -6,3 +6,10 @@ include =
     brmspy/binaries/*
     brmspy/install.py
     brmspy/helpers/rtools.py
+
+[paths]
+brmspy =
+    brmspy
+    /home/runner/work/brmspy/brmspy/brmspy
+    /Users/runner/work/brmspy/brmspy/brmspy
+    D:\a\brmspy\brmspy\brmspy
