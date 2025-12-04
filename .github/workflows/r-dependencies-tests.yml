@@ -74,6 +74,12 @@ jobs:
         with:
           path: coverage_parts
 
+      - name: List downloaded coverage artifacts
+        run: |
+          echo "==== coverage_parts tree ===="
+          ls -R coverage_parts || echo "coverage_parts directory missing"
+          echo "============================="
+
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
@@ -84,8 +90,8 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install coverage
 
-          # merge all .coverage files under coverage_parts into one
-          coverage combine coverage_parts
+          # merge all .coverage files under each artifact directory
+          coverage combine coverage_parts/*
 
           # emit a unified coverage.json in repo root
           coverage json -o coverage.json
