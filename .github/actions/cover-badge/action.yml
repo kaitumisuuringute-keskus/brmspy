@@ -78,6 +78,7 @@ runs:
       with:
         attempt_limit: 3
         attempt_delay: 2000
+        shell: bash
         command: |
           git fetch origin ${{ steps.pick-deploy-branch.outputs.deploy_branch }}
           git reset --hard origin/${{ steps.pick-deploy-branch.outputs.deploy_branch }}
