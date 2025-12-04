@@ -106,7 +106,7 @@ jobs:
 
           # Human-readable summary (similar to pytest-cov's table)
           echo "==== Combined coverage report ===="
-          coverage report
+          coverage report -m
           echo "=================================="
 
       - name: Upload merged coverage artifact
