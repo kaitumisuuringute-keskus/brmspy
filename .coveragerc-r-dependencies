@@ -1,6 +1,8 @@
 [run]
 source = brmspy
+
+[report]
 include =
     brmspy/binaries/*
     brmspy/install.py
-    brmspy/helpers/rtools.py
+    brms/helpers/rtools.py
