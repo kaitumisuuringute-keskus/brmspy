@@ -50,3 +50,9 @@ jobs:
           --cov-report=json 
           --cov-config=.coveragerc-r-dependencies
 
+      - name: Update coverage badge
+        if: matrix.os == 'windows-latest'
+        uses: ./.github/actions/cover-badge
+        with:
+          filename: coverage-rdeps.svg
+          label: coverage-rdeps

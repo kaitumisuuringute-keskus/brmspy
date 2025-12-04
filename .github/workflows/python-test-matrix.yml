@@ -263,4 +263,6 @@ jobs:
             matrix.os == 'ubuntu-latest' &&
             github.ref == 'refs/heads/master' &&
             matrix.python-version == '3.12'
-        uses: we-cli/coverage-badge-action@main
+        uses: ./.github/actions/cover-badge
+        with:
+          filename: coverage.svg

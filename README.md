@@ -9,7 +9,9 @@ This is an early development version of the library, use with caution.
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Documentation](https://img.shields.io/badge/docs-mkdocs-blue.svg)](https://kaitumisuuringute-keskus.github.io/brmspy/)
-[![Coverage](https://kaitumisuuringute-keskus.github.io/brmspy/badges/coverage.svg)](https://github.com/kaitumisuuringute-keskus/brmspy/actions)
+
+[![Coverage main](https://kaitumisuuringute-keskus.github.io/brmspy/badges/coverage.svg)](https://github.com/kaitumisuuringute-keskus/brmspy/actions)
+[![Coverage r dependencies](https://kaitumisuuringute-keskus.github.io/brmspy/badges/coverage-rdeps.svg)](https://github.com/kaitumisuuringute-keskus/brmspy/actions)
 [![python-test-matrix](https://github.com/kaitumisuuringute-keskus/brmspy/actions/workflows/python-test-matrix.yml/badge.svg)](https://github.com/kaitumisuuringute-keskus/brmspy/actions/workflows/python-test-matrix.yml)
 [![r-dependencies-tests](https://github.com/kaitumisuuringute-keskus/brmspy/actions/workflows/r-dependencies-tests.yml/badge.svg)](https://github.com/kaitumisuuringute-keskus/brmspy/actions/workflows/r-dependencies-tests.yml)
 
