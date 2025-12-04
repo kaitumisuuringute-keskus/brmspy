@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 @pytest.mark.requires_brms
@@ -25,7 +26,7 @@ class TestSummaryFunction:
             family="gaussian",
             iter=100,
             warmup=50,
-            chains=2,
+            chains=1,
             silent=2,
             refresh=0
         )
@@ -90,7 +91,7 @@ class TestSummaryFunction:
             family="gaussian",
             iter=100,
             warmup=50,
-            chains=2,
+            chains=1,
             silent=2,
             refresh=0
         )
@@ -154,7 +155,7 @@ class TestSummaryFunction:
             family="gaussian",
             iter=100,
             warmup=50,
-            chains=2,
+            chains=1,
             silent=2,
             refresh=0
         )
@@ -233,7 +234,7 @@ class TestFixefFunction:
             family="gaussian",
             iter=100,
             warmup=50,
-            chains=2,
+            chains=1,
             silent=2,
             refresh=0
         )
@@ -317,7 +318,7 @@ class TestRanefFunction:
             family="gaussian",
             iter=100,
             warmup=50,
-            chains=2,
+            chains=1,
             silent=2,
             refresh=0
         )
@@ -399,7 +400,7 @@ class TestRanefFunction:
             family="gaussian",
             iter=100,
             warmup=50,
-            chains=2,
+            chains=1,
             silent=2,
             refresh=0
         )
@@ -431,7 +432,7 @@ class TestRanefFunction:
             f"DataArray should have dims ('draw', 'group', 'coef'), got {group_re_draws.dims}"
         
         # Verify number of draws (2 chains × 50 post-warmup = 100 draws)
-        expected_draws = 2 * (100 - 50)  # chains * (iter - warmup)
+        expected_draws = 1 * (100 - 50)  # chains * (iter - warmup)
         assert group_re_draws.sizes['draw'] == expected_draws, \
             f"Should have {expected_draws} draws, got {group_re_draws.sizes['draw']}"
         
@@ -482,7 +483,7 @@ class TestPosteriorSummaryFunction:
             family="gaussian",
             iter=100,
             warmup=50,
-            chains=2,
+            chains=1,
             silent=2,
             refresh=0
         )
@@ -549,7 +550,7 @@ class TestPriorSummaryFunction:
             family="gaussian",
             iter=100,
             warmup=50,
-            chains=2,
+            chains=1,
             silent=2,
             refresh=0
         )
@@ -615,7 +616,7 @@ class TestLooFunction:
             family="gaussian",
             iter=100,
             warmup=50,
-            chains=2,
+            chains=1,
             silent=2,
             refresh=0
         )
@@ -707,7 +708,7 @@ class TestLooFunction:
             family="gaussian",
             iter=100,
             warmup=50,
-            chains=2,
+            chains=1,
             silent=2,
             refresh=0
         )
@@ -787,7 +788,7 @@ class TestLooCompareFunction:
             family="gaussian",
             iter=100,
             warmup=50,
-            chains=2,
+            chains=1,
             silent=2,
             refresh=0
         )
@@ -798,7 +799,7 @@ class TestLooCompareFunction:
             family="gaussian",
             iter=100,
             warmup=50,
-            chains=2,
+            chains=1,
             silent=2,
             refresh=0
         )
@@ -876,7 +877,7 @@ class TestLooCompareFunction:
             family="gaussian",
             iter=100,
             warmup=50,
-            chains=2,
+            chains=1,
             silent=2,
             refresh=0
         )
@@ -887,7 +888,7 @@ class TestLooCompareFunction:
             family="gaussian",
             iter=100,
             warmup=50,
-            chains=2,
+            chains=1,
             silent=2,
             refresh=0
         )
@@ -920,3 +921,117 @@ class TestLooCompareFunction:
             row_data = comparison.table.loc[name]
             assert row_data is not None, \
                 f"Row data for '{name}' should not be None"
+
+
+@pytest.mark.requires_brms
+class TestValidateNewdataFunction:
+    """Test the validate_newdata() function for validating prediction data."""
+    
+    @pytest.mark.slow
+    def test_validate_newdata_with_valid_data(self, sample_dataframe):
+        """
+        Test validate_newdata() with valid new data.
+        
+        Verifies:
+        - Returns a validated pandas DataFrame
+        - DataFrame has correct structure
+        - Can validate data for simple model without random effects
+        - Validation succeeds when all required variables present
+        """
+        import brmspy
+        import pandas as pd
+        
+        # Fit a simple model
+        model = brmspy.fit(
+            formula="y ~ x1 + x2",
+            data=sample_dataframe,
+            family="gaussian",
+            iter=100,
+            warmup=50,
+            chains=1,
+            silent=2,
+            refresh=0
+        )
+        
+        # Create valid new data with all required variables
+        n = 10
+        newdata = pd.DataFrame({
+            'y': np.random.normal(10, 2, n),
+            'x1': np.random.normal(0, 1, n),
+            'x2': np.random.choice(['A', 'B'], n),
+            'group': np.repeat(['G1', 'G2'], n//2)
+        })
+        
+        # Validate newdata
+        validated = brmspy.validate_newdata(
+            newdata,
+            model,
+            check_response=False  # Response not needed for prediction
+        )
+        
+        # Verify return type is DataFrame
+        assert isinstance(validated, pd.DataFrame), \
+            f"validate_newdata() should return DataFrame, got {type(validated)}"
+        
+        # Verify DataFrame is not empty
+        assert not validated.empty, \
+            "Validated DataFrame should not be empty"
+        
+        # Verify it has the same number of rows as input
+        assert len(validated) == len(newdata), \
+            f"Validated data should have {len(newdata)} rows, got {len(validated)}"
+        
+        # Verify required columns are present
+        assert 'x1' in validated.columns, \
+            "Validated data should contain x1 column"
+        assert 'x2' in validated.columns, \
+            "Validated data should contain x2 column"
+    
+    @pytest.mark.slow
+    def test_validate_newdata_with_missing_variables(self, sample_dataframe):
+        """
+        Test validate_newdata() with invalid data missing required variables.
+        
+        Verifies:
+        - Raises error when required variables are missing
+        - Error message indicates which variable is missing
+        - Validation properly detects incomplete data
+        """
+        import brmspy
+        import pandas as pd
+        import pytest
+        
+        # Fit a model with two predictors
+        model = brmspy.fit(
+            formula="y ~ x1 + x2",
+            data=sample_dataframe,
+            family="gaussian",
+            iter=100,
+            warmup=50,
+            chains=1,
+            silent=2,
+            refresh=0
+        )
+        
+        # Create invalid new data missing x2
+        invalid_newdata = pd.DataFrame({
+            'x1': [1.0, 2.0, 3.0]
+            # Missing x2!
+        })
+        
+        # Validation should raise an error
+        with pytest.raises(Exception) as exc_info:
+            brmspy.validate_newdata(
+                invalid_newdata,
+                model,
+                check_response=False
+            )
+        
+        # Verify error was raised
+        assert exc_info.value is not None, \
+            "validate_newdata should raise error for missing variables"
+        
+        # Error message should mention the missing variable or validation failure
+        error_msg = str(exc_info.value).lower()
+        assert 'x2' in error_msg or 'validate_data' in error_msg or 'column' in error_msg or 'not found' in error_msg, \
+            f"Error should mention missing variable, got: {exc_info.value}"

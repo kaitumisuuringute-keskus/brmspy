@@ -201,7 +201,7 @@ from brmspy.brms import (
     posterior_linpred,
     log_lik,
     summary, fixef, ranef,
-    prior_summary, posterior_summary, loo, loo_compare,
+    prior_summary, posterior_summary, loo, loo_compare, validate_newdata,
     prior, get_prior, default_prior,
 
     call,
@@ -248,7 +248,7 @@ __all__ = [
 
     # diagnosis
     'summary', 'fixef', 'ranef', 'prior_summary', 'posterior_summary',
-    'loo', 'loo_compare',
+    'loo', 'loo_compare', 'validate_newdata',
 
     # generic helper
     'call',

@@ -57,6 +57,16 @@
   * Best model always listed first with elpd_diff = 0
   * Comprehensive docstring with usage examples
 
+* **`validate_newdata()` Data Validation**: New function for validating prediction data:
+  * Validates new data against fitted model requirements before making predictions
+  * Checks for required variables, factor levels, and grouping structure
+  * Returns validated DataFrame ready for use in prediction functions
+  * Support for `allow_new_levels` parameter to permit new grouping factor levels
+  * Can skip response variable checking with `check_response=False`
+  * Validates autocorrelation structures and group-level effects
+  * Primarily used internally by prediction methods but available for direct use
+  * Comprehensive Python-style docstring with parameter descriptions and examples
+
 ### Type System Improvements
 
 * **DataFrame Detection**: `r_to_py()` now correctly detects R DataFrames and preserves:
@@ -71,7 +81,7 @@
 
 ### Testing
 
-* Added 12 comprehensive tests for diagnostics functions:
+* Added 14 comprehensive tests for diagnostics functions:
   * `summary()`: structure validation, component access, pretty printing
   * `fixef()`: summary statistics and parameter extraction
   * `ranef()`: both summary mode and raw posterior draws mode
@@ -79,6 +89,7 @@
   * `prior_summary()`: prior specifications with custom priors
   * `loo()`: basic LOO-CV computation and Pareto k diagnostics
   * `loo_compare()`: model comparison with default and custom model names
+  * `validate_newdata()`: validation with valid data and error handling for invalid data
 * All tests optimized with reduced iterations (`iter=100, warmup=50`) for faster CI execution
 
 ### Generic Function Access
@@ -98,7 +109,7 @@
 
 ### API
 
-* Exported `fixef`, `ranef`, `posterior_summary`, `prior_summary`, `loo`, `loo_compare`, and `call` from `brmspy` module
+* Exported `fixef`, `ranef`, `posterior_summary`, `prior_summary`, `loo`, `loo_compare`, `validate_newdata`, and `call` from `brmspy` module
 * Added `LooResult` and `LooCompareResult` to public types for model comparison workflows
 
 

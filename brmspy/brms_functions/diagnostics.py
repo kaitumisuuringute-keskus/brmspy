@@ -817,14 +817,10 @@ def loo_compare(
 
     r_brms_loo = cast(Callable, ro.r("brms::loo"))
     r_loo_compare = cast(Callable, ro.r("loo::loo_compare"))
-    r_get_ic = cast(Callable, ro.r("function(x) attr(x, 'ic')"))
     r_as_df = cast(Callable, ro.r("as.data.frame"))
 
     r_models = [py_to_r(obj) for obj in objects]
     r_loos = [r_brms_loo(m) for m in r_models]
-
-    ic = r_to_py(r_get_ic(r_loos[0]))
-    crit_str = str(ic)
 
     res_r = r_loo_compare(*r_loos)
 
@@ -843,4 +839,176 @@ def loo_compare(
 
     res_df = cast(pd.DataFrame, r_to_py(r_as_df(res_r)))
 
-    return LooCompareResult(table=res_df, criterion=crit_str, r=res_r)
+    return LooCompareResult(table=res_df, criterion=criterion, r=res_r)
+
+
+def validate_newdata(
+  newdata: pd.DataFrame,
+  object: Union[ro.ListVector, FitResult],
+  re_formula: Optional[str] = None,
+  allow_new_levels: bool = False,
+  newdata2: Optional[pd.DataFrame] = None,
+  resp = None,
+  check_response = True,
+  incl_autocor = True,
+  group_vars = None,
+  req_vars = None,
+  **kwargs
+) -> pd.DataFrame:
+    """
+    Validate new data for predictions from a fitted brms model.
+    
+    Ensures that new data contains all required variables and has the correct
+    structure for making predictions. Checks variable types, factor levels,
+    grouping variables, and autocorrelation structures. This function is primarily
+    used internally by prediction methods but can be called directly for debugging
+    or validation purposes.
+    
+    [BRMS documentation](https://paulbuerkner.com/brms/reference/validate_newdata.html)
+    
+    Parameters
+    ----------
+    newdata : pd.DataFrame
+        DataFrame containing new data to be validated against the model.
+        Must include all predictor variables used in the model formula.
+    object : FitResult or ro.ListVector
+        Fitted model from [`fit()`](brmspy/brms_functions/brm.py:1) or R brmsfit object
+    re_formula : str, optional
+        Formula string specifying group-level effects to include in validation.
+        If None (default), include all group-level effects.
+        If NA, include no group-level effects.
+    allow_new_levels : bool, default=False
+        Whether to allow new levels of grouping variables not present in
+        the original training data. If False, raises an error for new levels.
+    newdata2 : pd.DataFrame, optional
+        Additional data that cannot be passed via `newdata`, such as objects
+        used in autocorrelation structures or stanvars.
+    resp : str or list of str, optional
+        Names of response variables to validate. If specified, validation
+        is performed only for the specified responses (relevant for multivariate models).
+    check_response : bool, default=True
+        Whether to check if response variables are present in newdata.
+        Set to False when making predictions where response is not needed.
+    incl_autocor : bool, default=True
+        Whether to include autocorrelation structures originally specified
+        in the model. If True, validates autocorrelation-related variables.
+    group_vars : list of str, optional
+        Names of specific grouping variables to validate. If None (default),
+        validates all grouping variables present in the model.
+    req_vars : list of str, optional
+        Names of specific variables required in newdata. If None (default),
+        all variables from the original training data are required (unless
+        excluded by other parameters).
+    **kwargs
+        Additional arguments passed to brms::validate_newdata()
+    
+    Returns
+    -------
+    pd.DataFrame
+        Validated DataFrame based on newdata, potentially with added or
+        modified columns to ensure compatibility with the model.
+    
+    Raises
+    ------
+    ValueError
+        If newdata is missing required variables
+    ValueError
+        If factor levels in newdata don't match those in training data
+        (when allow_new_levels=False)
+    ValueError
+        If grouping variables have invalid structure
+    
+    See Also
+    --------
+    brms::validate_newdata : R documentation
+        https://paulbuerkner.com/brms/reference/validate_newdata.html
+    [`posterior_predict()`](brmspy/brms_functions/prediction.py:1) : Uses validate_newdata internally
+    [`posterior_epred()`](brmspy/brms_functions/prediction.py:1) : Uses validate_newdata internally
+    
+    Examples
+    --------
+    Basic validation for prediction data:
+    
+    ```python
+    import brmspy
+    import pandas as pd
+    
+    # Fit model
+    model = brmspy.fit("y ~ x1 + x2", data=train_data, chains=4)
+    
+    # Prepare new data
+    new_data = pd.DataFrame({
+        'x1': [1.0, 2.0, 3.0],
+        'x2': [0.5, 1.0, 1.5]
+    })
+    
+    # Validate before prediction
+    validated_data = brmspy.validate_newdata(new_data, model)
+    print(validated_data)
+    ```
+    
+    Validate with group-level effects:
+    
+    ```python
+    # Model with random effects
+    model = brmspy.fit("y ~ x + (1|group)", data=train_data, chains=4)
+    
+    # New data with grouping variable
+    new_data = pd.DataFrame({
+        'x': [1.0, 2.0],
+        'group': ['A', 'B']  # Must match training data groups
+    })
+    
+    # Validate - will error if groups A or B weren't in training
+    validated_data = brmspy.validate_newdata(
+        new_data,
+        model,
+        allow_new_levels=False
+    )
+    ```
+    
+    Allow new levels for population-level predictions:
+    
+    ```python
+    # Allow new group levels (makes population-level predictions only)
+    new_data_with_new_groups = pd.DataFrame({
+        'x': [3.0, 4.0],
+        'group': ['C', 'D']  # New groups not in training
+    })
+    
+    validated_data = brmspy.validate_newdata(
+        new_data_with_new_groups,
+        model,
+        allow_new_levels=True
+    )
+    ```
+    
+    Skip response variable checking:
+    
+    ```python
+    # When making predictions, response not needed
+    new_data = pd.DataFrame({'x1': [1.0, 2.0]})
+    
+    validated_data = brmspy.validate_newdata(
+        new_data,
+        model,
+        check_response=False
+    )
+    ```
+    """
+    r_validate_newdata = cast(Callable, ro.r("brms::validate_newdata"))
+    kwargs = kwargs_r({
+        "newdata": newdata,
+        "object": object,
+        "re_formula": re_formula,
+        "allow_new_levels": allow_new_levels,
+        "newdata2": newdata2,
+        "resp": resp,
+        "check_response": check_response,
+        "incl_autocor": incl_autocor,
+        "group_vars": group_vars,
+        "req_vars": req_vars,
+        **kwargs
+    })
+    res_r = r_validate_newdata(**kwargs)
+    return cast(pd.DataFrame, r_to_py(res_r))
