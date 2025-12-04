@@ -43,6 +43,7 @@ jobs:
         env:
           BRMSPY_CROSSPLATFORM_TESTS: "1"
           GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+          COVERAGE_FILE: .coverage.${{ matrix.os }}
         run: >
           python -m pytest -v -m crossplatform 
           --cov-report=term 
