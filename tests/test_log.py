@@ -10,6 +10,30 @@ import time
 from io import StringIO
 
 
+def capture_brmspy_logs(run_func):
+    """
+    Helper to capture log output from brmspy logger using StringIO.
+    
+    This avoids pytest's capfd/capsys issues with custom loggers.
+    """
+    from brmspy.helpers.log import get_logger
+    
+    logger = get_logger()
+    stream = StringIO()
+    handler = logging.StreamHandler(stream)
+    # Use same formatter as existing handler
+    if logger.handlers:
+        handler.setFormatter(logger.handlers[0].formatter)
+    
+    logger.addHandler(handler)
+    try:
+        run_func()
+        handler.flush()
+        return stream.getvalue()
+    finally:
+        logger.removeHandler(handler)
+
+
 class TestColors:
     """Test Colors class constants."""
     
@@ -176,77 +200,87 @@ class TestGetLogger:
 class TestLoggingFunctions:
     """Test logging functions."""
     
-    def test_log_with_explicit_method_name(self, caplog):
+    def test_log_with_explicit_method_name(self):
         """Test log() with explicit method_name"""
         from brmspy.helpers.log import log
         
-        with caplog.at_level(logging.INFO):
-            log("test message", method_name="my_method")
+        output = capture_brmspy_logs(
+            lambda: log("test message", method_name="my_method")
+        )
         
-        assert "test message" in caplog.text
-        assert "my_method" in caplog.text
+        assert "test message" in output
+        assert "my_method" in output
     
-    def test_log_with_auto_detection(self, caplog):
+    def test_log_with_auto_detection(self):
         """Test log() with automatic method name detection"""
         from brmspy.helpers.log import log
         
-        with caplog.at_level(logging.INFO):
-            log("auto detect message")
+        output = capture_brmspy_logs(
+            lambda: log("auto detect message")
+        )
         
-        assert "auto detect message" in caplog.text
+        assert "auto detect message" in output
     
-    def test_log_info(self, caplog):
+    def test_log_info(self):
         """Test log_info() function"""
         from brmspy.helpers.log import log_info
         
-        with caplog.at_level(logging.INFO):
-            log_info("info message")
+        output = capture_brmspy_logs(
+            lambda: log_info("info message")
+        )
         
-        assert "info message" in caplog.text
+        assert "info message" in output
     
-    def test_log_debug(self, caplog):
+    def test_log_debug(self):
         """Test log_debug() function"""
         from brmspy.helpers.log import log_debug, set_log_level
         
         # Set to DEBUG level to capture debug messages
         set_log_level(logging.DEBUG)
         
-        with caplog.at_level(logging.DEBUG):
-            log_debug("debug message")
+        output = capture_brmspy_logs(
+            lambda: log_debug("debug message")
+        )
         
-        assert "debug message" in caplog.text
+        assert "debug message" in output
         
         # Reset to INFO
         set_log_level(logging.INFO)
     
-    def test_log_warning(self, caplog):
+    def test_log_warning(self):
         """Test log_warning() function"""
         from brmspy.helpers.log import log_warning
         
-        with caplog.at_level(logging.WARNING):
-            log_warning("warning message")
+        output = capture_brmspy_logs(
+            lambda: log_warning("warning message")
+        )
         
-        assert "warning message" in caplog.text
+        assert "warning message" in output
+        assert "WARNING" in output
     
-    def test_log_error(self, caplog):
+    def test_log_error(self):
         """Test log_error() function"""
         from brmspy.helpers.log import log_error
         
-        with caplog.at_level(logging.ERROR):
-            log_error("error message")
+        output = capture_brmspy_logs(
+            lambda: log_error("error message")
+        )
         
-        assert "error message" in caplog.text
+        assert "error message" in output
+        assert "ERROR" in output
     
-    def test_log_critical(self, caplog):
+    def test_log_critical(self):
         """Test log_critical() function"""
         from brmspy.helpers.log import log_critical
         
-        with caplog.at_level(logging.CRITICAL):
-            log_critical("critical message")
+        output = capture_brmspy_logs(
+            lambda: log_critical("critical message")
+        )
         
-        assert "critical message" in caplog.text
+        assert "critical message" in output
+        assert "CRITICAL" in output
     
-    def test_all_log_levels_in_sequence(self, caplog):
+    def test_all_log_levels_in_sequence(self):
         """Test all log level functions in one test"""
         from brmspy.helpers.log import (
             log_info, log_debug, log_warning, log_error, log_critical, set_log_level
@@ -255,19 +289,21 @@ class TestLoggingFunctions:
         # Enable all levels
         set_log_level(logging.DEBUG)
         
-        with caplog.at_level(logging.DEBUG):
+        def run_all():
             log_debug("debug")
             log_info("info")
             log_warning("warning")
             log_error("error")
             log_critical("critical")
         
+        output = capture_brmspy_logs(run_all)
+        
         # Verify all messages appear
-        assert "debug" in caplog.text
-        assert "info" in caplog.text
-        assert "warning" in caplog.text
-        assert "error" in caplog.text
-        assert "critical" in caplog.text
+        assert "debug" in output
+        assert "info" in output
+        assert "warning" in output
+        assert "error" in output
+        assert "critical" in output
         
         # Reset
         set_log_level(logging.INFO)
@@ -294,20 +330,25 @@ class TestSetLogLevel:
         set_log_level(logging.INFO)
         assert logger.level == logging.INFO
     
-    def test_set_log_level_filters_messages(self, caplog):
+    def test_set_log_level_filters_messages(self):
         """Test that setting level filters out lower priority messages"""
-        from brmspy.helpers.log import log_debug, log_info, set_log_level
+        from brmspy.helpers.log import log_debug, log_info, log_warning, set_log_level
         
         # Set to WARNING - should filter out INFO and DEBUG
         set_log_level(logging.WARNING)
         
-        with caplog.at_level(logging.DEBUG):
+        def run():
             log_debug("should not appear")
             log_info("also should not appear")
+            log_warning("should appear")
+        
+        output = capture_brmspy_logs(run)
         
         # These should be filtered out
-        assert "should not appear" not in caplog.text
-        assert "also should not appear" not in caplog.text
+        assert "should not appear" not in output
+        assert "also should not appear" not in output
+        # This should be present
+        assert "should appear" in output
         
         # Reset to INFO
         set_log_level(logging.INFO)
@@ -316,44 +357,49 @@ class TestSetLogLevel:
 class TestLogTime:
     """Test LogTime context manager."""
     
-    def test_logtime_context_manager(self, caplog):
+    def test_logtime_context_manager(self):
         """Test LogTime measures and logs elapsed time"""
         from brmspy.helpers.log import LogTime
         
-        with caplog.at_level(logging.INFO):
+        def run():
             with LogTime("test_operation"):
                 time.sleep(0.01)  # Small delay
         
+        output = capture_brmspy_logs(run)
+        
         # Verify log message contains operation name and time
-        assert "test_operation" in caplog.text
-        assert "took" in caplog.text
-        assert "seconds" in caplog.text
+        assert "test_operation" in output
+        assert "took" in output
+        assert "seconds" in output
     
-    def test_logtime_default_name(self, caplog):
+    def test_logtime_default_name(self):
         """Test LogTime with default name"""
         from brmspy.helpers.log import LogTime
         
-        with caplog.at_level(logging.INFO):
+        def run():
             with LogTime():
                 time.sleep(0.01)
         
+        output = capture_brmspy_logs(run)
+        
         # Should use default "process" name
-        assert "process" in caplog.text
-        assert "took" in caplog.text
+        assert "process" in output
+        assert "took" in output
     
-    def test_logtime_measures_time(self, caplog):
+    def test_logtime_measures_time(self):
         """Test that LogTime actually measures elapsed time"""
         from brmspy.helpers.log import LogTime
+        import re
         
-        with caplog.at_level(logging.INFO):
+        def run():
             with LogTime("timed_op") as lt:
                 time.sleep(0.05)  # 50ms delay
         
+        output = capture_brmspy_logs(run)
+        
         # Verify time measurement
-        log_text = caplog.text
         # Extract the time value (format: "X.XX seconds")
-        import re
-        match = re.search(r'took (\d+\.\d+) seconds', log_text)
+        match = re.search(r'took (\d+\.\d+) seconds', output)
         assert match is not None
         elapsed = float(match.group(1))
         assert elapsed >= 0.04  # Should be at least 40ms (allowing some margin)
@@ -362,48 +408,45 @@ class TestLogTime:
 class TestGreet:
     """Test greet() function."""
     
-    def test_greet_outputs_warnings(self, caplog):
+    def test_greet_outputs_warnings(self):
         """Test that greet() outputs expected warning messages"""
         from brmspy.helpers.log import greet
         
-        with caplog.at_level(logging.WARNING):
-            greet()
+        output = capture_brmspy_logs(greet)
         
         # Verify all three warning lines appear
-        assert "brmspy <0.2 is still evolving" in caplog.text
-        assert "APIs may change" in caplog.text
-        assert "Feedback or a star on GitHub" in caplog.text
-        assert "https://github.com/kaitumisuuringute-keskus/brmspy" in caplog.text
+        assert "brmspy <0.2 is still evolving" in output
+        assert "APIs may change" in output
+        assert "Feedback or a star on GitHub" in output
+        assert "https://github.com/kaitumisuuringute-keskus/brmspy" in output
 
 
 class TestCallerNameDetection:
     """Test _get_caller_name() function."""
     
-    def test_get_caller_name_from_function(self, caplog):
+    def test_get_caller_name_from_function(self):
         """Test that _get_caller_name detects the calling function"""
         from brmspy.helpers.log import log
         
         def my_test_function():
-            with caplog.at_level(logging.INFO):
-                log("message from function")
+            log("message from function")
         
-        my_test_function()
+        output = capture_brmspy_logs(my_test_function)
         
-        # The log should contain the function name
-        assert "my_test_function" in caplog.text or "message from function" in caplog.text
+        # The log should contain the function name or the message
+        assert "my_test_function" in output or "message from function" in output
     
-    def test_get_caller_name_with_explicit_override(self, caplog):
+    def test_get_caller_name_with_explicit_override(self):
         """Test that explicit method_name overrides auto-detection"""
         from brmspy.helpers.log import log
         
         def some_function():
-            with caplog.at_level(logging.INFO):
-                log("test", method_name="explicit_name")
+            log("test", method_name="explicit_name")
         
-        some_function()
+        output = capture_brmspy_logs(some_function)
         
         # Should use explicit name, not function name
-        assert "explicit_name" in caplog.text
+        assert "explicit_name" in output
 
 
 if __name__ == '__main__':
