@@ -178,7 +178,7 @@ Complete workflow with model diagnostics:
 ```
 """
 
-__version__ = "0.1.13"
+__version__ = "0.2.0"
 __author__ = "Remi Sebastian Kits, Adam Haber"
 __license__ = "Apache-2.0"
 
