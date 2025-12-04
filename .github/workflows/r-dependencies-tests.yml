@@ -56,9 +56,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-${{ matrix.os }}
-          path: |
-            .coverage
-            coverage.json
+          path: .coverage*
+          include-hidden-files: true
+          if-no-files-found: ignore
 
   merge-coverage:
     runs-on: ubuntu-latest
@@ -69,31 +69,35 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download coverage artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: coverage_parts
-
-      - name: List downloaded coverage artifacts
-        run: |
-          echo "==== coverage_parts tree ===="
-          ls -R coverage_parts || echo "coverage_parts directory missing"
-          echo "============================="
-
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          # Grab all coverage-* artifacts from this workflow run
+          pattern: coverage-*
+          merge-multiple: true
+
+      - name: Sanity-check downloaded coverage files
+        run: |
+          echo "Workspace contents after download:"
+          ls -la
+          echo
+          echo "Coverage data files:"
+          ls -la .coverage* || echo "No .coverage* files found"
 
       - name: Combine coverage
         run: |
           python -m pip install --upgrade pip
           python -m pip install coverage
 
-          # merge all .coverage files under each artifact directory
-          coverage combine coverage_parts/*
+          # Combine all .coverage.* into a single .coverage
+          coverage combine
 
-          # emit a unified coverage.json in repo root
+          # Emit unified coverage.json in repo root
           coverage json -o coverage.json
 
       - name: Update coverage badge
