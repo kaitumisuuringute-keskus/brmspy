@@ -200,7 +200,7 @@ from brmspy.brms import (
     posterior_predict,
     posterior_linpred,
     log_lik,
-    summary, fixef,
+    summary, fixef, ranef,
     prior, get_prior, default_prior,
 
     save_rds, read_rds_fit, read_rds_raw,
@@ -244,7 +244,7 @@ __all__ = [
     'families', 'family', 'brmsfamily',
 
     # diagnosis
-    'summary', 'fixef',
+    'summary', 'fixef', 'ranef',
 
     # types
     'FitResult', 'FormulaResult', 'PosteriorEpredResult', 'PosteriorPredictResult',

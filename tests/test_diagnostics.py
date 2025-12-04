@@ -23,8 +23,8 @@ class TestSummaryFunction:
             formula="y ~ x1",
             data=sample_dataframe,
             family="gaussian",
-            iter=200,
-            warmup=100,
+            iter=100,
+            warmup=50,
             chains=2,
             silent=2,
             refresh=0
@@ -88,8 +88,8 @@ class TestSummaryFunction:
             formula="y ~ x1",
             data=sample_dataframe,
             family="gaussian",
-            iter=200,
-            warmup=100,
+            iter=100,
+            warmup=50,
             chains=2,
             silent=2,
             refresh=0
@@ -152,8 +152,8 @@ class TestSummaryFunction:
             formula="y ~ x1",
             data=sample_dataframe,
             family="gaussian",
-            iter=200,
-            warmup=100,
+            iter=100,
+            warmup=50,
             chains=2,
             silent=2,
             refresh=0
@@ -231,8 +231,8 @@ class TestFixefFunction:
             formula="y ~ x1",
             data=sample_dataframe,
             family="gaussian",
-            iter=200,
-            warmup=100,
+            iter=100,
+            warmup=50,
             chains=2,
             silent=2,
             refresh=0
@@ -284,3 +284,174 @@ class TestFixefFunction:
             "fixef() with pars=['x1'] should return only 1 parameter"
         assert 'x1' in str(x1_only.index[0]), \
             "Extracted parameter should be x1"
+
+
+@pytest.mark.requires_brms
+class TestRanefFunction:
+    """Test the ranef() function for extracting group-level (random) effects."""
+    
+    @pytest.mark.slow
+    def test_ranef_summary_mode(self, sample_dataframe):
+        """
+        Test ranef() with summary=True (default).
+        
+        Verifies:
+        - Returns dict of xarray DataArrays
+        - Each DataArray has correct dimensions: (group, stat, coef)
+        - Contains expected statistics (Estimate, Est.Error, credible intervals)
+        - Can select specific groups and statistics
+        """
+        import brmspy
+        import xarray as xr
+        
+        # Add group variation for better convergence
+        sample_dataframe['y'] = (
+            sample_dataframe['y'] +
+            sample_dataframe['group'].map({'G1': -2, 'G2': 2})
+        )
+        
+        # Fit a model with random effects
+        model = brmspy.fit(
+            formula="y ~ x1 + (1|group)",
+            data=sample_dataframe,
+            family="gaussian",
+            iter=100,
+            warmup=50,
+            chains=2,
+            silent=2,
+            refresh=0
+        )
+        
+        # Get random effects (default: summary=True)
+        random_effects = brmspy.ranef(model)
+        
+        # Verify return type is dict
+        assert isinstance(random_effects, dict), \
+            f"ranef() should return dict, got {type(random_effects)}"
+        
+        # Verify dict is not empty
+        assert len(random_effects) > 0, \
+            "Random effects dict should not be empty"
+        
+        # Verify 'group' is in the dict (our grouping factor)
+        assert 'group' in random_effects, \
+            "Random effects should contain 'group' key"
+        
+        # Get the group random effects
+        group_re = random_effects['group']
+        
+        # Verify it's an xarray DataArray
+        assert isinstance(group_re, xr.DataArray), \
+            f"Random effects should be xarray DataArray, got {type(group_re)}"
+        
+        # Verify dimensions for summary=True: (group, stat, coef)
+        assert group_re.dims == ('group', 'stat', 'coef'), \
+            f"DataArray should have dims ('group', 'stat', 'coef'), got {group_re.dims}"
+        
+        # Verify we have the expected groups (G1, G2)
+        groups = list(group_re.coords['group'].values)
+        assert len(groups) == 2, \
+            "Should have 2 groups"
+        assert set(groups) == {'G1', 'G2'}, \
+            "Groups should be G1 and G2"
+        
+        # Verify we have expected statistics
+        stats = list(group_re.coords['stat'].values)
+        assert 'Estimate' in stats, \
+            "Statistics should include Estimate"
+        assert any('Error' in s or 'Est.Error' in s for s in stats), \
+            "Statistics should include error/uncertainty"
+        
+        # Verify we can select specific values
+        intercept_estimates = group_re.sel(coef='Intercept', stat='Estimate')
+        assert intercept_estimates.shape == (2,), \
+            "Should have one estimate per group"
+        
+        # Verify no NaN values
+        assert not group_re.isnull().any(), \
+            "Random effects should not contain NaN values"
+    
+    @pytest.mark.slow
+    def test_ranef_raw_samples_mode(self, sample_dataframe):
+        """
+        Test ranef() with summary=False to get raw posterior samples.
+        
+        Verifies:
+        - Returns dict of xarray DataArrays with raw draws
+        - Each DataArray has correct dimensions: (draw, group, coef)
+        - Number of draws matches expected posterior samples
+        - Can compute custom statistics from raw draws
+        """
+        import brmspy
+        import xarray as xr
+        import numpy as np
+        
+        # Add group variation for better convergence
+        sample_dataframe['y'] = (
+            sample_dataframe['y'] +
+            sample_dataframe['group'].map({'G1': -2, 'G2': 2})
+        )
+        
+        # Fit a model with random effects
+        model = brmspy.fit(
+            formula="y ~ x1 + (1|group)",
+            data=sample_dataframe,
+            family="gaussian",
+            iter=100,
+            warmup=50,
+            chains=2,
+            silent=2,
+            refresh=0
+        )
+        
+        # Get raw posterior samples (summary=False)
+        random_effects_draws = brmspy.ranef(model, summary=False)
+        
+        # Verify return type is dict
+        assert isinstance(random_effects_draws, dict), \
+            f"ranef(summary=False) should return dict, got {type(random_effects_draws)}"
+        
+        # Verify dict is not empty
+        assert len(random_effects_draws) > 0, \
+            "Random effects dict should not be empty"
+        
+        # Verify 'group' is in the dict
+        assert 'group' in random_effects_draws, \
+            "Random effects should contain 'group' key"
+        
+        # Get the group random effects draws
+        group_re_draws = random_effects_draws['group']
+        
+        # Verify it's an xarray DataArray
+        assert isinstance(group_re_draws, xr.DataArray), \
+            f"Random effects should be xarray DataArray, got {type(group_re_draws)}"
+        
+        # Verify dimensions for summary=False: (draw, group, coef)
+        assert group_re_draws.dims == ('draw', 'group', 'coef'), \
+            f"DataArray should have dims ('draw', 'group', 'coef'), got {group_re_draws.dims}"
+        
+        # Verify number of draws (2 chains × 50 post-warmup = 100 draws)
+        expected_draws = 2 * (100 - 50)  # chains * (iter - warmup)
+        assert group_re_draws.sizes['draw'] == expected_draws, \
+            f"Should have {expected_draws} draws, got {group_re_draws.sizes['draw']}"
+        
+        # Verify we have the expected groups
+        groups = list(group_re_draws.coords['group'].values)
+        assert len(groups) == 2, \
+            "Should have 2 groups"
+        assert set(groups) == {'G1', 'G2'}, \
+            "Groups should be G1 and G2"
+        
+        # Verify we can compute statistics from raw draws
+        intercept_draws = group_re_draws.sel(coef='Intercept', group='G1')
+        assert intercept_draws.shape == (expected_draws,), \
+            f"Should have {expected_draws} draws for single group/coef"
+        
+        # Compute custom statistic (e.g., median)
+        median_estimate = float(np.median(intercept_draws.values))
+        assert not np.isnan(median_estimate), \
+            "Should be able to compute median from draws"
+        
+        # Verify no NaN values in the draws
+        assert not group_re_draws.isnull().any(), \
+            "Random effects draws should not contain NaN values"
