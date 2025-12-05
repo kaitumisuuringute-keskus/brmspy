@@ -378,6 +378,7 @@ build.main() or collect_runtime_metadata + stage_runtime_tree + pack_runtime
    - Mutates R environment without user action
    - On error, calls `_set_active_runtime(None)` - config change from "load" function
    - Violates "no surprise behavior"
+   - While this violates things, the side-effects might be necessary. We want a stable environment that carries over sessions!
 
 4. **use.activate_runtime()** - saves config as side effect
    - Main purpose is mutating R environment (libPaths, cmdstan_path)
