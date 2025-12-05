@@ -4,7 +4,7 @@ import pandas as pd
 import xarray as xr
 import numpy as np
 
-from brmspy.helpers.robject_iter import iterate_robject_to_dataclass
+from brmspy.helpers._robject_iter import iterate_robject_to_dataclass
 from ..helpers.conversion import (
     kwargs_r,
     py_to_r,

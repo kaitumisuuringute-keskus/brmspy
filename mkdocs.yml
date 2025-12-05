@@ -94,17 +94,11 @@ nav:
     - Helpers:
       - Conversion: api/helpers/conversion.md
       - Priors: api/helpers/priors.md
-      - RTools (Windows): api/helpers/rtools.md
-      - Singleton: api/helpers/singleton.md
   - Examples:
     - Google colab: examples/google-colab-example.md
     - Quick Start: examples/quickstart.md
     - Advanced Usage: examples/advanced.md
  
-  - Binaries:
-    - Build: binaries/build.md
-    - Env: binaries/env.md
-    - Use: binaries/use.md
   - Development: development/development.md
   - Changelog: changelog.md
 
