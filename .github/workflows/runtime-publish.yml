@@ -140,7 +140,7 @@ jobs:
 
               echo "== Building runtime tarball =="
               mkdir -p dist/runtime
-              python -m brmspy.binaries.build --output-dir dist/runtime
+              python -m brmspy.build --output-dir dist/runtime
 
               echo "== Contents of dist/runtime =="
               ls -R dist/runtime
@@ -218,7 +218,7 @@ jobs:
           RPY2_CFFI_MODE: "ABI"
         run: |
           mkdir -p dist/runtime
-          python -m brmspy.binaries.build --output-dir "dist/runtime"
+          python -m brmspy.build --output-dir "dist/runtime"
 
           RUNTIME_TARBALL=$(ls dist/runtime/*.tar.gz)
           if [ -z "$RUNTIME_TARBALL" ]; then
