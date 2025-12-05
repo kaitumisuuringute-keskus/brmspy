@@ -12,8 +12,16 @@ import pandas as pd
 import numpy as np
 
 
+
 class TestImports:
     """Test that all modules and functions can be imported."""
+
+    def test_ensure_installed(self):
+        from brmspy import install_prebuilt
+        try:
+            install_prebuilt(install_rtools=True)
+        except:
+            pass
 
     def test_import_brmspy(self):
         """Test basic brmspy import"""
