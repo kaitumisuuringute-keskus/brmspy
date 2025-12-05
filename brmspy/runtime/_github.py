@@ -76,7 +76,7 @@ def get_latest_runtime_version() -> str:
     """Query GitHub for latest runtime release version."""
     # For now, return a default version
     # This should query the GitHub API for the latest release
-    return "0.1.0"
+    return "0.2.0"
 
 
 def get_github_asset_sha256_from_url(url: str, require_digest: bool = False) -> str | None:

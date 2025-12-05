@@ -7,6 +7,7 @@ import hashlib
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
+import sys
 
 from brmspy.runtime._platform import system_fingerprint
 from brmspy.helpers.log import log
@@ -77,6 +78,17 @@ def stage_runtime_tree(base_dir: Path, metadata: dict, runtime_version: str) -> 
 
     log(f"[cmdstan] Copying CmdStan from {cmdstan_path} to {cmdstan_dir}")
     shutil.copytree(cmdstan_path, cmdstan_dir, dirs_exist_ok=True)
+
+
+    # On macOS, drop precompiled headers (PCH) to avoid SDK/PCH mismatch issues
+    if sys.platform == "darwin":
+        model_dir = cmdstan_dir / "stan" / "src" / "stan" / "model"
+        if model_dir.exists():
+            for entry in model_dir.iterdir():
+                # Clang stores PCH in dirs like "model_header.hpp.gch/"
+                if entry.is_dir() and entry.name.endswith(".hpp.gch"):
+                    log(f"[cmdstan] Removing PCH directory on macOS: {entry}")
+                    shutil.rmtree(entry, ignore_errors=True)
 
     # Write manifest.json
     r_pkg_versions = {pkg["Package"]: pkg["Version"] for pkg in pkgs}

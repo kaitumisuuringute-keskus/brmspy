@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       runtime_version:
-        description: "Logical runtime version (e.g. 0.1.0)"
+        description: "Logical runtime version (e.g. 0.2.0)"
         required: true
         type: string
-        default: "0.1.0"
+        default: "0.2.0"
       tag:
         description: "Git tag for the runtime release (e.g. runtime)"
         required: false
@@ -31,8 +31,8 @@ jobs:
         id: get_or_create_release
         uses: actions/github-script@v7
         env:
-          TAG: ${{ inputs.tag || 'runtime' }}
-          RUNTIME_VERSION: ${{ inputs.runtime_version || '0.1.0' }}
+          TAG: ${{ inputs.tag || format('runtime-{0}', inputs.runtime_version || '0.2.0') }}
+          RUNTIME_VERSION: ${{ inputs.runtime_version || '0.2.0' }}
         with:
           script: |
             const tag = process.env.TAG;
@@ -56,8 +56,8 @@ jobs:
                 owner,
                 repo,
                 tag_name: tag,
-                name: `Runtimes`,
-                body: `brmspy prebuilt runtimes for cmdstanr and brms.`,
+                name: `Runtimes ${runtimeVersion}`,
+                body: `brmspy prebuilt runtimes ${runtimeVersion} for cmdstanr and brms.`,
                 draft: false,
                 prerelease: true
               });
@@ -71,7 +71,7 @@ jobs:
       fail-fast: false
       max-parallel: 9
       matrix:
-        r: ["4.4", "4.3", "4.2", "4.1", "4.0", "4.5"]
+        r: ["4.5", "4.4", "4.3", "4.2", "4.1", "4.0"]
         os: [ubuntu-latest, macos-latest, windows-latest]
 
     runs-on: ${{ matrix.os }}
