@@ -147,6 +147,7 @@ class TestGetRVersion:
     platform.system() != "Windows",
     reason="Windows-specific Rtools tests"
 )
+@pytest.mark.rdeps
 class TestWindowsRtoolsDetection:
     """Windows-only tests for Rtools detection (lines 260-281)."""
     
@@ -172,6 +173,7 @@ class TestWindowsRtoolsDetection:
     reason="Windows-specific Rtools installation tests"
 )
 @pytest.mark.slow
+@pytest.mark.rdeps
 class TestWindowsRtoolsInstallation:
     """Windows-only tests for Rtools installation (lines 353-406)."""
     
@@ -203,6 +205,7 @@ class TestWindowsRtoolsInstallation:
     platform.system() == "Windows",
     reason="Non-Windows platform test"
 )
+@pytest.mark.rdeps
 class TestNonWindowsRtools:
     """Tests for non-Windows platforms."""
     
