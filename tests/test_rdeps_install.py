@@ -9,6 +9,7 @@ all 3 major platform images from a single local machine
 is both legally and technically difficult.
 """
 
+from typing import Any, cast
 import pytest
 import pandas as pd
 import numpy as np
@@ -35,7 +36,7 @@ def _fit_minimal_model(brms):
     assert isinstance(model.idata, az.InferenceData)
     
     # Check key parameters exist
-    param_names = list(model.idata.posterior.data_vars)
+    param_names = list(cast(Any, model.idata).posterior.data_vars)
     assert any('b_zAge' in p for p in param_names)
     assert any('b_zBase' in p for p in param_names)
 

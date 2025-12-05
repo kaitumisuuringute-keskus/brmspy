@@ -20,7 +20,7 @@ class TestBuildManifestHash:
     
     def test_generate_manifest_hash_deterministic(self):
         """Verify hash is deterministic for same manifest (lines 58-60)"""
-        from brmspy.binaries.build import _generate_manifest_hash
+        from brmspy.build._stage import _generate_manifest_hash
         
         manifest = {
             "runtime_version": "0.1.0",
@@ -41,7 +41,7 @@ class TestBuildManifestHash:
     
     def test_generate_manifest_hash_changes_with_content(self):
         """Verify hash changes when manifest content changes"""
-        from brmspy.binaries.build import _generate_manifest_hash
+        from brmspy.build._stage import _generate_manifest_hash
         
         manifest1 = {
             "runtime_version": "0.1.0",
@@ -66,7 +66,7 @@ class TestBuildRunRJson:
     
     def test_run_r_json_simple(self):
         """Execute simple R code returning JSON (lines 104-107)"""
-        from brmspy.binaries.build import _run_r_json
+        from brmspy.build._metadata import _run_r_json
         import rpy2.robjects as ro
         
         # Ensure jsonlite available
@@ -82,7 +82,7 @@ class TestBuildRunRJson:
     
     def test_run_r_json_with_nested_data(self):
         """Test R JSON with nested structures"""
-        from brmspy.binaries.build import _run_r_json
+        from brmspy.build._metadata import _run_r_json
         
         result = _run_r_json('''
             jsonlite::toJSON(list(
@@ -109,11 +109,11 @@ class TestBuildMetadataCollection:
 
     def test_collect_runtime_metadata_structure(self):
         """Collect metadata and verify structure (lines 160-166)"""
-        from brmspy.binaries.build import collect_runtime_metadata
-        from brmspy.binaries.r import _get_r_pkg_installed
+        from brmspy.build._metadata import collect_runtime_metadata
+        from brmspy.runtime._r_packages import is_package_installed
         
         # Skip if brms or cmdstanr not installed
-        if not (_get_r_pkg_installed("brms") and _get_r_pkg_installed("cmdstanr")):
+        if not (is_package_installed("brms") and is_package_installed("cmdstanr")):
             pytest.skip("Requires brms and cmdstanr installed")
         
         metadata = collect_runtime_metadata()
@@ -132,11 +132,11 @@ class TestBuildMetadataCollection:
     
     def test_collect_runtime_metadata_has_required_packages(self):
         """Verify brms and cmdstanr are included in metadata"""
-        from brmspy.binaries.build import collect_runtime_metadata
-        from brmspy.binaries.r import _get_r_pkg_installed
+        from brmspy.build._metadata import collect_runtime_metadata
+        from brmspy.runtime._r_packages import is_package_installed
         
         # Skip if brms or cmdstanr not installed
-        if not (_get_r_pkg_installed("brms") and _get_r_pkg_installed("cmdstanr")):
+        if not (is_package_installed("brms") and is_package_installed("cmdstanr")):
             pytest.skip("Requires brms and cmdstanr installed")
         
         metadata = collect_runtime_metadata()
@@ -165,12 +165,10 @@ class TestBuildStaging:
         brmspy.install_brms(use_prebuilt_binaries=True)
     
     def test_stage_runtime_tree_creates_structure(self, tmp_path):
-        """Verify directory structure creation (lines 247-305)"""
-        from brmspy.binaries.build import (
-            collect_runtime_metadata,
-            stage_runtime_tree
-        )
-        
+        """Verify directory structure creation"""
+        from brmspy.build._metadata import collect_runtime_metadata
+        from brmspy.build._stage import stage_runtime_tree
+
         metadata = collect_runtime_metadata()
         runtime_root = stage_runtime_tree(
             tmp_path,
@@ -195,10 +193,8 @@ class TestBuildStaging:
     
     def test_stage_runtime_tree_manifest_content(self, tmp_path):
         """Verify manifest.json contains correct metadata"""
-        from brmspy.binaries.build import (
-            collect_runtime_metadata,
-            stage_runtime_tree
-        )
+        from brmspy.build._metadata import collect_runtime_metadata
+        from brmspy.build._stage import stage_runtime_tree
         
         metadata = collect_runtime_metadata()
         runtime_root = stage_runtime_tree(
@@ -243,12 +239,10 @@ class TestBuildPacking:
         brmspy.install_brms(use_prebuilt_binaries=True)
     
     def test_pack_runtime_creates_archive(self, tmp_path):
-        """Verify archive is created correctly (lines 363-374)"""
-        from brmspy.binaries.build import (
-            collect_runtime_metadata,
-            stage_runtime_tree,
-            pack_runtime
-        )
+        """Verify archive is created correctly"""
+        from brmspy.build._metadata import collect_runtime_metadata
+        from brmspy.build._stage import stage_runtime_tree
+        from brmspy.build._pack import pack_runtime
         import tarfile
         
         # Stage runtime first
@@ -292,11 +286,9 @@ class TestBuildPacking:
     
     def test_pack_runtime_archive_size(self, tmp_path):
         """Verify packed archive is reasonable size"""
-        from brmspy.binaries.build import (
-            collect_runtime_metadata,
-            stage_runtime_tree,
-            pack_runtime
-        )
+        from brmspy.build._metadata import collect_runtime_metadata
+        from brmspy.build._stage import stage_runtime_tree
+        from brmspy.build._pack import pack_runtime
         
         stage_dir = tmp_path / "stage"
         stage_dir.mkdir()
