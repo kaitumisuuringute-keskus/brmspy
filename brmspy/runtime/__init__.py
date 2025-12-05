@@ -12,6 +12,7 @@ from pathlib import Path
 from brmspy.helpers.log import log_warning
 from brmspy.runtime import _r_packages
 from brmspy.runtime._types import RuntimeStatus, RuntimeManifest, SystemInfo
+from packaging.version import Version
 
 __all__ = [
     "install", "activate", "deactivate", "status",
@@ -220,6 +221,8 @@ def install_brms(
     ----------
     brms_version : str, default="latest"
         brms version: "latest", "2.23.0", or ">= 2.20.0"
+    repo : str | None, default=None
+        Extra CRAN repository URL
     install_cmdstanr : bool, default=True
         Whether to install cmdstanr and build CmdStan compiler
     install_rstan : bool, default=False
@@ -229,9 +232,38 @@ def install_brms(
     rstan_version : str, default="latest"
         rstan version: "latest", "2.32.6", or ">= 2.32.0"
     use_prebuilt_binaries: bool, default=False
-        Uses fully prebuilt binaries for cmdstanr and brms and their dependencies.
+        Uses fully prebuilt binaries for cmdstanr and brms and their dependencies. 
+        Ignores system R libraries and uses the latest brms and cmdstanr available 
+        for your system. Requires R>=4 and might not be compatible with some older
+        systems or missing toolchains. Can reduce setup time by 50x.
     install_rtools: bool, default=False
-        Installs RTools (windows only) if they cant be found.
+        Installs RTools (windows only) if they cant be found. 
+        WARNING: Modifies system path and runs the full rtools installer. 
+        Use with caution!
+    
+    Examples
+    --------
+    Basic installation:
+    
+    ```python
+    from brmspy import brms
+    brms.install_brms()
+    ```
+    Install specific version:
+    
+    ```python
+    brms.install_brms(brms_version="2.23.0")
+    ```
+
+    Use rstan instead of cmdstanr:
+
+    ```python
+    brms.install_brms(install_cmdstanr=False, install_rstan=True)
+    ```
+
+    Fast installation with prebuilt binaries:
+    ```python
+    brms.install_brms(use_prebuilt_binaries=True)
     """
     install(
         use_prebuilt=use_prebuilt_binaries,
@@ -246,7 +278,58 @@ def install_brms(
 
 
 def install_prebuilt(install_rtools: bool = False):
-    """Install prebuilt brmspy runtime bundle."""
+    """
+    Install prebuilt brmspy runtime bundle for fast setup.
+    
+    Downloads and activates a precompiled runtime containing:
+    - R packages (brms, cmdstanr, dependencies)
+    - Compiled CmdStan binary
+    - Complete environment ready for immediate use
+    
+    This reduces setup time from ~30 minutes to ~1 minute by avoiding
+    compilation. Available for specific platform/R version combinations.
+
+    This function reconfigures the running embedded R session to use an isolated 
+    library environment from downloaded binaries. It does not mix or break the 
+    default library tree already installed in the system.
+    
+    Parameters
+    ----------
+    install_rtools: bool, default=False
+        Installs RTools (windows only) if they cant be found. 
+        WARNING: Modifies system path and runs the full rtools installer.
+    
+    Returns
+    -------
+    bool
+        Path if installation succeeded, None otherwise
+    
+    Raises
+    ------
+    RuntimeError
+        If prebuilt binaries not available for this platform
+    
+    Notes
+    -----
+    **Platform Support**: Prebuilt binaries are available for:
+    - Linux: x86_64, glibc >= 2.27, g++ >= 9
+    - macOS: x86_64 and arm64, clang >= 11
+    - Windows: x86_64 with Rtools
+    
+    **R Version**: Runtime includes all R packages, so they must match
+    your R installation's major.minor version (e.g., R 4.3.x).
+    
+    **System Fingerprint**: Runtime is selected based on:
+    - Operating system (linux/macos/windows)
+    - CPU architecture (x86_64/arm64)
+    - R version (major.minor)
+    
+    Example: `linux-x86_64-r4.3`
+    
+    See Also
+    --------
+    install_brms : Main installation function
+    """
     return install(
         use_prebuilt=True,
         install_rtools=install_rtools,
@@ -254,16 +337,68 @@ def install_prebuilt(install_rtools: bool = False):
     )
 
 
-def get_brms_version() -> str | None:
-    """Get installed brms version."""
-    return status().brms_version
+def get_brms_version() -> Version | None:
+    """
+    Get installed brms R package version.
+    
+    Returns
+    -------
+    str
+        Version object or None
+    
+    Raises
+    ------
+    ImportError
+        If brms is not installed
+    
+    Examples
+    --------
+
+    ```python
+    from brmspy import brms
+    version = brms.get_brms_version()
+    print(f"brms version: {version}")
+    ```
+    """
+    version = status().brms_version
+    if version is None:
+        return None
+    return Version(version)
 
 
 def deactivate_runtime():
-    """Deactivate current runtime."""
+    """
+    
+    """
     deactivate()
 
 
-def get_active_runtime():
-    """Get active runtime path."""
+def get_active_runtime() -> Path | None:
+    """
+    Get path to currently active prebuilt runtime.
+    
+    Returns
+    -------
+    Path or None
+        Path to active runtime directory, or None if not configured
+    
+    Notes
+    -----
+    Returns None if:
+    - No runtime configured in config file
+    - Config file doesn't exist
+    - Config file is corrupted
+    
+    Examples
+    --------
+    ```python
+    from brmspy import get_active_runtime
+    
+    runtime_path = get_active_runtime()
+    if runtime_path and runtime_path.exists():
+        print(f"Active runtime: {runtime_path}")
+    else:
+        print("No active runtime configured")
+    ```
+    """
     return status().active_runtime

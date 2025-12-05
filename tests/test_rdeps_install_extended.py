@@ -46,7 +46,7 @@ class TestGetBrmsVersion:
     """Test brms version getter."""
     
     def test_get_brms_version_returns_version(self):
-        """Test get_brms_version returns version string"""
+        """Test get_package_version returns version string"""
         from brmspy.runtime._r_packages import get_package_version
         
         version = get_package_version("brms")
