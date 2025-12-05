@@ -3,9 +3,8 @@ source = brmspy
 
 [report]
 include =
-    brmspy/binaries/*
-    brmspy/install.py
-    brmspy/helpers/rtools.py
+    brmspy/runtime/*
+    brmspy/build/*
 
 [paths]
 brmspy =
