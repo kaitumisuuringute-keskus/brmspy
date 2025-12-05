@@ -9,6 +9,7 @@ from typing import List, Optional, Union, cast
 import rpy2.robjects as ro
 from rpy2.robjects.packages import importr
 from rpy2.robjects.vectors import StrVector
+from brmspy.helpers.log import log, log_error, log_warning
 
 
 # === Queries ===
@@ -70,58 +71,66 @@ def install_package(
     version: str | None = None,
     repos_extra: Optional[Union[str, List[Optional[str]], List[str]]] = None
 ) -> None:
-    """
-    Install single R package.
-    Uses remotes::install_version if version specified,
-    otherwise utils::install.packages.
-    """
-    # Normalize special values
+    from brmspy.runtime._r_env import unload_package
+
+    # Normalise special values that mean "latest / no constraint"
     if version is not None:
         v = version.strip()
         if v == "" or v.lower() in ("latest", "any"):
             version = None
         else:
             version = v
-    
+
     utils = importr("utils")
     system = platform.system()
     cores = multiprocessing.cpu_count()
-    
+
     already_installed = is_package_installed(name)
-    
-    repos: list[str] = ["https://cloud.r-project.org"]
+
+    repos: list[str] = ["https://cloud.r-project.org"]  # good default mirror
+
+    if system == "Linux":
+        # On Linux, we MUST use P3M to get binaries. These present as "source"
+        # to R, so type="source" is actually fine.
+        binary_repo = _get_linux_repo()
+        repos.insert(0, binary_repo)  # high priority
+        preferred_type = "source"
+    else:
+        # Windows / macOS use native CRAN binaries in the "no version" path
+        preferred_type = "binary"
 
     if repos_extra:
         if isinstance(repos_extra, list):
             for _r in repos_extra:
                 if isinstance(_r, str) and _r not in repos:
                     repos.append(_r)
-        elif repos_extra and repos_extra not in repos:
+        elif repos_extra not in repos:
             repos.append(repos_extra)
-    
-    if system == "Linux":
-        binary_repo = _get_linux_repo()
-        repos.insert(0, binary_repo)
-        preferred_type = "source"
-    else:
-        preferred_type = "binary"
-    
-    # Version specified -> use remotes
+
+    # ------------------------------------------------------------------
+    # BRANCH 1: version *specified* -> delegate entirely to remotes
+    # ------------------------------------------------------------------
     if version is not None:
+        log(
+            f"Installing {name} "
+            f"(version spec: {version!r}) via remotes::install_version()..."
+        )
+
         # Ensure remotes is available
         ro.r(
             'if (!requireNamespace("remotes", quietly = TRUE)) '
             'install.packages("remotes", repos = "https://cloud.r-project.org")'
         )
-        
+
+        # Pass repo vector from Python into R
         ro.globalenv[".brmspy_repos"] = StrVector(repos)
+
+        # Escape double quotes in version spec just in case
         v_escaped = version.replace('"', '\\"')
-        
+
         try:
             if already_installed and system == "Windows":
-                from brmspy.runtime._r_env import unload_package
                 unload_package(name)
-            
             ro.r(
                 f'remotes::install_version('
                 f'package = "{name}", '
@@ -129,32 +138,74 @@ def install_package(
                 f'repos = .brmspy_repos)'
             )
         finally:
+            # Clean up
             del ro.globalenv[".brmspy_repos"]
-        
+
+        installed_version = get_package_version(name)
+        if installed_version is None:
+            raise RuntimeError(
+                f"{name} did not appear after remotes::install_version('{version}')."
+            )
+
+        log(
+            f"Installed {name} via remotes::install_version "
+            f"(installed: {installed_version})."
+        )
         return
-    
-    # No version -> install latest
-    if is_package_installed(name):
-        return
-    
+
+    # ------------------------------------------------------------------
+    # BRANCH 2: no version spec -> "latest" from repos via install.packages
+    # ------------------------------------------------------------------
+    installed_version = None
     try:
+        if already_installed:
+            installed_version = get_package_version(name)
+    except Exception:
+        installed_version = None
+
+    if installed_version is not None:
+        log(f"{name} {installed_version} already installed.")
+        return
+
+    log(f"Installing {name} on {system} (Repos: {len(repos)})...")
+
+    try:
+        # Primary Attempt (Fast Binary / P3M)
         if already_installed and system == "Windows":
-            from brmspy.runtime._r_env import unload_package
             unload_package(name)
-        
         utils.install_packages(
             StrVector((name,)),
             repos=StrVector(repos),
             type=preferred_type,
             Ncpus=cores,
         )
-    except Exception:
-        # Fallback to source
-        utils.install_packages(
-            StrVector((name,)),
-            repos=StrVector(repos),
-            Ncpus=cores,
+        installed_version = get_package_version(name)
+        if installed_version is None:
+            raise RuntimeError(
+                f"{name} did not appear after install (type={preferred_type})."
+            )
+        log(f"Installed {name} via {preferred_type} path.")
+    except Exception as e:
+        log_warning(
+            f"{preferred_type} install failed for {name}. "
+            f"Falling back to source compilation. ({e})"
         )
+        try:
+            if already_installed and system == "Windows":
+                unload_package(name)
+            utils.install_packages(
+                StrVector((name,)),
+                repos=StrVector(repos),
+                # don't set type, let R manage this.
+                Ncpus=cores,
+            )
+            installed_version = get_package_version(name)
+            if installed_version is None:
+                raise RuntimeError(f"{name} did not appear after source install.")
+            log(f"brmspy: Installed {name} from source.")
+        except Exception as e2:
+            log_error(f"Failed to install {name}.")
+            raise e2
 
 
 def install_package_deps(name: str, include_suggests: bool = False) -> None:
@@ -163,7 +214,8 @@ def install_package_deps(name: str, include_suggests: bool = False) -> None:
     if include_suggests:
         which_deps = 'c("Depends", "Imports", "LinkingTo", "Suggests")'
 
-    ncpus = multiprocessing.cpu_count()
+    ncpus = multiprocessing.cpu_count() - 1
+    ncpus = max(1, ncpus)
     
     ro.r(f"""
         pkgs <- unique(unlist(
