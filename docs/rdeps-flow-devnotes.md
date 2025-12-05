@@ -1,4 +1,6 @@
-# functions list (based on dev after 0.1.13)
+# Rdeps flow overview
+
+## functions list (based on dev after 0.1.13)
 
 brmspy.install._init - add cran repo
 brmspy.install._get_linux_repo - get Posit Package Manager (P3M) - precompiled R packages for Linux
@@ -66,7 +68,7 @@ brmspy.binaries.use._install_from_directory
 brmspy.binaries.use.install_and_activate_runtime
 brmspy.binaries.use.autoload_last_runtime
 
-# Runtime / install subsystem design rules
+## Runtime / install subsystem design rules
 
 1. No hidden side effects. Every function must either be:
     - Pure-ish (only computes/reads), or
@@ -104,9 +106,11 @@ brmspy.binaries.use.autoload_last_runtime
     - Everything else is internal; it may change without notice.
     - Public functions never expose internal data structures directly.
 
-# Current flow
+7. Due to complexity of layers, within internals we should always import as module and call the method on the function. e.g config._clear_active_runtime() is more obvious in its function than _clear_active_runtime()
 
-## Entry Points (Public API)
+## Current flow
+
+### Entry Points (Public API)
 
 From brmspy/__init__.py and brms.py:
 - install_brms() - traditional R package installation
@@ -117,9 +121,10 @@ From brmspy/__init__.py and brms.py:
 - fit() / brm() - fit Bayesian models
 - On import: autoload_last_runtime() runs automatically
 
-## Flow 1: Traditional Install (install_brms with use_prebuilt_binaries=False)
+### Flow 1: Traditional Install (install_brms with use_prebuilt_binaries=False)
 
 install.install_brms()
+```
 ├─> install._init() - sets CRAN mirror
 ├─> [if install_rtools] rtools._install_rtools_for_current_r()
 │   ├─> rtools._get_r_version()
@@ -147,10 +152,12 @@ install.install_brms()
     ├─> importr("posterior") [required]
     ├─> importr("brms") [required]
     └─> importr("base") [required]
+```
 
-## Flow 2: Prebuilt Runtime Install
+### Flow 2: Prebuilt Runtime Install
 
 install.install_prebuilt()
+```
 ├─> install._init()
 ├─> r._forward_github_token_to_r()
 ├─> [if install_rtools] rtools._install_rtools_for_current_r()
@@ -164,10 +171,12 @@ install.install_prebuilt()
 ├─> env.system_fingerprint() - get {os}-{arch}-r{major}.{minor}
 ├─> construct GitHub release URL
 └─> use.install_and_activate_runtime() [see Flow 3]
+```
 
-## Flow 3: Runtime Installation & Activation
+### Flow 3: Runtime Installation & Activation
 
 use.install_and_activate_runtime()
+```
 ├─> [if official GitHub URL] github.get_github_asset_sha256_from_url()
 │   ├─> github._parse_github_release_download_url()
 │   ├─> github._github_get_json() - fetch from GitHub API
@@ -191,10 +200,12 @@ use.install_and_activate_runtime()
 ├─> use._write_stored_hash() - save hash for future reuse
 ├─> use._load_manifest() - final validation
 └─> [if activate] use.activate_runtime() [see Flow 4]
+```
 
-## Flow 4: Runtime Activation
+### Flow 4: Runtime Activation
 
 use.activate_runtime(runtime_root)
+```
 ├─> validate structure: manifest.json, Rlib/, cmdstan/ exist
 ├─> use._load_manifest()
 ├─> [optional] verify fingerprint matches env.system_fingerprint()
@@ -207,10 +218,12 @@ use.activate_runtime(runtime_root)
 ├─> verify brms and cmdstanr loadable
 ├─> config._set_active_runtime(runtime_root) - save to ~/.brmspy/config.json
 └─> log.greet()
+```
 
-## Flow 5: Auto-Activation on Import
+### Flow 5: Auto-Activation on Import
 
 import brmspy / from brmspy import brms
+```
 ├─> brmspy/__init__.py imports brmspy.brms
 └─> brms.py module level:
     ├─> use.autoload_last_runtime()
@@ -218,10 +231,12 @@ import brmspy / from brmspy import brms
     │   ├─> [if exists] use.activate_runtime() [see Flow 4]
     │   └─> [if error] config._set_active_runtime(None) - clear invalid config
     └─> singleton._get_brms() - import R packages [see Flow 1]
+```
 
-## Flow 6: Deactivation
+### Flow 6: Deactivation
 
 use.deactivate_runtime()
+```
 ├─> check if _default_libpath exists and runtime active
 ├─> for pkg in ["brms", "cmdstanr", "rstan"]:
 │   └─> [if loaded] r._try_force_unload_package(pkg)
@@ -230,10 +245,12 @@ use.deactivate_runtime()
 ├─> [else] ro.r('cmdstanr::set_cmdstan_path(path=NULL)')
 ├─> config._clear_active_runtime_config_only()
 └─> singleton._invalidate_singletons()
+```
 
-## Flow 7: Building Runtime (for developers)
+### Flow 7: Building Runtime (for developers)
 
 build.main() or collect_runtime_metadata + stage_runtime_tree + pack_runtime
+```
 ├─> build.collect_runtime_metadata() - executes build-manifest.R
 │   └─> returns {r_version, cmdstan_path, cmdstan_version, packages: [{Package, Version, LibPath}]}
 ├─> build.stage_runtime_tree(base_dir, metadata, runtime_version)
@@ -245,6 +262,7 @@ build.main() or collect_runtime_metadata + stage_runtime_tree + pack_runtime
 │   └─> write manifest.json with metadata + hash
 └─> build.pack_runtime(runtime_root, out_dir, runtime_version)
     └─> create brmspy-runtime-{version}-{fingerprint}.tar.gz
+```
 
 ## Helper Module Functions
 
@@ -338,5 +356,172 @@ build.main() or collect_runtime_metadata + stage_runtime_tree + pack_runtime
     └── ...
 ```
 
-# Issues
 
+
+
+## Issues
+
+### Rule 1 Violations: Hidden Side Effects
+
+1. **config._clear_active_runtime()** - surprising behavior
+   - Function name suggests it clears config only
+   - Actually calls `deactivate_runtime()` which mutates R environment
+   - Mixes config management (read-only) with R environment mutation
+
+2. **use._maybe_reuse_existing_runtime()** - hidden activation
+   - Looks like a query/check function ("maybe check if can reuse")
+   - Actually calls `activate_runtime()` as side effect if hash matches
+   - Activation is major side effect hidden in innocent-looking function
+
+3. **use.autoload_last_runtime()** - implicit mutation at import
+   - Runs automatically when brms.py module loads
+   - Mutates R environment without user action
+   - On error, calls `_set_active_runtime(None)` - config change from "load" function
+   - Violates "no surprise behavior"
+
+4. **use.activate_runtime()** - saves config as side effect
+   - Main purpose is mutating R environment (libPaths, cmdstan_path)
+   - Also saves runtime path to config file (`_set_active_runtime()`)
+   - Mixes activation (process) with persistence (disk)
+
+5. **install.install_prebuilt()** - forces import
+   - Ends with `_get_brms()` call
+   - Imports R packages as side effect after installation
+   - Not clear from name that it will load packages
+
+6. **install._build_cmdstanr()** - may trigger install via exception
+   - On Windows toolchain failure, raises exception that suggests installing Rtools
+   - The function itself tries to fix via cmdstanr::check_cmdstan_toolchain(fix=TRUE)
+   - Name suggests "build" but also verifies and may auto-fix toolchain
+
+### Rule 2 Violations: Multiple Responsibilities
+
+7. **rtools._install_rtools_for_current_r()** - too many steps
+   - Detects R version
+   - Maps to Rtools version
+   - Checks if already present
+   - Downloads installer
+   - Installs silently
+   - Updates Python PATH
+   - Updates R PATH via Sys.setenv
+   - Forces R tool re-scan
+   - Should be orchestrator calling focused helper functions
+
+8. **install._install_rpackage()** - complex branching logic
+   - Normalizes version specs
+   - Checks installation status
+   - Determines repos (with platform-specific P3M logic)
+   - Handles remotes::install_version branch
+   - Handles utils::install_packages branch
+   - Both branches have fallback logic
+   - Windows-specific unload handling
+   - Too many concerns in one function
+
+9. **install.install_brms()** - orchestrator that does too much inline
+   - Calls install_prebuilt inline with conditional
+   - Mixes high-level orchestration with implementation details
+   - Should delegate more cleanly
+
+10. **use.activate_runtime()** - combines many operations
+    - Validates structure
+    - Stores defaults
+    - Invalidates singletons
+    - Unloads packages (3 of them)
+    - Mutates R library paths
+    - Sets cmdstan path
+    - Verifies loadable
+    - Saves config
+    - Greets user
+    - Should be split into validation, mutation, and persistence phases
+
+11. **use.install_and_activate_runtime()** - does two distinct things
+    - Downloads/extracts/installs (disk operations)
+    - Activates runtime (R environment mutation)
+    - Forces activation even if user only wants to install
+
+### Rule 3 Violations: Structure and Module Organization
+
+12. **Singleton state scattered across modules**
+    - R package singletons in helpers/singleton.py (_brms, _cmdstanr, etc.)
+    - R environment singletons in binaries/use.py (_default_libpath, _default_cmdstan_path)
+    - Two different singleton patterns for related concerns
+
+13. **env.can_use_prebuilt()** - marked UNUSED but still exists
+    - Dead code should be removed
+    - Fix: Delete.
+
+### Rule 4 Violations: Naming Conventions
+
+14. **singleton._get_brms()** - name doesn't indicate side effects
+    - Named `get_*` which should be read-only
+    - First call imports packages (side effect)
+    - Caches for subsequent calls
+
+15. **use._store_default_renv()** - conditional behavior not in name
+    - Only stores if `get_active_runtime() is None`
+    - Name doesn't indicate conditional logic
+
+16. **install._init()** - vague name
+    - Just sets CRAN mirror
+    - Name suggests broader initialization
+
+17. **r._try_force_unload_package()** - hidden remove behavior
+    - Has `uninstall` parameter that calls remove.packages()
+    - Name only mentions "unload"
+    - Fix: Split into _unload_package() and _remove_package()
+
+18. **use.install_and_activate_runtime()** - combines two action types
+    - Mixes `install_*` (disk) with `activate_*` (process)
+    - Violates convention that each verb has one mutation type
+    - Fix: Split into separate install and activate functions
+
+### Rule 5 Violations: Layered Hierarchy
+
+19. **Circular dependency: config ↔ use**
+    - config._clear_active_runtime() calls use.deactivate_runtime()
+    - use.activate_runtime() calls config._set_active_runtime()
+    - Peer modules calling each other
+
+20. **use._maybe_reuse_existing_runtime() calls activate_runtime()**
+    - Lower-level helper calling higher-level orchestrator
+    - Should return status and let orchestrator decide
+
+21. **Flow 5 violates entry point principle**
+    - autoload_last_runtime() runs at module import
+    - No explicit entry point call from user
+    - Subsystem activates itself
+
+### Rule 6 Violations: Public API Surface
+
+22. **Too many public runtime functions**
+    - install_brms (counts as runtime function)
+    - install_prebuilt
+    - install_and_activate_runtime
+    - activate_runtime
+    - deactivate_runtime
+    - get_active_runtime
+    - Six functions when rule says "at most 4"
+
+23. **install_and_activate_runtime exposed as public**
+    - Should be internal implementation detail
+    - Users should call install() then activate() explicitly
+    - Fix: Make internal, expose only install() and activate()
+
+### Cross-Cutting Issues
+
+
+25. **Error handling by raising exceptions with instructions**
+    - _build_cmdstanr() raises exception suggesting manual Rtools install
+    - Error message tells user what to do instead of function doing it
+    - Inconsistent with _install_rtools_for_current_r() which does auto-install
+    - Fix: Consistent approach - either auto-fix or always error with instructions
+
+26. **State persistence timing unclear**
+    - activate_runtime() saves config at end (after activation)
+    - If activation fails mid-way, config may be corrupted
+    - Fix: Validate fully before any mutations, then mutate atomically
+
+27. **_invalidate_singletons() called from multiple places**
+    - Called from install_brms(), activate_runtime(), deactivate_runtime()
+    - Unclear when singletons are actually invalid
+    - Should be explicit about when cached packages are stale
