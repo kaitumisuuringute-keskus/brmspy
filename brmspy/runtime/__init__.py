@@ -9,6 +9,7 @@ Public API (4 functions only):
 """
 
 from pathlib import Path
+from brmspy.helpers.log import log_warning
 from brmspy.runtime import _r_packages
 from brmspy.runtime._types import RuntimeStatus, RuntimeManifest, SystemInfo
 
@@ -177,26 +178,25 @@ def _autoload() -> None:
     Fails silently - must never break imports.
     """
     from brmspy.runtime import _config, _activation, _storage
-    import logging
     
     path = _config.get_active_runtime_path()
     if path is None:
         return
     
     if not path.exists():
-        logging.warning(f"Configured runtime no longer exists: {path}")
+        log_warning(f"Failed to auto-activate saved runtime. Configured runtime no longer exists: {path}")
         _config.set_active_runtime_path(None)
         return
     
     if not _storage.is_runtime_dir(path):
-        logging.warning(f"Configured runtime is invalid: {path}")
+        log_warning(f"Failed to auto-activate saved runtime. Configured runtime is invalid: {path}")
         _config.set_active_runtime_path(None)
         return
     
     try:
         _activation.activate(path)
     except Exception as e:
-        logging.warning(f"Failed to auto-activate runtime: {e}")
+        log_warning(f"FFailed to auto-activate saved runtime {path}: {e}")
         _config.set_active_runtime_path(None)
 
 

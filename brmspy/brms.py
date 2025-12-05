@@ -26,6 +26,9 @@ from brmspy.brms_functions.stan import make_stancode
 from brmspy.brms_functions import families
 from brmspy.brms_functions.families import family, brmsfamily
 
+from brmspy.runtime import (
+    install_brms, get_brms_version, install_prebuilt, deactivate_runtime, get_active_runtime
+)
 
 # Auto-load last runtime on import
 runtime._autoload()
