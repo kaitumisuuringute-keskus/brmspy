@@ -195,7 +195,9 @@ from brmspy.brms import (
     get_brms_data,
     get_data,
     fit, brm,
-    formula,
+
+    formula, set_nl, set_mecor, set_rescor,
+
     make_stancode,
     posterior_epred,
     posterior_predict,
@@ -238,7 +240,7 @@ __all__ = [
     'fit', 'brm',
 
     # formula
-    'formula',
+    'formula', 'set_mecor', 'set_rescor', 'set_nl',
 
     # priors
     'prior', 'get_prior', 'default_prior',
