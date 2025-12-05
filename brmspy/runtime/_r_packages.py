@@ -162,6 +162,8 @@ def install_package_deps(name: str, include_suggests: bool = False) -> None:
     which_deps = 'c("Depends", "Imports", "LinkingTo")'
     if include_suggests:
         which_deps = 'c("Depends", "Imports", "LinkingTo", "Suggests")'
+
+    ncpus = multiprocessing.cpu_count()
     
     ro.r(f"""
         pkgs <- unique(unlist(
@@ -175,7 +177,7 @@ def install_package_deps(name: str, include_suggests: bool = False) -> None:
         
         to_install <- setdiff(pkgs, rownames(installed.packages()))
         if (length(to_install)) {{
-            install.packages(to_install)
+            install.packages(to_install, Ncpus = {ncpus})
         }}
     """)
 

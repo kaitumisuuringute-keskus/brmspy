@@ -355,7 +355,8 @@ def require_toolchain_compatible() -> None:
 def require_prebuilt_compatible() -> None:
     """Raise RuntimeError if system can't use prebuilt runtimes."""
     issues = get_compatibility_issues()
-    if issues:
+    can_use = can_use_prebuilt()
+    if issues or not can_use:
         raise RuntimeError(
             "System cannot use prebuilt runtimes:\n" +
             "\n".join(f"  - {issue}" for issue in issues)

@@ -29,7 +29,6 @@ def install_traditional(
     _platform.require_r_available()
     
     # Setup
-    _r_packages.set_cran_mirror()
     _r_env.forward_github_token()
     
     if install_rtools and _platform.get_os() == "windows":

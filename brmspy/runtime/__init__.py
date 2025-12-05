@@ -9,6 +9,7 @@ Public API (4 functions only):
 """
 
 from pathlib import Path
+from brmspy.runtime import _r_packages
 from brmspy.runtime._types import RuntimeStatus, RuntimeManifest, SystemInfo
 
 __all__ = [
@@ -16,6 +17,8 @@ __all__ = [
     "RuntimeStatus", "RuntimeManifest", "SystemInfo",
 ]
 
+# MUST be called as otherwise the environment gets stuck asking for one
+_r_packages.set_cran_mirror()
 
 def install(
     *,
