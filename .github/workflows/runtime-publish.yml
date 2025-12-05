@@ -67,6 +67,8 @@ jobs:
 
   publish:
     needs: create-release
+    env:
+      RUNTIME_VERSION: ${{ inputs.runtime_version || '0.2.0' }}
     strategy:
       fail-fast: false
       max-parallel: 9
@@ -114,6 +116,7 @@ jobs:
             -w /work \
             -e R_VERSION="${R_VERSION}" \
             -e RPY2_CFFI_MODE="${RPY2_CFFI_MODE}" \
+            -e RUNTIME_VERSION="${RUNTIME_VERSION}" \
             ghcr.io/kaitumisuuringute-keskus/brmspy-runtime-builder:ubuntu18-gcc9 \
             bash -lc '
               set -euo pipefail
@@ -140,7 +143,7 @@ jobs:
 
               echo "== Building runtime tarball =="
               mkdir -p dist/runtime
-              python -m brmspy.build --output-dir dist/runtime
+              python -m brmspy.build --output-dir dist/runtime --runtime-version "$RUNTIME_VERSION"
 
               echo "== Contents of dist/runtime =="
               ls -R dist/runtime
@@ -218,7 +221,7 @@ jobs:
           RPY2_CFFI_MODE: "ABI"
         run: |
           mkdir -p dist/runtime
-          python -m brmspy.build --output-dir "dist/runtime"
+          python -m brmspy.build --output-dir "dist/runtime" --runtime-version "$RUNTIME_VERSION"
 
           RUNTIME_TARBALL=$(ls dist/runtime/*.tar.gz)
           if [ -z "$RUNTIME_TARBALL" ]; then
@@ -237,7 +240,7 @@ jobs:
       - name: Delete existing asset if it exists
         uses: actions/github-script@v7
         env:
-          TAG: ${{ inputs.tag || 'runtime' }}
+          TAG: ${{ inputs.tag || format('runtime-{0}', inputs.runtime_version || '0.2.0') }}
           ASSET_NAME: "${{ env.RUNTIME_FILENAME }}"
         with:
           script: |
