@@ -7,7 +7,7 @@ import platform
 import re
 import subprocess
 import tempfile
-from urllib.error import HTTPError, URLError
+from urllib.error import ContentTooShortError, HTTPError, URLError
 import urllib.request
 from pathlib import Path
 from typing import Optional, cast
@@ -132,16 +132,65 @@ def get_installed_gxx_version() -> tuple[int, int] | None:
     return None
 
 
-def download_installer(rtools_version: str) -> Path:
-    """Download Rtools installer to temp directory."""
-    url = get_download_url(rtools_version)
-    
-    with tempfile.NamedTemporaryFile(suffix=".exe", delete=False) as tmp:
-        tmp_path = Path(tmp.name)
-    
-    urllib.request.urlretrieve(url, tmp_path)
-    return tmp_path
 
+def _stream_download(url: str, dst: Path, expected_size: Optional[int] = None) -> None:
+    """Download URL to dst in chunks, verifying size if expected_size is given."""
+    CHUNK_SIZE = 1024 * 1024  # 1 MB
+
+    with urllib.request.urlopen(url) as resp, dst.open("wb") as f:
+        total = 0
+        while True:
+            chunk = resp.read(CHUNK_SIZE)
+            if not chunk:
+                break
+            f.write(chunk)
+            total += len(chunk)
+
+    if expected_size is not None and total != expected_size:
+        raise IOError(
+            f"incomplete download: got {total} bytes, expected {expected_size}"
+        )
+
+
+def download_installer(rtools_version: str, max_retries: int = 3) -> Path:
+    """Download Rtools installer to temp directory with retries and size check."""
+    url = get_download_url(rtools_version)
+
+    last_err: Optional[Exception] = None
+
+    # We fetch Content-Length once; if it's missing, we'll just skip the size check.
+    expected_size: Optional[int] = None
+    try:
+        with urllib.request.urlopen(url) as resp:
+            length = resp.headers.get("Content-Length")
+            if length is not None:
+                expected_size = int(length)
+    except Exception as e:
+        # If the HEAD/initial GET failed, we'll let the main loop handle retries.
+        last_err = e
+
+    for attempt in range(1, max_retries + 1):
+        with tempfile.NamedTemporaryFile(suffix=".exe", delete=False) as tmp:
+            tmp_path = Path(tmp.name)
+
+        try:
+            _stream_download(url, tmp_path, expected_size)
+            # Reaching here means we got the whole file (or no expected_size set).
+            return tmp_path
+
+        except (URLError, IOError, ContentTooShortError) as e:
+            last_err = e
+            # Remove partial file
+            try:
+                tmp_path.unlink(missing_ok=True)
+            except OSError:
+                pass
+
+            log_warning(f" download attempt {attempt}/{max_retries} failed: {e}")
+
+    raise RuntimeError(
+        f"Failed to download Rtools installer from {url} after {max_retries} attempts"
+    ) from last_err
 
 def run_installer(installer: Path, silent: bool = True) -> None:
     """Run Rtools installer."""
