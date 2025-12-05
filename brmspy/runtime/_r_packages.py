@@ -4,7 +4,7 @@ R package queries and installation. Stateless - no caching.
 
 import platform
 import multiprocessing
-from typing import Optional
+from typing import List, Optional, Union, cast
 
 import rpy2.robjects as ro
 from rpy2.robjects.packages import importr
@@ -21,7 +21,7 @@ def get_package_version(name: str) -> str | None:
         if (is.na(v)) stop('Package not found')
         v
         """
-        v_str = ro.r(expr)[0]
+        v_str = cast(List, ro.r(expr))[0]
         return str(v_str)
     except Exception:
         return None
@@ -68,6 +68,7 @@ def _get_linux_repo() -> str:
 def install_package(
     name: str,
     version: str | None = None,
+    repos_extra: Optional[Union[str, List[Optional[str]], List[str]]] = None
 ) -> None:
     """
     Install single R package.
@@ -89,6 +90,14 @@ def install_package(
     already_installed = is_package_installed(name)
     
     repos: list[str] = ["https://cloud.r-project.org"]
+
+    if repos_extra:
+        if isinstance(repos_extra, list):
+            for _r in repos_extra:
+                if isinstance(_r, str) and _r not in repos:
+                    repos.append(_r)
+        elif repos_extra and repos_extra not in repos:
+            repos.append(repos_extra)
     
     if system == "Linux":
         binary_repo = _get_linux_repo()

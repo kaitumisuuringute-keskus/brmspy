@@ -68,8 +68,8 @@ def get_asset_sha256(url: str) -> str | None:
 def get_runtime_download_url(fingerprint: str, version: str = "latest") -> str:
     """Construct download URL for runtime bundle."""
     if version == "latest":
-        version = "runtime"  # Use 'runtime' tag for latest
-    return f"https://github.com/{REPO_OWNER}/{REPO_NAME}/releases/download/{version}/brmspy-runtime-{version}-{fingerprint}.tar.gz"
+        version = get_latest_runtime_version()
+    return f"https://github.com/{REPO_OWNER}/{REPO_NAME}/releases/download/runtime/brmspy-runtime-{version}-{fingerprint}.tar.gz"
 
 
 def get_latest_runtime_version() -> str:

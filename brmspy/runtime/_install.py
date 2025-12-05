@@ -3,6 +3,7 @@ Installation orchestration for both traditional and prebuilt modes.
 """
 
 import tempfile
+from typing import List
 import urllib.request
 from pathlib import Path
 from brmspy.runtime import (
@@ -38,7 +39,11 @@ def install_traditional(
     _r_packages.install_package("brms", version=brms_version)
     _r_packages.install_package_deps("brms")
     
-    _r_packages.install_package("cmdstanr", version=cmdstanr_version)
+    repos_cmdstanr: List[str] = [
+        "https://mc-stan.org/r-packages/",
+        'https://stan-dev.r-universe.dev'
+    ]
+    _r_packages.install_package("cmdstanr", version=cmdstanr_version, repos_extra=repos_cmdstanr)
     _r_packages.install_package_deps("cmdstanr")
     _r_packages.build_cmdstan()
     
