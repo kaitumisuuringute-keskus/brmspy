@@ -28,14 +28,14 @@ def get_cmdstan_path() -> str | None:
 def is_namespace_loaded(name: str) -> bool:
     """Check if package namespace is loaded."""
     expr = f'"{name}" %in% loadedNamespaces()'
-    res = ro.r(expr)
+    res = cast(ro. ListVector, ro.r(expr))
     return str(res[0]).lower().strip() == "true"
 
 
 def is_package_attached(name: str) -> bool:
     """Check if package is on search path."""
     expr = f'paste0("package:", "{name}") %in% search()'
-    res = ro.r(expr)
+    res = cast(ro.ListVector, ro.r(expr))
     return str(res[0]).lower().strip() == "true"
 
 
