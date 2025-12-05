@@ -44,11 +44,12 @@ def _remove_deps():
     import rpy2.robjects as ro
     import rpy2.robjects.packages as rpackages
     import sys
+    from brmspy.runtime._activation import MANAGED_PACKAGES, _unload_managed_packages
 
-    if rpackages.isinstalled("brms"):
-        ro.r('remove.packages("brms")')
-    if rpackages.isinstalled("cmdstanr"):
-        ro.r('remove.packages("cmdstanr")')
+    _unload_managed_packages()
+    for package in MANAGED_PACKAGES:
+        if rpackages.isinstalled(package) :
+            ro.r(f'remove.packages("{package}")')
 
     # since other tests might have imported brmspy already with global _brms singleton set,
     # we need to remove it from sys.modules first
@@ -56,8 +57,9 @@ def _remove_deps():
         if name.startswith("brmspy"):
             del sys.modules[name]
     
-    from brmspy.helpers.singleton import _invalidate_singletons
-    _invalidate_singletons()
+    # Use new runtime API for invalidating singletons
+    from brmspy.runtime._state import invalidate_packages
+    invalidate_packages()
 
 
 @pytest.mark.crossplatform
@@ -74,14 +76,14 @@ class TestCrossplatformInstall:
 
         # Keep brmspy after removal to ensure the library imports without brms installed
         from brmspy import brms
-        from brmspy.helpers.singleton import _get_brms
+        from brmspy.runtime._state import get_brms
 
         brms.install_brms(use_prebuilt_binaries=False)
 
         assert rpackages.isinstalled("brms")
         assert rpackages.isinstalled("cmdstanr")
 
-        _brms = _get_brms()
+        _brms = get_brms()
         assert _brms is not None
 
         _fit_minimal_model(brms)
@@ -96,18 +98,18 @@ class TestCrossplatformInstall:
 
         # Keep brmspy after removal to ensure the library imports without brms installed
         from brmspy import brms
-        from brmspy.helpers.singleton import _get_brms
+        from brmspy.runtime._state import get_brms
 
-        brms.install_brms(use_prebuilt_binaries=True)
+        brms.install_brms(use_prebuilt_binaries=True, install_rtools=True)
 
         assert rpackages.isinstalled("brms")
         assert rpackages.isinstalled("cmdstanr")
 
-        _brms = _get_brms()
+        _brms = get_brms()
         assert _brms is not None
 
         _fit_minimal_model(brms)
 
-        from brmspy.binaries.use import deactivate_runtime
-
-        deactivate_runtime()
+        # Use new runtime API for deactivation
+        from brmspy import runtime
+        runtime.deactivate()
