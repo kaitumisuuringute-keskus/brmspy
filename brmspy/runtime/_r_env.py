@@ -4,7 +4,7 @@ Each function does exactly one R operation. Stateless.
 """
 
 import os
-from typing import Callable
+from typing import Callable, List, cast
 import rpy2.robjects as ro
 
 
@@ -12,14 +12,14 @@ import rpy2.robjects as ro
 
 def get_lib_paths() -> list[str]:
     """Get current .libPaths() from R."""
-    result = ro.r('.libPaths()')
+    result = cast(ro.ListVector, ro.r('.libPaths()'))
     return [str(p) for p in result]
 
 
 def get_cmdstan_path() -> str | None:
     """Get current cmdstanr::cmdstan_path() or None."""
     try:
-        result = ro.r("cmdstanr::cmdstan_path()")
+        result = cast(ro.ListVector, ro.r("cmdstanr::cmdstan_path()"))
         return str(result[0]) if result else None
     except Exception:
         return None
@@ -109,7 +109,7 @@ def unload_package(name: str) -> bool:
     """
     
     try:
-        result = ro.r(r_code)
+        result = cast(List, ro.r(r_code))
         return str(result[0]).lower().strip() == "true"
     except Exception:
         return False
@@ -125,7 +125,7 @@ def forward_github_token() -> None:
         if not pat and not token:
             return
         
-        r_setenv = ro.r["Sys.setenv"]
+        r_setenv = cast(Callable, ro.r("Sys.setenv"))
         
         if pat:
             kwargs["GITHUB_PAT"] = pat

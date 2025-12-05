@@ -44,8 +44,11 @@ def _remove_deps():
     import rpy2.robjects as ro
     import rpy2.robjects.packages as rpackages
     import sys
-    from brmspy.runtime._activation import MANAGED_PACKAGES, _unload_managed_packages
+    from brmspy.runtime._activation import MANAGED_PACKAGES, _unload_managed_packages, deactivate
 
+    deactivate()
+
+    # in case the default/previous env has packages, do it again!
     _unload_managed_packages()
     for package in MANAGED_PACKAGES:
         if rpackages.isinstalled(package) :
@@ -56,10 +59,6 @@ def _remove_deps():
     for name in list(sys.modules.keys()):
         if name.startswith("brmspy"):
             del sys.modules[name]
-    
-    # Use new runtime API for invalidating singletons
-    from brmspy.runtime._state import invalidate_packages
-    invalidate_packages()
 
 
 @pytest.mark.crossplatform

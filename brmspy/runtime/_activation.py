@@ -4,6 +4,7 @@ Does NOT touch config - that's the caller's responsibility.
 """
 
 from pathlib import Path
+from brmspy.helpers.log import log_warning
 from brmspy.runtime import _manifest, _r_env, _state, _platform
 
 
@@ -75,7 +76,10 @@ def deactivate() -> None:
     
     _unload_managed_packages()
     _r_env.set_lib_paths(stored.lib_paths)
-    _r_env.set_cmdstan_path(stored.cmdstan_path)
+    try:
+        _r_env.set_cmdstan_path(stored.cmdstan_path)
+    except Exception as e:
+        log_warning(f"Failed to set_cmdstan_path to stored default ({stored.cmdstan_path}). Skipping! {e}")
     _state.clear_stored_env()
     _state.invalidate_packages()
 
@@ -83,7 +87,7 @@ def deactivate() -> None:
 def _unload_managed_packages() -> None:
     """Unload brms, cmdstanr, rstan if loaded."""
     for pkg in MANAGED_PACKAGES:
-        if _r_env.is_namespace_loaded(pkg):
+        if _r_env.is_namespace_loaded(pkg) or _r_env.is_package_attached(pkg):
             _r_env.unload_package(pkg)
 
 
