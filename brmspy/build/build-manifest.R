@@ -9,7 +9,7 @@ if (length(missing_root) > 0) {
 deps_list <- tools::package_dependencies(
     pkgs_root,
     recursive = TRUE,
-    which = c("Depends", "Imports", "LinkingTo")
+    which = c("Depends", "Imports", "LinkingTo", "Suggests")
 )
 
 all_deps <- unique(c(pkgs_root, unlist(deps_list, use.names = FALSE)))
