@@ -4,7 +4,7 @@ import rpy2.robjects.packages as rpackages
 from rpy2.robjects import default_converter, pandas2ri, numpy2ri, ListVector
 from rpy2.robjects.conversion import localconverter
 
-from ..helpers.singleton import _get_brms
+from ..runtime._state import get_brms
 from ..helpers.conversion import (
     brmsfit_to_idata,
     kwargs_r
@@ -58,7 +58,7 @@ def get_brms_data(dataset_name: str) -> pd.DataFrame:
     print(f"Censored observations: {kidney['censored'].sum()}")
     ```
     """
-    brms = _get_brms()
+    brms = get_brms()
     with localconverter(default_converter + pandas2ri.converter + numpy2ri.converter) as cv:
         brmsdata = rpackages.data(brms)
         if brmsdata:

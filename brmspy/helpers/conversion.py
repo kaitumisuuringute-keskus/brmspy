@@ -13,7 +13,7 @@ from rpy2.robjects import vectors
 
 from rpy2.robjects.functions import SignatureTranslatedFunction
 
-from brmspy.helpers import singleton
+from brmspy.runtime._state import get_base
 from brmspy.helpers.log import log_warning
 from brmspy.types import IDFit, RListVectorExtension
 
@@ -336,7 +336,7 @@ def brmsfit_to_idata(brmsfit_obj, model_data=None) -> IDFit:
     dims = None
     
     try:
-        _base = singleton._get_base()
+        _base = get_base()
         # Extract data from the fit object: fit$data
         if _base:
             r_data = _base.getElement(brmsfit_obj, "data")

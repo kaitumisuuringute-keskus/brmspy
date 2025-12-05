@@ -3,7 +3,7 @@ import typing
 import pandas as pd
 from .formula import formula
 from ..helpers.priors import _build_priors
-from ..helpers.singleton import _get_brms
+from ..runtime._state import get_brms
 from ..helpers.conversion import (
     py_to_r
 )
@@ -100,7 +100,7 @@ def make_stancode(
     )
     ```
     """
-    brms = _get_brms()
+    brms = get_brms()
 
     data_r = py_to_r(data)
     priors_r = _build_priors(priors)

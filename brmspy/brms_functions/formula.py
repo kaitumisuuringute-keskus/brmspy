@@ -1,6 +1,6 @@
 import typing
 
-from ..helpers.singleton import _get_brms
+from ..runtime._state import get_brms
 from ..helpers.conversion import (
     kwargs_r, r_to_py
 )
@@ -75,7 +75,7 @@ def formula(
         )
     ```
     """
-    brms = _get_brms()
+    brms = get_brms()
     formula_args = kwargs_r(formula_args)
     formula_obj = brms.bf(formula, **formula_args)
     return FormulaResult(r=formula_obj, dict=typing.cast(dict, r_to_py(formula_obj)))

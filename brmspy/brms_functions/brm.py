@@ -4,7 +4,7 @@ import pandas as pd
 from .formula import formula
 from brmspy.helpers.log import log
 from ..helpers.priors import _build_priors
-from ..helpers.singleton import _get_brms, _get_cmdstanr, _get_rstan
+from ..runtime._state import get_brms, get_cmdstanr, get_rstan
 from ..helpers.conversion import (
     brmsfit_to_idata,
     kwargs_r, py_to_r
@@ -137,15 +137,15 @@ def fit(
         )
     ```
     """
-    brms = _get_brms()
+    brms = get_brms()
 
     if backend == "cmdstanr":
-        cmdstanr = _get_cmdstanr()
+        cmdstanr = get_cmdstanr()
         if cmdstanr is None:
             raise RuntimeError("cmdstanr backend is not installed! Please run install_brms(install_cmdstanr=True)")
 
     if backend == "rstan":
-        rstan = _get_rstan()
+        rstan = get_rstan()
         if rstan is None:
             raise RuntimeError("rstan backend is not installed! Please run install_brms(install_rstan=True)")
     
