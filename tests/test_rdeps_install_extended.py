@@ -83,23 +83,13 @@ class TestInstallRPackage:
         # Just test they don't crash - actual installation tested elsewhere
         
         # Empty string
-        try:
-            install_package("jsonlite", version="")
-        except Exception:
-            pass  # May fail but shouldn't crash on version parsing
+        install_package("jsonlite", version="")
         
         # "latest" keyword
-        try:
-            install_package("jsonlite", version="latest")
-        except Exception:
-            pass
+        install_package("jsonlite", version="latest")
         
         # "any" keyword
-        try:
-            install_package("jsonlite", version="any")
-        except Exception:
-            pass
-
+        install_package("jsonlite", version="any")
 
 @pytest.mark.crossplatform  
 class TestInstallRPackageDeps:
@@ -108,13 +98,8 @@ class TestInstallRPackageDeps:
     def test_install_package_deps_basic(self):
         """Test basic dependency installation"""
         from brmspy.runtime._r_packages import install_package_deps
-        
-        # Try with a package that has dependencies
-        # Should not raise exception even if some deps fail
-        try:
-            install_package_deps("brms")
-        except Exception:
-            pass  # May fail but should handle gracefully
+
+        install_package_deps("brms")
 
 
 @pytest.mark.crossplatform
