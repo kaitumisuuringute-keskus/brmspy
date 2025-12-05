@@ -8,9 +8,11 @@ import subprocess
 import tempfile
 import urllib.request
 from pathlib import Path
-from typing import Optional
+from typing import Optional, cast
 
 import rpy2.robjects as ro
+
+from brmspy.helpers.log import log_warning
 
 
 # R version range -> Rtools version
@@ -168,3 +170,30 @@ def ensure_installed() -> None:
     # Verify installation
     if not is_installed():
         raise RuntimeError("Rtools installation failed")
+    
+
+
+def _windows_has_rtools(silent=False) -> bool:
+    # If Rtools is already found, skip (cmdstanr check)
+    try:
+        # Check if 'make' is available. If yes, we probably have Rtools.
+        make_path = str(cast(list, ro.r('Sys.which("make")'))[0])
+        if make_path and "rtools" in make_path.lower():
+            return True
+    except Exception:
+        pass
+
+    try:
+        out = subprocess.check_output(["g++", "--version"], text=True, shell=True)
+    except Exception:
+        if not silent:
+            log_warning(f"g++ not found")
+        return False
+
+    # Very rough: we expect mingw in the banner
+    if "mingw" not in out.lower():
+        if not silent:
+            log_warning(f"mingw not found in g++ banner")
+        return False
+
+    return True

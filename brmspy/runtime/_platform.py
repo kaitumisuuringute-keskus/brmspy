@@ -5,7 +5,7 @@ No side effects, no R environment mutation.
 
 import platform
 import subprocess
-from typing import Optional
+from typing import Optional, cast
 from brmspy.runtime._types import SystemInfo
 
 
@@ -37,8 +37,10 @@ def get_r_version() -> tuple[int, int, int] | None:
     """Returns R version tuple or None if R not available."""
     try:
         import rpy2.robjects as ro
-        major = int(ro.r("R.Version()$major")[0])
-        minor_str = str(ro.r("R.Version()$minor")[0])
+        r_major = cast(ro.ListVector, ro.r("R.Version()$major"))
+        r_minor = cast(ro.ListVector, ro.r("R.Version()$minor"))
+        major = int(r_major[0])
+        minor_str = str(r_minor[0])
         parts = minor_str.split(".")
         minor = int(parts[0]) if parts and parts[0].isdigit() else 0
         patch = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 0
@@ -125,7 +127,7 @@ def get_system_info() -> SystemInfo:
     elif os_name == "macos":
         clang_ver = get_clang_version()
     elif os_name == "windows":
-        from brmspy.helpers.rtools import _windows_has_rtools
+        from ._rtools import _windows_has_rtools
         has_rtools = _windows_has_rtools(silent=True)
         gxx_ver = get_gxx_version()
     
@@ -212,8 +214,13 @@ def is_macos_toolchain_ok() -> bool:
 
 def is_windows_toolchain_ok() -> bool:
     """True if Rtools with g++ >= 9."""
-    from brmspy.helpers.rtools import _windows_has_rtools
-    return _windows_has_rtools(silent=True)
+    from _rtools import _windows_has_rtools
+    if not _windows_has_rtools(silent=True):
+        return False
+    gxx_version = get_gxx_version()
+    if gxx_version is None or gxx_version < (9, 0):
+        return False
+    return True
 
 
 def is_toolchain_compatible() -> bool:
