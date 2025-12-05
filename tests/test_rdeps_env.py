@@ -1,8 +1,7 @@
 """
-Tests for brmspy.binaries.env module (platform detection and compatibility).
+Tests for brmspy.runtime._platform module (platform detection and compatibility).
 
-Focus: Version parsing, platform detection, toolchain checks.
-Target: 72% → 86%+ coverage
+Focus: Platform detection, toolchain checks, system fingerprinting.
 
 These tests exercise platform-specific code paths and error handling.
 """
@@ -13,29 +12,37 @@ from unittest.mock import patch, MagicMock
 
 
 @pytest.mark.crossplatform
-class TestNormalizedOsArch:
-    """Test OS and architecture normalization."""
+class TestOsArchDetection:
+    """Test OS and architecture detection."""
     
-    def test_normalized_os_arch_current_platform(self):
-        """Verify normalization for current platform"""
-        from brmspy.binaries.env import _normalized_os_arch
+    def test_get_os_current_platform(self):
+        """Verify OS detection for current platform"""
+        from brmspy.runtime._platform import get_os
         
-        os_name, arch = _normalized_os_arch()
+        os_name = get_os()
         
         # Should return normalized values
-        assert os_name in ("linux", "macos", "windows") or os_name  # or unknown
-        assert arch in ("x86_64", "arm64") or arch  # or unknown
+        assert os_name in ("linux", "macos", "windows") or os_name
+    
+    def test_get_arch_current_platform(self):
+        """Verify architecture detection for current platform"""
+        from brmspy.runtime._platform import get_arch
+        
+        arch = get_arch()
+        
+        # Should return normalized values
+        assert arch in ("x86_64", "arm64") or arch
 
 
 @pytest.mark.crossplatform
 class TestGetRVersionTuple:
     """Test R version detection."""
     
-    def test_get_r_version_tuple_returns_tuple(self):
+    def test_get_r_version_returns_tuple(self):
         """Verify R version is returned as tuple"""
-        from brmspy.binaries.env import get_r_version_tuple
+        from brmspy.runtime._platform import get_r_version
         
-        version = get_r_version_tuple()
+        version = get_r_version()
         
         if version is not None:
             assert isinstance(version, tuple)
@@ -46,9 +53,9 @@ class TestGetRVersionTuple:
             assert isinstance(patch, int)
             assert major >= 4, f"R version too old: {version}"
     
-    def test_get_r_version_tuple_handles_r_unavailable(self):
-        """Handle R unavailable scenario (lines 98-99, 108-109)"""
-        from brmspy.binaries.env import get_r_version_tuple
+    def test_get_r_version_handles_r_unavailable(self):
+        """Handle R unavailable scenario"""
+        from brmspy.runtime._platform import get_r_version
         
         # Mock rpy2 import failure
         with patch.dict('sys.modules', {'rpy2.robjects': None}):
@@ -61,203 +68,168 @@ class TestGetRVersionTuple:
 class TestRAvailableAndSupported:
     """Test R availability checking."""
     
-    def test_r_available_and_supported_current_r(self):
+    def test_is_r_available_current_r(self):
+        """Test R availability"""
+        from brmspy.runtime._platform import is_r_available
+        
+        # R should be available in test environment
+        assert is_r_available()
+    
+    def test_is_r_supported_current_r(self):
         """Test with current R installation"""
-        from brmspy.binaries.env import r_available_and_supported
+        from brmspy.runtime._platform import is_r_supported
         
         # Should work with default requirements (R >= 4.0)
-        assert r_available_and_supported(min_major=4, min_minor=0)
+        assert is_r_supported(min_version=(4, 0))
     
-    def test_r_available_and_supported_high_requirements(self):
-        """Test with very high version requirements (lines 149-152)"""
-        from brmspy.binaries.env import r_available_and_supported
+    def test_is_r_supported_high_requirements(self):
+        """Test with very high version requirements"""
+        from brmspy.runtime._platform import is_r_supported
         
         # R 99.99 definitely not available
-        result = r_available_and_supported(min_major=99, min_minor=99)
+        result = is_r_supported(min_version=(99, 99))
         assert result is False
     
-    def test_r_available_and_supported_current_major_high_minor(self):
-        """Test minor version check (line 151-152)"""
-        from brmspy.binaries.env import r_available_and_supported, get_r_version_tuple
+    def test_is_r_supported_current_major_high_minor(self):
+        """Test minor version check"""
+        from brmspy.runtime._platform import is_r_supported, get_r_version
         
-        version = get_r_version_tuple()
+        version = get_r_version()
         if version:
             major, minor, _ = version
             # Require higher minor version than current
-            result = r_available_and_supported(min_major=major, min_minor=minor + 10)
+            result = is_r_supported(min_version=(major, minor + 10))
             assert result is False
 
 
 @pytest.mark.crossplatform
-class TestExtractGlibcVersion:
-    """Test glibc version parsing."""
+class TestGlibcVersion:
+    """Test glibc version detection."""
     
-    def test_extract_glibc_version_standard_format(self):
-        """Parse standard ldd output"""
-        from brmspy.binaries.env import extract_glibc_version
+    def test_get_glibc_version_on_linux(self):
+        """Test glibc detection on Linux"""
+        from brmspy.runtime._platform import get_glibc_version, get_os
+        import platform
         
-        output = """ldd (Ubuntu GLIBC 2.31-0ubuntu9.9) 2.31
-Copyright (C) 2020 Free Software Foundation, Inc."""
-        
-        version = extract_glibc_version(output)
-        assert version == (2, 31)
-    
-    def test_extract_glibc_version_different_format(self):
-        """Parse alternative ldd output format"""
-        from brmspy.binaries.env import extract_glibc_version
-        
-        output = """ldd (GNU libc) 2.27
-Copyright info here"""
-        
-        version = extract_glibc_version(output)
-        assert version == (2, 27)
-    
-    def test_extract_glibc_version_invalid(self):
-        """Handle unparseable output (line 199)"""
-        from brmspy.binaries.env import extract_glibc_version
-        
-        # No version number
-        assert extract_glibc_version("Error: command not found") is None
-        
-        # Empty output
-        assert extract_glibc_version("") is None
-        
-        # Invalid format
-        assert extract_glibc_version("ldd version unknown") is None
+        if platform.system() == "Linux":
+            version = get_glibc_version()
+            if version is not None:
+                assert isinstance(version, tuple)
+                assert len(version) == 2
+                assert version[0] >= 2  # glibc 2.x
+        else:
+            # Non-Linux should return None
+            version = get_glibc_version()
+            assert version is None
 
 
 @pytest.mark.crossplatform
-class TestParseClangVersion:
-    """Test clang version parsing."""
+class TestClangVersion:
+    """Test clang version detection."""
     
-    def test_parse_clang_version_standard_format(self):
-        """Parse standard clang output"""
-        from brmspy.binaries.env import parse_clang_version
+    def test_get_clang_version_on_macos(self):
+        """Test clang detection on macOS"""
+        from brmspy.runtime._platform import get_clang_version
+        import platform
         
-        output = """Apple clang version 14.0.0 (clang-1400.0.29.202)
-Target: arm64-apple-darwin22.1.0
-Thread model: posix"""
-        
-        version = parse_clang_version(output)
-        assert version == (14, 0)
-    
-    def test_parse_clang_version_llvm_format(self):
-        """Parse LLVM clang output"""
-        from brmspy.binaries.env import parse_clang_version
-        
-        output = """clang version 11.0.0
-Target: x86_64-pc-linux-gnu"""
-        
-        version = parse_clang_version(output)
-        assert version == (11, 0)
-    
-    def test_parse_clang_version_no_clang_keyword(self):
-        """Handle output without 'clang' keyword (line 239)"""
-        from brmspy.binaries.env import parse_clang_version
-        
-        # No 'clang' in line
-        output = "version 11.0.0\nOther info"
-        version = parse_clang_version(output)
-        # Should skip lines without 'clang'
-        assert version is None or version
-    
-    def test_parse_clang_version_invalid(self):
-        """Handle unparseable output (line 245)"""
-        from brmspy.binaries.env import parse_clang_version
-        
-        # No version number
-        assert parse_clang_version("clang: error: no input files") is None
-        
-        # Empty output
-        assert parse_clang_version("") is None
-        
-        # Invalid version format
-        assert parse_clang_version("clang version unknown") is None
+        if platform.system() == "Darwin":
+            version = get_clang_version()
+            if version is not None:
+                assert isinstance(version, tuple)
+                assert len(version) == 2
+                assert version[0] >= 11  # clang 11+
+        else:
+            # Non-macOS should return None
+            version = get_clang_version()
+            assert version is None
 
 
 @pytest.mark.crossplatform
-class TestLinuxCanUsePrebuilt:
-    """Test Linux prebuilt compatibility checks."""
+class TestLinuxToolchain:
+    """Test Linux toolchain compatibility checks."""
     
-    def test_linux_can_use_prebuilt_subprocess_errors(self):
-        """Handle subprocess errors gracefully (lines 295-296, 304-305)"""
-        from brmspy.binaries.env import linux_can_use_prebuilt
+    def test_is_linux_toolchain_ok_on_linux(self):
+        """Test Linux toolchain check"""
+        from brmspy.runtime._platform import is_linux_toolchain_ok
         import platform
         
         if platform.system() == "Linux":
             # On Linux, should check actual tools
-            result = linux_can_use_prebuilt()
+            result = is_linux_toolchain_ok()
             assert isinstance(result, bool)
         else:
-            # On non-Linux, won't run these checks
-            pass
+            # On non-Linux, won't pass these checks
+            result = is_linux_toolchain_ok()
+            assert result is False
 
 
 @pytest.mark.crossplatform
-class TestMacosCanUsePrebuilt:
-    """Test macOS prebuilt compatibility checks."""
+class TestMacosToolchain:
+    """Test macOS toolchain compatibility checks."""
     
-    def test_macos_can_use_prebuilt_subprocess_errors(self):
-        """Handle subprocess errors gracefully (lines 355-357, 365-366)"""
-        from brmspy.binaries.env import macos_can_use_prebuilt
+    def test_is_macos_toolchain_ok_on_macos(self):
+        """Test macOS toolchain check"""
+        from brmspy.runtime._platform import is_macos_toolchain_ok
         import platform
         
         if platform.system() == "Darwin":
             # On macOS, should check actual tools
-            result = macos_can_use_prebuilt()
+            result = is_macos_toolchain_ok()
             assert isinstance(result, bool)
         else:
-            # On non-macOS, won't run these checks
-            pass
+            # On non-macOS, won't pass these checks
+            result = is_macos_toolchain_ok()
+            assert result is False
 
 
 @pytest.mark.crossplatform
-class TestWindowsCanUsePrebuilt:
-    """Test Windows prebuilt compatibility checks."""
+class TestWindowsToolchain:
+    """Test Windows toolchain compatibility checks."""
     
-    def test_windows_can_use_prebuilt_checks_rtools(self):
+    def test_is_windows_toolchain_ok_checks_rtools(self):
         """Verify Windows checks for Rtools"""
-        from brmspy.binaries.env import windows_can_use_prebuilt
+        from brmspy.runtime._platform import is_windows_toolchain_ok
         import platform
         
         if platform.system() == "Windows":
-            result = windows_can_use_prebuilt()
+            result = is_windows_toolchain_ok()
             assert isinstance(result, bool)
         else:
             # On non-Windows, should return False
-            pass
+            result = is_windows_toolchain_ok()
+            assert result is False
 
 
 @pytest.mark.crossplatform
 class TestSupportedPlatform:
     """Test platform support checking."""
     
-    def test_supported_platform_current_system(self):
+    def test_is_platform_supported_current_system(self):
         """Check current platform support"""
-        from brmspy.binaries.env import supported_platform
+        from brmspy.runtime._platform import is_platform_supported
         
-        result = supported_platform()
+        result = is_platform_supported()
         assert isinstance(result, bool)
     
-    def test_supported_platform_with_mock_unsupported_os(self):
-        """Test with unsupported OS (lines 468-469)"""
-        from brmspy.binaries.env import supported_platform
+    def test_is_platform_supported_with_mock_unsupported_os(self):
+        """Test with unsupported OS"""
+        from brmspy.runtime._platform import is_platform_supported
         import platform as plat
         
         # Mock platform.system to return unsupported OS
         with patch.object(plat, 'system', return_value='FreeBSD'):
-            result = supported_platform()
+            result = is_platform_supported()
             assert result is False
     
-    def test_supported_platform_with_mock_unsupported_arch(self):
-        """Test with unsupported architecture (lines 472-474)"""
-        from brmspy.binaries.env import supported_platform
+    def test_is_platform_supported_with_mock_unsupported_arch(self):
+        """Test with unsupported architecture"""
+        from brmspy.runtime._platform import is_platform_supported
         import platform as plat
         
         # Mock unsupported architecture
         with patch.object(plat, 'system', return_value='Linux'):
             with patch.object(plat, 'machine', return_value='riscv64'):
-                result = supported_platform()
+                result = is_platform_supported()
                 assert result is False
 
 
@@ -265,21 +237,21 @@ class TestSupportedPlatform:
 class TestToolchainIsCompatible:
     """Test toolchain compatibility routing."""
     
-    def test_toolchain_is_compatible_current_platform(self):
+    def test_is_toolchain_compatible_current_platform(self):
         """Test toolchain check for current platform"""
-        from brmspy.binaries.env import toolchain_is_compatible
+        from brmspy.runtime._platform import is_toolchain_compatible
         
-        result = toolchain_is_compatible()
+        result = is_toolchain_compatible()
         assert isinstance(result, bool)
     
-    def test_toolchain_is_compatible_unknown_os(self):
-        """Return False for unknown OS (line 528)"""
-        from brmspy.binaries.env import toolchain_is_compatible
+    def test_is_toolchain_compatible_unknown_os(self):
+        """Return False for unknown OS"""
+        from brmspy.runtime._platform import is_toolchain_compatible
         import platform as plat
         
         # Mock unknown OS
         with patch.object(plat, 'system', return_value='UnknownOS'):
-            result = toolchain_is_compatible()
+            result = is_toolchain_compatible()
             assert result is False
 
 
@@ -289,7 +261,7 @@ class TestSystemFingerprint:
     
     def test_system_fingerprint_format(self):
         """Verify fingerprint format"""
-        from brmspy.binaries.env import system_fingerprint
+        from brmspy.runtime._platform import system_fingerprint
         
         fp = system_fingerprint()
         
@@ -300,38 +272,32 @@ class TestSystemFingerprint:
             assert parts[-1].startswith('r')
     
     def test_system_fingerprint_when_r_unavailable(self):
-        """Return None when R version unavailable (line 583)"""
-        from brmspy.binaries.env import system_fingerprint
+        """Raise error when R version unavailable"""
+        from brmspy.runtime._platform import system_fingerprint
         
-        # Mock get_r_version_tuple to return None
-        with patch('brmspy.binaries.env.get_r_version_tuple', return_value=None):
-            fp = system_fingerprint()
-            assert fp is None
+        # Mock get_r_version to return None
+        with patch('brmspy.runtime._platform.get_r_version', return_value=None):
+            with pytest.raises(RuntimeError, match="R version could not be determined"):
+                system_fingerprint()
 
 
 @pytest.mark.crossplatform
 class TestPrebuiltAvailableFor:
     """Test prebuilt availability checking."""
     
-    def test_prebuilt_available_for_none_fingerprint(self):
-        """Return False for None fingerprint (lines 641-642)"""
-        from brmspy.binaries.env import prebuilt_available_for
-        
-        result = prebuilt_available_for(None)
-        assert result is False
-    
-    def test_prebuilt_available_for_unknown_fingerprint(self):
-        """Return False for unknown fingerprint (line 643)"""
-        from brmspy.binaries.env import prebuilt_available_for
+    def test_is_prebuilt_available_unknown_fingerprint(self):
+        """Test prebuilt availability for unknown fingerprint"""
+        from brmspy.runtime._platform import is_prebuilt_available
         
         # Unknown platform
-        result = prebuilt_available_for("unknown-platform-r99.99")
-        assert result is False
+        result = is_prebuilt_available("unknown-platform-r99.99")
+        # With empty PREBUILT_FINGERPRINTS, all fingerprints are considered available
+        assert result is True
     
-    def test_prebuilt_available_for_valid_fingerprint(self):
+    def test_is_prebuilt_available_valid_fingerprint(self):
         """Check availability for valid fingerprints"""
-        from brmspy.binaries.env import (
-            prebuilt_available_for,
+        from brmspy.runtime._platform import (
+            is_prebuilt_available,
             PREBUILT_FINGERPRINTS
         )
         
@@ -340,7 +306,7 @@ class TestPrebuiltAvailableFor:
         PREBUILT_FINGERPRINTS.add(test_fp)
         
         try:
-            result = prebuilt_available_for(test_fp)
+            result = is_prebuilt_available(test_fp)
             assert result is True
         finally:
             # Clean up
@@ -353,14 +319,14 @@ class TestCanUsePrebuilt:
     
     def test_can_use_prebuilt_current_system(self):
         """Test prebuilt check for current system"""
-        from brmspy.binaries.env import can_use_prebuilt
+        from brmspy.runtime._platform import can_use_prebuilt
         
         result = can_use_prebuilt()
         assert isinstance(result, bool)
     
     def test_can_use_prebuilt_unsupported_platform(self):
-        """Return False for unsupported platform (lines 715-716)"""
-        from brmspy.binaries.env import can_use_prebuilt
+        """Return False for unsupported platform"""
+        from brmspy.runtime._platform import can_use_prebuilt
         import platform as plat
         
         # Mock unsupported platform
@@ -369,51 +335,48 @@ class TestCanUsePrebuilt:
             assert result is False
     
     def test_can_use_prebuilt_r_unavailable(self):
-        """Return False when R unavailable (lines 718-719)"""
-        from brmspy.binaries.env import can_use_prebuilt
+        """Return False when R unavailable"""
+        from brmspy.runtime._platform import can_use_prebuilt
         
         # Mock R unavailable
-        with patch('brmspy.binaries.env.r_available_and_supported', return_value=False):
+        with patch('brmspy.runtime._platform.is_r_supported', return_value=False):
             result = can_use_prebuilt()
             assert result is False
     
     def test_can_use_prebuilt_toolchain_incompatible(self):
-        """Return False when toolchain incompatible (lines 721-722)"""
-        from brmspy.binaries.env import can_use_prebuilt
+        """Return False when toolchain incompatible"""
+        from brmspy.runtime._platform import can_use_prebuilt
         
         # Mock incompatible toolchain
-        with patch('brmspy.binaries.env.supported_platform', return_value=True):
-            with patch('brmspy.binaries.env.r_available_and_supported', return_value=True):
-                with patch('brmspy.binaries.env.toolchain_is_compatible', return_value=False):
+        with patch('brmspy.runtime._platform.is_platform_supported', return_value=True):
+            with patch('brmspy.runtime._platform.is_r_supported', return_value=True):
+                with patch('brmspy.runtime._platform.is_toolchain_compatible', return_value=False):
                     result = can_use_prebuilt()
                     assert result is False
 
 
 @pytest.mark.crossplatform
-class TestVersionParsingEdgeCases:
-    """Test version parsing with edge cases."""
+class TestGetSystemInfo:
+    """Test system info collection."""
     
-    def test_extract_glibc_multiline_versions(self):
-        """Test glibc parsing with multiple version-like strings"""
-        from brmspy.binaries.env import extract_glibc_version
+    def test_get_system_info_returns_dataclass(self):
+        """Test get_system_info returns SystemInfo dataclass"""
+        from brmspy.runtime._platform import get_system_info
+        from brmspy.runtime._types import SystemInfo
         
-        output = """Some text with 1.2.3
-ldd (Ubuntu GLIBC 2.35-0ubuntu3.4) 2.35
-More text with 4.5.6"""
+        info = get_system_info()
         
-        # Parser finds first numeric token that looks like a version
-        # In this case it's 1.2 from "1.2.3"
-        version = extract_glibc_version(output)
-        assert version == (1, 2)
+        assert isinstance(info, SystemInfo)
+        assert info.os in ("linux", "macos", "windows") or info.os
+        assert info.arch in ("x86_64", "arm64") or info.arch
+        assert isinstance(info.fingerprint, str)
     
-    def test_parse_clang_multiline_versions(self):
-        """Test clang parsing with multiple version-like strings"""
-        from brmspy.binaries.env import parse_clang_version
+    def test_get_compatibility_issues_returns_list(self):
+        """Test get_compatibility_issues returns list of strings"""
+        from brmspy.runtime._platform import get_compatibility_issues
         
-        output = """Some text 1.2.3
-Apple clang version 13.1.6 (clang-1316.0.21.2.5)
-More text 4.5.6"""
+        issues = get_compatibility_issues()
         
-        # Should find clang version
-        version = parse_clang_version(output)
-        assert version == (13, 1) or version == (1316, 0)  # Depends on parsing
+        assert isinstance(issues, list)
+        for issue in issues:
+            assert isinstance(issue, str)

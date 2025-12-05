@@ -214,7 +214,7 @@ def is_macos_toolchain_ok() -> bool:
 
 def is_windows_toolchain_ok() -> bool:
     """True if Rtools with g++ >= 9."""
-    from _rtools import _windows_has_rtools
+    from ._rtools import _windows_has_rtools
     if not _windows_has_rtools(silent=True):
         return False
     gxx_version = get_gxx_version()
