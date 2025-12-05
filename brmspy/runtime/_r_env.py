@@ -7,6 +7,8 @@ import os
 from typing import Callable, List, cast
 import rpy2.robjects as ro
 
+from brmspy.helpers.log import log_warning
+
 
 # === Queries ===
 
@@ -53,10 +55,19 @@ def set_lib_paths(paths: list[str]) -> None:
 
 def set_cmdstan_path(path: str | None) -> None:
     """Set cmdstanr::set_cmdstan_path()."""
-    if path is None:
-        ro.r('cmdstanr::set_cmdstan_path(path=NULL)')
-    else:
-        ro.r(f'cmdstanr::set_cmdstan_path("{path}")')
+    try:
+      if path is None:
+          path_str = "NULL"
+      else:
+          path_str = f'"{path}"'
+      ro.r(f'''
+      if (!requireNamespace("cmdstanr", quietly = TRUE)) {{
+        stop("cmdstanr is not available in rlibs")
+      }}
+      cmdstanr::set_cmdstan_path(path={path_str})
+      ''')
+    except Exception as e:
+        log_warning(f"Failed to set cmdstan_path to {path}: {e}")
 
 
 def unload_package(name: str) -> bool:
