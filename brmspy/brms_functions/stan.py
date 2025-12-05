@@ -1,7 +1,7 @@
 
 import typing
 import pandas as pd
-from .formula import formula
+from .formula import bf
 from ..helpers.priors import _build_priors
 from ..runtime._state import get_brms
 from ..helpers.conversion import (
@@ -12,7 +12,7 @@ from ..types import (
 )
 
 
-_formula_fn = formula
+_formula_fn = bf
 
 def make_stancode(
     formula: typing.Union[FormulaResult, str],

@@ -62,6 +62,9 @@ def system_fingerprint() -> str:
 
 def get_glibc_version() -> tuple[int, int] | None:
     """Linux only. Parse from ldd --version."""
+    if get_os() != "linux":
+        return None
+
     try:
         out = subprocess.check_output(["ldd", "--version"], text=True)
         for line in out.splitlines():
@@ -77,6 +80,9 @@ def get_glibc_version() -> tuple[int, int] | None:
 
 def get_clang_version() -> tuple[int, int] | None:
     """macOS only. Parse from clang --version."""
+    if get_os() != "macos":
+        return None
+
     try:
         out = subprocess.check_output(["clang", "--version"], text=True)
         for line in out.splitlines():

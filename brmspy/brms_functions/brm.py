@@ -1,7 +1,7 @@
 import typing
 import pandas as pd
 
-from .formula import formula
+from .formula import bf
 from brmspy.helpers.log import log
 from ..helpers.priors import _build_priors
 from ..runtime._state import get_brms, get_cmdstanr, get_rstan
@@ -15,11 +15,11 @@ from ..types import (
 from rpy2.robjects import ListVector
 
 
-_formula_fn = formula
+_formula_fn = bf
 
 
 
-def fit(
+def brm(
     formula: typing.Union[FormulaResult, str],
     data: typing.Union[dict, pd.DataFrame],
     priors: typing.Optional[typing.Sequence[PriorSpec]] = None,
@@ -197,5 +197,3 @@ def fit(
 
     idata = brmsfit_to_idata(fit)
     return FitResult(idata=idata, r=fit)
-
-brm = fit

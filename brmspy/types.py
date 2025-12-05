@@ -1,7 +1,7 @@
 """Result types for brmspy functions."""
 
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Mapping, Optional, cast
+from typing import Any, Callable, Dict, Mapping, Optional, Union, cast
 import rpy2.robjects as robjects
 import arviz as az
 import xarray as xr
@@ -409,6 +409,27 @@ class FormulaResult(RListVectorExtension):
     ```
     """
     dict: Dict
+
+    @classmethod
+    def _formula_parse(cls, r: Union[str, robjects.ListVector]) -> 'FormulaResult':
+        from .helpers.conversion import r_to_py
+        if isinstance(r, str):
+            r_fun = cast(Callable, robjects.r('brms::bf'))
+            r = cast(robjects.ListVector, r_fun(r))
+        return cls(r=r, dict=cast(dict, r_to_py(r)))
+
+
+    def __add__(self, other):
+        if isinstance(other, (robjects.ListVector, str)):
+            other = FormulaResult._formula_parse(other)
+
+        if not isinstance(other, FormulaResult):
+            raise ValueError("When adding values to formula, they must be FormulaResult or parseable to FormulaResult")
+        
+        plus = cast(Callable, robjects.r('function (a, b) a + b'))
+        combo = plus(self.r, other.r)
+
+        return FormulaResult._formula_parse(combo)
 
 
 
