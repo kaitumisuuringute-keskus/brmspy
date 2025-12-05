@@ -34,7 +34,7 @@ For faster installation (~20-60 seconds vs 20-30 minutes), use prebuilt runtime 
 
 ```python
 from brmspy import brms
-brms.install_brms(use_prebuilt_binaries=True)
+brms.install_brms(use_prebuilt=True)
 ```
 
 ## Windows RTools
@@ -46,7 +46,7 @@ Use with caution!
 ```python
 from brmspy import brms
 brms.install_brms(
-    use_prebuilt_binaries=True,
+    use_prebuilt=True,
     install_rtools=True # works for both prebuilt and compiled binaries.
 )
 ```

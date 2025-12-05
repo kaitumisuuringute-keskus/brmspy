@@ -31,7 +31,7 @@ Install R dependencies (traditional method, ~30 minutes):
 Quick installation with prebuilt binaries (recommended, ~1 minute):
 
 ```python
-    brms.install_brms(use_prebuilt_binaries=True)
+    brms.install_brms(use_prebuilt=True)
 ```
 Install specific brms version:
 

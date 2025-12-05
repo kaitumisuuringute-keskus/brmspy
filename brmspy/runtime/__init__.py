@@ -23,8 +23,9 @@ def install_brms(
     install_rstan: bool = False,
     cmdstanr_version: str = "latest",
     rstan_version: str = "latest",
-    use_prebuilt_binaries: bool = False,
-    install_rtools: bool = False
+    use_prebuilt: bool = False,
+    install_rtools: bool = False,
+    **kwargs
 ):
     """
     Install brms R package, optionally cmdstanr and CmdStan compiler, or rstan.
@@ -43,7 +44,7 @@ def install_brms(
         cmdstanr version: "latest", "0.8.1", or ">= 0.8.0"
     rstan_version : str, default="latest"
         rstan version: "latest", "2.32.6", or ">= 2.32.0"
-    use_prebuilt_binaries: bool, default=False
+    use_prebuilt: bool, default=False
         Uses fully prebuilt binaries for cmdstanr and brms and their dependencies. 
         Ignores system R libraries and uses the latest brms and cmdstanr available 
         for your system. Requires R>=4 and might not be compatible with some older
@@ -75,10 +76,13 @@ def install_brms(
 
     Fast installation with prebuilt binaries:
     ```python
-    brms.install_brms(use_prebuilt_binaries=True)
+    brms.install_brms(use_prebuilt=True)
     """
+    if "use_prebuilt_binaries" in kwargs:
+        use_prebuilt = kwargs['use_prebuilt_binaries']
+        log_warning("'use_prebuilt_binaries' is deprecated, please use 'use_prebuilt' instead")
     install(
-        use_prebuilt=use_prebuilt_binaries,
+        use_prebuilt=use_prebuilt,
         install_rtools=install_rtools,
         install_cmdstanr=install_cmdstanr,
         brms_version=brms_version,

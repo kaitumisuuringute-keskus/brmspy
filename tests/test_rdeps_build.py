@@ -105,7 +105,7 @@ class TestBuildMetadataCollection:
     def setup_class(cls):
         """Ensure brms and cmdstanr are installed before tests."""
         import brmspy
-        brmspy.install_brms(use_prebuilt_binaries=True)
+        brmspy.install_brms(use_prebuilt=True)
 
     def test_collect_runtime_metadata_structure(self):
         """Collect metadata and verify structure (lines 160-166)"""
@@ -162,7 +162,7 @@ class TestBuildStaging:
     def setup_class(cls):
         """Ensure brms and cmdstanr are installed before tests."""
         import brmspy
-        brmspy.install_brms(use_prebuilt_binaries=True)
+        brmspy.install_brms(use_prebuilt=True)
     
     def test_stage_runtime_tree_creates_structure(self, tmp_path):
         """Verify directory structure creation"""
@@ -236,7 +236,7 @@ class TestBuildPacking:
     def setup_class(cls):
         """Ensure brms and cmdstanr are installed before tests."""
         import brmspy
-        brmspy.install_brms(use_prebuilt_binaries=True)
+        brmspy.install_brms(use_prebuilt=True)
     
     def test_pack_runtime_creates_archive(self, tmp_path):
         """Verify archive is created correctly"""

@@ -13,7 +13,7 @@ from brmspy import brms
 ```
 
 ```python
-brms.install_brms(use_prebuilt_binaries=True)
+brms.install_brms(use_prebuilt=True)
 ```
 
 ```python
