@@ -12,7 +12,7 @@ import pytest
 import os
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestGitHubTokenForwarding:
     """Test GitHub token forwarding to R environment."""
     
@@ -98,7 +98,7 @@ class TestGitHubTokenForwarding:
                 os.environ['GITHUB_PAT'] = original_pat
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestPackageStateChecks:
     """Test R package state detection."""
     
@@ -149,7 +149,7 @@ class TestPackageStateChecks:
         assert isinstance(result, bool)
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestPackageQueries:
     """Test R package query operations."""
     
@@ -189,7 +189,7 @@ class TestPackageQueries:
         assert result is False
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestLibPathOperations:
     """Test R library path operations."""
     
@@ -229,7 +229,7 @@ class TestLibPathOperations:
             set_lib_paths(original_paths)
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestCmdStanPath:
     """Test CmdStan path operations."""
     

@@ -10,7 +10,7 @@ import pytest
 import platform
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestGetLinuxRepo:
     """Test Linux repository detection."""
     
@@ -41,7 +41,7 @@ class TestGetLinuxRepo:
             assert "packagemanager.posit.co" in repo
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestGetBrmsVersion:
     """Test brms version getter."""
     
@@ -60,7 +60,7 @@ class TestGetBrmsVersion:
             assert major >= 2
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestInstallRPackage:
     """Test R package installation function."""
     
@@ -91,7 +91,7 @@ class TestInstallRPackage:
         # "any" keyword
         install_package("jsonlite", version="any")
 
-@pytest.mark.crossplatform  
+@pytest.mark.rdeps  
 class TestInstallRPackageDeps:
     """Test dependency installation."""
     
@@ -102,7 +102,7 @@ class TestInstallRPackageDeps:
         install_package_deps("brms")
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 @pytest.mark.slow
 class TestBuildCmdstanr:
     """Test CmdStan building."""
@@ -137,7 +137,7 @@ class TestWindowsRtoolsHandling:
         pass  # Skip - requires manipulating system state
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 @pytest.mark.slow
 class TestInstallPrebuilt:
     """Test prebuilt binary installation."""
@@ -198,7 +198,7 @@ class TestInstallPrebuilt:
                         install_prebuilt(install_rtools=False)
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 @pytest.mark.slow
 class TestInstallBrms:
     """Test main install_brms function."""
@@ -274,7 +274,7 @@ class TestInstallBrms:
                                 assert len(rstan_calls) > 0
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestInit:
     """Test initialization function."""
     

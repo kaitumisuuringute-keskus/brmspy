@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestConfigPath:
     """Test config path resolution."""
     
@@ -31,7 +31,7 @@ class TestConfigPath:
         assert config_path.name == "config.json"
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestConfigLoad:
     """Test config loading with various scenarios."""
     
@@ -96,7 +96,7 @@ class TestConfigLoad:
         assert config == {}
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestConfigSave:
     """Test config saving with various scenarios."""
     
@@ -155,7 +155,7 @@ class TestConfigSave:
             os.chmod(config_path.parent, 0o755)
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestActiveRuntime:
     """Test active runtime get/set/clear operations."""
     
@@ -263,7 +263,7 @@ class TestActiveRuntime:
         assert runtime is None
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestConfigPersistence:
     """Test config persistence across operations."""
     

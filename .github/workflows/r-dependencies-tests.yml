@@ -41,7 +41,7 @@ jobs:
 
       - name: Test with pytest
         env:
-          BRMSPY_CROSSPLATFORM_TESTS: "1"
+          BRMSPY_DESTRUCTIVE_RDEPS_TESTS: "1"
           GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
           COVERAGE_FILE: .coverage.${{ matrix.os }}
         run: >

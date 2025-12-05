@@ -14,7 +14,7 @@ import platform
 from pathlib import Path
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestBuildManifestHash:
     """Test manifest hash generation for integrity verification."""
     
@@ -60,7 +60,7 @@ class TestBuildManifestHash:
         assert hash1 != hash2
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestBuildRunRJson:
     """Test R JSON execution helper."""
     
@@ -96,7 +96,7 @@ class TestBuildRunRJson:
         assert isinstance(result["nested"], dict)
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 @pytest.mark.slow
 class TestBuildMetadataCollection:
     """Test R environment metadata collection."""
@@ -153,7 +153,7 @@ class TestBuildMetadataCollection:
             assert "LibPath" in pkg
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 @pytest.mark.slow
 class TestBuildStaging:
     """Test runtime tree staging and directory structure creation."""
@@ -227,7 +227,7 @@ class TestBuildStaging:
         assert all(c in '0123456789abcdef' for c in hash_val)
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 @pytest.mark.slow
 class TestBuildPacking:
     """Test archive creation from staged runtime."""

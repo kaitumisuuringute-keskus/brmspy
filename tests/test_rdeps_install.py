@@ -62,7 +62,7 @@ def _remove_deps():
             del sys.modules[name]
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestCrossplatformInstall:
     """Test brms installation and version checking on 3 major OS."""
     

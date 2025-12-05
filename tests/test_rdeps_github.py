@@ -21,7 +21,7 @@ from brmspy.runtime._github import (
 )
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestGitHubReleaseURL:
     """Test GitHub release URL parsing."""
     
@@ -49,7 +49,7 @@ class TestGitHubReleaseURL:
         assert asset_name == "asset.tar.gz"
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestGitHubAPIFetch:
     """Test GitHub API metadata fetching."""
     
@@ -87,7 +87,7 @@ class TestGitHubAPIFetch:
                 fetch_release_metadata("owner", "repo", "v1.0.0")
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestAssetSHA256:
     """Test SHA256 retrieval from GitHub assets."""
     
@@ -122,7 +122,7 @@ class TestAssetSHA256:
                 get_github_asset_sha256_from_url(url, require_digest=True)
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestRuntimeDownloadURL:
     """Test runtime download URL construction."""
     

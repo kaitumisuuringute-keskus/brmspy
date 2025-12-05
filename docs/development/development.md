@@ -175,7 +175,7 @@ All workflows in `.github/workflows/`:
 
 **Workflow:**
 - Python 3.12 only
-- Tests marked with `@pytest.mark.crossplatform`
+- Tests marked with `@pytest.mark.rdeps`
 - Fail-fast disabled
 
 ### 3. Documentation (`docs.yml`)
@@ -292,7 +292,7 @@ pytest -n auto                     # Parallel (requires pytest-xdist)
 ### Test Markers
 
 ```python
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 def test_basic_fit():
     """Runs on all platforms in CI"""
     pass

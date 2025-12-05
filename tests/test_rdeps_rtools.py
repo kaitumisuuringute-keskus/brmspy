@@ -12,7 +12,7 @@ import platform
 from packaging.version import Version
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestRtoolsVersionMapping:
     """Test R version to Rtools version mapping (lines 117-132)."""
     
@@ -73,7 +73,7 @@ class TestRtoolsVersionMapping:
         assert pick_rtools_for_r(Version("3.5.0")) is None
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestGxxVersionParsing:
     """Test g++ compiler version parsing (line 251, lines 260-281)."""
     
@@ -129,7 +129,7 @@ Copyright info here"""
         assert _parse_gxx_version("g++ version unknown") is None
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestGetRVersion:
     """Test R version detection via rpy2."""
     

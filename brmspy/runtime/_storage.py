@@ -86,7 +86,7 @@ def install_from_archive(
     
     try:
         with tarfile.open(archive, mode="r:*") as tf:
-            tf.extractall(path=temp_extract_root)
+            tf.extractall(path=temp_extract_root, filter="data")
         
         # Find the runtime directory in extracted content
         runtime_tmp = temp_extract_root / "runtime"

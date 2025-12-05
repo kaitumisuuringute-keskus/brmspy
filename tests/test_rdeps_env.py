@@ -11,7 +11,7 @@ import subprocess
 from unittest.mock import patch, MagicMock
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestOsArchDetection:
     """Test OS and architecture detection."""
     
@@ -34,7 +34,7 @@ class TestOsArchDetection:
         assert arch in ("x86_64", "arm64") or arch
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestGetRVersionTuple:
     """Test R version detection."""
     
@@ -64,7 +64,7 @@ class TestGetRVersionTuple:
             pass  # R should be available in test environment
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestRAvailableAndSupported:
     """Test R availability checking."""
     
@@ -102,7 +102,7 @@ class TestRAvailableAndSupported:
             assert result is False
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestGlibcVersion:
     """Test glibc version detection."""
     
@@ -123,7 +123,7 @@ class TestGlibcVersion:
             assert version is None
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestClangVersion:
     """Test clang version detection."""
     
@@ -144,7 +144,7 @@ class TestClangVersion:
             assert version is None
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestLinuxToolchain:
     """Test Linux toolchain compatibility checks."""
     
@@ -163,7 +163,7 @@ class TestLinuxToolchain:
             assert result is False
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestMacosToolchain:
     """Test macOS toolchain compatibility checks."""
     
@@ -182,7 +182,7 @@ class TestMacosToolchain:
             assert result is False
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestWindowsToolchain:
     """Test Windows toolchain compatibility checks."""
     
@@ -200,7 +200,7 @@ class TestWindowsToolchain:
             assert result is False
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestSupportedPlatform:
     """Test platform support checking."""
     
@@ -233,7 +233,7 @@ class TestSupportedPlatform:
                 assert result is False
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestToolchainIsCompatible:
     """Test toolchain compatibility routing."""
     
@@ -255,7 +255,7 @@ class TestToolchainIsCompatible:
             assert result is False
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestSystemFingerprint:
     """Test system fingerprint generation."""
     
@@ -281,7 +281,7 @@ class TestSystemFingerprint:
                 system_fingerprint()
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestPrebuiltAvailableFor:
     """Test prebuilt availability checking."""
     
@@ -313,7 +313,7 @@ class TestPrebuiltAvailableFor:
             PREBUILT_FINGERPRINTS.discard(test_fp)
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestCanUsePrebuilt:
     """Test master prebuilt eligibility check."""
     
@@ -355,7 +355,7 @@ class TestCanUsePrebuilt:
                     assert result is False
 
 
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 class TestGetSystemInfo:
     """Test system info collection."""
     
