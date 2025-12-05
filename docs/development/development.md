@@ -285,7 +285,7 @@ tests/
 ```bash
 pytest tests/ -v                    # All tests
 pytest tests/ -v --cov=brmspy      # With coverage
-pytest -m crossplatform            # Cross-platform only
+pytest -m rdeps                    # DESTRUCTIVE rdeps tests
 pytest -n auto                     # Parallel (requires pytest-xdist)
 ```
 

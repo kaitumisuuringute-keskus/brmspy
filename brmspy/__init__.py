@@ -185,13 +185,16 @@ __license__ = "Apache-2.0"
 # Import brms module for use as: from brmspy import brms
 from brmspy import brms
 from brmspy import runtime
+from brmspy.runtime import (
+    install_brms, install_prebuilt,
+    deactivate_runtime,
+    get_brms_version,
+)
 from brmspy.runtime._platform import system_fingerprint
 from brmspy.brms import (
     get_brms_data,
     fit, brm,
     formula,
-    install_brms, install_prebuilt,
-    get_brms_version,
     make_stancode,
     posterior_epred,
     posterior_predict,

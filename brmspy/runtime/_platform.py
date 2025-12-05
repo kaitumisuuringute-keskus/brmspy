@@ -92,10 +92,11 @@ def get_clang_version() -> tuple[int, int] | None:
     return None
 
 
-def get_gxx_version() -> tuple[int, int] | None:
+def get_gxx_version(out: None | str) -> tuple[int, int] | None:
     """Parse from g++ --version."""
     try:
-        out = subprocess.check_output(["g++", "--version"], text=True)
+        if out is None:
+            out = subprocess.check_output(["g++", "--version"], text=True)
         # Parse g++ version (same logic as helpers/rtools.py)
         for line in out.splitlines():
             for token in line.split():

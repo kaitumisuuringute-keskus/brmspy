@@ -13,6 +13,7 @@ from typing import Optional, cast
 import rpy2.robjects as ro
 
 from brmspy.helpers.log import log_warning
+from packaging.version import Version
 
 
 # R version range -> Rtools version
@@ -22,12 +23,17 @@ RTOOLS_VERSIONS = {
     (4, 3): "43",
     (4, 4): "44",
     (4, 5): "45",
+    (4, 6): "46",
+    (4, 7): "47"
 }
 
 
-def get_required_version(r_version: tuple[int, int, int]) -> str | None:
+def get_required_version(r_version: tuple[int, int, int] | Version) -> str | None:
     """Map R version to required Rtools version."""
-    major, minor, _ = r_version
+    if isinstance(r_version, Version):
+        major, minor = r_version.major, r_version.minor
+    else:
+        major, minor, _ = r_version
     
     # Find the appropriate Rtools version
     for (r_major, r_minor), rtools_ver in sorted(RTOOLS_VERSIONS.items(), reverse=True):
@@ -103,6 +109,12 @@ def update_paths() -> None:
     """Update PATH in both Python os.environ and R Sys.setenv."""
     # Update Python PATH
     rtools_paths = [
+        r"C:\rtools48\usr\bin",
+        r"C:\rtools48\mingw64\bin",
+        r"C:\rtools47\usr\bin",
+        r"C:\rtools47\mingw64\bin",
+        r"C:\rtools46\usr\bin",
+        r"C:\rtools46\mingw64\bin",
         r"C:\rtools45\usr\bin",
         r"C:\rtools45\mingw64\bin",
         r"C:\rtools44\usr\bin",

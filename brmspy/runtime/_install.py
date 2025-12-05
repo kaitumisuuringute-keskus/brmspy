@@ -18,6 +18,8 @@ def install_traditional(
     cmdstanr_version: str | None = None,
     install_rstan: bool = True,
     install_rtools: bool = False,
+    install_cmdstanr: bool = True,
+    rstan_version: str | None = None
 ) -> None:
     """
     Install brms via traditional R package installation.
@@ -42,12 +44,13 @@ def install_traditional(
         "https://mc-stan.org/r-packages/",
         'https://stan-dev.r-universe.dev'
     ]
-    _r_packages.install_package("cmdstanr", version=cmdstanr_version, repos_extra=repos_cmdstanr)
-    _r_packages.install_package_deps("cmdstanr")
-    _r_packages.build_cmdstan()
+    if install_cmdstanr:
+        _r_packages.install_package("cmdstanr", version=cmdstanr_version, repos_extra=repos_cmdstanr)
+        _r_packages.install_package_deps("cmdstanr")
+        _r_packages.build_cmdstan()
     
     if install_rstan:
-        _r_packages.install_package("rstan")
+        _r_packages.install_package("rstan", version=rstan_version)
         _r_packages.install_package_deps("rstan")
     
     _state.invalidate_packages()

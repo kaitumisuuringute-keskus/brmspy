@@ -89,7 +89,7 @@ def pytest_configure(config):
     )
     config.addinivalue_line(
         "markers",
-        "crossplatform: crossplatform test. only runs within githubs cross-platform-tests workflow."
+        "rdeps: rdeps test. only runs within githubs r-dependencies-tests workflow."
     )
 
 
