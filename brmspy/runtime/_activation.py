@@ -46,9 +46,12 @@ def activate(runtime_path: Path) -> None:
         
         rlib = runtime_path / "Rlib"
         cmdstan = runtime_path / "cmdstan"
+
+        rlib_posix = rlib.as_posix()
+        cmdstan_posix = cmdstan.as_posix()
         
-        _r_env.set_lib_paths([str(rlib)])
-        _r_env.set_cmdstan_path(str(cmdstan))
+        _r_env.set_lib_paths([str(rlib_posix)])
+        _r_env.set_cmdstan_path(str(cmdstan_posix))
         
         # Verify loadable
         _verify_runtime_loadable()

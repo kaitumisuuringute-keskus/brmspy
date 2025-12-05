@@ -15,7 +15,7 @@ from brmspy.types import (
     IDPredict,
     PriorSpec
 )
-from brmspy.brms_functions.io import get_brms_data, read_rds_fit, read_rds_raw, save_rds
+from brmspy.brms_functions.io import get_brms_data, read_rds_fit, read_rds_raw, save_rds, get_data
 from brmspy.brms_functions.prior import prior, get_prior, default_prior
 from brmspy.brms_functions.brm import brm, fit
 from brmspy.brms_functions.diagnostics import summary, fixef, ranef, posterior_summary, prior_summary, loo, loo_compare, validate_newdata
@@ -48,7 +48,7 @@ __all__ = [
     'install_brms', 'get_brms_version', 'install_prebuilt', 'deactivate_runtime', 'get_active_runtime',
 
     # IO
-    'get_brms_data', 'save_rds', 'read_rds_raw', 'read_rds_fit',
+    'get_brms_data', 'save_rds', 'read_rds_raw', 'read_rds_fit', 'get_data',
 
     # brm
     'fit', 'brm',

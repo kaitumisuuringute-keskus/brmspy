@@ -193,6 +193,7 @@ from brmspy.runtime import (
 from brmspy.runtime._platform import system_fingerprint
 from brmspy.brms import (
     get_brms_data,
+    get_data,
     fit, brm,
     formula,
     make_stancode,
@@ -229,7 +230,7 @@ __all__ = [
     'install_brms', 'get_brms_version', 'install_prebuilt', 'deactivate_runtime',
 
     # IO
-    'get_brms_data', 'save_rds', 'read_rds_raw', 'read_rds_fit',
+    'get_brms_data', 'save_rds', 'read_rds_raw', 'read_rds_fit', 'get_data',
 
     # brm
     'fit', 'brm',

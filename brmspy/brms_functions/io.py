@@ -7,64 +7,104 @@ from rpy2.robjects.conversion import localconverter
 from ..runtime._state import get_brms
 from ..helpers.conversion import (
     brmsfit_to_idata,
-    kwargs_r
+    kwargs_r,
+    r_to_py
 )
 from ..types import (
     FitResult, RListVectorExtension
 )
 import rpy2.robjects as ro
 
-
-def get_brms_data(dataset_name: str) -> pd.DataFrame:
+def get_data(dataset_name: str, **kwargs) -> pd.DataFrame:
     """
-    Load example dataset from brms package.
-    
+    Load an R dataset and return it as a pandas DataFrame.
+
+    This is a thin wrapper around R's ``data()`` that loads the object
+    into the R global environment and converts it to a
+    :class:`pandas.DataFrame`.
+
     Parameters
     ----------
     dataset_name : str
-        Dataset name. Available datasets include:
-        - 'epilepsy': Epileptic seizure counts
-        - 'kidney': Kidney infection data with censoring
-        - 'inhaler': Inhaler usage study
-        - 'btdata': British Telecom share price data
-        - And many more from brms package
-    
+        Name of the dataset as used in R (e.g. ``"BTdata"``).
+    **kwargs
+        Additional keyword arguments forwarded to R's ``data()`` function,
+        for example ``package="MCMCglmm"`` or other arguments supported
+        by ``utils::data()`` in R.
+
     Returns
     -------
     pd.DataFrame
-        Dataset as pandas DataFrame with column names preserved
-    
+        Dataset converted to a pandas DataFrame.
+
+    Raises
+    ------
+    KeyError
+        If the dataset is not found in the R global environment after
+        calling ``data()``.
+    RuntimeError
+        If conversion from the R object to a pandas DataFrame fails.
+
     See Also
     --------
-    brms::brmsdata : R documentation for available datasets
-        https://paulbuerkner.com/brms/reference/index.html#data
-    
+    get_brms_data
+        Convenience wrapper for datasets from the ``brms`` package.
+    """
+    r_kwargs = kwargs_r(kwargs)
+
+    r_data = typing.cast(typing.Callable, ro.r["data"])
+    r_data(dataset_name, **r_kwargs)
+    r_obj = ro.globalenv[dataset_name]
+
+    return typing.cast(pd.DataFrame, r_to_py(r_obj))
+
+
+def get_brms_data(dataset_name: str, **kwargs) -> pd.DataFrame:
+    """
+    Load an example dataset from the R ``brms`` package.
+
+    This is a convenience wrapper around :func:`get_data` that fixes
+    ``package="brms"`` and returns the dataset as a
+    :class:`pandas.DataFrame`.
+
+    Parameters
+    ----------
+    dataset_name : str
+        Name of the example dataset in the ``brms`` package (e.g.
+        ``"epilepsy"``, ``"kidney"``, ``"inhaler"``).
+    **kwargs
+        Additional keyword arguments forwarded to :func:`get_data`
+        and ultimately to R's ``data()`` function. These can be used
+        to override defaults such as the target environment.
+
+    Returns
+    -------
+    pd.DataFrame
+        Dataset as a pandas DataFrame with column names preserved.
+
+    See Also
+    --------
+    get_data
+        Generic loader for datasets from arbitrary R packages.
+    brms R reference
+        For a list of available example datasets and their structure.
+
     Examples
     --------
-    Load epilepsy dataset:
-    
-    ```python
-    from brmspy import brms
-    epilepsy = brms.get_brms_data("epilepsy")
-    print(epilepsy.head())
-    print(epilepsy.columns)
-    ```
+    Load the epilepsy dataset::
 
-    Load kidney dataset with censoring:
-    
-    ```python
-    kidney = brms.get_brms_data("kidney")
-    print(f"Shape: {kidney.shape}")
-    print(f"Censored observations: {kidney['censored'].sum()}")
-    ```
+        from brmspy.runtime import get_brms_data
+
+        epilepsy = get_brms_data("epilepsy")
+        print(epilepsy.head())
+
+    Load the kidney dataset and inspect censoring::
+
+        kidney = get_brms_data("kidney")
+        print(kidney.shape)
+        print(kidney["censored"].value_counts())
     """
-    brms = get_brms()
-    with localconverter(default_converter + pandas2ri.converter + numpy2ri.converter) as cv:
-        brmsdata = rpackages.data(brms)
-        if brmsdata:
-            return pd.DataFrame(brmsdata.fetch(dataset_name)[dataset_name])
-        else:
-            return pd.DataFrame({})
+    return get_data(dataset_name, package="brms", **kwargs)
 
 
 

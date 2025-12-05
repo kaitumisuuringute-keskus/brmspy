@@ -217,21 +217,25 @@ def install_package_deps(name: str, include_suggests: bool = False) -> None:
     ncpus = multiprocessing.cpu_count() - 1
     ncpus = max(1, ncpus)
     
-    ro.r(f"""
-        pkgs <- unique(unlist(
-            tools::package_dependencies(
-                c("{name}"),
-                recursive = TRUE,
-                which = {which_deps},
-                db = available.packages()
-            )
-        ))
-        
-        to_install <- setdiff(pkgs, rownames(installed.packages()))
-        if (length(to_install)) {{
-            install.packages(to_install, Ncpus = {ncpus})
-        }}
-    """)
+    try:
+        ro.r(f"""
+            pkgs <- unique(unlist(
+                tools::package_dependencies(
+                    c("{name}"),
+                    recursive = TRUE,
+                    which = {which_deps},
+                    db = available.packages()
+                )
+            ))
+            
+            to_install <- setdiff(pkgs, rownames(installed.packages()))
+            if (length(to_install)) {{
+                install.packages(to_install, Ncpus = {ncpus})
+            }}
+        """)
+    except Exception as e:
+        log_warning(str(e))
+        return
 
 
 def build_cmdstan(cores: int | None = None) -> None:
