@@ -92,7 +92,7 @@ def get_clang_version() -> tuple[int, int] | None:
     return None
 
 
-def get_gxx_version(out: None | str) -> tuple[int, int] | None:
+def get_gxx_version(out: None | str = None) -> tuple[int, int] | None:
     """Parse from g++ --version."""
     try:
         if out is None:
