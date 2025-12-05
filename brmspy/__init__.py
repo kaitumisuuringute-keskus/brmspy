@@ -223,7 +223,9 @@ from brmspy.brms import (
     IDFit,
     IDLogLik,
     IDPredict,
-    PriorSpec
+    PriorSpec,
+
+    install_rpackage
 )
 __all__ = [
     # R env
@@ -252,7 +254,7 @@ __all__ = [
     'loo', 'loo_compare', 'validate_newdata',
 
     # generic helper
-    'call',
+    'call', 'install_rpackage',
 
     # types
     'FitResult', 'FormulaResult', 'PosteriorEpredResult', 'PosteriorPredictResult',
