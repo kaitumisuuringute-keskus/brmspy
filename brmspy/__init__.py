@@ -184,12 +184,8 @@ __license__ = "Apache-2.0"
 
 # Import brms module for use as: from brmspy import brms
 from brmspy import brms
-from brmspy.binaries import (
-    system_fingerprint,
-    activate_runtime,
-    install_and_activate_runtime,
-    deactivate_runtime
-)
+from brmspy import runtime
+from brmspy.runtime._platform import system_fingerprint
 from brmspy.brms import (
     get_brms_data,
     fit, brm,
@@ -236,7 +232,7 @@ __all__ = [
     'fit', 'brm',
 
     # formula
-    'formula', 
+    'formula',
 
     # priors
     'prior', 'get_prior', 'default_prior',
@@ -268,11 +264,9 @@ __all__ = [
     # stan
     'make_stancode',
     
-
-    # Extras
-    "system_fingerprint",
-    "activate_runtime",
-    "install_and_activate_runtime",
+    # Runtime API
+    'runtime',
+    'system_fingerprint',
 
     "__version__",
 ]

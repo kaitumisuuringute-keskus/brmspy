@@ -10,7 +10,7 @@ from typing import List, cast
 
 import rpy2.robjects as ro
 
-from brmspy.binaries.env import system_fingerprint
+from brmspy.binaries_deprecated.env import system_fingerprint
 from brmspy.helpers.log import log
 
 

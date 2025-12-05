@@ -8,10 +8,10 @@ from typing import Callable, Optional, Tuple, Union, cast
 
 import rpy2.robjects as ro
 
-from brmspy.binaries.config import get_active_runtime, _set_active_runtime, _clear_active_runtime_config_only
-from brmspy.binaries.env import system_fingerprint
-from brmspy.binaries.github import get_github_asset_sha256_from_url
-from brmspy.binaries.r import _try_force_unload_package, _r_namespace_loaded, _r_package_attached
+from brmspy.binaries_deprecated.config import get_active_runtime, _set_active_runtime, _clear_active_runtime_config_only
+from brmspy.binaries_deprecated.env import system_fingerprint
+from brmspy.binaries_deprecated.github import get_github_asset_sha256_from_url
+from brmspy.binaries_deprecated.r import _try_force_unload_package, _r_namespace_loaded, _r_package_attached
 from brmspy.helpers.log import greet, log, log_warning
 from brmspy.helpers.singleton import _invalidate_singletons
 
@@ -168,7 +168,7 @@ def activate_runtime(runtime_root: Union[str, Path]) -> None:
 
     # Save the activated runtime path for auto-activation on next import
     try:
-        from brmspy.binaries.config import _set_active_runtime
+        from brmspy.binaries_deprecated.config import _set_active_runtime
         _set_active_runtime(runtime_root)
     except Exception as e:
         log_warning(f"Failed to save runtime configuration: {e}")

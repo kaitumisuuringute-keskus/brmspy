@@ -202,6 +202,6 @@ def _clear_active_runtime() -> None:
     _clear_active_runtime()
     ```
     """
-    from brmspy.binaries.use import deactivate_runtime
+    from brmspy.binaries_deprecated.use import deactivate_runtime
     deactivate_runtime()
     _clear_active_runtime_config_only()

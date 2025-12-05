@@ -138,13 +138,13 @@ Prebuilt runtimes require:
 
 See `brmspy.binaries.env` for detailed compatibility checking.
 """
-from brmspy.binaries.use import (
+from brmspy.binaries_deprecated.use import (
     install_and_activate_runtime,
     activate_runtime,
     deactivate_runtime
 )
-from brmspy.binaries.env import system_fingerprint
-from brmspy.binaries.config import (
+from brmspy.binaries_deprecated.env import system_fingerprint
+from brmspy.binaries_deprecated.config import (
     get_active_runtime,
     _set_active_runtime,
     _clear_active_runtime
