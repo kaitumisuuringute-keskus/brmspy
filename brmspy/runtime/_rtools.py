@@ -4,8 +4,10 @@ Windows Rtools management. Split into focused functions.
 
 import os
 import platform
+import re
 import subprocess
 import tempfile
+from urllib.error import HTTPError, URLError
 import urllib.request
 from pathlib import Path
 from typing import Optional, cast
@@ -42,7 +44,7 @@ def get_required_version(r_version: tuple[int, int, int] | Version) -> str | Non
     
     return None
 
-RTOOLS_INSTALLERS = {
+RTOOLS_FALLBACK_URLS = {
     "40": "https://cran.r-project.org/bin/windows/Rtools/rtools40-x86_64.exe",
     "42": "https://cran.r-project.org/bin/windows/Rtools/rtools42/files/rtools42-5355-5357.exe",
     "43": "https://cran.r-project.org/bin/windows/Rtools/rtools43/files/rtools43-5976-5975.exe",
@@ -50,10 +52,46 @@ RTOOLS_INSTALLERS = {
     "45": "https://cran.r-project.org/bin/windows/Rtools/rtools45/files/rtools45-6691-6492.exe",
 }
 
+RTOOLS_BASE = "https://cran.r-project.org/bin/windows/Rtools"
+
+def _discover_rtools_installer(rtools_version: str, timeout: float = 10.0) -> str | None:
+    """
+    Try to discover the latest Rtools installer .exe from the CRAN directory index.
+
+    Looks at:
+        https://cran.r-project.org/bin/windows/Rtools/rtools{version}/files/
+    and picks the newest-looking `rtools{version}-*.exe`.
+    """
+    index_url = f"{RTOOLS_BASE}/rtools{rtools_version}/files/"
+
+    try:
+        with urllib.request.urlopen(index_url, timeout=timeout) as resp:
+            html = resp.read().decode("utf-8", errors="ignore")
+    except (HTTPError, URLError):
+        return None
+
+    # Look for href="rtools42-5355-5357.exe" etc.
+    pattern = rf'href="(rtools{re.escape(rtools_version)}-[^"]+\.exe)"'
+    matches = re.findall(pattern, html)
+    if not matches:
+        return None
+
+    # If there are multiple, take the lexicographically last one (usually the newest build)
+    filename = sorted(matches)[-1]
+    return index_url + filename
+
 def get_download_url(rtools_version: str) -> str:
     """Get download URL for Rtools version."""
-    if rtools_version in RTOOLS_INSTALLERS:
-        return RTOOLS_INSTALLERS[rtools_version]
+    # Try to dynamically discover from CRAN directory listing
+    url = _discover_rtools_installer(rtools_version)
+    if url is not None:
+        return url
+
+    # Fall back to old hard-coded mapping if discovery fails
+    if rtools_version in RTOOLS_FALLBACK_URLS:
+        return RTOOLS_FALLBACK_URLS[rtools_version]
+
+    # Probably will NOT work, but return it anyways
     return f"https://cran.r-project.org/bin/windows/Rtools/rtools{rtools_version}/files/rtools{rtools_version}-x86_64.exe"
 
 
