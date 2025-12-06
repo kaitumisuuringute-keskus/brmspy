@@ -43,8 +43,9 @@ jobs:
           BRMSPY_DESTRUCTIVE_RDEPS_TESTS: "1"
           GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
           COVERAGE_FILE: .coverage.${{ matrix.os }}
+        # These tests modify the filesystem, dont run in parallel! xdist just gives us separation
         run: >
-          python -m pytest tests/test_rdeps_install_prebuilt.py tests/test_rdeps_install.py -v -n 1 --dist=loadfile -m rdeps 
+          python -m pytest tests/ -v -n 1 --dist=loadfile -m rdeps 
           --cov-report=term 
           --cov-report=xml 
           --cov-report=json 
