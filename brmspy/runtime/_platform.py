@@ -66,7 +66,7 @@ def get_glibc_version() -> tuple[int, int] | None:
         return None
 
     try:
-        out = subprocess.check_output(["ldd", "--version"], text=True)
+        out = subprocess.check_output(["ldd", "--version"], text=True, timeout=10)
         for line in out.splitlines():
             for token in line.split():
                 if token[0].isdigit() and "." in token:
@@ -84,7 +84,7 @@ def get_clang_version() -> tuple[int, int] | None:
         return None
 
     try:
-        out = subprocess.check_output(["clang", "--version"], text=True)
+        out = subprocess.check_output(["clang", "--version"], text=True, timeout=10)
         for line in out.splitlines():
             if "clang" not in line.lower():
                 continue
@@ -102,7 +102,7 @@ def get_gxx_version(out: None | str = None) -> tuple[int, int] | None:
     """Parse from g++ --version."""
     try:
         if out is None:
-            out = subprocess.check_output(["g++", "--version"], text=True)
+            out = subprocess.check_output(["g++", "--version"], text=True, timeout=10)
         # Parse g++ version (same logic as helpers/rtools.py)
         for line in out.splitlines():
             for token in line.split():
@@ -208,7 +208,7 @@ def is_linux_toolchain_ok() -> bool:
 def is_macos_toolchain_ok() -> bool:
     """True if Xcode CLT installed and clang >= 11."""
     try:
-        subprocess.check_output(["xcode-select", "-p"], text=True)
+        subprocess.check_output(["xcode-select", "-p"], text=True, timeout=10)
     except Exception:
         return False
     
@@ -290,7 +290,7 @@ def get_compatibility_issues() -> list[str]:
                 issues.append(f"g++ {gxx} is too old (need >= 9.0)")
         elif os_name == "macos":
             try:
-                subprocess.check_output(["xcode-select", "-p"], text=True)
+                subprocess.check_output(["xcode-select", "-p"], text=True, timeout=10)
             except Exception:
                 issues.append("Xcode Command Line Tools not installed")
             clang = get_clang_version()

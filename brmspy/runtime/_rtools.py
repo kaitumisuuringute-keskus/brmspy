@@ -5,19 +5,20 @@ Windows Rtools management. Split into focused functions.
 import os
 import platform
 import re
+import string
 import subprocess
 import tempfile
 from urllib.error import ContentTooShortError, HTTPError, URLError
 import urllib.request
 from pathlib import Path
-from typing import Optional, cast
+from typing import Callable, Optional, cast
 
 import rpy2.robjects as ro
 
 from brmspy.helpers.log import log_warning
 from packaging.version import Version
 
-from brmspy.runtime._platform import get_arch
+from brmspy.runtime._platform import get_arch, get_os
 
 
 # R version range -> Rtools version
@@ -28,9 +29,32 @@ RTOOLS_VERSIONS = {
     (4, 4): "44",
     (4, 5): "45",
     (4, 6): "46",
-    (4, 7): "47"
+    (4, 7): "47",
+    (4, 8): "48"
 }
+RTOOLS_SUBDIRS = [
+    os.path.join("usr", "bin"),
+    os.path.join("mingw64", "bin"),
+]
 
+def _windows_drives() -> list[str]:
+    """Return a list of existing drive roots like ['C:\\', 'D:\\', ...]."""
+    drives = []
+    for letter in string.ascii_uppercase:
+        root = f"{letter}:\\"
+        if Path(root).exists():
+            drives.append(root)
+    return drives
+
+def _candidate_rtools_paths() -> list[str]:
+    """Generate all plausible Rtools bin paths across all drives."""
+    candidates: list[str] = []
+    for drive in _windows_drives():
+        for ver in RTOOLS_VERSIONS.values():
+            base = os.path.join(drive, f"rtools{ver}")
+            for sub in RTOOLS_SUBDIRS:
+                candidates.append(os.path.join(base, sub))
+    return candidates
 
 def get_required_version(r_version: tuple[int, int, int] | Version) -> str | None:
     """Map R version to required Rtools version."""
@@ -125,11 +149,11 @@ def is_installed() -> bool:
     try:
         # Check for make
         subprocess.run(["make", "--version"], 
-                      capture_output=True, check=True)
+                      capture_output=True, check=True, timeout=10)
         
         # Check for mingw g++
         result = subprocess.run(["g++", "--version"],
-                               capture_output=True, text=True, check=True)
+                               capture_output=True, text=True, check=True, timeout=10)
         
         # Verify it's mingw
         output = result.stdout.lower()
@@ -144,7 +168,7 @@ def is_installed() -> bool:
 def get_installed_gxx_version() -> tuple[int, int] | None:
     """Get g++ version from Rtools."""
     try:
-        result = subprocess.check_output(["g++", "--version"], text=True)
+        result = subprocess.check_output(["g++", "--version"], text=True, timeout=10)
         # Parse version
         for line in result.splitlines():
             for token in line.split():
@@ -222,42 +246,34 @@ def run_installer(installer: Path, silent: bool = True) -> None:
 
 def update_paths() -> None:
     """Update PATH in both Python os.environ and R Sys.setenv."""
-    # Update Python PATH
-    rtools_paths = [
-        r"C:\rtools48\usr\bin",
-        r"C:\rtools48\mingw64\bin",
-        r"C:\rtools47\usr\bin",
-        r"C:\rtools47\mingw64\bin",
-        r"C:\rtools46\usr\bin",
-        r"C:\rtools46\mingw64\bin",
-        r"C:\rtools45\usr\bin",
-        r"C:\rtools45\mingw64\bin",
-        r"C:\rtools44\usr\bin",
-        r"C:\rtools44\mingw64\bin",
-        r"C:\rtools43\usr\bin",
-        r"C:\rtools43\mingw64\bin",
-        r"C:\rtools42\usr\bin",
-        r"C:\rtools42\mingw64\bin",
-        r"C:\rtools40\usr\bin",
-        r"C:\rtools40\mingw64\bin",
-    ]
-    
+    if get_os() != "windows":
+        return None
+
     current_path = os.environ.get("PATH", "")
-    new_paths = []
-    
-    for rtools_path in rtools_paths:
-        if Path(rtools_path).exists() and rtools_path not in current_path:
-            new_paths.append(rtools_path)
-    
-    if new_paths:
-        os.environ["PATH"] = os.pathsep.join(new_paths) + os.pathsep + current_path
-        
-        # Also update R's PATH
-        try:
-            new_path_str = os.pathsep.join(new_paths + [current_path])
-            ro.r(f'Sys.setenv(PATH = "{new_path_str}")')
-        except Exception:
-            pass
+    current_entries = current_path.split(os.pathsep) if current_path else []
+
+    new_entries: list[str] = []
+
+    for candidate in _candidate_rtools_paths():
+        p = Path(candidate)
+        if p.exists():
+            # avoid duplicates in both new_entries and existing PATH
+            if candidate not in current_entries and candidate not in new_entries:
+                new_entries.append(candidate)
+
+    if not new_entries:
+        return
+
+    # Update Python PATH
+    os.environ["PATH"] = os.pathsep.join(new_entries + current_entries)
+
+    # Update R PATH using rpy2 in a safe way (no manual quoting)
+    try:
+        sys_setenv = cast(Callable, ro.r("Sys.setenv"))
+        sys_setenv(PATH=os.environ["PATH"])
+    except Exception:
+        # Best-effort; don't crash if R isn't ready
+        pass
 
 
 def ensure_installed() -> None:
