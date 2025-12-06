@@ -44,7 +44,10 @@ def _fit_minimal_model(brms):
 
 
 def _remove_deps():
+    import rpy2.robjects as ro
+    import rpy2.robjects.packages as rpackages
     import sys
+    from brmspy.runtime._activation import MANAGED_PACKAGES, _unload_managed_packages, deactivate
 
     try:
         from brmspy.runtime._activation import _unload_managed_packages
@@ -52,16 +55,10 @@ def _remove_deps():
     except Exception:
         pass
     
-    from brmspy.runtime._r_env import run_gc
-    run_gc()
+    for package in MANAGED_PACKAGES:
+        if rpackages.isinstalled(package):
+            ro.r(f'remove.packages("{package}")')
     
-    try:
-        from brmspy.runtime._activation import _remove_managed_packages
-        _remove_managed_packages()
-    except Exception:
-        pass
-            
-
     # since other tests might have imported brmspy already with global _brms singleton set,
     # we need to remove it from sys.modules first
     for name in list(sys.modules.keys()):
@@ -80,6 +77,7 @@ class TestCrossplatformInstall:
     
     @pytest.mark.slow
     def test_brms_install(self):
+        from brmspy import brms
         import rpy2.robjects.packages as rpackages
         _remove_deps()
         
@@ -102,6 +100,7 @@ class TestCrossplatformInstall:
     
     @pytest.mark.slow
     def test_brms_install_prebuilt(self):
+        from brmspy import brms
         import rpy2.robjects.packages as rpackages
         _remove_deps()
         

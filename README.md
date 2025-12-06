@@ -252,7 +252,7 @@ model = brms.fit(
 
 ## Known issues
 
-- Due to Windows' idiosyncrasies installing existing R packages or BRMS and its dependencies is NOT guaranteed to succeed in the same session. It is strongly recommended to restart your Python session. This also means autoloading previously used prebuilt environment on windows is disabled, call activate() to enable it.
+- Due to Windows' idiosyncrasies installing existing R packages (or cmdstanr) is NOT guaranteed to succeed in the same session if it has already been used. It is strongly recommended to restart your Python session before doing any installations when you have used it. This also means autoloading previously used prebuilt environment on windows is disabled, call activate() to load existing prebuilt runtime.
 
 ## Requirements
 
