@@ -1,6 +1,7 @@
 """
 Pytest configuration and shared fixtures for brmspy tests
 """
+from pathlib import Path
 import pytest
 import sys
 import os
@@ -92,6 +93,51 @@ def pytest_configure(config):
         "rdeps: rdeps test. only runs within githubs r-dependencies-tests workflow."
     )
 
+@pytest.fixture(autouse=True, scope="module")
+def clean_runtime_dir_between_tests(request):
+    """
+    After each test, remove everything inside get_runtime_base_dir().
+
+    Assumes tests are configured to use a throwaway runtime directory
+    (e.g. via env var) so this doesn't touch real user data.
+    """
+
+    # For non-rdeps modules: no-op
+    if request.node.get_closest_marker("rdeps") is None:
+        yield
+        return
+
+    if os.getenv('BRMSPY_DESTRUCTIVE_RDEPS_TESTS') != "1":
+        yield
+        return
+
+    from brmspy.runtime._storage import get_runtime_base_dir
+    import shutil
+
+    base_dir: Path = get_runtime_base_dir()
+
+    # If the dir doesn't exist, nothing to do
+    if not base_dir.exists():
+        yield
+        return
+
+    if ".brmspy" not in str(base_dir):
+        # bail out instead of nuking something sketchy
+        yield
+        return
+
+    # Remove contents, keep the base directory itself
+    for entry in base_dir.iterdir():
+        try:
+            if entry.is_dir():
+                shutil.rmtree(entry, ignore_errors=True)
+            else:
+                entry.unlink(missing_ok=True)
+        except Exception:
+            # make cleanup best-effort, not test-failing
+            pass
+    
+    yield
 
 @pytest.fixture(scope="session")
 def brms_available():
