@@ -43,31 +43,60 @@ def _fit_minimal_model(brms):
     assert any('b_zBase' in p for p in param_names)
 
 
-def _remove_deps():
-    import rpy2.robjects as ro
-    import rpy2.robjects.packages as rpackages
-    import sys
-    from brmspy.runtime._activation import MANAGED_PACKAGES, _unload_managed_packages, deactivate
-
-    # in case the default/previous env has packages, do it again!
-    try:
-        _unload_managed_packages()
-    except:
-        pass
-
-    for package in MANAGED_PACKAGES:
-        if rpackages.isinstalled(package):
-            ro.r(f'remove.packages("{package}")')
-            
-
-    # since other tests might have imported brmspy already with global _brms singleton set,
-    # we need to remove it from sys.modules first
+def _clear_brmspy_modules():
+    """
+    Clear all brmspy modules from sys.modules.
+    
+    This releases Python-side references to R objects, which is
+    necessary before R-side cleanup can fully succeed.
+    """
+    import sys, gc
     for name in list(sys.modules.keys()):
         if name.startswith("brmspy"):
             del sys.modules[name]
+    gc.collect()
 
+
+def _remove_deps():
+    """
+    Remove all managed R packages in an OS-safe and order-safe way.
     
-
+    Handles:
+    - Cross-platform path/DLL differences (especially Windows)
+    - Package dependency ordering via multiple passes
+    - Partial/failed states
+    - Works regardless of what's currently loaded
+    
+    This is DESTRUCTIVE - only use in CI tests!
+    """
+    # 1. Clear Python modules FIRST to release any R object references
+    #    Must happen before importing brmspy components
+    _clear_brmspy_modules()
+    
+    # 2. Now safe to import and use library functions
+    from brmspy.runtime._activation import (
+        unload_all_non_base_packages, 
+        remove_managed_packages
+    )
+    from brmspy.runtime._r_env import run_gc
+    
+    # 3. Full unload and remove using library functions
+    try:
+        unload_all_non_base_packages()
+    except Exception:
+        pass
+    
+    run_gc()
+    
+    try:
+        remove_managed_packages()
+    except Exception:
+        pass
+    
+    run_gc()
+    
+    # 4. Final Python module cleanup (in case re-imported during above)
+    _clear_brmspy_modules()
 
 
 @pytest.mark.rdeps
@@ -76,14 +105,13 @@ class TestCrossplatformInstall:
     
     @pytest.mark.slow
     def test_brms_install(self):
-        from brmspy import brms
         import rpy2.robjects.packages as rpackages
         _remove_deps()
         
         assert not rpackages.isinstalled("brms")
         assert not rpackages.isinstalled("cmdstanr")
 
-        # Keep brmspy after removal to ensure the library imports without brms installed
+        # Import after removal to ensure the library imports without brms installed
         from brmspy import brms
         from brmspy.runtime._state import get_brms
 
@@ -99,14 +127,13 @@ class TestCrossplatformInstall:
     
     @pytest.mark.slow
     def test_brms_install_prebuilt(self):
-        from brmspy import brms
         import rpy2.robjects.packages as rpackages
         _remove_deps()
         
         assert not rpackages.isinstalled("brms")
         assert not rpackages.isinstalled("cmdstanr")
 
-        # Keep brmspy after removal to ensure the library imports without brms installed
+        # Import after removal to ensure the library imports without brms installed
         from brmspy import brms
         from brmspy.runtime._state import get_brms
 
@@ -120,6 +147,6 @@ class TestCrossplatformInstall:
 
         _fit_minimal_model(brms)
 
-        # Use new runtime API for deactivation
+        # Use runtime API for deactivation
         from brmspy import runtime
         runtime.deactivate()
