@@ -15,6 +15,8 @@ import sys
 import gc
 
 
+
+
 def _fit_minimal_model(brms):
     """Run a very small model to verify the installation."""
     epilepsy = brms.get_brms_data("epilepsy")
@@ -41,49 +43,34 @@ def _fit_minimal_model(brms):
     assert any('b_zBase' in p for p in param_names)
 
 
-
 def _remove_deps():
-    """
-    Remove all managed R packages in an OS-safe and order-safe way.
-    
-    Handles:
-    - Cross-platform path/DLL differences (especially Windows)
-    - Package dependency ordering via multiple passes
-    - Partial/failed states
-    - Works regardless of what's currently loaded
-    
-    This is DESTRUCTIVE - only use in CI tests!
-    """
-    # 1. Clear Python modules FIRST to release any R object references
-    #    Must happen before importing brmspy components
-    from brmspy.runtime._state import invalidate_packages
-    invalidate_packages()
+    import sys
 
-    # 2. Now safe to import and use library functions
-    from brmspy.runtime._activation import (
-        _unload_managed_packages, _remove_managed_packages
-        
-    )
-    from brmspy.runtime._r_env import run_gc
-    
-    # 3. Full unload and remove using library functions
     try:
+        from brmspy.runtime._activation import _unload_managed_packages
         _unload_managed_packages()
     except Exception:
         pass
     
+    from brmspy.runtime._r_env import run_gc
     run_gc()
     
     try:
+        from brmspy.runtime._activation import _remove_managed_packages
         _remove_managed_packages()
     except Exception:
         pass
+            
+
+    # since other tests might have imported brmspy already with global _brms singleton set,
+    # we need to remove it from sys.modules first
+    for name in list(sys.modules.keys()):
+        if name.startswith("brmspy"):
+            del sys.modules[name]
     
-    run_gc()
-    
-    # 4. Final Python module cleanup (in case re-imported during above)
-    from brmspy.runtime._state import invalidate_packages
-    invalidate_packages()
+    #from brmspy.runtime._state import invalidate_packages
+    #invalidate_packages()
+    gc.collect()
 
 
 

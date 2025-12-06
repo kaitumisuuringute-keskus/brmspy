@@ -21,8 +21,17 @@ def get_brms() -> Any:
     """Get brms R package, importing on first access."""
     global _brms
     if _brms is None:
-        from rpy2.robjects.packages import importr
-        _brms = importr("brms")
+        try:
+            from rpy2.robjects.packages import importr
+            _brms = importr("brms")
+        except Exception as e:
+            raise ImportError(
+                "brms R package not found. Install it using:\n\n"
+                "  import brmspy\n"
+                "  brmspy.install_brms(use_prebuilt=True)  # for prebuilt binaries\n\n"
+                "Or install from source:\n"
+                "  brmspy.install_brms()\n"
+            ) from e
     return _brms
 
 
