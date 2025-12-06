@@ -41,18 +41,6 @@ def _fit_minimal_model(brms):
     assert any('b_zBase' in p for p in param_names)
 
 
-def _clear_brmspy_modules():
-    """
-    Clear all brmspy modules from sys.modules.
-    
-    This releases Python-side references to R objects, which is
-    necessary before R-side cleanup can fully succeed.
-    """
-    for name in list(sys.modules.keys()):
-        if name.startswith("brmspy"):
-            del sys.modules[name]
-    gc.collect()
-
 
 def _remove_deps():
     """
@@ -68,8 +56,9 @@ def _remove_deps():
     """
     # 1. Clear Python modules FIRST to release any R object references
     #    Must happen before importing brmspy components
-    _clear_brmspy_modules()
-    
+    from brmspy.runtime._state import invalidate_packages
+    invalidate_packages()
+
     # 2. Now safe to import and use library functions
     from brmspy.runtime._activation import (
         unload_all_non_base_packages, 
@@ -93,7 +82,8 @@ def _remove_deps():
     run_gc()
     
     # 4. Final Python module cleanup (in case re-imported during above)
-    _clear_brmspy_modules()
+    from brmspy.runtime._state import invalidate_packages
+    invalidate_packages()
 
 
 @pytest.fixture(scope="module", autouse=True)
