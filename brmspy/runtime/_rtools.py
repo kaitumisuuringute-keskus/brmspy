@@ -183,11 +183,11 @@ def get_installed_gxx_version() -> tuple[int, int] | None:
     return None
 
 
-def _stream_download(url: str, dst: Path) -> None:
+def _stream_download(url: str, dst: Path, timeout: Optional[float] = 30) -> None:
     """Download URL to dst in chunks, verifying size if Content-Length is present."""
     CHUNK_SIZE = 1024 * 1024  # 1 MB
 
-    with urllib.request.urlopen(url) as resp, dst.open("wb") as f:
+    with urllib.request.urlopen(url, timeout=timeout) as resp, dst.open("wb") as f:
         content_length = resp.headers.get("Content-Length")
         expected_size: Optional[int] = int(content_length) if content_length else None
 
@@ -257,7 +257,8 @@ def run_installer(installer: Path, rtools_version: str, silent: bool = True) -> 
             f"/DIR={install_dir}",  # no inner quotes
         ])
 
-    subprocess.run(args, check=True)
+    # 5 minute timeout - Rtools installers typically complete in 1-3 minutes
+    subprocess.run(args, check=True, timeout=300)
 
 
 def update_paths() -> None:
