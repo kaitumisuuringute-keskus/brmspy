@@ -64,6 +64,12 @@ def _remove_deps():
         if name.startswith("brmspy"):
             del sys.modules[name]
 
+    from brmspy import brms
+    ro.r('options(repos = c(CRAN = "https://cloud.r-project.org"))')
+
+    
+
+
 
 @pytest.mark.rdeps
 class TestCrossplatformInstall:

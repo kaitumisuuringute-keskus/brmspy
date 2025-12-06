@@ -96,9 +96,9 @@ nav:
       - Conversion: api/helpers/conversion.md
       - Priors: api/helpers/priors.md
   - Examples:
-    - Google colab: examples/google-colab-example.md
-    - Estimating multivariate models: examples/estimating-multivariate-models-with-brmspy.ipynb
-    - Vi sampling Usage: examples/vi-sampling.ipynb
+    - Getting started (Colab): examples/brmspy-google-colab.ipynb
+    - Estimating multivariate models: examples/brmspy-estimating-multivariate-models.ipynb
+    - Variational Inference: examples/brmspy-vi-sampling.ipynb
  
   - Development: development/development.md
   - Changelog: changelog.md
