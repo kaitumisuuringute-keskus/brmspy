@@ -15,6 +15,8 @@ import pandas as pd
 import numpy as np
 import warnings
 
+
+
 def _fit_minimal_model(brms):
     # run a very small model to verify the installation
     epilepsy = brms.get_brms_data("epilepsy")
@@ -74,6 +76,7 @@ class TestCrossplatformInstall:
     
     @pytest.mark.slow
     def test_brms_install(self):
+        from brmspy import brms
         import rpy2.robjects.packages as rpackages
         _remove_deps()
         
@@ -96,6 +99,7 @@ class TestCrossplatformInstall:
     
     @pytest.mark.slow
     def test_brms_install_prebuilt(self):
+        from brmspy import brms
         import rpy2.robjects.packages as rpackages
         _remove_deps()
         

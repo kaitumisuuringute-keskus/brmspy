@@ -280,6 +280,8 @@ def install(
         If download fails (prebuilt only).
     """
     from brmspy.runtime import _install, _config, _activation
+
+    _r_packages.set_cran_mirror()
     
     if use_prebuilt:
         runtime_path = _install.install_prebuilt(install_rtools=install_rtools)
