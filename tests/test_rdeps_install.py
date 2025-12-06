@@ -71,8 +71,6 @@ def _remove_deps():
     for name in list(sys.modules.keys()):
         if name.startswith("brmspy"):
             del sys.modules[name]
-    
-    gc.collect()
 
 
 
