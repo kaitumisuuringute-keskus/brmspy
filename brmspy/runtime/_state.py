@@ -102,6 +102,8 @@ def capture_current_env() -> StoredEnv:
 
 def store_env(env: StoredEnv) -> None:
     """Store environment for later restoration."""
+    if ".brmspy/runtime/" in env.lib_paths or ".brmspy\\runtime\\" in env.lib_paths:
+        return
     global _stored_env
     _stored_env = env
 
