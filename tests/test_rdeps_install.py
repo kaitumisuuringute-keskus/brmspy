@@ -11,14 +11,12 @@ is both legally and technically difficult.
 
 from typing import Any, cast
 import pytest
-import pandas as pd
-import numpy as np
-import warnings
-
+import sys
+import gc
 
 
 def _fit_minimal_model(brms):
-    # run a very small model to verify the installation
+    """Run a very small model to verify the installation."""
     epilepsy = brms.get_brms_data("epilepsy")
     
     # Fit model (with reduced iterations for testing)
@@ -50,7 +48,6 @@ def _clear_brmspy_modules():
     This releases Python-side references to R objects, which is
     necessary before R-side cleanup can fully succeed.
     """
-    import sys, gc
     for name in list(sys.modules.keys()):
         if name.startswith("brmspy"):
             del sys.modules[name]
@@ -97,6 +94,19 @@ def _remove_deps():
     
     # 4. Final Python module cleanup (in case re-imported during above)
     _clear_brmspy_modules()
+
+
+@pytest.fixture(scope="module", autouse=True)
+def warm_platform_cache():
+    """
+    Pre-cache platform detection BEFORE any R manipulation.
+    
+    This prevents segfaults from subprocess.fork() after R package
+    unloading corrupts the R environment state.
+    """
+    from brmspy.runtime import _platform
+    _platform.warm_cache()
+    yield
 
 
 @pytest.mark.rdeps
