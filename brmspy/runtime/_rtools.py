@@ -316,7 +316,7 @@ def ensure_installed() -> None:
     # Download and install
     installer = download_installer(rtools_ver)
     try:
-        run_installer(installer, silent=True)
+        run_installer(installer, rtools_version=rtools_ver, silent=True)
     finally:
         if installer.exists():
             installer.unlink()
