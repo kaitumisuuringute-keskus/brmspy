@@ -75,6 +75,8 @@ def install_from_archive(
     Extract archive to runtime directory.
     Returns path to installed runtime.
     """
+    import time
+    
     base_dir = get_runtime_base_dir()
     runtime_root = get_runtime_path(fingerprint, version)
     
@@ -102,9 +104,16 @@ def install_from_archive(
         if not manifest_path.is_file():
             raise RuntimeError(f"Missing manifest.json in {runtime_tmp}")
         
-        # Remove existing runtime if present
+        # Remove existing runtime if present - critical for Windows!
+        # On Windows, if runtime_root exists and rmtree fails silently,
+        # shutil.move() will place runtime_tmp INSIDE runtime_root instead of replacing it.
         if runtime_root.exists():
-            shutil.rmtree(runtime_root, ignore_errors=True)
+            shutil.rmtree(runtime_root, ignore_errors=False)
+            # Wait for deletion to complete on Windows (file locking issues)
+            for _ in range(10):
+                if not runtime_root.exists():
+                    break
+                time.sleep(0.1)
         
         # Move to final location
         shutil.move(str(runtime_tmp), str(runtime_root))
