@@ -205,10 +205,12 @@ model = brms.fit(
 [brms documentation](https://paulbuerkner.com/brms/reference/index.html)
 
 ### Setup Functions
-- `install_brms()` - Install brms, cmdstanr, and CmdStan
-- `install_prebuilt()`
-- `activate_brms()` - Activate existing prebuilt runtime
-- `deactivate_brms()` - Deactivate current runtime
+It is NOT recommended to run installation functions when you have used the session.
+
+- `install_brms()` - Install brms, cmdstanr, and CmdStan from source or runtime
+- `install_runtime()` - Install latest runtime for OS
+- `activate_runtime()` - Activate existing prebuilt runtime
+- `deactivate_runtime()` - Deactivate current runtime
 - `get_brms_version()` - Get installed brms version
 
 ### Data Functions
@@ -221,6 +223,7 @@ model = brms.fit(
 ### Model Functions
 - `bf`, `lg`, `nlf`, `acformula`, `set_rescor`, `set_mecor`, `set_nl` - formula functions
 - `brm()` - Fit Bayesian regression model
+- `add_criterion` - add loo, waic criterions to fit
 - `make_stancode()` - Generate Stan code for model
 
 ### Diagnostics Functions

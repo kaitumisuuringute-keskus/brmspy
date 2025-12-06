@@ -45,4 +45,4 @@ class TestInstallPrebuilt:
 
         # Use runtime API for deactivation
         from brmspy import runtime
-        runtime.deactivate_brms()
+        runtime.deactivate_runtime()

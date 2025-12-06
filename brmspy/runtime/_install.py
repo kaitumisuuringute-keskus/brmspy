@@ -57,7 +57,7 @@ def install_traditional(
     _state.get_brms()
 
 
-def install_prebuilt(
+def install_runtime(
     *,
     install_rtools: bool = False,
 ) -> Path:

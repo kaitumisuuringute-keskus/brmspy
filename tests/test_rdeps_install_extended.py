@@ -126,7 +126,7 @@ class TestInstallPrebuilt:
     
     def test_install_prebuilt_checks_compatibility(self):
         """Test prebuilt checks system compatibility"""
-        from brmspy.runtime._install import install_prebuilt
+        from brmspy.runtime._install import install_runtime
         from brmspy.runtime import _platform
         
         # Mock incompatible system
@@ -135,11 +135,11 @@ class TestInstallPrebuilt:
         with patch.object(_platform, 'can_use_prebuilt', return_value=False):
             # Should raise RuntimeError from require_prebuilt_compatible
             with pytest.raises(RuntimeError, match="cannot use prebuilt"):
-                install_prebuilt(install_rtools=False)
+                install_runtime(install_rtools=False)
     
     def test_install_prebuilt_constructs_url(self):
         """Test URL construction from fingerprint"""
-        from brmspy.runtime._install import install_prebuilt
+        from brmspy.runtime._install import install_runtime
         from brmspy.runtime import _platform, _github, _storage
         
         # Mock environment to allow test without actual installation
@@ -154,7 +154,7 @@ class TestInstallPrebuilt:
                             with patch('urllib.request.urlretrieve') as mock_dl:
                                 with patch.object(_storage, 'install_from_archive', return_value=Path('/fake/runtime')):
                                     
-                                    result = install_prebuilt(install_rtools=False)
+                                    result = install_runtime(install_rtools=False)
                                     
                                     # Should have downloaded
                                     assert mock_dl.called
@@ -167,7 +167,7 @@ class TestInstallPrebuilt:
     
     def test_install_prebuilt_handles_failure(self):
         """Test prebuilt installation failure handling"""
-        from brmspy.runtime._install import install_prebuilt
+        from brmspy.runtime._install import install_runtime
         from brmspy.runtime import _platform
         from unittest.mock import patch
         
@@ -177,7 +177,7 @@ class TestInstallPrebuilt:
                     
                     # Should raise, not return False
                     with pytest.raises(RuntimeError):
-                        install_prebuilt(install_rtools=False)
+                        install_runtime(install_rtools=False)
 
 
 @pytest.mark.rdeps
@@ -193,7 +193,7 @@ class TestInstallBrms:
         from pathlib import Path
         
         # Mock successful prebuilt installation
-        with patch.object(_install, 'install_prebuilt', return_value=Path('/fake/runtime')):
+        with patch.object(_install, 'install_runtime', return_value=Path('/fake/runtime')):
             with patch('brmspy.runtime._activation.activate'):
                 with patch('brmspy.runtime._config.set_active_runtime_path'):
                     # Should return path

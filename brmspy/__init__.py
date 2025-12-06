@@ -186,8 +186,8 @@ __license__ = "Apache-2.0"
 from brmspy import brms
 from brmspy import runtime
 from brmspy.runtime import (
-    install_brms, install_prebuilt,
-    deactivate_brms, activate_brms,
+    install_brms, install_runtime,
+    deactivate_runtime, activate_runtime,
     get_brms_version,
 )
 from brmspy.runtime._platform import system_fingerprint
@@ -232,7 +232,7 @@ from brmspy.brms import (
 )
 __all__ = [
     # R env
-    'install_brms', 'install_prebuilt', 'get_brms_version',  'deactivate_brms', 'activate_brms',
+    'install_brms', 'install_runtime', 'get_brms_version',  'deactivate_runtime', 'activate_runtime',
 
     # IO
     'get_brms_data', 'save_rds', 'read_rds_raw', 'read_rds_fit', 'get_data',

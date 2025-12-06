@@ -7,7 +7,7 @@ from brmspy.runtime._types import RuntimeStatus, RuntimeManifest, SystemInfo
 from packaging.version import Version
 
 __all__ = [
-    "install_brms", "install_prebuilt", "activate_brms", "deactivate_brms", "status", "get_brms_version",
+    "install_brms", "install_runtime", "activate_runtime", "deactivate_runtime", "status", "get_brms_version",
     "RuntimeStatus", "RuntimeManifest", "SystemInfo",
 ]
 
@@ -16,7 +16,7 @@ _r_packages.set_cran_mirror()
 
 
 
-def install_prebuilt(install_rtools: bool = False):
+def install_runtime(install_rtools: bool = False):
     """
     Install prebuilt brmspy runtime bundle for fast setup.
     
@@ -211,7 +211,7 @@ def install_brms(
     _r_packages.set_cran_mirror()
     
     if use_prebuilt:
-        runtime_path = _install.install_prebuilt(install_rtools=install_rtools)
+        runtime_path = _install.install_runtime(install_rtools=install_rtools)
         
         if activate:
             _activation.activate(runtime_path)
@@ -230,7 +230,7 @@ def install_brms(
         return None
 
 
-def activate_brms(runtime_path: Path | str | None = None) -> None:
+def activate_runtime(runtime_path: Path | str | None = None) -> None:
     """
     Activate a runtime by mutating R environment.
     
@@ -283,7 +283,7 @@ def activate_brms(runtime_path: Path | str | None = None) -> None:
     _config.set_active_runtime_path(runtime_path)
 
 
-def deactivate_brms() -> None:
+def deactivate_runtime() -> None:
     """
     Deactivate current runtime and restore original R environment.
     
