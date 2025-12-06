@@ -54,13 +54,20 @@ RTOOLS_FALLBACK_URLS = {
 
 RTOOLS_BASE = "https://cran.r-project.org/bin/windows/Rtools"
 
-def _discover_rtools_installer(rtools_version: str, timeout: float = 10.0) -> str | None:
+def _discover_rtools_installer(
+    rtools_version: str,
+    timeout: float = 10.0,
+    aarch64: bool = False,
+) -> str | None:
     """
     Try to discover the latest Rtools installer .exe from the CRAN directory index.
 
     Looks at:
         https://cran.r-project.org/bin/windows/Rtools/rtools{version}/files/
     and picks the newest-looking `rtools{version}-*.exe`.
+
+    If ``aarch64`` is True, prefer the ``-aarch64-`` installer.
+    Otherwise prefer the x86_64 installer and avoid the aarch64 one.
     """
     index_url = f"{RTOOLS_BASE}/rtools{rtools_version}/files/"
 
@@ -70,14 +77,28 @@ def _discover_rtools_installer(rtools_version: str, timeout: float = 10.0) -> st
     except (HTTPError, URLError):
         return None
 
-    # Look for href="rtools42-5355-5357.exe" etc.
+    # Match things like:
+    #   rtools45-6691-6492.exe
+    #   rtools45-aarch64-6691-6492.exe
     pattern = rf'href="(rtools{re.escape(rtools_version)}-[^"]+\.exe)"'
     matches = re.findall(pattern, html)
     if not matches:
         return None
 
-    # If there are multiple, take the lexicographically last one (usually the newest build)
-    filename = sorted(matches)[-1]
+    # Split by arch:
+    aarch64_candidates = [m for m in matches if "-aarch64-" in m]
+    x86_candidates     = [m for m in matches if "-aarch64-" not in m]
+
+    if aarch64:
+        candidates = aarch64_candidates or x86_candidates
+    else:
+        candidates = x86_candidates or aarch64_candidates
+
+    if not candidates:
+        return None
+
+    # Lexicographically last is usually the newest build
+    filename = sorted(candidates)[-1]
     return index_url + filename
 
 def get_download_url(rtools_version: str) -> str:

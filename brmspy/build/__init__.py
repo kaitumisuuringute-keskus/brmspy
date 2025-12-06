@@ -43,8 +43,9 @@ def main():
     out_dir = base_dir
     runtime_version = args.runtime_version
 
-    from brmspy.runtime._r_packages import install_package_deps
+    from brmspy.runtime._r_packages import install_package
     #install_package_deps("brms", include_suggests=False)
+    install_package("StanHeaders")
 
     # Set CRAN mirror
     ro.r('options(repos = c(CRAN = "https://cloud.r-project.org"))')

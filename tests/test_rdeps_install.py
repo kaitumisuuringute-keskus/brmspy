@@ -47,7 +47,10 @@ def _remove_deps():
     import sys
     from brmspy.runtime._activation import MANAGED_PACKAGES, _unload_managed_packages, deactivate
 
-    deactivate()
+    try:
+        deactivate()
+    except:
+        pass
 
     # in case the default/previous env has packages, do it again!
     _unload_managed_packages()
