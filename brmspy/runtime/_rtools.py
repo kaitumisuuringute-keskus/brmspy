@@ -234,13 +234,27 @@ def download_installer(rtools_version: str, max_retries: int = 3) -> Path:
 
 
 
+def run_installer(installer: Path, rtools_version: str, silent: bool = True) -> None:
+    """Run Rtools installer safely on Windows and CI."""
+    system_drive = os.environ.get("SystemDrive", "C:")
+    assert rtools_version in list(RTOOLS_VERSIONS.values())
 
-def run_installer(installer: Path, silent: bool = True) -> None:
-    """Run Rtools installer."""
+    install_dir = Path(system_drive) / f"Rtools{rtools_version}"
+
+    # Ensure parent directory exists to avoid ACL weirdness
+    install_dir.parent.mkdir(parents=True, exist_ok=True)
+
     args = [str(installer)]
+
     if silent:
-        args.extend(["/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART"])
-    
+        args.extend([
+            "/SP-",               # skip intro dialog (CRITICAL)
+            "/VERYSILENT",
+            "/SUPPRESSMSGBOXES",
+            "/NORESTART",
+            f"/DIR={install_dir}",  # no inner quotes
+        ])
+
     subprocess.run(args, check=True)
 
 
