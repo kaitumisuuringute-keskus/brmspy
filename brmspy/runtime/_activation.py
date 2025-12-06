@@ -29,6 +29,10 @@ def activate(runtime_path: Path) -> None:
     
     On failure, attempts to restore original environment.
     """
+    stored = _state.get_stored_env()
+    if stored is not None:
+        deactivate()
+
     # Validate
     manifest = _manifest.parse_manifest(runtime_path / "manifest.json")
     if manifest is None:
