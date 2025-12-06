@@ -31,6 +31,33 @@ jobs:
         with:
           r-version: "release"
 
+      - name: Cache Rtools 4.5 installer
+        if: runner.os == 'Windows'
+        id: cache-rtools
+        uses: actions/cache@v4
+        with:
+          path: rtools-cache
+          key: rtools45-6691-6492
+
+      - name: Download Rtools 4.5 installer
+        if: runner.os == 'Windows' && steps.cache-rtools.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "$env:GITHUB_WORKSPACE\rtools-cache" | Out-Null
+          Invoke-WebRequest `
+            -Uri "https://cran.r-project.org/bin/windows/Rtools/rtools45/files/rtools45-6691-6492.exe" `
+            -OutFile "$env:GITHUB_WORKSPACE\rtools-cache\rtools45-6691-6492.exe"
+
+      - name: Export RTOOLS_INSTALLER_EXE env var
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $installer = "$env:GITHUB_WORKSPACE\rtools-cache\rtools45-6691-6492.exe"
+          if (-not (Test-Path $installer)) {
+            Write-Error "Rtools installer not found at $installer"
+          }
+          "RTOOLS_INSTALLER_EXE=$installer" >> $env:GITHUB_ENV
+
       - name: Install Python package
         run: |
           python -m pip install --upgrade pip
@@ -43,8 +70,10 @@ jobs:
           BRMSPY_DESTRUCTIVE_RDEPS_TESTS: "1"
           GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
           COVERAGE_FILE: .coverage.${{ matrix.os }}
+          BRMSPY_RTOOLS_INSTALLER_EXE: ${{ env.RTOOLS_INSTALLER_EXE }}
         # These tests modify the filesystem, dont run in parallel! xdist just gives us separation
         run: >
+      
           python -m pytest tests/ -v -n 1 --dist=loadfile -m rdeps 
           --cov-report=term 
           --cov-report=xml 

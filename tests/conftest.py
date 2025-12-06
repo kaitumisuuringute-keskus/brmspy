@@ -102,11 +102,6 @@ def clean_runtime_dir_between_tests(request):
     (e.g. via env var) so this doesn't touch real user data.
     """
 
-    # For non-rdeps modules: no-op
-    if request.node.get_closest_marker("rdeps") is None:
-        yield
-        return
-
     if os.getenv('BRMSPY_DESTRUCTIVE_RDEPS_TESTS') != "1":
         yield
         return

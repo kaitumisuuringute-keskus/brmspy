@@ -8,9 +8,68 @@ Note: Windows-specific tests use pytest.skipif to only run on Windows CI.
 """
 
 import os
+from pathlib import Path
 import pytest
 import platform
 from packaging.version import Version
+
+
+
+
+@pytest.fixture(autouse=True)
+def use_cached_rtools_installer_in_ci(monkeypatch):
+    """
+    In CI on Windows, intercept download_installer so it streams from the
+    cached BRMSPY_RTOOLS_INSTALLER_EXE instead of hitting CRAN.
+
+    Still goes through _stream_download, so chunking and size checks are tested.
+    """
+    if platform.system() != "Windows":
+        return
+
+    # Only do this in GitHub Actions, otherwise let local devs hit the network or cache manually
+    if os.environ.get("GITHUB_ACTIONS", "").lower() != "true":
+        return
+
+    exe = os.environ.get("BRMSPY_RTOOLS_INSTALLER_EXE")
+    if not exe:
+        # No cached installer → fall back to real download_installer
+        raise Exception("Not allowed to test without cached exe!")
+
+    exe_path = Path(exe)
+    if not exe_path.is_file():
+        pytest.skip(f"BRMSPY_RTOOLS_INSTALLER_EXE does not exist: {exe_path}")
+
+    import brmspy.runtime._rtools as _rtools  # noqa: WPS433
+
+    def fake_download_installer(rtools_version: str, max_retries: int = 3) -> Path:  # type: ignore[override]
+        """
+        Replacement for download_installer that uses the cached exe.
+
+        We still:
+          - create a temp file
+          - stream bytes into it via _stream_download
+        so the rest of the code path behaves exactly as before.
+        """
+        import tempfile
+
+        # Make a temp target like the real function does
+        with tempfile.NamedTemporaryFile(suffix=".exe", delete=False) as tmp:
+            dst = Path(tmp.name)
+
+        # Use file:// URL so _stream_download still uses urllib + chunks
+        url = exe_path.resolve().as_uri()
+        _rtools._stream_download(url, dst)
+
+        return dst
+
+    # Patch the symbol that ensure_installed() calls
+    monkeypatch.setattr(_rtools, "download_installer", fake_download_installer)
+
+
+
+
+
 
 
 @pytest.mark.rdeps
@@ -169,7 +228,13 @@ class TestWindowsRtoolsDetection:
         assert isinstance(result, bool)
 
 def in_github_actions() -> bool:
-    return os.environ.get("GITHUB_ACTIONS", "").lower() == "true"
+    if os.environ.get("GITHUB_ACTIONS", "").lower() == "true":
+        rtools_exe = os.environ.get("BRMSPY_RTOOLS_INSTALLER_EXE")
+        if rtools_exe:
+            return True
+        else:
+            return False
+    return True
 
 @pytest.mark.skipif(
     platform.system() != "Windows",
@@ -180,14 +245,6 @@ def in_github_actions() -> bool:
 class TestWindowsRtoolsInstallation:
     """Windows-only tests for Rtools installation (lines 353-406)."""
     
-    def test_install_rtools_for_current_r_returns_tag(self):
-        """Test Rtools installation returns appropriate tag"""
-        from brmspy.runtime._rtools import ensure_installed
-        
-        if not in_github_actions():
-            # Unfortunately we have to stop hammering CRAN for rtools until we start properly caching it!
-            ensure_installed()
-    
     def test_install_rtools_updates_path(self):
         """Verify Rtools installation updates PATH"""
         import os
@@ -197,14 +254,13 @@ class TestWindowsRtoolsInstallation:
         initial_path = os.environ.get("PATH", "")
         
         # Run installation (may do nothing if already present)
-        if not in_github_actions():
-            ensure_installed()
-            
-            # Get updated PATH
-            updated_path = os.environ.get("PATH", "")
-            
-            # If tag returned, PATH should include rtools
-            assert "rtools" in updated_path.lower()
+        ensure_installed()
+        
+        # Get updated PATH
+        updated_path = os.environ.get("PATH", "")
+        
+        # If tag returned, PATH should include rtools
+        assert "rtools" in updated_path.lower()
 
 
 @pytest.mark.skipif(
