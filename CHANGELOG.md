@@ -1,3 +1,8 @@
+## 0.2.0
+
+- add_criterion, get_data, bf, lf, nlf, acformula, set_rescor, set_mecor, set_nl, 
+- Formula addition
+
 ## 0.1.13 - Enhanced Diagnostics & Type-Safe Summaries
 *25.12.04*
 

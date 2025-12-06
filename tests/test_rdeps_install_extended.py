@@ -119,24 +119,6 @@ class TestBuildCmdstanr:
             # May fail on certain platforms but should have tried
             assert "Rtools" in str(e) or "toolchain" in str(e) or "cmdstan" in str(e).lower()
 
-
-@pytest.mark.skipif(
-    platform.system() != "Windows",
-    reason="Windows-specific test"
-)
-@pytest.mark.slow
-class TestWindowsRtoolsHandling:
-    """Windows-specific Rtools handling in installation."""
-    
-    def test_build_cmdstan_windows_no_rtools(self):
-        """Test Windows build without Rtools"""
-        from brmspy.runtime._r_packages import build_cmdstan
-        
-        # If Rtools missing, should raise helpful error
-        # This is difficult to test without actually removing Rtools
-        pass  # Skip - requires manipulating system state
-
-
 @pytest.mark.rdeps
 @pytest.mark.slow
 class TestInstallPrebuilt:

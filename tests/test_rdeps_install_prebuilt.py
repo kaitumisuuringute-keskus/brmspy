@@ -14,7 +14,7 @@ import pytest
 
 
 @pytest.mark.rdeps
-class TestCrossplatformInstall:
+class TestInstallPrebuilt:
     """Test brms installation and version checking on 3 major OS."""
     
     @pytest.mark.slow

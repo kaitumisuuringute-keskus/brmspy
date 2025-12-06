@@ -157,13 +157,7 @@ class TestBuildMetadataCollection:
 @pytest.mark.slow
 class TestBuildStaging:
     """Test runtime tree staging and directory structure creation."""
-    
-    @classmethod
-    def setup_class(cls):
-        """Ensure brms and cmdstanr are installed before tests."""
-        import brmspy
-        brmspy.install_brms(use_prebuilt=True)
-    
+
     def test_stage_runtime_tree_creates_structure(self, tmp_path):
         """Verify directory structure creation"""
         from brmspy.build._metadata import collect_runtime_metadata
