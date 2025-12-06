@@ -239,7 +239,7 @@ def run_installer(installer: Path, silent: bool = True) -> None:
     """Run Rtools installer."""
     args = [str(installer)]
     if silent:
-        args.extend(["/VERYSILENT", "/SUPPRESSMSGBOXES"])
+        args.extend(["/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART"])
     
     subprocess.run(args, check=True)
 
