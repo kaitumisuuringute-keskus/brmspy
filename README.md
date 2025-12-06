@@ -107,58 +107,6 @@ az.plot_posterior(model.idata)
 - **Prebuilt Binaries**: Fast installation with precompiled runtimes containing cmdstanr and brms (50x faster, 25 seconds on Google Colab)
 - **Stays true to brms**: function names, their parameters, returned objects are designed to be as close as possible to brms
 
-## API Reference
-
-[brmspy documentation](https://kaitumisuuringute-keskus.github.io/brmspy/)
-
-[brms documentation](https://paulbuerkner.com/brms/reference/index.html)
-
-### Setup Functions
-- `brms.install_brms()` - Install brms, cmdstanr, and CmdStan
-- `brms.get_brms_version()` - Get installed brms version
-
-### Data Functions
-- `brms.get_brms_data()` - Load example datasets from brms
-- `brms.get_data()` - Load example datasets from any package
-- `brms.save_rds()` - Save brmsfit or another robject
-- `brms.load_rds_fit()` - Load saved brmsfit object as FitResult (with idata)
-- `brms.load_rds_raw()` - Load r object
-
-### Model Functions
-- `brms.formula()` - Define formula with kwargs
-- `brms.fit()` or `brms.brm()` - Fit Bayesian regression model
-- `brms.make_stancode()` - Generate Stan code for model
-
-### Diagnostics Functions
-- `brms.summary()` - Comprehensive model summary as SummaryResult dataclass
-- `brms.fixef()` - Extract population-level (fixed) effects
-- `brms.ranef()` - Extract group-level (random) effects as xarray
-- `brms.posterior_summary()` - Summary statistics for all parameters
-- `brms.prior_summary()` - Extract prior specifications used in model
-- `brms.loo()` - Leave-one-out cross-validation with PSIS
-- `brms.loo_compare()` - Compare multiple models using LOO-CV
-- `brms.validate_newdata()` - Validate new data for predictions
-
-### Prior Functions
-- `brms.prior()` - Define a prior with same syntax as r-s `prior_string`
-- `brms.get_prior()` - Get pd.DataFrame describing default priors
-- `brms.default_prior()` - Get pd.DataFrame describing default priors
-
-### Families Functions
-- `brms.family()` - Get family object of FitResult
-- `brms.brmsfamily()` - Construct family object from kwargs
-- `brms.families.gaussian()`, `...bernoulli()`, `...beta_binomial()`, etc - Wrappers around brmsfamily for faster family object construction
-
-### Prediction Functions
-- `brms.posterior_epred()` - Expected value predictions (without noise)
-- `brms.posterior_predict()` - Posterior predictive samples (with noise)
-- `brms.posterior_linpred()` - Linear predictor values
-- `brms.log_lik()` - Log-likelihood values
-
-### Generic Function Access
-- `brms.call()` - Call any brms/R function by name with automatic type conversion
-
-
 ## Usage
 
 ### Basic Model
@@ -248,6 +196,59 @@ model = brms.fit(
     seed=123        # Random seed
 )
 ```
+
+
+## API Reference (partial)
+
+[brmspy documentation](https://kaitumisuuringute-keskus.github.io/brmspy/)
+
+[brms documentation](https://paulbuerkner.com/brms/reference/index.html)
+
+### Setup Functions
+- `install_brms()` - Install brms, cmdstanr, and CmdStan
+- `get_brms_version()` - Get installed brms version
+
+### Data Functions
+- `get_brms_data()` - Load example datasets from brms
+- `get_data()` - Load example datasets from any package
+- `save_rds()` - Save brmsfit or another robject
+- `load_rds_fit()` - Load saved brmsfit object as FitResult (with idata)
+- `load_rds_raw()` - Load r object
+
+### Model Functions
+- `bf`, `lg`, `nlf`, `acformula`, `set_rescor`, `set_mecor`, `set_nl` - formula functions
+- `brm()` - Fit Bayesian regression model
+- `make_stancode()` - Generate Stan code for model
+
+### Diagnostics Functions
+- `summary()` - Comprehensive model summary as SummaryResult dataclass
+- `fixef()` - Extract population-level (fixed) effects
+- `ranef()` - Extract group-level (random) effects as xarray
+- `posterior_summary()` - Summary statistics for all parameters
+- `prior_summary()` - Extract prior specifications used in model
+- `loo()` - Leave-one-out cross-validation with PSIS
+- `loo_compare()` - Compare multiple models using LOO-CV
+- `validate_newdata()` - Validate new data for predictions
+
+### Prior Functions
+- `prior()` - Define a prior with same syntax as r-s `prior_string`
+- `get_prior()` - Get pd.DataFrame describing default priors
+- `default_prior()` - Get pd.DataFrame describing default priors
+
+### Families Functions
+- `family()` - Get family object of FitResult
+- `brmsfamily()` - Construct family object from kwargs
+- `brms.families.gaussian()`, `...bernoulli()`, `...beta_binomial()`, etc - Wrappers around brmsfamily for faster family object construction
+
+### Prediction Functions
+- `posterior_epred()` - Expected value predictions (without noise)
+- `posterior_predict()` - Posterior predictive samples (with noise)
+- `posterior_linpred()` - Linear predictor values
+- `log_lik()` - Log-likelihood values
+
+### Generic Function Access
+- `call()` - Call any brms/R function by name with automatic type conversion
+
 
 ## Requirements
 

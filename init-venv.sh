@@ -121,7 +121,7 @@ echo ""
 
 # Install with all optional dependencies
 uv pip install -e ".[all]"
-uv pip install mkdocs-material mkdocstrings[python] mkdocs-material "mkdocs-shadcn@git+https://github.com/asiffer/mkdocs-shadcn@30-search-indexing-broken"
+uv pip install mkdocs-material mkdocs-jupyter mkdocstrings[python] mkdocs-material "mkdocs-shadcn@git+https://github.com/asiffer/mkdocs-shadcn@30-search-indexing-broken"
 
 success "All packages installed successfully!"
 

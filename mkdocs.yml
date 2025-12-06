@@ -47,6 +47,7 @@ theme:
 
 plugins:
   - search
+  - mkdocs-jupyter
   - mkdocstrings:
       handlers:
         python:
@@ -96,8 +97,8 @@ nav:
       - Priors: api/helpers/priors.md
   - Examples:
     - Google colab: examples/google-colab-example.md
-    - Quick Start: examples/quickstart.md
-    - Advanced Usage: examples/advanced.md
+    - Estimating multivariate models: examples/estimating-multivariate-models-with-brmspy.ipynb
+    - Vi sampling Usage: examples/vi-sampling.ipynb
  
   - Development: development/development.md
   - Changelog: changelog.md
