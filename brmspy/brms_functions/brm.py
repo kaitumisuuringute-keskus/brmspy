@@ -1,4 +1,4 @@
-import typing
+from typing import Union, Sequence, Optional, List, Tuple
 import pandas as pd
 
 from .formula import bf
@@ -20,14 +20,14 @@ _formula_fn = bf
 
 
 def brm(
-    formula: typing.Union[FormulaResult, str],
-    data: typing.Union[dict, pd.DataFrame],
-    priors: typing.Optional[typing.Sequence[PriorSpec]] = None,
-    family: typing.Union[str, ListVector] = "gaussian",
+    formula: Union[FormulaResult, str],
+    data: Union[dict, pd.DataFrame],
+    priors: Optional[Sequence[PriorSpec]] = None,
+    family: Union[str, ListVector] = "gaussian",
     sample_prior: str = "no",
     sample: bool = True,
     backend: str = "cmdstanr",
-    formula_args: typing.Optional[dict] = None,
+    formula_args: Optional[dict] = None,
     **brm_args,
 ) -> FitResult:
     """
@@ -197,3 +197,15 @@ def brm(
 
     idata = brmsfit_to_idata(fit)
     return FitResult(idata=idata, r=fit)
+
+
+def add_criterion(
+    fit: Union[ListVector, FitResult],
+    criterion: Union[str, List[str], Tuple[str]],
+    model_name: Optional[str] = None,
+    overwrite: Optional[bool] = False,
+    file: Optional[str] = None,
+    force_save: Optional[bool] = False,
+) -> FitResult:
+    pass
+    fit_r = py_to_r(fit)

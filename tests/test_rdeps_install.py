@@ -47,7 +47,7 @@ def _remove_deps():
     import rpy2.robjects as ro
     import rpy2.robjects.packages as rpackages
     import sys
-    from brmspy.runtime._activation import MANAGED_PACKAGES, _unload_managed_packages
+    from brmspy.runtime._activation import MANAGED_PACKAGES, _unload_managed_packages, _remove_managed_packages
 
     try:
         from brmspy.runtime._activation import _unload_managed_packages
@@ -55,9 +55,7 @@ def _remove_deps():
     except Exception:
         pass
     
-    for package in MANAGED_PACKAGES:
-        if rpackages.isinstalled(package):
-            ro.r(f'remove.packages("{package}")')
+    _remove_managed_packages()
     
     # Clear stored env to prevent state pollution from previous tests
     try:
