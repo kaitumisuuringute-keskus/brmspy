@@ -7,6 +7,7 @@ Target: 29% → 85%+ coverage
 Note: Windows-specific tests use pytest.skipif to only run on Windows CI.
 """
 
+import os
 import pytest
 import platform
 from packaging.version import Version
@@ -167,6 +168,8 @@ class TestWindowsRtoolsDetection:
         result = _windows_has_rtools(silent=False)
         assert isinstance(result, bool)
 
+def in_github_actions() -> bool:
+    return os.environ.get("GITHUB_ACTIONS", "").lower() == "true"
 
 @pytest.mark.skipif(
     platform.system() != "Windows",
@@ -181,7 +184,9 @@ class TestWindowsRtoolsInstallation:
         """Test Rtools installation returns appropriate tag"""
         from brmspy.runtime._rtools import ensure_installed
         
-        ensure_installed()
+        if not in_github_actions():
+            # Unfortunately we have to stop hammering CRAN for rtools until we start properly caching it!
+            ensure_installed()
     
     def test_install_rtools_updates_path(self):
         """Verify Rtools installation updates PATH"""
@@ -192,13 +197,14 @@ class TestWindowsRtoolsInstallation:
         initial_path = os.environ.get("PATH", "")
         
         # Run installation (may do nothing if already present)
-        ensure_installed()
-        
-        # Get updated PATH
-        updated_path = os.environ.get("PATH", "")
-        
-        # If tag returned, PATH should include rtools
-        assert "rtools" in updated_path.lower()
+        if not in_github_actions():
+            ensure_installed()
+            
+            # Get updated PATH
+            updated_path = os.environ.get("PATH", "")
+            
+            # If tag returned, PATH should include rtools
+            assert "rtools" in updated_path.lower()
 
 
 @pytest.mark.skipif(

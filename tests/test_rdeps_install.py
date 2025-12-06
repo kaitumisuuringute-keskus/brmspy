@@ -114,7 +114,7 @@ class TestCrossplatformInstall:
         from brmspy import brms
         from brmspy.runtime._state import get_brms
 
-        brms.install_brms(use_prebuilt=True, install_rtools=True)
+        brms.install_brms(use_prebuilt=True, install_rtools=False)
 
         assert rpackages.isinstalled("brms")
         assert rpackages.isinstalled("cmdstanr")
