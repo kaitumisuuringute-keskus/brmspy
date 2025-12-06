@@ -4,6 +4,7 @@ Does NOT touch config - that's the caller's responsibility.
 """
 
 from pathlib import Path
+from typing import cast
 from brmspy.helpers.log import log_warning
 from brmspy.runtime import _manifest, _r_env, _state, _platform
 
@@ -87,7 +88,7 @@ def deactivate() -> None:
     _state.invalidate_packages()
 
 
-def _unload_managed_packages() -> None:
+def _unload_managed_packages_simple() -> None:
     """Unload brms, cmdstanr, rstan if loaded."""
     for pkg in MANAGED_PACKAGES:
         if _r_env.is_namespace_loaded(pkg) or _r_env.is_package_attached(pkg):
@@ -95,6 +96,23 @@ def _unload_managed_packages() -> None:
                 _r_env.unload_package(pkg)
             except Exception as e:
                 log_warning(f"{e}")
+
+def _unload_managed_packages() -> None:
+    """
+    Unload all non-system R packages currently loaded in the environment.
+
+    This will keep base and recommended packages (e.g., "stats", "utils", "graphics")
+    but unload everything else to ensure a clean R session.
+    """
+    import rpy2.robjects as ro
+    base_pkgs = set(str(v) for v in cast(ro.ListVector, ro.r("base::.packages(TRUE)")))
+    loaded_pkgs = set(str(v) for v in cast(ro.ListVector, ro.r("loadedNamespaces()")))
+
+    for pkg in sorted(loaded_pkgs - base_pkgs):
+        try:
+            _r_env.unload_package(pkg)
+        except Exception as e:
+            log_warning(f"Failed to unload {pkg}: {e}")
 
 
 def _verify_runtime_loadable() -> None:
