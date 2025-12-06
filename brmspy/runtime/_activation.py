@@ -6,7 +6,7 @@ Does NOT touch config - that's the caller's responsibility.
 from pathlib import Path
 from typing import cast
 from brmspy.helpers.log import log_warning
-from brmspy.runtime import _manifest, _r_env, _state, _platform
+from brmspy.runtime import _manifest, _r_env, _r_packages, _state, _platform
 
 
 MANAGED_PACKAGES = ("brms", "cmdstanr", "rstan")
@@ -97,12 +97,14 @@ def _unload_managed_packages() -> None:
             except Exception as e:
                 log_warning(f"{e}")
 
-    for pkg in sorted(loaded_pkgs - base_pkgs):
-        try:
-            _r_env.unload_package(pkg)
-        except Exception as e:
-            log_warning(f"Failed to unload {pkg}: {e}")
-
+def _remove_managed_packages() -> None:
+    """removes brms, cmdstanr, rstan if loaded."""
+    for pkg in MANAGED_PACKAGES:
+        if _r_packages.is_package_installed(pkg):
+            try:
+                _r_packages.remove_package(pkg)
+            except Exception as e:
+                log_warning(f"{e}")
 
 def _verify_runtime_loadable() -> None:
     """Verify brms and cmdstanr can be loaded."""

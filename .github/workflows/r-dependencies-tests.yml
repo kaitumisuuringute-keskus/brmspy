@@ -34,18 +34,32 @@ jobs:
       - name: Install Python package
         run: |
           python -m pip install --upgrade pip
-          python -m pip install pytest pytest-cov arviz tqdm
+          python -m pip install pytest pytest-cov pytest-xdist arviz tqdm
           python -m pip install -e ".[dev]"
         shell: bash
 
 
-      - name: Test with pytest
+      - name: Test with pytest (Ubuntu, MacOS)
+        if: runner.os != 'Windows'
         env:
           BRMSPY_DESTRUCTIVE_RDEPS_TESTS: "1"
           GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
           COVERAGE_FILE: .coverage.${{ matrix.os }}
         run: >
           python -m pytest tests/ -v -m rdeps 
+          --cov-report=term 
+          --cov-report=xml 
+          --cov-report=json 
+          --cov-config=.coveragerc-r-dependencies
+      
+      - name: Test with pytest (Windows
+        if: runner.os == 'Windows'
+        env:
+          BRMSPY_DESTRUCTIVE_RDEPS_TESTS: "1"
+          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+          COVERAGE_FILE: .coverage.${{ matrix.os }}
+        run: >
+          python -m pytest tests/ -v -n 1 --dist=loadfile -m rdeps 
           --cov-report=term 
           --cov-report=xml 
           --cov-report=json 

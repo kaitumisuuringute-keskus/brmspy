@@ -258,3 +258,40 @@ def build_cmdstan(cores: int | None = None) -> None:
             ) from e
     
     ro.r(f"cmdstanr::install_cmdstan(cores = {cores}, overwrite = FALSE)")
+
+def remove_package(name: str) -> bool:
+    r_code = f'''
+    (function(pkg) {{
+        removed <- FALSE
+        libs <- .libPaths()
+        
+        for (lib in libs) {{
+            pkg_path <- file.path(lib, pkg)
+            if (dir.exists(pkg_path)) {{
+                tryCatch({{
+                    # Use normalized path for cross-platform safety
+                    lib_norm <- normalizePath(lib, winslash = "/", mustWork = FALSE)
+                    suppressWarnings(remove.packages(pkg, lib = lib_norm))
+                    removed <- TRUE
+                }}, error = function(e) {{
+                    # Windows fallback: try direct deletion if DLLs are unloaded
+                    if (.Platform$OS.type == "windows") {{
+                        tryCatch({{
+                            unlink(pkg_path, recursive = TRUE, force = TRUE)
+                            removed <- TRUE
+                        }}, error = function(e2) NULL)
+                    }}
+                }})
+            }}
+        }}
+        
+        # Check if actually removed
+        return(!dir.exists(file.path(.libPaths()[1], pkg)))
+    }})('{name}')
+    '''
+
+    try:
+        result = cast(List, ro.r(r_code))
+        return str(result[0]).lower().strip() == "true"
+    except Exception:
+        return False

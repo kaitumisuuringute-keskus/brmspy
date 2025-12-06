@@ -61,21 +61,21 @@ def _remove_deps():
 
     # 2. Now safe to import and use library functions
     from brmspy.runtime._activation import (
-        unload_all_non_base_packages, unload_managed_packages,
-        remove_managed_packages
+        _unload_managed_packages, _remove_managed_packages
+        
     )
     from brmspy.runtime._r_env import run_gc
     
     # 3. Full unload and remove using library functions
     try:
-        unload_managed_packages()
+        _unload_managed_packages()
     except Exception:
         pass
     
     run_gc()
     
     try:
-        remove_managed_packages()
+        _remove_managed_packages()
     except Exception:
         pass
     
@@ -85,18 +85,6 @@ def _remove_deps():
     from brmspy.runtime._state import invalidate_packages
     invalidate_packages()
 
-
-@pytest.fixture(scope="module", autouse=True)
-def warm_platform_cache():
-    """
-    Pre-cache platform detection BEFORE any R manipulation.
-    
-    This prevents segfaults from subprocess.fork() after R package
-    unloading corrupts the R environment state.
-    """
-    from brmspy.runtime import _platform
-    _platform.warm_cache()
-    yield
 
 
 @pytest.mark.rdeps

@@ -250,6 +250,10 @@ model = brms.fit(
 - `call()` - Call any brms/R function by name with automatic type conversion
 
 
+## Known issues
+
+- Due to Windows' idiosyncrasies installing existing R packages or BRMS and its dependencies is NOT guaranteed to succeed in the same session. It is strongly recommended to restart your Python session. This also means autoloading previously used prebuilt environment on windows is disabled, call activate() to enable it.
+
 ## Requirements
 
 **Python**: 3.10-3.14

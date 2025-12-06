@@ -1,5 +1,6 @@
 
 from pathlib import Path
+import platform
 from brmspy.helpers.log import log_warning
 from brmspy.runtime import _r_packages
 from brmspy.runtime._types import RuntimeStatus, RuntimeManifest, SystemInfo
@@ -443,7 +444,10 @@ def _autoload() -> None:
         log_warning(f"Failed to auto-activate saved runtime. Configured runtime is invalid: {path}")
         _config.set_active_runtime_path(None)
         return
-    
+
+    if platform.system() == "Windows":
+        log_warning("Autoloading previous prebuilt environment is disabled on windows. Please call activate()")
+
     try:
         _activation.activate(path)
     except Exception as e:

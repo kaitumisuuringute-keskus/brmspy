@@ -130,6 +130,15 @@ def unload_package(name: str) -> bool:
         return False
 
 
+def run_gc() -> None:
+    """Run garbage collection in both Python and R."""
+    import gc
+    gc.collect()
+    try:
+        ro.r('gc()')
+    except Exception:
+        pass
+
 def forward_github_token() -> None:
     """Copy GITHUB_TOKEN/GITHUB_PAT to R's Sys.setenv."""
     try:

@@ -2,6 +2,7 @@
 Main brms module with Pythonic API.
 """
 
+import platform
 from brmspy import runtime
 from brmspy.helpers.log import log_warning
 from brmspy.runtime._state import get_brms as _get_brms
@@ -38,6 +39,7 @@ from brmspy.runtime import (
 
 # Auto-load last runtime on import
 runtime._autoload()
+    
 
 # R imports must NOT be done lazily!
 # Lazy imports with rpy2 within tqdm loops for example WILL cause segfaults!
