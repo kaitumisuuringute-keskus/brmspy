@@ -45,7 +45,7 @@ jobs:
           GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
           COVERAGE_FILE: .coverage.${{ matrix.os }}
         run: >
-          python -m pytest -v -m rdeps 
+          python -m pytest tests/test_rdeps_install.py -v -m rdeps 
           --cov-report=term 
           --cov-report=xml 
           --cov-report=json 
