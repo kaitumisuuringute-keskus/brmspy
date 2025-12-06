@@ -72,38 +72,52 @@ def set_cmdstan_path(path: str | None) -> None:
 
 def unload_package(name: str) -> bool:
     """
+    Also known as footgun. Don't call without very good reason.
+
     Attempt to unload package. Returns True if successful.
     Tries: detach -> unloadNamespace -> library.dynam.unload
     Does NOT uninstall.
     """
+    is_tested = ("cmdstanr", "rstan", "brms")
+
+    detach_only = name not in is_tested
+
     r_code = f"""
       pkg <- "{name}"
+      detach_only <- {str(detach_only).upper()}
       
-      .unload_pkg <- function(pkg) {{
+      .unload_pkg <- function(pkg, detach_only) {{
         success <- TRUE
         
-        # 1) Detach from search path
+        # Always try to detach from search path first
         tryCatch({{
           search_name <- paste0("package:", pkg)
           if (search_name %in% search()) {{
-            detach(search_name, unload = TRUE, character.only = TRUE)
+            detach(search_name,
+                   unload = !detach_only,
+                   character.only = TRUE)
           }}
         }}, error = function(e) {{ success <<- FALSE }})
-        
+
+        if (detach_only) {{
+          # For data.table: do *not* touch namespace or DLL
+          return(success)
+        }}
+
         # 2) Unload namespace
         tryCatch({{
           if (pkg %in% loadedNamespaces()) {{
             unloadNamespace(pkg)
           }}
         }}, error = function(e) {{ success <<- FALSE }})
-        
+
         # 3) pkgload (devtools-style unload)
         tryCatch({{
           if (requireNamespace("pkgload", quietly = TRUE)) {{
             pkgload::unload(pkg)
           }}
         }}, error = function(e) {{}})
-        
+
         # 4) DLL unload if still registered
         tryCatch({{
           dlls <- getLoadedDLLs()
@@ -111,16 +125,18 @@ def unload_package(name: str) -> bool:
             dll_info <- dlls[[pkg]]
             dll_name <- dll_info[["name"]]
             libpath  <- dirname(dll_info[["path"]])
-            library.dynam.unload(chname = dll_name,
-                                package = pkg,
-                                libpath = libpath)
+            library.dynam.unload(
+              chname  = dll_name,
+              package = pkg,
+              libpath = libpath
+            )
           }}
         }}, error = function(e) {{}})
-        
-        return(success)
+
+        success
       }}
       
-      .unload_pkg(pkg)
+      .unload_pkg(pkg, detach_only)
     """
     
     try:
