@@ -6,6 +6,7 @@ import json
 import shutil
 import tarfile
 from pathlib import Path
+from brmspy.runtime._platform import get_os
 from brmspy.runtime._types import RuntimeManifest
 
 
@@ -16,9 +17,19 @@ def get_runtime_base_dir() -> Path:
     return base_dir
 
 
-def get_runtime_path(fingerprint: str, version: str) -> Path:
+def get_runtime_path(fingerprint: str, version: str, n=None, allow_existing=True) -> Path:
     """Returns ~/.brmspy/runtime/{fingerprint}-{version}/."""
-    return get_runtime_base_dir() / f"{fingerprint}-{version}"
+    if n is None:
+        runtime_path = get_runtime_base_dir() / f"{fingerprint}-{version}"
+    else:
+        runtime_path = get_runtime_base_dir() / f"{fingerprint}-{version}-{n}"
+    if not allow_existing:
+        if runtime_path.exists():
+            if n is None:
+                n = 0
+            return get_runtime_path(fingerprint, version, n + 1)
+
+    return runtime_path
 
 
 def is_runtime_dir(path: Path) -> bool:
@@ -78,7 +89,8 @@ def install_from_archive(
     import time
     
     base_dir = get_runtime_base_dir()
-    runtime_root = get_runtime_path(fingerprint, version)
+    is_windows = get_os() == "windows"
+    runtime_root = get_runtime_path(fingerprint, version, allow_existing=not is_windows)
     
     # Extract to temp directory first
     temp_extract_root = base_dir / "_tmp_extract"
