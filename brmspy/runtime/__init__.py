@@ -2,7 +2,8 @@
 from pathlib import Path
 import platform
 from brmspy.helpers.log import log_warning
-from brmspy.runtime import _r_packages
+from brmspy.runtime import _r_packages, _storage
+from brmspy.runtime._platform import system_fingerprint
 from brmspy.runtime._types import RuntimeStatus, RuntimeManifest, SystemInfo
 from packaging.version import Version
 
@@ -265,6 +266,9 @@ def activate_runtime(runtime_path: Path | str | None = None) -> None:
     if runtime_path is None:
         runtime_path = _config.get_active_runtime_path()
         if runtime_path is None:
+            runtime_path = find_local_runtime()
+
+        if runtime_path is None:
             raise ValueError(
                 "No runtime_path provided and no active runtime in config. "
                 "Run install(use_prebuilt=True) first or provide a path."
@@ -341,6 +345,27 @@ def status() -> RuntimeStatus:
         cmdstanr_version=_r_packages.get_package_version("cmdstanr"),
         rstan_version=_r_packages.get_package_version("rstan"),
     )
+
+def find_local_runtime() -> Path | None:
+    """
+    Find an installed runtime matching the current system fingerprint.
+
+    Uses ``system_fingerprint()`` to compute the current system identity and
+    searches the local runtime store for a matching runtime directory.
+
+    Returns
+    -------
+    Path or None
+        Path to the matching runtime root directory if found,
+        otherwise ``None``.
+
+    Notes
+    -----
+    This function is a pure lookup:
+    it does not install, activate, or modify any runtime state.
+    """
+    fingerprint = system_fingerprint()
+    return _storage.find_runtime_by_fingerprint(fingerprint)
 
 
 # === Internal: Auto-activation ===

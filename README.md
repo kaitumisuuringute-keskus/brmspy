@@ -212,6 +212,7 @@ It is NOT recommended to run installation functions when you have used the sessi
 - `activate_runtime()` - Activate existing prebuilt runtime
 - `deactivate_runtime()` - Deactivate current runtime
 - `get_brms_version()` - Get installed brms version
+- `find_local_runtime()` - checks if a runtime exists locally in standard directory and returns path if it does
 
 ### Data Functions
 - `get_brms_data()` - Load example datasets from brms
