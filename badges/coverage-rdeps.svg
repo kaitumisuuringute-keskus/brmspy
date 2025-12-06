@@ -1,14 +1,14 @@
 <svg width="132.1" height="20" viewBox="0 0 1321 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="coverage-rdeps: 67%">
   <title>coverage-rdeps: 67%</title>
-  <linearGradient id="tvmMO" x2="0" y2="100%">
+  <linearGradient id="FSIfC" x2="0" y2="100%">
     <stop offset="0" stop-opacity=".1" stop-color="#EEE"/>
     <stop offset="1" stop-opacity=".1"/>
   </linearGradient>
-  <mask id="VLUFq"><rect width="1321" height="200" rx="30" fill="#FFF"/></mask>
-  <g mask="url(#VLUFq)">
+  <mask id="eazva"><rect width="1321" height="200" rx="30" fill="#FFF"/></mask>
+  <g mask="url(#eazva)">
     <rect width="961" height="200" fill="#555"/>
     <rect width="360" height="200" fill="#F73" x="961"/>
-    <rect width="1321" height="200" fill="url(#tvmMO)"/>
+    <rect width="1321" height="200" fill="url(#FSIfC)"/>
   </g>
   <g aria-hidden="true" fill="#fff" text-anchor="start" font-family="Verdana,DejaVu Sans,sans-serif" font-size="110">
     <text x="60" y="148" textLength="861" fill="#000" opacity="0.25">coverage-rdeps</text>
