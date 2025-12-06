@@ -38,22 +38,7 @@ jobs:
           python -m pip install -e ".[dev]"
         shell: bash
 
-
-      - name: Test with pytest (Ubuntu, MacOS)
-        if: runner.os != 'Windows'
-        env:
-          BRMSPY_DESTRUCTIVE_RDEPS_TESTS: "1"
-          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-          COVERAGE_FILE: .coverage.${{ matrix.os }}
-        run: >
-          python -m pytest tests/ -v -m rdeps 
-          --cov-report=term 
-          --cov-report=xml 
-          --cov-report=json 
-          --cov-config=.coveragerc-r-dependencies
-      
-      - name: Test with pytest (Windows
-        if: runner.os == 'Windows'
+      - name: Test with pytest
         env:
           BRMSPY_DESTRUCTIVE_RDEPS_TESTS: "1"
           GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}

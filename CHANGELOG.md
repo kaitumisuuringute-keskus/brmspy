@@ -3,6 +3,11 @@
 - add_criterion, get_data, bf, lf, nlf, acformula, set_rescor, set_mecor, set_nl, 
 - Formula addition
 
+- install_brms, install_runtime,
+    deactivate_runtime, activate_runtime,
+    find_local_runtime, get_active_runtime,
+    get_brms_version,
+
 ## 0.1.13 - Enhanced Diagnostics & Type-Safe Summaries
 *25.12.04*
 
