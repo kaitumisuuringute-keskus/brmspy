@@ -91,7 +91,10 @@ def _unload_managed_packages() -> None:
     """Unload brms, cmdstanr, rstan if loaded."""
     for pkg in MANAGED_PACKAGES:
         if _r_env.is_namespace_loaded(pkg) or _r_env.is_package_attached(pkg):
-            _r_env.unload_package(pkg)
+            try:
+                _r_env.unload_package(pkg)
+            except Exception as e:
+                log_warning(f"{e}")
 
 
 def _verify_runtime_loadable() -> None:

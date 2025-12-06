@@ -86,6 +86,8 @@ def install_from_archive(
     
     try:
         with tarfile.open(archive, mode="r:*") as tf:
+            # 'data' filter breaks on windows and python 3.14 demands a filter.
+            # fully_trusted is least error prone for now
             tf.extractall(path=temp_extract_root, filter="fully_trusted")
         
         # Find the runtime directory in extracted content

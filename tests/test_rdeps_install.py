@@ -47,28 +47,22 @@ def _remove_deps():
     import sys
     from brmspy.runtime._activation import MANAGED_PACKAGES, _unload_managed_packages, deactivate
 
-    try:
-        deactivate()
-    except:
-        pass
-
     # in case the default/previous env has packages, do it again!
     try:
         _unload_managed_packages()
     except:
         pass
+
     for package in MANAGED_PACKAGES:
-        if rpackages.isinstalled(package) :
+        if rpackages.isinstalled(package):
             ro.r(f'remove.packages("{package}")')
+            
 
     # since other tests might have imported brmspy already with global _brms singleton set,
     # we need to remove it from sys.modules first
     for name in list(sys.modules.keys()):
         if name.startswith("brmspy"):
             del sys.modules[name]
-
-    from brmspy import brms
-    ro.r('options(repos = c(CRAN = "https://cloud.r-project.org"))')
 
     
 
