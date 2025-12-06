@@ -21,7 +21,7 @@ from brmspy.brms_functions.prior import prior, get_prior, default_prior
 from brmspy.brms_functions.brm import brm
 from brmspy.brms_functions.brm import brm as fit
 
-from brmspy.brms_functions.diagnostics import summary, fixef, ranef, posterior_summary, prior_summary, loo, loo_compare, validate_newdata
+from brmspy.brms_functions.diagnostics import summary, fixef, ranef, posterior_summary, prior_summary, validate_newdata
 from brmspy.brms_functions.generic import call
 from brmspy.brms_functions.formula import (
     bf, lf, nlf, acformula, set_rescor, set_mecor, set_nl, 
@@ -40,6 +40,7 @@ from brmspy.runtime import (
 
 # Auto-load last runtime on import
 runtime._autoload()
+
     
 
 # R imports must NOT be done lazily!
@@ -76,7 +77,7 @@ __all__ = [
     "posterior_predict", "posterior_epred", "posterior_linpred", "log_lik",
 
     # diagnosis
-    'summary', 'fixef', 'ranef', 'posterior_summary', 'prior_summary', 'loo', 'loo_compare', 'validate_newdata',
+    'summary', 'fixef', 'ranef', 'posterior_summary', 'prior_summary', 'validate_newdata',
     
     # generic
     'call',

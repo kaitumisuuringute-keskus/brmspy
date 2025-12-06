@@ -1,6 +1,6 @@
 from dataclasses import dataclass, is_dataclass
 from types import UnionType
-from typing import Any, Callable, Dict, List, Optional, Union, get_args, get_origin
+from typing import Any, Callable, Dict, List, Optional, Union, cast, get_args, get_origin
 import pandas as pd
 import rpy2.robjects as ro
 
@@ -71,6 +71,7 @@ def _matches_iterconf(value: Any, conf: IterConf) -> bool:
     return isinstance(value, conf.cls)
 
 
+_fun_repr = cast(Callable, ro.r('function(x) paste(capture.output(x), collapse = "\\n")'))
 def iterate_robject_to_dataclass(
     names: List[str],
     get: Callable[[str], Any],
@@ -98,6 +99,15 @@ def iterate_robject_to_dataclass(
     out: Dict[str, Any] = {}
 
     for param, iterconf in iteration_params.items():
+        if param == "_str" and r:
+            try:
+                repr = cast(List[str], _fun_repr(r))
+                repr = str(repr[0])
+            except:
+                repr = None
+            out['_str'] = repr
+            continue
+
         if param not in names:
             continue
 

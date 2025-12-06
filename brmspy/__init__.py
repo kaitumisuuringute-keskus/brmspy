@@ -182,6 +182,39 @@ __version__ = "0.2.0"
 __author__ = "Remi Sebastian Kits, Adam Haber"
 __license__ = "Apache-2.0"
 
+def _initialise_r_safe() -> None:
+    """
+    Configure R for safer embedded execution.
+
+    - Force rpy2 ABI mode (must be set before importing rpy2)
+    - Disable fork-based R parallelism (future::multicore, mclapply)
+    - Use future::plan(sequential) if future is available
+    - Leave cmdstanr multi-core sampling alone
+    """
+    import os
+    import sys
+
+    import rpy2.robjects as ro
+
+    ro.r(
+        r"""
+        # Disable fork-based mechanisms that are unsafe in embedded R
+        options(
+          mc.cores = 1L,             # parallel::mclapply -> serial
+          future.fork.enable = FALSE, # disable future::multicore
+          loo.cores = 1L # deprecated but still respected, for now.
+        )
+
+        # If 'future' is installed, force sequential backend
+        if (requireNamespace("future", quietly = TRUE)) {
+          future::plan(future::sequential)
+        }
+        """
+    )
+
+
+_initialise_r_safe()
+
 # Import brms module for use as: from brmspy import brms
 from brmspy import brms
 from brmspy import runtime
@@ -206,7 +239,7 @@ from brmspy.brms import (
     posterior_linpred,
     log_lik,
     summary, fixef, ranef,
-    prior_summary, posterior_summary, loo, loo_compare, validate_newdata,
+    prior_summary, posterior_summary, validate_newdata,
     prior, get_prior, default_prior,
 
     call,
@@ -257,7 +290,7 @@ __all__ = [
 
     # diagnosis
     'summary', 'fixef', 'ranef', 'prior_summary', 'posterior_summary',
-    'loo', 'loo_compare', 'validate_newdata',
+    'validate_newdata',
 
     # generic helper
     'call', 'install_rpackage',

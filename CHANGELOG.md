@@ -1,6 +1,7 @@
 ## 0.2.0
 
-- add_criterion, get_data, bf, lf, nlf, acformula, set_rescor, set_mecor, set_nl, 
+- removed add_criterion, loo, loo_compare - too unstable and cause segfaults very often. Easy replacements in arviz.
+- get_data, bf, lf, nlf, acformula, set_rescor, set_mecor, set_nl, 
 - Formula addition
 
 - install_brms, install_runtime,
