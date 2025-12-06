@@ -163,11 +163,13 @@ class TestBuildStaging:
         from brmspy.build._metadata import collect_runtime_metadata
         from brmspy.build._stage import stage_runtime_tree
 
+        ver = "0.1.0-test1"
+
         metadata = collect_runtime_metadata()
         runtime_root = stage_runtime_tree(
             tmp_path,
             metadata,
-            runtime_version="0.1.0-test"
+            runtime_version=ver
         )
         
         # Verify basic structure
@@ -190,11 +192,13 @@ class TestBuildStaging:
         from brmspy.build._metadata import collect_runtime_metadata
         from brmspy.build._stage import stage_runtime_tree
         
+        ver = "0.1.0-test2"
+
         metadata = collect_runtime_metadata()
         runtime_root = stage_runtime_tree(
             tmp_path,
             metadata,
-            runtime_version="0.1.0-test"
+            runtime_version=ver
         )
         
         # Load and verify manifest
@@ -202,7 +206,7 @@ class TestBuildStaging:
             manifest = json.load(f)
         
         # Verify core fields
-        assert manifest["runtime_version"] == "0.1.0-test"
+        assert manifest["runtime_version"] == ver
         assert "fingerprint" in manifest
         assert "r_version" in manifest
         assert "cmdstan_version" in manifest
@@ -236,12 +240,13 @@ class TestBuildPacking:
         # Stage runtime first
         stage_dir = tmp_path / "stage"
         stage_dir.mkdir()
+        ver = "0.1-testb1"
         
         metadata = collect_runtime_metadata()
         runtime_root = stage_runtime_tree(
             stage_dir,
             metadata,
-            runtime_version="0.1.0-test"
+            runtime_version=ver
         )
         
         # Pack it
@@ -249,14 +254,14 @@ class TestBuildPacking:
         archive_path = pack_runtime(
             runtime_root,
             out_dir,
-            runtime_version="0.1.0-test"
+            runtime_version=ver
         )
         
         # Verify archive exists and has correct name
         assert archive_path.exists()
         assert archive_path.suffix == ".gz"
         assert "brmspy-runtime" in archive_path.name
-        assert "0.1.0-test" in archive_path.name
+        assert ver in archive_path.name
         
         # Verify it's a valid tarball
         assert tarfile.is_tarfile(archive_path)
@@ -280,19 +285,21 @@ class TestBuildPacking:
         
         stage_dir = tmp_path / "stage"
         stage_dir.mkdir()
+
+        ver = "0.1.0-testb2"
         
         metadata = collect_runtime_metadata()
         runtime_root = stage_runtime_tree(
             stage_dir,
             metadata,
-            runtime_version="0.1.0-test"
+            runtime_version=ver
         )
         
         out_dir = tmp_path / "out"
         archive_path = pack_runtime(
             runtime_root,
             out_dir,
-            runtime_version="0.1.0-test"
+            runtime_version=ver
         )
         
         # Archive should exist and be non-empty

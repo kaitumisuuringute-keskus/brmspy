@@ -47,7 +47,7 @@ def stage_runtime_tree(base_dir: Path, metadata: dict, runtime_version: str) -> 
     if fingerprint is None:
         raise RuntimeError("system_fingerprint() returned None; cannot build runtime bundle.")
 
-    runtime_root = base_dir / fingerprint
+    runtime_root = base_dir / f"{fingerprint}-{runtime_version}"
     rlib_dir = runtime_root / "Rlib"
     cmdstan_dir = runtime_root / "cmdstan"
 
