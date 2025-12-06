@@ -1,167 +1,42 @@
 """
 System and environment detection. All functions are pure.
 No side effects, no R environment mutation.
-
-NOTE: Platform detection results are cached to avoid subprocess calls
-after R package manipulation, which can cause segfaults due to fork()
-inheriting corrupted R state.
 """
 
 import platform
 import subprocess
-from typing import Any
+from typing import Optional, cast
 from brmspy.runtime._types import SystemInfo
 
 
-# === Module-level cache ===
-# Critical: subprocess calls after R manipulation can segfault due to fork()
-# inheriting corrupted R state. We cache results to avoid this.
-
-_cache: dict[str, Any] = {}
-
-
-def _cached_subprocess_output(args: list[str], cache_key: str | None = None) -> str | None:
-    """
-    Cached wrapper for subprocess.check_output.
-    
-    Returns cached result if available, otherwise runs subprocess and caches.
-    Returns None on any error. This prevents repeated subprocess calls
-    which can segfault after R package manipulation.
-    
-    Parameters
-    ----------
-    args : list[str]
-        Command and arguments to run
-    cache_key : str, optional
-        Cache key. Defaults to joined args.
-        
-    Returns
-    -------
-    str or None
-        Command output or None on error
-    """
-    if cache_key is None:
-        cache_key = f"subprocess:{':'.join(args)}"
-    
-    if cache_key in _cache:
-        return _cache[cache_key]
-    
-    try:
-        result = subprocess.check_output(
-            args, 
-            text=True, 
-            stderr=subprocess.DEVNULL,
-            timeout=30
-        )
-        _cache[cache_key] = result
-        return result
-    except Exception:
-        _cache[cache_key] = None
-        return None
-
-
-def _cached_subprocess_run(args: list[str], cache_key: str | None = None) -> bool:
-    """
-    Cached wrapper for subprocess.run success check.
-    
-    Returns True if command succeeds, False otherwise.
-    Results are cached to avoid repeated subprocess calls.
-    """
-    if cache_key is None:
-        cache_key = f"subprocess_run:{':'.join(args)}"
-    
-    if cache_key in _cache:
-        return _cache[cache_key]
-    
-    try:
-        subprocess.run(
-            args,
-            capture_output=True,
-            check=True,
-            timeout=30
-        )
-        _cache[cache_key] = True
-        return True
-    except Exception:
-        _cache[cache_key] = False
-        return False
-
-
-def clear_cache() -> None:
-    """Clear the platform detection cache. Use with caution."""
-    _cache.clear()
-
-
-def warm_cache() -> None:
-    """
-    Pre-populate platform detection cache.
-    
-    Call this BEFORE any R package manipulation to avoid
-    subprocess segfaults from fork() with corrupted R state.
-    """
-    # These calls will populate the cache
-    get_os()
-    get_arch()
-    get_r_version()
-    
-    os_name = get_os()
-    if os_name == "linux":
-        get_glibc_version()
-        get_gxx_version()
-    elif os_name == "macos":
-        get_clang_version()
-        _xcode_clt_installed()  # Cache xcode-select check
-    elif os_name == "windows":
-        get_gxx_version()
-
-
-# === Detection (pure, cached) ===
+# === Detection (pure) ===
 
 def get_os() -> str:
     """Returns 'linux', 'macos', or 'windows'."""
-    cache_key = "os"
-    if cache_key in _cache:
-        return _cache[cache_key]
-    
     raw_os = platform.system().lower()
     if raw_os == "darwin":
-        result = "macos"
+        return "macos"
     elif raw_os in ("windows", "linux"):
-        result = raw_os
+        return raw_os
     else:
-        result = raw_os
-    
-    _cache[cache_key] = result
-    return result
+        return raw_os
 
 
 def get_arch() -> str:
     """Returns 'x86_64' or 'arm64'."""
-    cache_key = "arch"
-    if cache_key in _cache:
-        return _cache[cache_key]
-    
     raw_arch = platform.machine().lower()
     if raw_arch in ("x86_64", "amd64"):
-        result = "x86_64"
+        return "x86_64"
     elif raw_arch in ("arm64", "aarch64"):
-        result = "arm64"
+        return "arm64"
     else:
-        result = raw_arch
-    
-    _cache[cache_key] = result
-    return result
+        return raw_arch
 
 
 def get_r_version() -> tuple[int, int, int] | None:
     """Returns R version tuple or None if R not available."""
-    cache_key = "r_version"
-    if cache_key in _cache:
-        return _cache[cache_key]
-    
     try:
         import rpy2.robjects as ro
-        from typing import cast
         r_major = cast(ro.ListVector, ro.r("R.Version()$major"))
         r_minor = cast(ro.ListVector, ro.r("R.Version()$minor"))
         major = int(r_major[0])
@@ -169,133 +44,83 @@ def get_r_version() -> tuple[int, int, int] | None:
         parts = minor_str.split(".")
         minor = int(parts[0]) if parts and parts[0].isdigit() else 0
         patch = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 0
-        result = (major, minor, patch)
+        return major, minor, patch
     except Exception:
-        result = None
-    
-    _cache[cache_key] = result
-    return result
+        return None
 
 
 def system_fingerprint() -> str:
     """Returns '{os}-{arch}-r{major}.{minor}' string."""
-    cache_key = "fingerprint"
-    if cache_key in _cache:
-        return _cache[cache_key]
-    
     os_name = get_os()
     arch = get_arch()
     r_ver = get_r_version()
     if not r_ver:
         raise RuntimeError("R version could not be determined")
     major, minor, _ = r_ver
-    result = f"{os_name}-{arch}-r{major}.{minor}"
-    
-    _cache[cache_key] = result
-    return result
+    return f"{os_name}-{arch}-r{major}.{minor}"
 
 
 def get_glibc_version() -> tuple[int, int] | None:
     """Linux only. Parse from ldd --version."""
-    cache_key = "glibc_version"
-    if cache_key in _cache:
-        return _cache[cache_key]
-    
     if get_os() != "linux":
-        _cache[cache_key] = None
         return None
 
-    out = _cached_subprocess_output(["ldd", "--version"])
-    result = _parse_version_from_output(out)
-    
-    _cache[cache_key] = result
-    return result
+    try:
+        out = subprocess.check_output(["ldd", "--version"], text=True)
+        for line in out.splitlines():
+            for token in line.split():
+                if token[0].isdigit() and "." in token:
+                    parts = token.split(".")
+                    if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit():
+                        return int(parts[0]), int(parts[1])
+    except Exception:
+        pass
+    return None
 
 
 def get_clang_version() -> tuple[int, int] | None:
     """macOS only. Parse from clang --version."""
-    cache_key = "clang_version"
-    if cache_key in _cache:
-        return _cache[cache_key]
-    
     if get_os() != "macos":
-        _cache[cache_key] = None
         return None
 
-    out = _cached_subprocess_output(["clang", "--version"])
-    if out is None:
-        _cache[cache_key] = None
-        return None
-    
-    # clang version parsing - look for version after "clang"
-    result = None
-    for line in out.splitlines():
-        if "clang" not in line.lower():
-            continue
-        result = _parse_version_from_output(line)
-        if result:
-            break
-    
-    _cache[cache_key] = result
-    return result
-
-
-def get_gxx_version(out: str | None = None) -> tuple[int, int] | None:
-    """Parse from g++ --version."""
-    cache_key = "gxx_version"
-    
-    # If output provided, don't use cache (caller is testing)
-    if out is None:
-        if cache_key in _cache:
-            return _cache[cache_key]
-        out = _cached_subprocess_output(["g++", "--version"])
-    
-    result = _parse_version_from_output(out)
-    
-    if out is None:  # Only cache if we fetched it ourselves
-        _cache[cache_key] = result
-    return result
-
-
-def _parse_version_from_output(out: str | None) -> tuple[int, int] | None:
-    """Parse major.minor version from command output."""
-    if out is None:
-        return None
-    
-    for line in out.splitlines():
-        for token in line.split():
-            if token and token[0].isdigit() and "." in token:
-                parts = token.split(".")
-                if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit():
-                    return int(parts[0]), int(parts[1])
+    try:
+        out = subprocess.check_output(["clang", "--version"], text=True)
+        for line in out.splitlines():
+            if "clang" not in line.lower():
+                continue
+            for token in line.split():
+                if token[0].isdigit() and "." in token:
+                    parts = token.split(".")
+                    if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit():
+                        return int(parts[0]), int(parts[1])
+    except Exception:
+        pass
     return None
 
 
-def _xcode_clt_installed() -> bool:
-    """Check if Xcode Command Line Tools are installed (cached)."""
-    cache_key = "xcode_clt_installed"
-    if cache_key in _cache:
-        return _cache[cache_key]
-    
-    result = _cached_subprocess_run(["xcode-select", "-p"])
-    _cache[cache_key] = result
-    return result
+def get_gxx_version(out: None | str = None) -> tuple[int, int] | None:
+    """Parse from g++ --version."""
+    try:
+        if out is None:
+            out = subprocess.check_output(["g++", "--version"], text=True)
+        # Parse g++ version (same logic as helpers/rtools.py)
+        for line in out.splitlines():
+            for token in line.split():
+                if token[0].isdigit() and "." in token:
+                    parts = token.split(".")
+                    if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit():
+                        return int(parts[0]), int(parts[1])
+    except Exception:
+        pass
+    return None
 
 
 def get_system_info() -> SystemInfo:
     """Collect all system info into immutable dataclass."""
-    cache_key = "system_info"
-    if cache_key in _cache:
-        return _cache[cache_key]
-    
     os_name = get_os()
     arch = get_arch()
     r_ver = get_r_version()
-    
-    try:
-        fp = system_fingerprint()
-    except RuntimeError:
-        fp = f"{os_name}-{arch}-rUNK"
+    fp = system_fingerprint() if r_ver else f"{os_name}-{arch}-rUNK"
     
     # Collect toolchain info based on OS
     glibc_ver = None
@@ -313,7 +138,7 @@ def get_system_info() -> SystemInfo:
         has_rtools = _windows_has_rtools(silent=True)
         gxx_ver = get_gxx_version()
     
-    result = SystemInfo(
+    return SystemInfo(
         os=os_name,
         arch=arch,
         r_version=r_ver,
@@ -323,9 +148,6 @@ def get_system_info() -> SystemInfo:
         gxx_version=gxx_ver,
         has_rtools=has_rtools,
     )
-    
-    _cache[cache_key] = result
-    return result
 
 
 # === Boolean queries (for status, no exceptions) ===
@@ -372,60 +194,39 @@ def is_r_supported(min_version: tuple[int, int] = (4, 0)) -> bool:
 
 def is_linux_toolchain_ok() -> bool:
     """True if glibc >= 2.27 and g++ >= 9."""
-    cache_key = "linux_toolchain_ok"
-    if cache_key in _cache:
-        return _cache[cache_key]
-    
     glibc = get_glibc_version()
     if glibc is None or glibc < (2, 27):
-        _cache[cache_key] = False
         return False
     
     gxx = get_gxx_version()
     if gxx is None or gxx < (9, 0):
-        _cache[cache_key] = False
         return False
     
-    _cache[cache_key] = True
     return True
 
 
 def is_macos_toolchain_ok() -> bool:
     """True if Xcode CLT installed and clang >= 11."""
-    cache_key = "macos_toolchain_ok"
-    if cache_key in _cache:
-        return _cache[cache_key]
-    
-    if not _xcode_clt_installed():
-        _cache[cache_key] = False
+    try:
+        subprocess.check_output(["xcode-select", "-p"], text=True)
+    except Exception:
         return False
     
     clang = get_clang_version()
     if clang is None or clang < (11, 0):
-        _cache[cache_key] = False
         return False
     
-    _cache[cache_key] = True
     return True
 
 
 def is_windows_toolchain_ok() -> bool:
     """True if Rtools with g++ >= 9."""
-    cache_key = "windows_toolchain_ok"
-    if cache_key in _cache:
-        return _cache[cache_key]
-    
     from ._rtools import _windows_has_rtools
     if not _windows_has_rtools(silent=True):
-        _cache[cache_key] = False
         return False
-    
     gxx_version = get_gxx_version()
     if gxx_version is None or gxx_version < (9, 0):
-        _cache[cache_key] = False
         return False
-    
-    _cache[cache_key] = True
     return True
 
 
@@ -443,18 +244,13 @@ def is_toolchain_compatible() -> bool:
 
 def can_use_prebuilt() -> bool:
     """Master check: platform + R + toolchain."""
-    cache_key = "can_use_prebuilt"
-    if cache_key in _cache:
-        return _cache[cache_key]
-    
-    result = (
-        is_platform_supported() and 
-        is_r_supported() and 
-        is_toolchain_compatible()
-    )
-    
-    _cache[cache_key] = result
-    return result
+    if not is_platform_supported():
+        return False
+    if not is_r_supported():
+        return False
+    if not is_toolchain_compatible():
+        return False
+    return True
 
 
 # Prebuilt fingerprints set (currently empty, can be populated)
@@ -463,15 +259,13 @@ PREBUILT_FINGERPRINTS: set[str] = set()
 
 def is_prebuilt_available(fingerprint: str) -> bool:
     """True if we publish prebuilt for this fingerprint."""
+    # Currently we allow all fingerprints if can_use_prebuilt() passes
+    # In future, this could check against PREBUILT_FINGERPRINTS
     return fingerprint in PREBUILT_FINGERPRINTS if PREBUILT_FINGERPRINTS else True
 
 
 def get_compatibility_issues() -> list[str]:
     """Return list of human-readable compatibility issues."""
-    cache_key = "compatibility_issues"
-    if cache_key in _cache:
-        return _cache[cache_key].copy()  # Return copy to prevent mutation
-    
     issues = []
     
     if not is_platform_supported():
@@ -495,7 +289,9 @@ def get_compatibility_issues() -> list[str]:
             if gxx is None or gxx < (9, 0):
                 issues.append(f"g++ {gxx} is too old (need >= 9.0)")
         elif os_name == "macos":
-            if not _xcode_clt_installed():
+            try:
+                subprocess.check_output(["xcode-select", "-p"], text=True)
+            except Exception:
                 issues.append("Xcode Command Line Tools not installed")
             clang = get_clang_version()
             if clang is None or clang < (11, 0):
@@ -504,8 +300,7 @@ def get_compatibility_issues() -> list[str]:
             if not is_windows_toolchain_ok():
                 issues.append("Rtools not found or insufficient version")
     
-    _cache[cache_key] = issues
-    return issues.copy()
+    return issues
 
 
 # === Guard functions (raise on failure) ===

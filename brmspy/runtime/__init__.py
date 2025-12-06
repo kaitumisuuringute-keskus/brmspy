@@ -1,7 +1,7 @@
 
 from pathlib import Path
 from brmspy.helpers.log import log_warning
-from brmspy.runtime import _platform, _r_packages
+from brmspy.runtime import _r_packages
 from brmspy.runtime._types import RuntimeStatus, RuntimeManifest, SystemInfo
 from packaging.version import Version
 
@@ -12,7 +12,7 @@ __all__ = [
 
 # MUST be called as otherwise the environment gets stuck asking for one
 _r_packages.set_cran_mirror()
-_platform.warm_cache()
+
 
 # PUBLIC API
 
@@ -449,5 +449,4 @@ def _autoload() -> None:
     except Exception as e:
         log_warning(f"FFailed to auto-activate saved runtime {path}: {e}")
         _config.set_active_runtime_path(None)
-
 

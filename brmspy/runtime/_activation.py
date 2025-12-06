@@ -43,7 +43,7 @@ def activate(runtime_path: Path) -> None:
     
     # Attempt activation with rollback on failure
     try:
-        unload_managed_packages()
+        _unload_managed_packages()
         
         rlib = runtime_path / "Rlib"
         cmdstan = runtime_path / "cmdstan"
@@ -65,7 +65,6 @@ def activate(runtime_path: Path) -> None:
         raise RuntimeError(f"Activation failed: {e}") from e
 
 
-
 def deactivate() -> None:
     """
     Deactivate runtime by restoring original R environment.
@@ -79,7 +78,7 @@ def deactivate() -> None:
     if stored is None:
         raise RuntimeError("No runtime is currently active (no stored environment)")
     
-    unload_managed_packages()
+    _unload_managed_packages()
     _r_env.set_lib_paths(stored.lib_paths)
     try:
         _r_env.set_cmdstan_path(stored.cmdstan_path)
@@ -88,84 +87,22 @@ def deactivate() -> None:
     _state.clear_stored_env()
     _state.invalidate_packages()
 
-def unload_managed_packages() -> None:
-    """
-    Unload brms, cmdstanr, rstan if loaded.
-    
-    Simple version that only targets managed packages.
-    Use unload_all_non_base_packages() for comprehensive cleanup.
-    """
+
+def _unload_managed_packages() -> None:
+    """Unload brms, cmdstanr, rstan if loaded."""
     for pkg in MANAGED_PACKAGES:
         if _r_env.is_namespace_loaded(pkg) or _r_env.is_package_attached(pkg):
             try:
                 _r_env.unload_package(pkg)
             except Exception as e:
-                log_warning(f"Failed to unload {pkg}: {e}")
+                log_warning(f"{e}")
 
-
-def unload_all_non_base_packages(max_passes: int = 3) -> None:
-    """
-    Unload all non-base R packages currently loaded in the environment.
-    
-    This keeps base and recommended packages (e.g., "stats", "utils", "graphics")
-    but unloads everything else to ensure a clean R session.
-    
-    Uses multiple passes to handle dependency ordering - packages that depend
-    on others must be unloaded first, and multiple passes naturally handles this
-    without explicit dependency resolution.
-    
-    Parameters
-    ----------
-    max_passes : int, default=3
-        Maximum number of unload passes. Each pass attempts to unload all
-        non-base packages. Multiple passes handle dependency chains.
-    
-    Notes
-    -----
-    - Critical for Windows where loaded DLLs lock files
-    - Runs GC between passes to release R object references
-    - Failures are logged but don't raise exceptions
-    """
-    base_pkgs = _r_env.get_base_packages()
-    
-    for pass_num in range(max_passes):
-        loaded_pkgs = set(_r_env.get_loaded_namespaces())
-        to_unload = loaded_pkgs - base_pkgs
-        
-        if not to_unload:
-            break
-            
-        for pkg in sorted(to_unload):
-            try:
-                _r_env.unload_package(pkg)
-            except Exception as e:
-                # Only log on final pass to reduce noise
-                if pass_num == max_passes - 1:
-                    log_warning(f"Failed to unload {pkg}: {e}")
-        
-        # GC between passes to release references
-        _r_env.run_gc()
-
-def remove_managed_packages() -> None:
-    """
-    Unload AND remove (uninstall) managed R packages.
-    
-    This is a destructive operation - use only in tests or
-    when completely resetting the R environment.
-    
-    Order: unload all packages first (for clean DLL release),
-    then remove managed packages.
-    """
-    _r_env.run_gc()
-    
-    # Remove in dependency order (dependents first)
-    packages_to_remove = ("brms", "cmdstanr", "rstan", "StanHeaders")
-    
-    for pkg in packages_to_remove:
+    for pkg in sorted(loaded_pkgs - base_pkgs):
         try:
-            _r_env.remove_package(pkg)
+            _r_env.unload_package(pkg)
         except Exception as e:
-            log_warning(f"Failed to remove {pkg}: {e}")
+            log_warning(f"Failed to unload {pkg}: {e}")
+
 
 def _verify_runtime_loadable() -> None:
     """Verify brms and cmdstanr can be loaded."""
