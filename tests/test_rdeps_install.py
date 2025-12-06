@@ -61,14 +61,14 @@ def _remove_deps():
 
     # 2. Now safe to import and use library functions
     from brmspy.runtime._activation import (
-        unload_all_non_base_packages, 
+        unload_all_non_base_packages, unload_managed_packages,
         remove_managed_packages
     )
     from brmspy.runtime._r_env import run_gc
     
     # 3. Full unload and remove using library functions
     try:
-        unload_all_non_base_packages()
+        unload_managed_packages()
     except Exception:
         pass
     

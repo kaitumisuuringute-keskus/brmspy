@@ -43,7 +43,7 @@ def activate(runtime_path: Path) -> None:
     
     # Attempt activation with rollback on failure
     try:
-        unload_all_non_base_packages()
+        unload_managed_packages()
         
         rlib = runtime_path / "Rlib"
         cmdstan = runtime_path / "cmdstan"
@@ -79,7 +79,7 @@ def deactivate() -> None:
     if stored is None:
         raise RuntimeError("No runtime is currently active (no stored environment)")
     
-    unload_all_non_base_packages()
+    unload_managed_packages()
     _r_env.set_lib_paths(stored.lib_paths)
     try:
         _r_env.set_cmdstan_path(stored.cmdstan_path)
@@ -156,8 +156,6 @@ def remove_managed_packages() -> None:
     Order: unload all packages first (for clean DLL release),
     then remove managed packages.
     """
-    # Full unload first - critical for Windows DLL release
-    unload_all_non_base_packages()
     _r_env.run_gc()
     
     # Remove in dependency order (dependents first)
