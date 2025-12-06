@@ -52,8 +52,10 @@ def _candidate_rtools_paths() -> list[str]:
     for drive in _windows_drives():
         for ver in RTOOLS_VERSIONS.values():
             base = os.path.join(drive, f"rtools{ver}")
+            base2 = os.path.join(drive, f"Rtools{ver}")
             for sub in RTOOLS_SUBDIRS:
                 candidates.append(os.path.join(base, sub))
+                candidates.append(os.path.join(base2, sub))
     return candidates
 
 def get_required_version(r_version: tuple[int, int, int] | Version) -> str | None:
