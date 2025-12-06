@@ -226,12 +226,6 @@ class TestBuildStaging:
 class TestBuildPacking:
     """Test archive creation from staged runtime."""
     
-    @classmethod
-    def setup_class(cls):
-        """Ensure brms and cmdstanr are installed before tests."""
-        import brmspy
-        brmspy.install_brms(use_prebuilt=True)
-    
     def test_pack_runtime_creates_archive(self, tmp_path):
         """Verify archive is created correctly"""
         from brmspy.build._metadata import collect_runtime_metadata

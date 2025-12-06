@@ -42,8 +42,11 @@ def _remove_deps():
         pass
     
     for package in MANAGED_PACKAGES:
-        if rpackages.isinstalled(package):
-            ro.r(f'remove.packages("{package}")')
+        try:
+            if rpackages.isinstalled(package):
+                ro.r(f'remove.packages("{package}")')
+        except:
+            pass
     
     # Clear stored env to prevent state pollution from previous tests
     try:
