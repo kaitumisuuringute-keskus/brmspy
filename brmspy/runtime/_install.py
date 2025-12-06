@@ -111,6 +111,5 @@ def install_prebuilt(
         _storage.write_stored_hash(runtime_path, expected_hash)
     
     _state.invalidate_packages()
-    _state.get_brms()
     
     return runtime_path
