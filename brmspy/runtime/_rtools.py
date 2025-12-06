@@ -301,17 +301,16 @@ def ensure_installed() -> None:
 
 
 def _windows_has_rtools(silent=False) -> bool:
-    # If Rtools is already found, skip (cmdstanr check)
-    try:
-        # Check if 'make' is available. If yes, we probably have Rtools.
-        make_path = str(cast(list, ro.r('Sys.which("make")'))[0])
-        if make_path and "rtools" in make_path.lower():
-            return True
-    except Exception:
-        pass
+    # Fast path: RTOOLS*_HOME
+    for name in ("RTOOLS47_HOME", "RTOOLS46_HOME", "RTOOLS45_HOME", "RTOOLS44_HOME", "RTOOLS43_HOME", "RTOOLS42_HOME", "RTOOLS40_HOME"):
+        home = os.environ.get(name)
+        if home:
+            make = Path(home) / "usr" / "bin" / "make.exe"
+            if make.exists():
+                return True
 
     try:
-        out = subprocess.check_output(["g++", "--version"], text=True, shell=True)
+        out = subprocess.check_output(["g++", "--version"], text=True, shell=True, timeout=5)
     except Exception:
         if not silent:
             log_warning(f"g++ not found")
