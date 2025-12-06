@@ -48,22 +48,6 @@ def _remove_deps():
         except:
             pass
 
-    from brmspy import runtime
-    runtime.deactivate_brms()
-    
-    try:
-        from brmspy.runtime._activation import _unload_managed_packages
-        _unload_managed_packages()
-    except Exception:
-        pass
-    
-    for package in MANAGED_PACKAGES:
-        try:
-            if rpackages.isinstalled(package):
-                ro.r(f'remove.packages("{package}")')
-        except:
-            pass
-    
     # since other tests might have imported brmspy already with global _brms singleton set,
     # we need to remove it from sys.modules first
     for name in list(sys.modules.keys()):
