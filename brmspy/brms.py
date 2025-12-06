@@ -34,7 +34,7 @@ from brmspy.brms_functions.families import family, brmsfamily
 from brmspy.runtime._r_packages import install_package as install_rpackage
 
 from brmspy.runtime import (
-    install_brms, get_brms_version, install_prebuilt, deactivate_runtime, get_active_runtime
+    install_brms, get_brms_version, install_prebuilt, deactivate_brms, activate_brms, get_active_runtime
 )
 
 # Auto-load last runtime on import
@@ -53,7 +53,7 @@ except ImportError:
 
 __all__ = [
     # R env
-    'install_brms', 'get_brms_version', 'install_prebuilt', 'deactivate_runtime', 'get_active_runtime',
+    'install_brms', 'install_prebuilt', 'get_brms_version',  'deactivate_brms', 'activate_brms',
 
     'install_rpackage',
 

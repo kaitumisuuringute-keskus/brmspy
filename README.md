@@ -206,6 +206,9 @@ model = brms.fit(
 
 ### Setup Functions
 - `install_brms()` - Install brms, cmdstanr, and CmdStan
+- `install_prebuilt()`
+- `activate_brms()` - Activate existing prebuilt runtime
+- `deactivate_brms()` - Deactivate current runtime
 - `get_brms_version()` - Get installed brms version
 
 ### Data Functions

@@ -3,95 +3,18 @@ from pathlib import Path
 import platform
 from brmspy.helpers.log import log_warning
 from brmspy.runtime import _r_packages
+from brmspy.runtime._activation import deactivate
 from brmspy.runtime._types import RuntimeStatus, RuntimeManifest, SystemInfo
 from packaging.version import Version
 
 __all__ = [
-    "install", "activate", "deactivate", "status",
+    "install_brms", "install_prebuilt", "activate_brms", "deactivate_brms", "status", "get_brms_version",
     "RuntimeStatus", "RuntimeManifest", "SystemInfo",
 ]
 
 # MUST be called as otherwise the environment gets stuck asking for one
 _r_packages.set_cran_mirror()
 
-
-# PUBLIC API
-
-
-def install_brms(
-    brms_version: str = "latest",
-    install_cmdstanr: bool = True,
-    install_rstan: bool = False,
-    cmdstanr_version: str = "latest",
-    rstan_version: str = "latest",
-    use_prebuilt: bool = False,
-    install_rtools: bool = False,
-    **kwargs
-):
-    """
-    Install brms R package, optionally cmdstanr and CmdStan compiler, or rstan.
-    
-    Parameters
-    ----------
-    brms_version : str, default="latest"
-        brms version: "latest", "2.23.0", or ">= 2.20.0"
-    repo : str | None, default=None
-        Extra CRAN repository URL
-    install_cmdstanr : bool, default=True
-        Whether to install cmdstanr and build CmdStan compiler
-    install_rstan : bool, default=False
-        Whether to install rstan (alternative to cmdstanr)
-    cmdstanr_version : str, default="latest"
-        cmdstanr version: "latest", "0.8.1", or ">= 0.8.0"
-    rstan_version : str, default="latest"
-        rstan version: "latest", "2.32.6", or ">= 2.32.0"
-    use_prebuilt: bool, default=False
-        Uses fully prebuilt binaries for cmdstanr and brms and their dependencies. 
-        Ignores system R libraries and uses the latest brms and cmdstanr available 
-        for your system. Requires R>=4 and might not be compatible with some older
-        systems or missing toolchains. Can reduce setup time by 50x.
-    install_rtools: bool, default=False
-        Installs RTools (windows only) if they cant be found. 
-        WARNING: Modifies system path and runs the full rtools installer. 
-        Use with caution!
-    
-    Examples
-    --------
-    Basic installation:
-    
-    ```python
-    from brmspy import brms
-    brms.install_brms()
-    ```
-    Install specific version:
-    
-    ```python
-    brms.install_brms(brms_version="2.23.0")
-    ```
-
-    Use rstan instead of cmdstanr:
-
-    ```python
-    brms.install_brms(install_cmdstanr=False, install_rstan=True)
-    ```
-
-    Fast installation with prebuilt binaries:
-    ```python
-    brms.install_brms(use_prebuilt=True)
-    """
-    if "use_prebuilt_binaries" in kwargs:
-        use_prebuilt = kwargs['use_prebuilt_binaries']
-        log_warning("'use_prebuilt_binaries' is deprecated, please use 'use_prebuilt' instead")
-    install(
-        use_prebuilt=use_prebuilt,
-        install_rtools=install_rtools,
-        install_cmdstanr=install_cmdstanr,
-        brms_version=brms_version,
-        cmdstanr_version=cmdstanr_version,
-        rstan_version=rstan_version,
-        install_rstan=install_rstan,
-        activate=True,
-    )
 
 
 def install_prebuilt(install_rtools: bool = False):
@@ -147,7 +70,7 @@ def install_prebuilt(install_rtools: bool = False):
     --------
     install_brms : Main installation function
     """
-    return install(
+    return install_brms(
         use_prebuilt=True,
         install_rtools=install_rtools,
         activate=True,
@@ -183,24 +106,6 @@ def get_brms_version() -> Version | None:
     return Version(version)
 
 
-def deactivate_runtime():
-    """
-    Deactivate current prebuilt runtime and restore original R environment.
-    
-    This is an alias for :func:`deactivate` provided for backward compatibility.
-    
-    Raises
-    ------
-    RuntimeError
-        If no runtime is currently active.
-    
-    See Also
-    --------
-    deactivate : The main deactivation function.
-    """
-    deactivate()
-
-
 def get_active_runtime() -> Path | None:
     """
     Get path to currently active prebuilt runtime.
@@ -234,7 +139,7 @@ def get_active_runtime() -> Path | None:
 
 # semi-public
 
-def install(
+def install_brms(
     *,
     use_prebuilt: bool = False,
     install_rtools: bool = False,
@@ -244,42 +149,64 @@ def install(
     install_cmdstanr: bool = True,
     rstan_version: str | None = None,
     activate: bool = True,
+    **kwargs
 ) -> Path | None:
     """
-    Install brms and dependencies.
+    Install brms R package, optionally cmdstanr and CmdStan compiler, or rstan.
+
+    WINDOWS WARNING: DO NOT run this if you have 
     
     Parameters
     ----------
-    use_prebuilt : bool, default=False
-        If True, download prebuilt runtime bundle (~30 seconds).
-        If False, install R packages traditionally (~20-30 minutes).
-    install_rtools : bool, default=False
-        On Windows, install Rtools if not present.
-    brms_version : str or None, default=None
-        Specific brms version (traditional install only).
-    cmdstanr_version : str or None, default=None
-        Specific cmdstanr version (traditional install only).
-    install_rstan : bool, default=True
-        Install rstan package (traditional install only).
+    brms_version : str, default="latest"
+        brms version: "latest", "2.23.0", or ">= 2.20.0"
+    repo : str | None, default=None
+        Extra CRAN repository URL
     install_cmdstanr : bool, default=True
-        Install cmdstanr package (traditional install only).
-    rstan_version : str or None, default=None
-        Specific rstan version (traditional install only).
-    activate : bool, default=True
-        If True and use_prebuilt=True, activate runtime after install.
+        Whether to install cmdstanr and build CmdStan compiler
+    install_rstan : bool, default=False
+        Whether to install rstan (alternative to cmdstanr)
+    cmdstanr_version : str, default="latest"
+        cmdstanr version: "latest", "0.8.1", or ">= 0.8.0"
+    rstan_version : str, default="latest"
+        rstan version: "latest", "2.32.6", or ">= 2.32.0"
+    use_prebuilt: bool, default=False
+        Uses fully prebuilt binaries for cmdstanr and brms and their dependencies. 
+        Ignores system R libraries and uses the latest brms and cmdstanr available 
+        for your system. Requires R>=4 and might not be compatible with some older
+        systems or missing toolchains. Can reduce setup time by 50x.
+    install_rtools: bool, default=False
+        Installs RTools (windows only) if they cant be found. 
+        WARNING: Modifies system path and runs the full rtools installer. 
+        Use with caution!
     
-    Returns
-    -------
-    Path or None
-        Path to installed runtime if use_prebuilt=True, None otherwise.
+    Examples
+    --------
+    Basic installation:
     
-    Raises
-    ------
-    RuntimeError
-        If system requirements not met (with actionable message).
-    ConnectionError
-        If download fails (prebuilt only).
+    ```python
+    from brmspy import brms
+    brms.install_brms()
+    ```
+    Install specific version:
+    
+    ```python
+    brms.install_brms(brms_version="2.23.0")
+    ```
+
+    Use rstan instead of cmdstanr:
+
+    ```python
+    brms.install_brms(install_cmdstanr=False, install_rstan=True)
+    ```
+
+    Fast installation with prebuilt binaries:
+    ```python
+    brms.install_brms(use_prebuilt=True)
     """
+    if "use_prebuilt_binaries" in kwargs:
+        use_prebuilt = kwargs['use_prebuilt_binaries']
+        log_warning("'use_prebuilt_binaries' is deprecated, please use 'use_prebuilt' instead")
     from brmspy.runtime import _install, _config, _activation
 
     _r_packages.set_cran_mirror()
@@ -304,7 +231,7 @@ def install(
         return None
 
 
-def activate(runtime_path: Path | str | None = None) -> None:
+def activate_brms(runtime_path: Path | str | None = None) -> None:
     """
     Activate a runtime by mutating R environment.
     
@@ -357,7 +284,7 @@ def activate(runtime_path: Path | str | None = None) -> None:
     _config.set_active_runtime_path(runtime_path)
 
 
-def deactivate() -> None:
+def deactivate_brms() -> None:
     """
     Deactivate current runtime and restore original R environment.
     

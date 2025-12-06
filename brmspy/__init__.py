@@ -187,7 +187,7 @@ from brmspy import brms
 from brmspy import runtime
 from brmspy.runtime import (
     install_brms, install_prebuilt,
-    deactivate_runtime,
+    deactivate_brms, activate_brms,
     get_brms_version,
 )
 from brmspy.runtime._platform import system_fingerprint
@@ -232,7 +232,7 @@ from brmspy.brms import (
 )
 __all__ = [
     # R env
-    'install_brms', 'get_brms_version', 'install_prebuilt', 'deactivate_runtime',
+    'install_brms', 'install_prebuilt', 'get_brms_version',  'deactivate_brms', 'activate_brms',
 
     # IO
     'get_brms_data', 'save_rds', 'read_rds_raw', 'read_rds_fit', 'get_data',

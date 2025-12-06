@@ -54,6 +54,7 @@ def install_traditional(
         _r_packages.install_package_deps("rstan")
     
     _state.invalidate_packages()
+    _state.get_brms()
 
 
 def install_prebuilt(
@@ -108,5 +109,8 @@ def install_prebuilt(
     
     if expected_hash:
         _storage.write_stored_hash(runtime_path, expected_hash)
+    
+    _state.invalidate_packages()
+    _state.get_brms()
     
     return runtime_path
