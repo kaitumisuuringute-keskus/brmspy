@@ -1,4 +1,4 @@
-from typing import Union, Sequence, Optional, List, Tuple
+from typing import Union, Sequence, Optional, List, Tuple, cast
 import pandas as pd
 
 from .formula import bf
@@ -206,6 +206,89 @@ def add_criterion(
     overwrite: Optional[bool] = False,
     file: Optional[str] = None,
     force_save: Optional[bool] = False,
+    **kwargs
 ) -> FitResult:
-    pass
-    fit_r = py_to_r(fit)
+    """
+    Add model fit criteria (e.g. LOO, WAIC) to a brms model.
+
+    Thin wrapper around ``brms::add_criterion()`` that keeps the
+    Python-side :class:`FitResult` in sync with the underlying
+    ``brmsfit`` object.
+
+    Parameters
+    ----------
+    fit :
+        Fitted model returned by :func:`brm` (``FitResult``) or a raw
+        ``brmsfit`` R object (``rpy2.robjects.ListVector``).
+    criterion :
+        Name or sequence of names of criteria to compute. Supported
+        values in brms include ``"loo"``, ``"waic"``, ``"kfold"``,
+        ``"loo_subsample"``, ``"bayes_R2"``, ``"loo_R2"``,
+        ``"marglik"``.
+    model_name :
+        Optional model name. If ``None``, brms will derive it from
+        the model call.
+    overwrite :
+        If ``True``, recompute and overwrite criteria that are already
+        stored on the model object.
+    file :
+        Optional base filename for saving the updated model via
+        ``saveRDS()`` on the R side. The ``.rds`` extension is added
+        automatically. Only used if not ``None``.
+    force_save :
+        If ``True`` and ``file`` is given, force saving the model even
+        if no new criteria were added.
+    **kwargs :
+        Additional arguments forwarded to the underlying criterion
+        functions in brms (for example, arguments to ``loo()``).
+
+    Returns
+    -------
+    FitResult
+        Updated fit with the same posterior draws, but with the
+        requested criteria added to the underlying ``brmsfit`` object
+        (accessible as ``.r``). If ``fit`` was a :class:`FitResult`,
+        its existing ``idata`` is reused. If ``fit`` was a raw
+        ``brmsfit``, a new :class:`IDFit` is constructed via
+        :func:`brmsfit_to_idata`.
+
+    See Also
+    --------
+    brms::add_criterion
+    brms::loo
+    brms::waic
+    """
+    brms = get_brms()
+
+    # Extract underlying brmsfit and any existing InferenceData
+    if isinstance(fit, FitResult):
+        fit_r = cast(ListVector, fit.r)
+        existing_idata = fit.idata
+    else:
+        fit_r = cast(ListVector, fit)
+        existing_idata = None
+
+    r_kwargs = kwargs_r({
+        "criterion": criterion,
+        "model_name": model_name,
+        "overwrite": overwrite,
+        "file": file,
+        "force_save": force_save,
+        **kwargs,
+    })
+
+    fit_r_updated = brms.add_criterion(fit_r, **r_kwargs)
+
+    # Criteria don’t change the posterior draws; reuse idata if we have it
+    if isinstance(fit, FitResult) and not isinstance(fit.idata, IDFit):
+        # if someone passed a weird FitResult, fall back to recompute
+        idata = brmsfit_to_idata(fit_r_updated)
+    elif isinstance(fit, FitResult):
+        idata = existing_idata
+    else:
+        idata = brmsfit_to_idata(fit_r_updated)
+
+    if idata is None:
+        idata = IDFit()
+
+    return FitResult(idata=idata, r=fit_r_updated)

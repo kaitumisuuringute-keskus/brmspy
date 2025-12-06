@@ -9,7 +9,7 @@ from brmspy.helpers.log import log_warning
 from brmspy.runtime import _manifest, _r_env, _r_packages, _state, _platform
 
 
-MANAGED_PACKAGES = ("brms", "cmdstanr", "rstan", "data.table", "jsonlite", "StanHeaders")
+MANAGED_PACKAGES = ("brms", "cmdstanr", "rstan", "data.table", "jsonlite")
 
 
 def activate(runtime_path: Path) -> None:
