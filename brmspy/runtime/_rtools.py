@@ -17,6 +17,8 @@ import rpy2.robjects as ro
 from brmspy.helpers.log import log_warning
 from packaging.version import Version
 
+from brmspy.runtime._platform import get_arch
+
 
 # R version range -> Rtools version
 RTOOLS_VERSIONS = {
@@ -104,7 +106,9 @@ def _discover_rtools_installer(
 def get_download_url(rtools_version: str) -> str:
     """Get download URL for Rtools version."""
     # Try to dynamically discover from CRAN directory listing
-    url = _discover_rtools_installer(rtools_version)
+    is_arm64 = get_arch() == "arm64"
+
+    url = _discover_rtools_installer(rtools_version, aarch64=is_arm64)
     if url is not None:
         return url
 
