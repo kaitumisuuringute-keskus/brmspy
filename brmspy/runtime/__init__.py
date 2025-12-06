@@ -3,7 +3,6 @@ from pathlib import Path
 import platform
 from brmspy.helpers.log import log_warning
 from brmspy.runtime import _r_packages
-from brmspy.runtime._activation import deactivate
 from brmspy.runtime._types import RuntimeStatus, RuntimeManifest, SystemInfo
 from packaging.version import Version
 
