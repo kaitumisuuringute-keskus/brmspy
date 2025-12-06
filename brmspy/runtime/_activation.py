@@ -58,6 +58,7 @@ def activate(runtime_path: Path) -> None:
         _verify_runtime_loadable()
         
         _state.invalidate_packages()
+        _state.get_brms()
         
     except Exception as e:
         # Rollback
