@@ -205,7 +205,7 @@ class TestInstallBrms:
     
     def test_install_prebuilt_path(self):
         """Test install with prebuilt binaries"""
-        from brmspy.runtime import install
+        from brmspy.runtime import install_brms
         from brmspy.runtime import _install
         from unittest.mock import patch
         from pathlib import Path
@@ -215,12 +215,12 @@ class TestInstallBrms:
             with patch('brmspy.runtime._activation.activate'):
                 with patch('brmspy.runtime._config.set_active_runtime_path'):
                     # Should return path
-                    result = install(use_prebuilt=True, install_rtools=False)
+                    result = install_brms(use_prebuilt=True, install_rtools=False)
                     assert result == Path('/fake/runtime')
     
     def test_install_rtools_flag(self):
         """Test Rtools installation flag"""
-        from brmspy.runtime import install
+        from brmspy.runtime import install_brms
         from brmspy.runtime import _rtools, _r_packages, _r_env, _state
         from unittest.mock import patch, MagicMock
         
@@ -237,7 +237,7 @@ class TestInstallBrms:
                             with patch.object(_r_packages, 'build_cmdstan'):
                                 with patch.object(_state, 'invalidate_packages'):
                                     
-                                    install(
+                                    install_brms(
                                         use_prebuilt=False,
                                         install_rtools=True,
                                         install_rstan=False
@@ -248,7 +248,7 @@ class TestInstallBrms:
     
     def test_install_rstan_option(self):
         """Test rstan installation option"""
-        from brmspy.runtime import install
+        from brmspy.runtime import install_brms
         from brmspy.runtime import _r_packages, _r_env, _state
         from unittest.mock import patch, MagicMock
         
@@ -261,7 +261,7 @@ class TestInstallBrms:
                         with patch.object(_r_packages, 'build_cmdstan'):
                             with patch.object(_state, 'invalidate_packages'):
                                 
-                                install(
+                                install_brms(
                                     use_prebuilt=False,
                                     install_rstan=True
                                 )
