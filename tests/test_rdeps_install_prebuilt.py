@@ -21,7 +21,7 @@ class TestInstallPrebuilt:
     def test_brms_install_prebuilt(self):
         from brmspy import brms
         import rpy2.robjects.packages as rpackages
-        from .install_helpers import _remove_deps
+        from install_helpers import _remove_deps
         _remove_deps()
         
         assert not rpackages.isinstalled("brms")
@@ -40,7 +40,7 @@ class TestInstallPrebuilt:
         _brms = get_brms()
         assert _brms is not None
 
-        from .install_helpers import _fit_minimal_model
+        from install_helpers import _fit_minimal_model
         _fit_minimal_model(brms)
 
         # Use runtime API for deactivation
