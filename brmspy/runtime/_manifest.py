@@ -5,6 +5,7 @@ Manifest parsing and validation. Pure functions.
 import json
 import hashlib
 from pathlib import Path
+from brmspy.helpers.log import log_warning
 from brmspy.runtime._types import RuntimeManifest
 
 
@@ -13,6 +14,7 @@ def parse_manifest(path: Path) -> RuntimeManifest | None:
     if not path.exists():
         return None
     
+    data = None
     try:
         with path.open("r", encoding="utf-8") as f:
             data = json.load(f)
@@ -26,7 +28,9 @@ def parse_manifest(path: Path) -> RuntimeManifest | None:
             manifest_hash=data.get("manifest_hash", ""),
             built_at=data.get("built_at", ""),
         )
-    except Exception:
+    except Exception as e:
+        log_warning(f"Failed parsing manifest: {e}")
+        log_warning(f"Broken manifest contents: {data}")
         return None
 
 
