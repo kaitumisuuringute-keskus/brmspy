@@ -53,7 +53,10 @@ def _remove_deps():
         pass
 
     # in case the default/previous env has packages, do it again!
-    _unload_managed_packages()
+    try:
+        _unload_managed_packages()
+    except:
+        pass
     for package in MANAGED_PACKAGES:
         if rpackages.isinstalled(package) :
             ro.r(f'remove.packages("{package}")')
