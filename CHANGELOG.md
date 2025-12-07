@@ -1,13 +1,38 @@
-## 0.2.0
+## 0.2.0 - Runtime Refactor & Formula DSL
+*25.12.07*
 
-- removed add_criterion, loo, loo_compare - too unstable and cause segfaults very often. Easy replacements in arviz.
-- get_data, bf, lf, nlf, acformula, set_rescor, set_mecor, set_nl, 
-- Formula DSL (formula bits can be added together very similar to brms.)
+### Breaking Changes
 
-- install_brms, install_runtime,
-    deactivate_runtime, activate_runtime,
-    find_local_runtime, get_active_runtime,
-    get_brms_version,
+*   **Removed Diagnostics**: Removed `loo`, `loo_compare`, and `add_criterion` due to frequent segfaults in embedded R mode. Users should rely on `arviz.loo` and `arviz.compare` using the `idata` property of the fit result.
+*   **Installation API**: Renamed `use_prebuilt_binaries` argument to `use_prebuilt` in `install_brms()`.
+*   Installation API now consists of: `install_brms`, `install_runtime`, `deactivate_runtime`, `activate_runtime`, `find_local_runtime`, `get_active_runtime`, `get_brms_version`
+*   **Deprecations**: Renamed `fit` to `brm` and `formula` to `bf`. Previous names are still exported as aliases, but might be removed in a future version.
+
+### New Features
+
+*   **Formula DSL**: Implemented `bf`, `lf`, `nlf`, `acformula`, `set_rescor`, `set_mecor`, and `set_nl`. These objects support additive syntax (e.g., `bf(...) + set_rescor(True) + gaussian()`) mirroring native brms behavior.
+*   **Generic Data Loader**: Added `get_data()` to load datasets from any installed R package, complementing `get_brms_data()`.
+*   **Runtime Status**: Added `brmspy.runtime.status()` to programmatically inspect the current R environment, toolchain compatibility, and active runtime configuration.
+*   **Families now in package root**: Families can now be imported from package root, e.g `from brmspy import gaussian`
+
+### Runtime & Installation
+
+*   **Core Refactor**: Completely re-architected `brmspy.runtime` into strict layers (`_config`, `_r_env`, `_platform`, `_install`, etc) to eliminate side effects during import and prevent circular dependencies.
+*   **Atomic Activation**: `activate_runtime()` now validates manifest integrity and system fingerprints before mutating the R environment, ensuring atomic success or rollback.
+*   **Auto-Persistence**: The last successfully activated runtime is automatically restored on module import via `runtime._autoload`, creating persistent sessions across restarts.
+*   **Windows Toolchain**: Modularized RTools detection logic to accurately map R versions to RTools versions (4.0–4.5) and handle path updates safely.
+
+### Documentation & Infrastructure
+
+*   **MkDocs Migration**: Ported all documentation to MkDocs with the Material theme for better navigability and API references.
+*   **Rendered notebooks**: Added more notebook examples that are now rendered fully with links to running each in Google Colab.
+*   **ArViz diagnostics examples**: can now be found under API reference
+*   **Test coverage**: Test coverage for brms functions is now at 88% and for R environment and package management at 68%
+
+
+
+
+
 
 ## 0.1.13 - Enhanced Diagnostics & Type-Safe Summaries
 *25.12.04*
