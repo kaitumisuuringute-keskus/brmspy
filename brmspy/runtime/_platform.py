@@ -5,7 +5,7 @@ No side effects, no R environment mutation.
 
 import platform
 import subprocess
-from typing import Optional, cast
+from typing import cast
 from brmspy.runtime._types import SystemInfo
 
 

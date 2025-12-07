@@ -40,7 +40,7 @@ def use_cached_rtools_installer_in_ci(monkeypatch):
     if not exe_path.is_file():
         pytest.skip(f"BRMSPY_RTOOLS_INSTALLER_EXE does not exist: {exe_path}")
 
-    import brmspy.runtime._rtools as _rtools  # noqa: WPS433
+    from brmspy.runtime import _rtools
 
     def fake_download_installer(rtools_version: str, max_retries: int = 3) -> Path:  # type: ignore[override]
         """
@@ -252,7 +252,7 @@ class TestWindowsRtoolsInstallation:
 
         # skip for now, issues in CI
         return
-        
+        """
         # Get initial PATH
         initial_path = os.environ.get("PATH", "")
         
@@ -264,6 +264,7 @@ class TestWindowsRtoolsInstallation:
         
         # If tag returned, PATH should include rtools
         assert "rtools" in updated_path.lower()
+        """
 
 
 @pytest.mark.skipif(

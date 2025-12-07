@@ -2,12 +2,10 @@
 Runtime directory operations. Disk only, no R, no config.
 """
 
-import json
 import shutil
 import tarfile
 from pathlib import Path
 from brmspy.runtime._platform import get_os
-from brmspy.runtime._types import RuntimeManifest
 
 
 def get_runtime_base_dir() -> Path:

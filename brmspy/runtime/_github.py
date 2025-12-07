@@ -4,8 +4,8 @@ GitHub API operations for runtime downloads.
 
 import json
 import os
+from urllib.parse import urlparse
 import urllib.request
-from typing import Optional
 
 
 REPO_OWNER = "kaitumisuuringute-keskus"
@@ -13,17 +13,38 @@ REPO_NAME = "brmspy"
 
 
 def parse_release_url(url: str) -> tuple[str, str, str, str]:
-    """Parse GitHub release URL into (owner, repo, tag, asset_name)."""
-    # Example: https://github.com/owner/repo/releases/download/tag/asset.tar.gz
-    parts = url.split("/")
-    if "github.com" in url and "releases/download" in url:
-        idx = parts.index("releases")
-        owner = parts[idx - 2]
-        repo = parts[idx - 1]
-        tag = parts[idx + 2]
-        asset_name = parts[idx + 3]
-        return owner, repo, tag, asset_name
-    raise ValueError(f"Invalid GitHub release URL: {url}")
+    """
+    Parse a GitHub release asset URL into (owner, repo, tag, asset_name).
+
+    Expected pattern:
+        https://github.com/<owner>/<repo>/releases/download/<tag>/<asset_name>
+    """
+    parsed = urlparse(url)
+
+    if parsed.scheme not in {"http", "https"}:
+        raise ValueError(f"Invalid scheme in GitHub release URL: {url}")
+
+    if parsed.hostname != "github.com":
+        raise ValueError(f"Unexpected host in GitHub release URL: {parsed.hostname!r}")
+
+    # Split path, ignoring leading slash
+    parts = parsed.path.lstrip("/").split("/")
+
+    # Expected:
+    #   0: owner
+    #   1: repo
+    #   2: releases
+    #   3: download
+    #   4: tag
+    #   5: asset_name
+    if len(parts) < 6:
+        raise ValueError(f"Malformed GitHub release URL path: {parsed.path!r}")
+
+    if parts[2] != "releases" or parts[3] != "download":
+        raise ValueError(f"Path does not match releases/download structure: {parsed.path!r}")
+
+    owner, repo, _, _, tag, asset_name = parts[:6]
+    return owner, repo, tag, asset_name
 
 
 def fetch_release_metadata(owner: str, repo: str, tag: str) -> dict:

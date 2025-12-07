@@ -130,7 +130,8 @@ class TestRuntimeDownloadURL:
         """Test URL construction with specific version."""
         url = get_runtime_download_url("linux-x86_64-r4.3", version="1.2.3")
         
-        assert "github.com" in url
+        from urllib.parse import urlparse
+        assert urlparse(url).netloc == "github.com"
         assert "brmspy-runtime-1.2.3-linux-x86_64-r4.3.tar.gz" in url
     
     def test_get_runtime_download_url_with_latest(self):

@@ -8,7 +8,7 @@ import urllib.request
 from pathlib import Path
 from brmspy.runtime import (
     _platform, _r_packages, _r_env, _rtools,
-    _github, _download, _storage, _state
+    _github, _storage, _state
 )
 
 

@@ -424,7 +424,7 @@ class FormulaResult(RListVectorExtension):
             other = FormulaResult._formula_parse(other)
 
         if not isinstance(other, FormulaResult):
-            raise ValueError("When adding values to formula, they must be FormulaResult or parseable to FormulaResult")
+            raise ArithmeticError("When adding values to formula, they must be FormulaResult or parseable to FormulaResult")
         
         plus = cast(Callable, robjects.r('function (a, b) a + b'))
         combo = plus(self.r, other.r)
