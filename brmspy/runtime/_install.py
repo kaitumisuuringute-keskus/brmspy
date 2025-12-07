@@ -51,7 +51,6 @@ def install_traditional(
     
     if install_rstan:
         _r_packages.install_package("rstan", version=rstan_version)
-        _r_packages.install_package("StanHeaders")
         _r_packages.install_package_deps("rstan")
     
     _state.invalidate_packages()
