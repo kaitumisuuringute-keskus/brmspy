@@ -108,27 +108,8 @@ print(az.summary(model.idata))
 Model multiple responses simultaneously with seamless ArviZ integration:
 
 <table>
-<tr><th>R (brms)</th><th>Python (brmspy)</th></tr>
+<tr><th>Python (brmspy)</th><th>R (brms)</th></tr>
 <tr>
-<td>
-
-```r
-library(brms)
-library(loo)
-
-# Fit multivariate model
-fit <- brm(
-  bf(mvbind(tarsus, back) ~ sex + (1|p|fosternest))
-  + set_rescor(TRUE),
-  data = BTdata
-)
-
-# Separate LOO for each response
-loo_tarsus <- loo(fit, resp = "tarsus")
-loo_back <- loo(fit, resp = "back")
-```
-
-</td>
 <td>
 
 ```python
@@ -146,6 +127,25 @@ mv = brms.fit(
 az.loo(mv.idata, var_name="tarsus")
 az.loo(mv.idata, var_name="back")
 az.plot_ppc(mv.idata, var_names=["tarsus"])
+```
+
+</td>
+<td>
+
+```r
+library(brms)
+library(loo)
+
+# Fit multivariate model
+fit <- brm(
+  bf(mvbind(tarsus, back) ~ sex + (1|p|fosternest))
+  + set_rescor(TRUE),
+  data = BTdata
+)
+
+# Separate LOO for each response
+loo_tarsus <- loo(fit, resp = "tarsus")
+loo_back <- loo(fit, resp = "back")
 ```
 
 </td>
