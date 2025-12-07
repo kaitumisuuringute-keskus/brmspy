@@ -21,7 +21,7 @@ def get_lib_paths() -> list[str]:
 def get_cmdstan_path() -> str | None:
     """Get current cmdstanr::cmdstan_path() or None."""
     try:
-        result = cast(ro.ListVector, ro.r("cmdstanr::cmdstan_path()"))
+        result = cast(ro.ListVector, ro.r("suppressWarnings(suppressMessages(cmdstanr::cmdstan_path()))"))
         return str(result[0]) if result else None
     except Exception:
         return None
@@ -61,12 +61,10 @@ def set_cmdstan_path(path: str | None) -> None:
       else:
           path_str = f'"{path}"'
       ro.r(f'''
-      suppressWarnings(suppressMessages({{
-        if (!requireNamespace("cmdstanr", quietly = TRUE)) {{
-          stop("cmdstanr is not available in rlibs")
-        }}
-        cmdstanr::set_cmdstan_path(path={path_str})
-      }}))
+      if (!requireNamespace("cmdstanr", quietly = TRUE)) {{
+        stop("cmdstanr is not available in rlibs")
+      }}
+      cmdstanr::set_cmdstan_path(path={path_str})
       ''')
     except Exception as e:
         log_warning(f"Failed to set cmdstan_path to {path}: {e}")

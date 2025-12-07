@@ -21,9 +21,9 @@ This is an early development version of the library, use with caution.
 
 R>=4 is required before installing brmspy.
 
-If you encounter errors regarding `methods.so`, `R_HOME` you may need to manually point your environment to the R installation.
+On linux and macos you may need to manually point your environment to the R installation.
 
-Run the following in your terminal (works on Linux and macOS):
+Run the following in your terminal:
 
 ```bash
 # Set R_HOME and add lib directory to LD_LIBRARY_PATH

@@ -41,8 +41,8 @@ def install_traditional(
     _r_packages.install_package_deps("brms")
     
     repos_cmdstanr: List[str] = [
-        "https://mc-stan.org/r-packages/",
-        'https://stan-dev.r-universe.dev'
+        'https://stan-dev.r-universe.dev',
+        'https://mc-stan.org/r-packages/'
     ]
     if install_cmdstanr:
         _r_packages.install_package("cmdstanr", version=cmdstanr_version, repos_extra=repos_cmdstanr)
