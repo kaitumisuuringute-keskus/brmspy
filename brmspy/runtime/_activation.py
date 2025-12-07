@@ -12,7 +12,7 @@ if _platform.get_os() == "macos":
     # MacOS fails without forced tibble and pkgconfig unloading
     MANAGED_PACKAGES = ("brms", "cmdstanr", "rstan", "StanHeaders", "tibble", "pkgconfig")
 else:
-    MANAGED_PACKAGES = ("brms", "cmdstanr", "rstan", "StanHeaders")
+    MANAGED_PACKAGES = ("brms", "cmdstanr", "rstan")
 
 
 def activate(runtime_path: Path) -> None:
