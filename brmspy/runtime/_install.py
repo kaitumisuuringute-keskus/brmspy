@@ -46,6 +46,7 @@ def install_traditional(
     ]
     if install_cmdstanr:
         _r_packages.install_package("cmdstanr", version=cmdstanr_version, repos_extra=repos_cmdstanr)
+        _r_packages.install_package("StanHeaders", version=cmdstanr_version, repos_extra=repos_cmdstanr)
         _r_packages.install_package_deps("cmdstanr")
         _r_packages.build_cmdstan()
     

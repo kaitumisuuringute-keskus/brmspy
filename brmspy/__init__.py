@@ -182,21 +182,87 @@ __version__ = "0.2.1"
 __author__ = "Remi Sebastian Kits, Adam Haber"
 __license__ = "Apache-2.0"
 
-def _check_rpaths() -> None:
-    import os
-    import platform
 
-    if not os.environ.get("R_HOME"):
-        print(
-            "[brmspy][CRITICAL WARNING] R_HOME env var not found! The environment may not work!\n" \
-            "Set using `export R_HOME=$(R RHOME)` before starting python session"
-        )
-    if platform.system() != "Windows":
-        if not os.environ.get("LD_LIBRARY_PATH"):
-            print(
-                "[brmspy][CRITICAL WARNING] LD_LIBRARY_PATH env var not found! The environment may not work!\n" \
-                'Set using `export LD_LIBRARY_PATH="${R_HOME}/lib:${LD_LIBRARY_PATH}"` before starting python session'
+from typing import List, Optional, cast, Tuple
+
+
+def _check_r_setup(
+    verbose: bool = False
+) -> Tuple[bool, List[str]]:
+    import shutil, subprocess, os, platform
+
+    ok = True
+    messages: List[str] = []
+
+    def info(msg: str) -> None:
+        if verbose:
+            print(f"[brmspy][INFO] {msg}")
+
+    def warn(msg: str) -> None:
+        nonlocal ok
+        ok = False
+        messages.append(msg)
+        if verbose:
+            print(f"[brmspy][WARNING] {msg}")
+
+    # --- 1. Try to locate R and RHOME via the R executable -----------------
+    r_exec = shutil.which("R")
+    r_home_cmd: Optional[str] = None
+
+    if not r_exec:
+        # Not necessarily fatal if rpy2 was compiled with an absolute R_HOME,
+        # but very suspicious for anything reproducible.
+        warn("R executable `R` not found on PATH; this is a fragile setup.")
+    else:
+        try:
+            proc = subprocess.run(
+                [r_exec, "RHOME"],
+                check=True,
+                capture_output=True,
+                text=True
             )
+            r_home_cmd = proc.stdout.strip()
+            if not r_home_cmd:
+                warn("`R RHOME` returned an empty value.")
+            else:
+                info(f"RHOME (from `R RHOME`): {r_home_cmd}")
+        except Exception as e:
+            warn(f"`R RHOME` failed: {e!r}")
+
+    # --- 2. Look at env vars, but treat them as advisory -------------------
+    r_home_env = os.environ.get("R_HOME")
+    if r_home_env:
+        info(f"R_HOME env: {r_home_env}")
+    else:
+        info("R_HOME env var not set; relying on rpy2 / system defaults.")
+
+    if platform.system() != "Windows":
+        ld = os.environ.get("LD_LIBRARY_PATH")
+        if not ld:
+            info(
+                "LD_LIBRARY_PATH not set; assuming system linker config "
+                "already knows where libR.so lives."
+            )
+        else:
+            info(f"LD_LIBRARY_PATH is set (length {len(ld)} chars).")
+
+    # --- 3. Try to import rpy2 and talk to R --------------------------------
+    try:
+        import rpy2.robjects as ro  # type: ignore[import]
+    except Exception as e:
+        warn(f"Failed to import rpy2.robjects: {e!r}")
+        return ok, messages
+
+    try:
+        r_version = str(cast(ro.ListVector, ro.r("R.version"))[0])
+        lib_paths = [str(p) for p in cast(ro.ListVector, ro.r(".libPaths()"))]
+        info(f"R version: {r_version}")
+        info(f".libPaths(): {lib_paths}")
+    except Exception as e:
+        warn(f"rpy2 could not initialize R / run basic code: {e!r}")
+        return ok, messages
+
+    return ok, messages
 
 def _initialise_r_safe() -> None:
     """
@@ -207,7 +273,6 @@ def _initialise_r_safe() -> None:
     - Use future::plan(sequential) if future is available
     - Leave cmdstanr multi-core sampling alone
     """
-    _check_rpaths()
 
     import os
     import sys
@@ -233,6 +298,11 @@ def _initialise_r_safe() -> None:
     os.environ.setdefault("OMP_NUM_THREADS", "1")
     os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 
+    ok, messages = _check_r_setup()
+    if not ok:
+        print("[brmspy][WARNING] R environment diagnostics reported problems.")
+        for message in messages:
+            print(f"[brmspy][WARNING]   {message}")
 
     import rpy2.robjects as ro
 

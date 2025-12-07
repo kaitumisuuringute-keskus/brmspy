@@ -62,20 +62,13 @@ def set_cmdstan_path(path: str | None) -> None:
       else:
           path_str = f'"{path}"'
       
-      # Temporarily suppress rpy2 console callbacks
-      original_level = logging.getLogger('rpy2.rinterface_lib.callbacks').level
-      logging.getLogger('rpy2.rinterface_lib.callbacks').setLevel(logging.ERROR)
+      ro.r(f'''
+      if (!requireNamespace("cmdstanr", quietly = TRUE)) {{
+        stop("cmdstanr is not available in rlibs")
+      }}
+      cmdstanr::set_cmdstan_path(path={path_str})
+      ''')
       
-      try:
-          ro.r(f'''
-          if (!requireNamespace("cmdstanr", quietly = TRUE)) {{
-            stop("cmdstanr is not available in rlibs")
-          }}
-          cmdstanr::set_cmdstan_path(path={path_str})
-          ''')
-      finally:
-          logging.getLogger('rpy2.rinterface_lib.callbacks').setLevel(original_level)
-          
     except Exception as e:
         log_warning(f"Failed to set cmdstan_path to {path}: {e}")
 
