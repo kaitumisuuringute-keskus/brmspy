@@ -1,12 +1,11 @@
-import typing
+from typing import cast, Callable, Any, Optional, Dict
 import pandas as pd
 import numpy as np
 import re
 import xarray as xr
 import arviz as az
 
-import rpy2.robjects.packages as rpackages
-from rpy2.robjects import default_converter, pandas2ri, numpy2ri, ListVector, DataFrame, StrVector
+from rpy2.robjects import default_converter, pandas2ri, numpy2ri, ListVector
 import rpy2.robjects as ro
 from rpy2.robjects import pandas2ri
 from rpy2.robjects.conversion import localconverter
@@ -14,11 +13,11 @@ from rpy2.robjects import vectors
 
 from rpy2.robjects.functions import SignatureTranslatedFunction
 
-from brmspy.helpers import singleton
+from brmspy.runtime._state import get_base
 from brmspy.helpers.log import log_warning
-from brmspy.types import IDFit, PriorSpec, RListVectorExtension
+from brmspy.types import IDFit, RListVectorExtension
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 
 
 
@@ -168,213 +167,6 @@ def _coerce_stan_types(stan_code: str, stan_data: dict) -> dict:
     return stan_data
 
 
-def brmsfit_to_idata(brmsfit_obj, model_data=None) -> IDFit:
-    """
-    Convert brmsfit R object to ArviZ InferenceData format.
-    
-    Comprehensive conversion that extracts all MCMC diagnostics, predictions,
-    and observed data from a brms fitted model into ArviZ's InferenceData format.
-    Handles proper chain/draw indexing and coordinates for ArviZ compatibility.
-    
-    Parameters
-    ----------
-    brmsfit_obj : rpy2 R object (brmsfit)
-        Fitted Bayesian model from R's brms::brm() function
-    model_data : dict or DataFrame, optional
-        Additional model data (currently unused, reserved for future use)
-    
-    Returns
-    -------
-    arviz.InferenceData
-        Complete InferenceData object containing:
-        - **posterior**: Model parameters (β, σ, etc.) with shape (chains, draws, ...)
-        - **posterior_predictive**: Predicted outcomes y with observation noise
-        - **log_likelihood**: Log-likelihood values for LOO-CV and model comparison
-        - **observed_data**: Original response variable from training data
-        - **coords**: Observation IDs and other coordinates
-        - **dims**: Dimension labels for each variable
-    
-    Notes
-    -----
-    **InferenceData Groups:**
-    
-    1. **Posterior**: Parameter samples from MCMC
-       - Includes all model parameters (intercepts, slopes, sigmas, etc.)
-       - Shape: (n_chains, n_draws) for scalars, (n_chains, n_draws, ...) for arrays
-       - Extracted via posterior::as_draws_df()
-    
-    2. **Posterior Predictive**: Predictions including observation noise
-       - Generated via brms::posterior_predict()
-       - Useful for posterior predictive checks
-       - Shape: (n_chains, n_draws, n_obs)
-    
-    3. **Log Likelihood**: Pointwise log-likelihood values
-       - Generated via brms::log_lik()
-       - Required for LOO-CV and WAIC model comparison
-       - Shape: (n_chains, n_draws, n_obs)
-    
-    4. **Observed Data**: Original response variable
-       - Extracted from fit$data
-       - Uses first column (brms convention for response variable)
-       - Shape: (n_obs,)
-    
-    **Reshaping Strategy:**
-    
-    brms/rstan return flat arrays with shape (total_draws, ...) where
-    total_draws = n_chains × n_draws. This function reshapes to ArviZ's
-    expected format (n_chains, n_draws, ...) by:
-    1. Tracking chain IDs from .chain column
-    2. Computing per-chain draw indices
-    3. Pivoting and reshaping to 3D arrays
-    
-    Examples
-    --------
-
-    ```python
-    from brmspy import fit
-    from brmspy.helpers.conversion import brmsfit_to_idata
-    import arviz as az
-    
-    # Fit a model (returns InferenceData directly)
-    result = fit("y ~ x", data=pd.DataFrame({"y": [1, 2, 3], "x": [1, 2, 3]}))
-    idata = result.idata
-    
-    # Or manually convert brmsfit object
-    # brmsfit_r = ...  # R brmsfit object
-    # idata = brmsfit_to_idata(brmsfit_r)
-    
-    # Use ArviZ for diagnostics
-    az.summary(idata, var_names=["b_Intercept", "b_x"])
-    az.plot_trace(idata)
-    az.plot_posterior(idata, var_names=["sigma"])
-    ```
-
-    ```python
-    # Access different groups
-    idata.posterior  # Parameter samples
-    idata.posterior_predictive  # Predicted outcomes with noise
-    idata.log_likelihood  # For model comparison
-    idata.observed_data  # Original data
-    
-    # Model comparison with LOO-CV
-    az.loo(idata)
-    az.waic(idata)
-    ```
-
-    See Also
-    --------
-    brmspy.brms.fit : High-level fitting function (returns InferenceData)
-    brms_epred_to_idata : Convert expected value predictions
-    brms_predict_to_idata : Convert posterior predictions
-    arviz.InferenceData : ArviZ's data structure documentation
-    """
-
-    # =========================================================================
-    # GROUP 1: POSTERIOR (Parameters)
-    # =========================================================================
-    # Safely get the as_draws_df function
-    as_draws_df = typing.cast(typing.Callable, ro.r('posterior::as_draws_df'))
-    draws_r = as_draws_df(brmsfit_obj)
-    
-    with localconverter(ro.default_converter + pandas2ri.converter):
-        df = pandas2ri.rpy2py(draws_r)
-            
-    # Handle Chain/Draw Indexing
-    chain_col = '.chain' if '.chain' in df.columns else 'chain'
-    draw_col = '.draw' if '.draw' in df.columns else 'draw'
-    
-    # Create a clean 0..N index for draws within each chain
-    df['draw_idx'] = df.groupby(chain_col)[draw_col].transform(lambda x: np.arange(len(x)))
-    
-    chains = df[chain_col].unique()
-    n_chains = len(chains)
-    n_draws = df['draw_idx'].max() + 1
-    
-    # Helper to reshape flat arrays (total_draws, ...) -> (chains, draws, ...)
-    def reshape_to_arviz(values):
-        # values shape: (total_draws, n_obs)
-        # Reshape to (n_chains, n_draws, n_obs)
-        new_shape = (n_chains, n_draws) + values.shape[1:]
-        return values.reshape(new_shape)
-
-    posterior_dict = {}
-    for col in df.columns:
-        if col not in [chain_col, draw_col, '.iteration', 'draw_idx']:
-            # Pivot ensures we respect the chain/draw structure explicitly
-            mat = df.pivot(index='draw_idx', columns=chain_col, values=col)
-            posterior_dict[col] = mat.values.T 
-
-    # =========================================================================
-    # GROUP 2 & 3: POSTERIOR PREDICTIVE & LOG LIKELIHOOD
-    # =========================================================================
-    post_pred_dict = {}
-    log_lik_dict = {}
-
-    try:
-        # Get functions explicitly to avoid AttributeError
-        r_posterior_predict = typing.cast(typing.Callable, ro.r('brms::posterior_predict'))
-        r_log_lik = typing.cast(typing.Callable, ro.r('brms::log_lik'))
-        
-        # 1. Posterior Predictive
-        # Returns matrix: (Total_Draws x N_Obs)
-        pp_r = r_posterior_predict(brmsfit_obj)
-        pp_mat = np.array(pp_r)
-        post_pred_dict['y'] = reshape_to_arviz(pp_mat)
-        
-        # 2. Log Likelihood
-        ll_r = r_log_lik(brmsfit_obj)
-        ll_mat = np.array(ll_r)
-        log_lik_dict['y'] = reshape_to_arviz(ll_mat)
-        
-    except Exception as e:
-        log_warning(f"Could not extract posterior predictive/log_lik. {e}")
-        pass
-
-    # =========================================================================
-    # GROUP 4: OBSERVED DATA
-    # =========================================================================
-    observed_data_dict = {}
-    coords = None
-    dims = None
-    
-    try:
-        _base = singleton._get_base()
-        # Extract data from the fit object: fit$data
-        if _base:
-            r_data = _base.getElement(brmsfit_obj, "data")
-        else:
-            raise Exception("Base uninitialized (Should not happen if _get_brms was done)!")
-        
-        with localconverter(ro.default_converter + pandas2ri.converter):
-            df_data = pandas2ri.rpy2py(r_data)
-        
-        # Heuristic: The response variable is usually the first column 
-        # (brms rearranges internal data frame to put response first)
-        if df_data is not None and not df_data.empty:
-            resp_var = df_data.columns[0]
-            observed_data_dict['y'] = df_data[resp_var].values
-            
-            # Setup coordinates for ArviZ
-            coords = {'obs_id': np.arange(len(df_data))}
-            dims = {'y': ['obs_id']}
-        
-    except Exception as e:
-        log_warning(f"Could not extract observed data. {e}")
-
-    # =========================================================================
-    # CREATE INFERENCE DATA
-    # =========================================================================
-    idata = az.from_dict(
-        posterior=posterior_dict,
-        posterior_predictive=post_pred_dict if post_pred_dict else None,
-        log_likelihood=log_lik_dict if log_lik_dict else None,
-        observed_data=observed_data_dict if observed_data_dict else None,
-        coords=coords,
-        dims=dims
-    )
-    
-    return typing.cast(IDFit, idata)
-
 
 
 
@@ -462,7 +254,7 @@ def _reshape_r_prediction_to_arviz(r_matrix, brmsfit_obj, obs_coords=None):
     # 1. Get dimensions from the model
     # We use R functions to be safe about how brms stored the fit
     try:
-        r_nchains = typing.cast(typing.Callable, ro.r('brms::nchains'))
+        r_nchains = cast(Callable, ro.r('brms::nchains'))
         n_chains = int(r_nchains(brmsfit_obj)[0])
     except Exception:
         # Fallback if brms::nchains fails
@@ -492,6 +284,232 @@ def _reshape_r_prediction_to_arviz(r_matrix, brmsfit_obj, obs_coords=None):
     }
     
     return reshaped_data, coords, ["chain", "draw", "obs_id"]
+
+
+def brmsfit_to_idata(brmsfit_obj, model_data=None) -> IDFit:
+    """Convert brmsfit -> ArviZ InferenceData (uni- and multivariate)."""
+
+    # -------------------------------------------------
+    # POSTERIOR (parameters) via posterior::as_draws_df
+    # -------------------------------------------------
+    as_draws_df = cast(Callable, ro.r("posterior::as_draws_df"))
+    draws_r = as_draws_df(brmsfit_obj)
+
+    with localconverter(ro.default_converter + pandas2ri.converter):
+        df = pandas2ri.rpy2py(draws_r)
+
+    df = df.copy()
+
+    chain_col = ".chain" if ".chain" in df.columns else "chain"
+    draw_col = ".draw" if ".draw" in df.columns else "draw"
+
+    df["draw_idx"] = df.groupby(chain_col)[draw_col].transform(
+        lambda x: np.arange(len(x), dtype=int)
+    )
+
+    chains = np.sort(df[chain_col].unique())
+    n_chains = len(chains)
+    n_draws = int(df["draw_idx"].max()) + 1
+
+    posterior_dict: dict[str, np.ndarray] = {}
+
+    for col in df.columns:
+        if col in (chain_col, draw_col, ".iteration", "draw_idx"):
+            continue
+
+        mat = (
+            df.pivot(index="draw_idx", columns=chain_col, values=col)
+            .sort_index(axis=0)
+            .reindex(columns=chains)
+            .to_numpy()
+            .T
+        )
+        posterior_dict[col] = mat
+
+    def reshape_to_arviz(values: np.ndarray) -> np.ndarray:
+        values = np.asarray(values)
+        total = values.shape[0]
+        expected = n_chains * n_draws
+        if total != expected:
+            raise ValueError(
+                f"Expected {expected} rows (chains*draws), got {total}"
+            )
+        new_shape = (n_chains, n_draws) + values.shape[1:]
+        return values.reshape(new_shape)
+
+    # ------------------------------
+    # RESPONSE NAMES via brmsterms()
+    # ------------------------------
+    resp_names: list[str] = []
+    try:
+        # Method 1: Use brmsterms to get response variable names
+        r_code = """
+        function(fit) {
+            bterms <- brms::brmsterms(fit$formula)
+            if (inherits(bterms, "mvbrmsterms")) {
+                # Multivariate: extract response names from each term
+                names(bterms$terms)
+            } else {
+                # Univariate: get the single response
+                resp <- bterms$respform
+                if (!is.null(resp)) {
+                    all.vars(resp)[1]
+                } else {
+                    # Fallback: parse from formula
+                    all.vars(fit$formula$formula)[1]
+                }
+            }
+        }
+        """
+        get_resp_names = cast(Callable, ro.r(r_code))
+        resp_r = get_resp_names(brmsfit_obj)
+        resp_names = list(resp_r)
+    except Exception as e:
+        log_warning(f"[brmsfit_to_idata] Could not get response names via brmsterms: {e}")
+        
+        # Fallback: try to extract from model formula directly
+        try:
+            r_fallback = """
+            function(fit) {
+                # Try to get response names from the model's data
+                y <- brms::get_y(fit)
+                if (is.matrix(y) || is.data.frame(y)) {
+                    colnames(y)
+                } else if (!is.null(names(y))) {
+                    unique(names(y))[1]
+                } else {
+                    "y"
+                }
+            }
+            """
+            get_resp_fallback = cast(Callable, ro.r(r_fallback))
+            resp_r = get_resp_fallback(brmsfit_obj)
+            if hasattr(resp_r, '__iter__') and not isinstance(resp_r, str):
+                resp_names = [str(r) for r in resp_r if r is not None]
+            else:
+                resp_names = [str(resp_r)]
+        except Exception as e2:
+            log_warning(f"[brmsfit_to_idata] Fallback also failed: {e2}")
+
+    # -----------------------------
+    # OBSERVED DATA via brms::get_y
+    # -----------------------------
+    observed_data_dict: dict[str, np.ndarray] = {}
+    coords: dict[str, np.ndarray] = {}
+    dims: dict[str, list[str]] = {}
+    n_obs = 0
+
+    try:
+        r_get_y = cast(Callable, ro.r("brms::get_y"))
+        y_r = r_get_y(brmsfit_obj)
+
+        with localconverter(ro.default_converter + pandas2ri.converter):
+            y_py = pandas2ri.rpy2py(y_r)
+
+        if isinstance(y_py, pd.DataFrame):
+            n_obs = y_py.shape[0]
+            if not resp_names:
+                resp_names = list(y_py.columns)
+            for resp in resp_names:
+                if resp in y_py.columns:
+                    observed_data_dict[resp] = y_py[resp].to_numpy()
+
+        elif isinstance(y_py, pd.Series):
+            n_obs = y_py.shape[0]
+            if not resp_names:
+                resp_names = [str(y_py.name) or "y"]
+            observed_data_dict[resp_names[0]] = y_py.to_numpy()
+
+        else:
+            arr = np.asarray(y_py)
+            if arr.ndim == 1:
+                n_obs = arr.shape[0]
+                if not resp_names:
+                    resp_names = ["y"]
+                observed_data_dict[resp_names[0]] = arr
+            elif arr.ndim == 2:
+                n_obs, k = arr.shape
+                if not resp_names:
+                    resp_names = [f"y_{j}" for j in range(k)]
+                for j, resp in enumerate(resp_names):
+                    observed_data_dict[resp] = arr[:, j]
+
+        coords["obs_id"] = np.arange(n_obs)
+        for resp in resp_names:
+            dims[resp] = ["obs_id"]
+
+    except Exception as e:
+        log_warning(f"[brmsfit_to_idata] Could not extract observed data: {e}")
+
+    # ------------------------------
+    # POSTERIOR PREDICTIVE + LOG-LIK 
+    # ------------------------------
+    post_pred_dict: dict[str, np.ndarray] = {}
+    log_lik_dict: dict[str, np.ndarray] = {}
+
+    try:
+        # Define R wrapper functions that handle the resp argument correctly
+        r_pp_wrapper = cast(Callable, ro.r("""
+        function(fit, resp_name = NULL) {
+            if (is.null(resp_name)) {
+                brms::posterior_predict(fit)
+            } else {
+                brms::posterior_predict(fit, resp = resp_name)
+            }
+        }
+        """))
+        
+        r_ll_wrapper = cast(Callable, ro.r("""
+        function(fit, resp_name = NULL) {
+            if (is.null(resp_name)) {
+                brms::log_lik(fit)
+            } else {
+                brms::log_lik(fit, resp = resp_name)
+            }
+        }
+        """))
+
+        if not resp_names:
+            # No response names found - univariate default
+            pp_r = r_pp_wrapper(brmsfit_obj, ro.NULL)
+            ll_r = r_ll_wrapper(brmsfit_obj, ro.NULL)
+            post_pred_dict["y"] = reshape_to_arviz(np.asarray(pp_r))
+            log_lik_dict["y"] = reshape_to_arviz(np.asarray(ll_r))
+
+        elif len(resp_names) == 1:
+            # Single response
+            resp = resp_names[0]
+            pp_r = r_pp_wrapper(brmsfit_obj, resp)  # Pass as plain string
+            ll_r = r_ll_wrapper(brmsfit_obj, resp)
+            post_pred_dict[resp] = reshape_to_arviz(np.asarray(pp_r))
+            log_lik_dict[resp] = reshape_to_arviz(np.asarray(ll_r))
+
+        else:
+            # Multivariate: loop over response names
+            for resp in resp_names:
+                pp_r = r_pp_wrapper(brmsfit_obj, resp)  # Pass as plain string!
+                ll_r = r_ll_wrapper(brmsfit_obj, resp)
+                post_pred_dict[resp] = reshape_to_arviz(np.asarray(pp_r))
+                log_lik_dict[resp] = reshape_to_arviz(np.asarray(ll_r))
+
+    except Exception as e:
+        log_warning(f"[brmsfit_to_idata] Could not extract posterior predictive/log_lik: {e}")
+        import traceback
+        traceback.print_exc()
+
+    # -------------------
+    # BUILD InferenceData
+    # -------------------
+    idata = az.from_dict(
+        posterior=posterior_dict,
+        posterior_predictive=post_pred_dict or None,
+        log_likelihood=log_lik_dict or None,
+        observed_data=observed_data_dict or None,
+        coords=coords or None,
+        dims=dims or None,
+    )
+
+    return cast(IDFit, idata)
 
 def generic_pred_to_idata(r_pred_obj, brmsfit_obj, newdata=None, var_name="pred", az_name="posterior"):
     """
@@ -1038,7 +1056,7 @@ def r_to_py(obj):
             return cv.rpy2py(obj)
 
     # 1) Atomic vectors -------------------------------------------------------
-    obj_any = typing.cast(typing.Any, obj)
+    obj_any = cast(Any, obj)
     if isinstance(obj, vectors.Vector) and not isinstance(obj, ListVector):
         # length 1 → scalar
         if obj_any.__len__ and len(obj_any) == 1:
@@ -1083,7 +1101,7 @@ def r_to_py(obj):
     except Exception:
         return str(obj)
 
-def kwargs_r(kwargs: typing.Optional[typing.Dict]) -> typing.Dict:
+def kwargs_r(kwargs: Optional[Dict]) -> Dict:
     """
     Convert Python keyword arguments to R-compatible format.
     

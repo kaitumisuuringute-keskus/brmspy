@@ -16,8 +16,11 @@ python -m venv .venv
 source .venv/bin/activate  # or .venv\Scripts\activate on Windows
 pip install -e ".[all]"
 
-# Install R dependencies
-python -c "import brmspy; brmspy.install_brms()"
+# Install R dependencies (fast with prebuilt runtime)
+python -c "import brmspy; brmspy.install_brms(use_prebuilt=True)"
+
+# Or traditional installation from source (~30 minutes)
+# python -c "import brmspy; brmspy.install_brms()"
 ```
 
 ## Project Architecture
@@ -29,7 +32,6 @@ brmspy/
 ├── brmspy/                    # Main package
 │   ├── brms.py               # Core API exports
 │   ├── types.py              # Type definitions and result dataclasses
-│   ├── install.py            # R dependency installation
 │   ├── brms_functions/       # Modular brms function wrappers
 │   │   ├── brm.py            # Model fitting (fit, brm)
 │   │   ├── diagnostics.py    # Model diagnostics (summary, loo, etc.)
@@ -40,18 +42,27 @@ brmspy/
 │   │   ├── prediction.py     # Predictions (posterior_predict, etc.)
 │   │   ├── prior.py          # Prior specifications
 │   │   └── stan.py           # Stan code generation
-│   ├── binaries/             # Prebuilt runtime system
-│   │   ├── build.py          # Create runtime bundles
-│   │   ├── env.py            # Platform detection
-│   │   ├── github.py         # GitHub releases integration
-│   │   ├── r.py              # R installation utilities
-│   │   └── use.py            # Install runtimes
+│   ├── runtime/              # Runtime management system (layered architecture)
+│   │   ├── __init__.py       # Public API: install(), activate(), deactivate(), status()
+│   │   ├── _types.py         # Foundation: RuntimeStatus, RuntimeManifest, SystemInfo
+│   │   ├── _platform.py      # Foundation: Platform detection, fingerprinting
+│   │   ├── _manifest.py      # Foundation: Manifest reading
+│   │   ├── _r_packages.py    # R Layer: Package operations
+│   │   ├── _r_env.py         # R Layer: Environment management
+│   │   ├── _config.py        # Disk Layer: Config management (~/.brmspy/config.json)
+│   │   ├── _storage.py       # Disk Layer: Runtime storage (~/.brmspy/runtime/)
+│   │   ├── _download.py      # Disk Layer: Download utilities
+│   │   ├── _github.py        # Disk Layer: GitHub API integration
+│   │   ├── _rtools.py        # Disk Layer: Windows Rtools installation
+│   │   ├── _state.py         # Orchestration: State management (env snapshots)
+│   │   ├── _activation.py    # Orchestration: Runtime activation/deactivation
+│   │   └── _install.py       # Orchestration: Installation logic
 │   └── helpers/              # Internal utilities
 │       ├── conversion.py     # Python ↔ R ↔ ArviZ
 │       ├── log.py            # Logging utilities
 │       ├── priors.py         # Prior builders
 │       ├── robject_iter.py   # R object iteration
-│       ├── rtools.py         # Windows Rtools
+│       ├── rtools.py         # Rtools utilities (legacy)
 │       └── singleton.py      # R package caching
 ├── .github/workflows/        # CI/CD pipelines
 ├── .runtime_builder/         # Docker for Linux builds
@@ -63,7 +74,6 @@ brmspy/
 
 **brmspy/brms.py** - Main module that exports all public functions
 **brmspy/types.py** - Type definitions and result dataclasses (FitResult, SummaryResult, LooResult, etc.)
-**brmspy/install.py** - R dependency management and installation
 **brmspy/brms_functions/** - Modular organization of brms function wrappers:
   - **brm.py** - Model fitting functions
   - **diagnostics.py** - 8 diagnostic functions (summary, fixef, ranef, loo, loo_compare, validate_newdata, etc.)
@@ -75,7 +85,7 @@ brmspy/
   - **io.py** - Data I/O functions
   - **stan.py** - Stan code generation
 
-**brmspy/binaries/** - Prebuilt runtime bundle system
+**brmspy/runtime/** - Runtime management system with layered architecture (see below)
 **brmspy/helpers/** - Internal conversion and utility functions
 
 ### Data Flow
@@ -96,9 +106,62 @@ ArviZ InferenceData
 Python Result Objects
 ```
 
-## Runtime Binaries System
+## Runtime System Architecture
 
-The runtime system provides prebuilt bundles to skip lengthy R package compilation.
+The runtime system provides prebuilt bundles to skip lengthy R package compilation. The new architecture uses a **layered design pattern** with strict separation of concerns.
+
+### Layered Architecture
+
+The runtime system is organized into 4 layers, each with specific responsibilities:
+
+#### 1. Foundation Layer (No Dependencies)
+Pure functions for system information and data structures.
+
+- **`_types.py`** - Type definitions: [`RuntimeStatus`](../brmspy/runtime/_types.py), [`RuntimeManifest`](../brmspy/runtime/_types.py), [`SystemInfo`](../brmspy/runtime/_types.py)
+- **`_platform.py`** - Platform detection, system fingerprinting, compatibility checks
+- **`_manifest.py`** - Manifest file reading and validation
+
+#### 2. R Layer (Depends on Foundation)
+R package operations and environment management.
+
+- **`_r_packages.py`** - Install/unload R packages, build CmdStan
+- **`_r_env.py`** - Manage R environment variables, GitHub token forwarding
+
+#### 3. Disk Layer (Depends on Foundation)
+File system operations and external integrations.
+
+- **`_config.py`** - Persistent config at [`~/.brmspy/config.json`](../brmspy/runtime/_config.py)
+- **`_storage.py`** - Runtime storage at [`~/.brmspy/runtime/`](../brmspy/runtime/_storage.py)
+- **`_download.py`** - Download and hash verification utilities
+- **`_github.py`** - GitHub API for release discovery
+- **`_rtools.py`** - Windows Rtools installation
+
+#### 4. Orchestration Layer (Depends on All Lower Layers)
+High-level workflows coordinating multiple components.
+
+- **`_state.py`** - Environment snapshot/restore for activation
+- **`_activation.py`** - Runtime activation/deactivation logic
+- **`_install.py`** - Installation orchestration (traditional + prebuilt)
+
+#### Public API (`__init__.py`)
+Four clean functions for users:
+
+```python
+from brmspy import runtime
+
+# Install R packages traditionally (~30 min) or prebuilt (~1 min)
+runtime.install(use_prebuilt=True)
+
+# Activate a specific runtime
+runtime.activate(runtime_path)
+
+# Deactivate and restore original environment
+runtime.deactivate()
+
+# Query current state
+status = runtime.status()
+print(status.system.fingerprint)  # e.g., 'linux-x86_64-r4.5'
+```
 
 ### System Fingerprint
 
@@ -106,48 +169,45 @@ Each runtime is identified by: `{os}-{arch}-r{major}.{minor}`
 
 Examples:
 - `linux-x86_64-r4.5`
-- `darwin-arm64-r4.5` (macOS Apple Silicon)
+- `macos-arm64-r4.5` (Apple Silicon)
 - `windows-x86_64-r4.5`
 
-### Components
-
-**Platform Detection (`brmspy/binaries/env.py`):**
-- Detect OS, architecture, R version
-- Generate system fingerprint
-- Check runtime compatibility
-
-**Runtime Building (`brmspy/binaries/build.py`):**
-- Bundle CmdStan binaries
-- Package R packages (cmdstanr, brms, posterior)
-- Include system libraries (Linux)
-- Create manifest with metadata
-
-**Runtime Installation (`brmspy/binaries/use.py`):**
-- Download from GitHub releases
-- Extract and activate runtime
-- Configure environment
+Generated by [`_platform.system_fingerprint()`](../brmspy/runtime/_platform.py:52)
 
 ### Bundle Structure
 
 ```
 brmspy-runtime-{fingerprint}-{version}.tar.gz
-├── manifest.json              # Metadata
-├── cmdstan/                   # Compiled CmdStan
-├── Rlib                       # R libraries
+├── manifest.json              # Metadata (fingerprint, versions, build info)
+├── cmdstan/                   # Compiled CmdStan binaries
+└── Rlib/                      # R libraries (brms, cmdstanr, dependencies)
 ```
 
-### Usage
+Installed to: `~/.brmspy/runtime/{fingerprint}-{version}/`
+
+### Usage Examples
 
 ```python
 import brmspy
 
-# Install prebuilt runtime (2-3 minutes vs 20-30 from source)
-brmspy.install_prebuilt(version="0.1.0")
+# Fast installation with prebuilt runtime (~1 minute)
+brmspy.install_brms(use_prebuilt=True)
 
-# Build custom runtime locally
-from brmspy.binaries.build import build_runtime_bundle
-build_runtime_bundle(output_dir="dist/runtime")
+# Traditional installation (~30 minutes)
+brmspy.install_brms()
+
+# Check current runtime status
+status = brmspy.runtime.status()
+print(f"Active: {status.active_runtime}")
+print(f"System: {status.system.fingerprint}")
+print(f"Can use prebuilt: {status.can_use_prebuilt}")
+
+# Manual activation/deactivation
+brmspy.runtime.activate("/path/to/runtime")
+brmspy.runtime.deactivate()
 ```
+
+**Note:** Runtime building is handled internally by CI/CD. Users should use [`install(use_prebuilt=True)`](../brmspy/runtime/__init__.py:236) rather than building locally.
 
 ## CI/CD Pipelines
 
@@ -175,7 +235,7 @@ All workflows in `.github/workflows/`:
 
 **Workflow:**
 - Python 3.12 only
-- Tests marked with `@pytest.mark.crossplatform`
+- Tests marked with `@pytest.mark.rdeps`
 - Fail-fast disabled
 
 ### 3. Documentation (`docs.yml`)
@@ -201,7 +261,7 @@ All workflows in `.github/workflows/`:
 
 ### 5. Runtime Publish (`runtime-publish.yml`)
 
-**Trigger:** Manual dispatch  
+**Trigger:** Manual dispatch
 **Purpose:** Build prebuilt runtimes for all platforms
 
 **Architecture:**
@@ -213,7 +273,7 @@ All workflows in `.github/workflows/`:
 ```yaml
 - Pull: ghcr.io/.../brmspy-runtime-builder:ubuntu18-gcc9
 - Install R 4.5.0
-- Build runtime: python -m brmspy.binaries.build
+- Build runtime using internal build script
 - Upload tarball
 ```
 
@@ -221,9 +281,11 @@ All workflows in `.github/workflows/`:
 ```yaml
 - Setup Python 3.12 + R 4.5
 - Install dependencies
-- Build runtime
+- Build runtime using internal build script
 - Upload tarball
 ```
+
+**Note:** Runtime building uses internal tooling. The public API for users is [`brmspy.runtime.install(use_prebuilt=True)`](../brmspy/runtime/__init__.py).
 
 ### 6. Linux Runtime Builder (`build-linux-runtime-image.yml`)
 
@@ -262,16 +324,24 @@ docker push ghcr.io/{owner}/brmspy-runtime-builder:{tag}
 
 ```
 tests/
-├── conftest.py              # Pytest fixtures (sample_dataframe, etc.)
-├── test_basic.py            # Basic functionality tests
-├── test_crossplatform.py    # Cross-platform compatibility tests
-├── test_diagnostics.py      # Diagnostics functions tests (14 tests)
-├── test_families.py         # Family specifications tests
-├── test_generic.py          # Generic function caller tests
-├── test_integration.py      # End-to-end integration tests
-├── test_io.py               # I/O functions tests
-├── test_predictions.py      # Prediction functions tests
-└── test_priors.py           # Prior specification tests
+├── conftest.py                      # Pytest fixtures (sample_dataframe, etc.)
+├── test_basic.py                    # Basic functionality tests
+├── test_diagnostics.py              # Diagnostics functions tests (14 tests)
+├── test_families.py                 # Family specifications tests
+├── test_generic.py                  # Generic function caller tests
+├── test_integration.py              # End-to-end integration tests
+├── test_io.py                       # I/O functions tests
+├── test_predictions.py              # Prediction functions tests
+├── test_priors.py                   # Prior specification tests
+├── test_conversion.py               # Type conversion tests
+├── test_log.py                      # Logging utility tests
+├── test_rdeps_1_install.py          # Runtime installation tests (marked @pytest.mark.rdeps)
+├── test_rdeps_build.py              # Runtime building tests
+├── test_rdeps_config.py             # Config management tests
+├── test_rdeps_github.py             # GitHub API tests
+├── test_rdeps_install_extended.py   # Extended installation tests
+├── test_runtime_r_env.py            # R environment management tests
+└── test_runtime_storage.py          # Runtime storage tests
 ```
 
 **Test Coverage:**
@@ -285,14 +355,14 @@ tests/
 ```bash
 pytest tests/ -v                    # All tests
 pytest tests/ -v --cov=brmspy      # With coverage
-pytest -m crossplatform            # Cross-platform only
+pytest -m rdeps                    # DESTRUCTIVE rdeps tests
 pytest -n auto                     # Parallel (requires pytest-xdist)
 ```
 
 ### Test Markers
 
 ```python
-@pytest.mark.crossplatform
+@pytest.mark.rdeps
 def test_basic_fit():
     """Runs on all platforms in CI"""
     pass
@@ -317,14 +387,21 @@ Update in:
 
 ### Building Runtimes
 
-**Via GitHub Actions:**
+**Via GitHub Actions (Recommended):**
 1. Go to **Actions** → **runtime-publish**
 2. **Run workflow** with version and tag
 3. Runtimes published to: `releases/tag/runtime`
 
-**Locally:**
-```bash
-python -m brmspy.binaries.build --output-dir dist/runtime
+**Local Development:**
+Runtime building for local development uses internal scripts not exposed in the public API. For testing, use:
+
+```python
+# Install from source for testing
+import brmspy
+brmspy.install_brms()  # Traditional installation
+
+# Or test with prebuilt from GitHub
+brmspy.install_brms(use_prebuilt=True)
 ```
 
 ## Documentation
@@ -420,19 +497,32 @@ xcode-select --install
 
 **Windows:**
 ```python
-import brmspy.helpers.rtools as rtools
-rtools.install_rtools()
+import brmspy
+# Automatically installs Rtools if needed
+brmspy.install_brms(install_rtools=True)
+```
+
+Or manually via the runtime API:
+```python
+from brmspy.runtime import _rtools
+_rtools.ensure_installed()  # Internal API
 ```
 
 ### Runtime Incompatibility
 
 ```python
-# Build local runtime
-from brmspy.binaries.build import build_runtime_bundle
-build_runtime_bundle(output_dir="custom")
+# Check compatibility
+from brmspy import runtime
+status = runtime.status()
+print(f"Can use prebuilt: {status.can_use_prebuilt}")
+print(f"Issues: {status.compatibility_issues}")
 
-# Or install matching prebuilt
-brmspy.install_prebuilt()  # Auto-detects platform
+# Install matching prebuilt (auto-detects platform)
+import brmspy
+brmspy.install_brms(use_prebuilt=True)
+
+# Or install from source
+brmspy.install_brms()  # Traditional installation
 ```
 
 ## Contributing

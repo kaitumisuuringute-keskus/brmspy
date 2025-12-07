@@ -1,7 +1,7 @@
 """Result types for brmspy functions."""
 
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Mapping, Optional, cast
+from typing import Any, Callable, Dict, List, Mapping, Optional, Union, cast
 import rpy2.robjects as robjects
 import arviz as az
 import xarray as xr
@@ -410,6 +410,27 @@ class FormulaResult(RListVectorExtension):
     """
     dict: Dict
 
+    @classmethod
+    def _formula_parse(cls, r: Union[str, robjects.ListVector]) -> 'FormulaResult':
+        from .helpers.conversion import r_to_py
+        if isinstance(r, str):
+            r_fun = cast(Callable, robjects.r('brms::bf'))
+            r = cast(robjects.ListVector, r_fun(r))
+        return cls(r=r, dict=cast(dict, r_to_py(r)))
+
+
+    def __add__(self, other):
+        if isinstance(other, (robjects.ListVector, str)):
+            other = FormulaResult._formula_parse(other)
+
+        if not isinstance(other, FormulaResult):
+            raise ArithmeticError("When adding values to formula, they must be FormulaResult or parseable to FormulaResult")
+        
+        plus = cast(Callable, robjects.r('function (a, b) a + b'))
+        combo = plus(self.r, other.r)
+
+        return FormulaResult._formula_parse(combo)
+
 
 
 
@@ -421,7 +442,7 @@ def _indent_block(text: str, prefix: str = "  ") -> str:
 class SummaryResult(RListVectorExtension):
     formula: str
     data_name: str
-    group: str
+    group: Union[str, List[str]]
     nobs: int
     prior: pd.DataFrame
     algorithm: str
@@ -435,84 +456,16 @@ class SummaryResult(RListVectorExtension):
     fixed: pd.DataFrame
     spec_pars: pd.DataFrame
     cor_pars: pd.DataFrame
+    rescor_pars: Optional[pd.DataFrame] = None
     ngrps: Optional[Dict[str, int]] = None
     autocor: Optional[dict] = None
     random: Optional[Dict[str, pd.DataFrame]] = None
+    _str: Optional[str] = None
 
     def __str__(self) -> str:
-        lines = []
-
-        # Header (roughly analogous to brms::summary header)
-        lines.append("Summary of brmsfit (Python)")
-        lines.append("")
-        lines.append(f"Formula: {self.formula}")
-        lines.append(
-            f"   Data: {self.data_name} (Number of observations: {self.nobs})"
-        )
-        lines.append(
-            "  Draws: "
-            f"{self.chains:g} chains, each with iter = {self.iter:g}; "
-            f"warmup = {self.warmup:g}; thin = {self.thin:g};"
-        )
-        lines.append(
-            f"         total post-warmup draws = {self.total_ndraws}"
-        )
-
-        # Group-level info
-        if self.ngrps:
-            lines.append("")
-            lines.append("Group-Level Effects:")
-            grp_parts = [f"{name} ({n})" for name, n in self.ngrps.items()]
-            lines.append("  Groups: " + ", ".join(grp_parts))
-
-            if self.random:
-                # brms usually has a list of data.frames here; we try to mirror that
-                if isinstance(self.random, dict):
-                    for gname, val in self.random.items():
-                        lines.append(f" ~{gname}")
-                        if isinstance(val, pd.DataFrame):
-                            lines.append(_indent_block(val.to_string(), "  "))
-                        else:
-                            lines.append(_indent_block(str(val), "  "))
-                else:
-                    lines.append(_indent_block(str(self.random), "  "))
-
-        # Population-level effects
-        if isinstance(self.fixed, pd.DataFrame) and not self.fixed.empty:
-            lines.append("")
-            lines.append("Population-Level Effects:")
-            lines.append(_indent_block(self.fixed.to_string(), "  "))
-
-        # Family-specific parameters (spec_pars)
-        if isinstance(self.spec_pars, pd.DataFrame) and not self.spec_pars.empty:
-            lines.append("")
-            lines.append("Family Specific Parameters:")
-            lines.append(_indent_block(self.spec_pars.to_string(), "  "))
-
-        # Correlation parameters (cor_pars)
-        if isinstance(self.cor_pars, pd.DataFrame) and not self.cor_pars.empty:
-            lines.append("")
-            lines.append("Correlation Parameters:")
-            lines.append(_indent_block(self.cor_pars.to_string(), "  "))
-
-        # Prior info (optional but often useful)
-        if isinstance(self.prior, pd.DataFrame) and not self.prior.empty:
-            lines.append("")
-            lines.append("Prior:")
-            lines.append(_indent_block(self.prior.to_string(), "  "))
-
-        # Extra diagnostics / meta info
-        lines.append("")
-        lines.append("Algorithm & Diagnostics:")
-        lines.append(f"  Algorithm: {self.algorithm}")
-        lines.append(f"  Sampler:   {self.sampler}")
-        lines.append(f"  Rhat:      {'reported' if self.has_rhat else 'not reported'}")
-        if self.autocor is not None:
-            lines.append(f"  Autocor:   {self.autocor}")
-        else:
-            lines.append("  Autocor:   None")
-
-        return "\n".join(lines)
+        if self._str:
+            return self._str
+        return "MISSING REPR"
 
     def __repr__(self) -> str:
         # For interactive use, repr == pretty summary

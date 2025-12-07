@@ -227,7 +227,7 @@ jobs:
           R_LIBS_USER: ${{ env.R_LIBS_USER }}
         run: |
           python -m pip install --upgrade pip
-          python -m pip install pytest pytest-cov arviz tqdm
+          python -m pip install pytest pytest-cov pytest-xdist arviz tqdm
           python -m pip install -e ".[dev]"
 
       - name: mk coverage
@@ -263,4 +263,6 @@ jobs:
             matrix.os == 'ubuntu-latest' &&
             github.ref == 'refs/heads/master' &&
             matrix.python-version == '3.12'
-        uses: we-cli/coverage-badge-action@main
+        uses: ./.github/actions/cover-badge
+        with:
+          filename: coverage.svg

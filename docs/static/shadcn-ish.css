@@ -41,3 +41,7 @@
 .md-typeset {
   line-height: 1.6;
 }
+
+.jp-RenderedText[data-mime-type="application/vnd.jupyter.stderr"] {
+  display: none;
+}

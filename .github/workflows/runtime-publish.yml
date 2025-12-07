@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       runtime_version:
-        description: "Logical runtime version (e.g. 0.1.0)"
+        description: "Logical runtime version (e.g. 0.2.0)"
         required: true
         type: string
-        default: "0.1.0"
+        default: "0.2.0"
       tag:
         description: "Git tag for the runtime release (e.g. runtime)"
         required: false
@@ -31,8 +31,8 @@ jobs:
         id: get_or_create_release
         uses: actions/github-script@v7
         env:
-          TAG: ${{ inputs.tag || 'runtime' }}
-          RUNTIME_VERSION: ${{ inputs.runtime_version || '0.1.0' }}
+          TAG: ${{ inputs.tag || format('runtime-{0}', inputs.runtime_version || '0.2.0') }}
+          RUNTIME_VERSION: ${{ inputs.runtime_version || '0.2.0' }}
         with:
           script: |
             const tag = process.env.TAG;
@@ -56,8 +56,8 @@ jobs:
                 owner,
                 repo,
                 tag_name: tag,
-                name: `Runtimes`,
-                body: `brmspy prebuilt runtimes for cmdstanr and brms.`,
+                name: `Runtimes ${runtimeVersion}`,
+                body: `brmspy prebuilt runtimes ${runtimeVersion} for cmdstanr and brms.`,
                 draft: false,
                 prerelease: true
               });
@@ -67,11 +67,13 @@ jobs:
 
   publish:
     needs: create-release
+    env:
+      RUNTIME_VERSION: ${{ inputs.runtime_version || '0.2.0' }}
     strategy:
       fail-fast: false
       max-parallel: 9
       matrix:
-        r: ["4.4", "4.3", "4.2", "4.1", "4.0", "4.5"]
+        r: ["4.5", "4.4", "4.3", "4.2", "4.1", "4.0"]
         os: [ubuntu-latest, macos-latest, windows-latest]
 
     runs-on: ${{ matrix.os }}
@@ -114,6 +116,7 @@ jobs:
             -w /work \
             -e R_VERSION="${R_VERSION}" \
             -e RPY2_CFFI_MODE="${RPY2_CFFI_MODE}" \
+            -e RUNTIME_VERSION="${RUNTIME_VERSION}" \
             ghcr.io/kaitumisuuringute-keskus/brmspy-runtime-builder:ubuntu18-gcc9 \
             bash -lc '
               set -euo pipefail
@@ -132,7 +135,7 @@ jobs:
 
               echo "== Installing Python deps =="
               python -m pip install --upgrade pip
-              python -m pip install pytest pytest-cov arviz tqdm
+              python -m pip install pytest pytest-cov pytest-xdist arviz tqdm
               python -m pip install -e ".[dev]"
 
               echo "== Installing R deps via brmspy =="
@@ -140,7 +143,7 @@ jobs:
 
               echo "== Building runtime tarball =="
               mkdir -p dist/runtime
-              python -m brmspy.binaries.build --output-dir dist/runtime
+              python -m brmspy.build --output-dir dist/runtime --runtime-version "$RUNTIME_VERSION"
 
               echo "== Contents of dist/runtime =="
               ls -R dist/runtime
@@ -196,7 +199,7 @@ jobs:
         shell: bash
         run: |
           python -m pip install --upgrade pip
-          python -m pip install pytest pytest-cov arviz tqdm
+          python -m pip install pytest pytest-cov pytest-xdist arviz tqdm
           python -m pip install -e ".[dev]"
 
       - name: Install R dependencies
@@ -218,7 +221,7 @@ jobs:
           RPY2_CFFI_MODE: "ABI"
         run: |
           mkdir -p dist/runtime
-          python -m brmspy.binaries.build --output-dir "dist/runtime"
+          python -m brmspy.build --output-dir "dist/runtime" --runtime-version "$RUNTIME_VERSION"
 
           RUNTIME_TARBALL=$(ls dist/runtime/*.tar.gz)
           if [ -z "$RUNTIME_TARBALL" ]; then
@@ -237,7 +240,7 @@ jobs:
       - name: Delete existing asset if it exists
         uses: actions/github-script@v7
         env:
-          TAG: ${{ inputs.tag || 'runtime' }}
+          TAG: ${{ inputs.tag || format('runtime-{0}', inputs.runtime_version || '0.2.0') }}
           ASSET_NAME: "${{ env.RUNTIME_FILENAME }}"
         with:
           script: |

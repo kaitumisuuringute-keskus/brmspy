@@ -1,10 +1,11 @@
-import typing
+from typing import Union, Sequence, Optional
 import pandas as pd
 
-from .formula import formula
-from brmspy.helpers.log import log
+
+from .formula import bf
+from brmspy.helpers.log import log, log_warning
 from ..helpers.priors import _build_priors
-from ..helpers.singleton import _get_brms, _get_cmdstanr, _get_rstan
+from ..runtime._state import get_brms, get_cmdstanr, get_rstan
 from ..helpers.conversion import (
     brmsfit_to_idata,
     kwargs_r, py_to_r
@@ -13,21 +14,30 @@ from ..types import (
     FitResult, FormulaResult, IDFit, PriorSpec
 )
 from rpy2.robjects import ListVector
+from rpy2.rinterface_lib import openrlib
 
 
-_formula_fn = formula
+_formula_fn = bf
 
 
+_WARNING_CORES = """`cores <= 1` is unsafe in embedded R sessions. The single-process
+code path used by brmsfit manipulation or creation functions can crash the interpreter.
+Always use `cores >= 2` to force parallel workers and avoid segfaults."""
 
-def fit(
-    formula: typing.Union[FormulaResult, str],
-    data: typing.Union[dict, pd.DataFrame],
-    priors: typing.Optional[typing.Sequence[PriorSpec]] = None,
-    family: typing.Union[str, ListVector] = "gaussian",
+def _warn_cores(cores: Optional[int]):
+    if cores is None or cores <= 1:
+        log_warning(_WARNING_CORES)
+
+def brm(
+    formula: Union[FormulaResult, str],
+    data: Union[dict, pd.DataFrame],
+    priors: Optional[Sequence[PriorSpec]] = None,
+    family: Optional[Union[str, ListVector]] = "gaussian",
     sample_prior: str = "no",
     sample: bool = True,
     backend: str = "cmdstanr",
-    formula_args: typing.Optional[dict] = None,
+    formula_args: Optional[dict] = None,
+    cores: Optional[int] = 2,
     **brm_args,
 ) -> FitResult:
     """
@@ -70,6 +80,12 @@ def fit(
     posterior_epred : Expected value predictions
     posterior_predict : Posterior predictive samples
     formula : Create formula object with options
+
+    Warnings
+    --------
+    ``cores <= 1`` is unsafe in embedded R sessions. The single-process
+    code path used by ``brms::brm()`` can crash the interpreter.
+    Always use ``cores >= 2`` to force parallel workers and avoid segfaults.
     
     Examples
     --------
@@ -137,15 +153,15 @@ def fit(
         )
     ```
     """
-    brms = _get_brms()
+    brms = get_brms()
 
     if backend == "cmdstanr":
-        cmdstanr = _get_cmdstanr()
+        cmdstanr = get_cmdstanr()
         if cmdstanr is None:
             raise RuntimeError("cmdstanr backend is not installed! Please run install_brms(install_cmdstanr=True)")
 
     if backend == "rstan":
-        rstan = _get_rstan()
+        rstan = get_rstan()
         if rstan is None:
             raise RuntimeError("rstan backend is not installed! Please run install_brms(install_rstan=True)")
     
@@ -171,6 +187,7 @@ def fit(
         'family': family,
         'sample_prior': sample_prior,
         'backend': backend,
+        'cores': cores
     }
     
     # Add priors if specified
@@ -178,8 +195,9 @@ def fit(
         brm_kwargs['prior'] = brms_prior
     
     # Add user-specified arguments
-    brm_args = kwargs_r(brm_args)
     brm_kwargs.update(brm_args)
+
+    brm_kwargs = kwargs_r(brm_kwargs)
     
     # Set empty=TRUE if not sampling
     if not sample:
@@ -189,7 +207,8 @@ def fit(
         log(f"Fitting model with brms (backend: {backend})...")
     
     # Call brms::brm() with all arguments
-    fit = brms.brm(**brm_kwargs)
+    with openrlib.rlock:
+        fit = brms.brm(**brm_kwargs)
     
     # Handle return type conversion
     if not sample:
@@ -198,4 +217,13 @@ def fit(
     idata = brmsfit_to_idata(fit)
     return FitResult(idata=idata, r=fit)
 
-brm = fit
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,103 @@
+name: Coverage Badge
+description: Badges for test results and code coverage
+
+branding:
+  icon: check-circle
+  color: green
+
+inputs:
+  filename:
+    description: "Filename for the generated coverage badge (inside badges/)"
+    required: false
+    default: cover.svg
+  label:
+    description: "Label text shown on the badge (left side)"
+    required: false
+    default: coverage
+
+runs:
+  using: composite
+  steps:
+    - name: Get Values
+      id: get-values
+      shell: bash
+      run: |
+        if [ -f "coverage/coverage-summary.json" ]; then
+          COV=$(node -p 't=require(`./coverage/coverage-summary.json`).total,Math.min(...`lines|statements|functions|branches`.split(`|`).map(k=>t[k].pct))')
+        elif [ -f "coverage.json" ]; then
+          COV=$(python -c 'import json; print(json.load(open("coverage.json"))["totals"]["percent_covered_display"])')
+        else
+          echo "Error: Neither coverage/coverage-summary.json nor coverage.json found."
+          exit 1
+        fi
+        echo "coverage=$COV" >> "$GITHUB_OUTPUT"
+
+    # pretend to be still https://github.com/stefanzweifel/git-auto-commit-action/blob/master/action.yml
+    - name: Git Config
+      shell: bash
+      run: |
+        git config user.name github-actions[bot]
+        git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+
+    - name: Pick Deploy Branch
+      id: pick-deploy-branch
+      shell: bash
+      run: |
+        IS_DEFAULT_BRANCH=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
+        DEPLOY_BRANCH=$([ "$IS_DEFAULT_BRANCH" = true ] && echo 'gh-pages' || echo 'gh-pages-debug')
+        echo "deploy_branch=$DEPLOY_BRANCH" >> "$GITHUB_OUTPUT"
+        if git ls-remote --exit-code --heads origin $DEPLOY_BRANCH; then
+          echo "Branch $DEPLOY_BRANCH exists."
+        else
+          git switch --orphan $DEPLOY_BRANCH
+          git commit --allow-empty -m "Initial commit"
+          git push -u origin $DEPLOY_BRANCH
+          echo "Branch $DEPLOY_BRANCH created."
+        fi
+
+    - name: Checkout ${{ steps.pick-deploy-branch.outputs.deploy_branch }}
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ steps.pick-deploy-branch.outputs.deploy_branch }}
+
+    - name: Create Badges
+      shell: bash
+      env:
+        COV: ${{ steps.get-values.outputs.coverage }}
+        BADGE_FILENAME: ${{ inputs.filename }}
+        BADGE_LABEL: ${{ inputs.label }}
+      run: |
+        npm i -g badgen-cli
+        COLOR=$(node -p '+process.env.COV >= 95 ? `green` : `orange`')
+        badgen -j "$BADGE_LABEL" -s "$COV%" -c "$COLOR" > "$RUNNER_TEMP/$BADGE_FILENAME"
+
+    - name: Deploy Badges
+      shell: bash
+      env:
+        BADGE_FILENAME: ${{ inputs.filename }}
+      run: |
+        set -e
+        DEPLOY_BRANCH="${{ steps.pick-deploy-branch.outputs.deploy_branch }}"
+
+        git fetch origin "$DEPLOY_BRANCH"
+        git reset --hard "origin/$DEPLOY_BRANCH"
+
+        mkdir -p badges
+        mv "$RUNNER_TEMP/$BADGE_FILENAME" "badges/$BADGE_FILENAME"
+
+        git add "badges/$BADGE_FILENAME" || true
+
+        if ! git diff --cached --quiet; then
+          git commit -m 'Update badges [skip ci]'
+          git push
+        else
+          echo "No changes to commit"
+        fi
+
+    # Without this, will get Error:
+    # Can't find 'action.yml', 'action.yaml' or 'Dockerfile' under '/home/runner/work/coverage-badge-action/coverage-badge-action/action.yml'.
+    # Did you forget to run actions/checkout before running your local action?
+    - name: Checkout Back
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ github.ref }}

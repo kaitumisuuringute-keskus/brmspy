@@ -96,10 +96,10 @@ class TestGenericCallFunction:
         
         # Alternative test: call a function that definitely exists
         # nobs (number of observations)
-        result = brmspy.call("nobs", model)
+        result_nobs = brmspy.call("nobs", model)
         
         # Should return the number of observations
-        assert isinstance(result, (int, float)), \
+        assert isinstance(result_nobs, (int, float)), \
             "nobs should return a number"
-        assert result == len(sample_dataframe), \
-            f"nobs should return {len(sample_dataframe)}, got {result}"
+        assert result_nobs == len(sample_dataframe), \
+            f"nobs should return {len(sample_dataframe)}, got {result_nobs}"

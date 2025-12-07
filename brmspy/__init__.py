@@ -31,7 +31,7 @@ Install R dependencies (traditional method, ~30 minutes):
 Quick installation with prebuilt binaries (recommended, ~1 minute):
 
 ```python
-    brms.install_brms(use_prebuilt_binaries=True)
+    brms.install_brms(use_prebuilt=True)
 ```
 Install specific brms version:
 
@@ -178,37 +178,73 @@ Complete workflow with model diagnostics:
 ```
 """
 
-__version__ = "0.1.13"
+__version__ = "0.2.0"
 __author__ = "Remi Sebastian Kits, Adam Haber"
 __license__ = "Apache-2.0"
 
+def _initialise_r_safe() -> None:
+    """
+    Configure R for safer embedded execution.
+
+    - Force rpy2 ABI mode (must be set before importing rpy2)
+    - Disable fork-based R parallelism (future::multicore, mclapply)
+    - Use future::plan(sequential) if future is available
+    - Leave cmdstanr multi-core sampling alone
+    """
+    import os
+    import sys
+
+    import rpy2.robjects as ro
+
+    ro.r(
+        r"""
+        # Disable fork-based mechanisms that are unsafe in embedded R
+        options(
+          mc.cores = 1L,             # parallel::mclapply -> serial
+          future.fork.enable = FALSE, # disable future::multicore
+          loo.cores = 1L # deprecated but still respected, for now.
+        )
+
+        # If 'future' is installed, force sequential backend
+        if (requireNamespace("future", quietly = TRUE)) {
+          future::plan(future::sequential)
+        }
+        """
+    )
+
+
+_initialise_r_safe()
+
 # Import brms module for use as: from brmspy import brms
 from brmspy import brms
-from brmspy.binaries import (
-    system_fingerprint,
-    activate_runtime,
-    install_and_activate_runtime
+from brmspy import runtime
+from brmspy.runtime import (
+    install_brms, install_runtime,
+    deactivate_runtime, activate_runtime,
+    find_local_runtime, get_active_runtime,
+    get_brms_version,
 )
+from brmspy.runtime._platform import system_fingerprint
 from brmspy.brms import (
     get_brms_data,
+    get_data,
     fit, brm,
-    formula,
-    install_brms, install_prebuilt,
-    get_brms_version,
+
+    formula, bf, set_nl, set_mecor, set_rescor,
+    lf, nlf, acformula,
+
     make_stancode,
     posterior_epred,
     posterior_predict,
     posterior_linpred,
     log_lik,
     summary, fixef, ranef,
-    prior_summary, posterior_summary, loo, loo_compare, validate_newdata,
+    prior_summary, posterior_summary, validate_newdata,
     prior, get_prior, default_prior,
 
     call,
 
     save_rds, read_rds_fit, read_rds_raw,
-
-    families, family, brmsfamily,
 
     FitResult,
     PosteriorEpredResult,
@@ -222,20 +258,37 @@ from brmspy.brms import (
     IDFit,
     IDLogLik,
     IDPredict,
-    PriorSpec
+    PriorSpec,
+
+    install_rpackage
+)
+from brmspy.brms_functions.families import (
+    brmsfamily, family, student, bernoulli, beta_binomial, negbinomial,
+    negbinomial2, geometric, discrete_weibull, com_poisson, lognormal,
+    shifted_lognormal, skew_normal, exponential, weibull, frechet,
+    gen_extreme_value, exgaussian, wiener, Beta, xbeta, dirichlet,
+    dirichlet2, logistic_normal, von_mises, asym_laplace,
+    zero_inflated_asym_laplace, cox, hurdle_poisson, hurdle_negbinomial,
+    hurdle_gamma, hurdle_lognormal, hurdle_cumulative, zero_inflated_beta,
+    zero_one_inflated_beta, zero_inflated_poisson, zero_inflated_negbinomial,
+    zero_inflated_binomial, zero_inflated_beta_binomial, categorical,
+    multinomial, dirichlet_multinomial, cumulative, sratio, cratio, acat,
+    gaussian, poisson, binomial, Gamma, inverse_gaussian
 )
 __all__ = [
     # R env
-    'install_brms', 'get_brms_version', 'install_prebuilt',
+    'install_brms', 'install_runtime', 'get_brms_version',  'deactivate_runtime', 'activate_runtime',
+    'find_local_runtime', 'get_active_runtime',
 
     # IO
-    'get_brms_data', 'save_rds', 'read_rds_raw', 'read_rds_fit',
+    'get_brms_data', 'save_rds', 'read_rds_raw', 'read_rds_fit', 'get_data',
 
     # brm
     'fit', 'brm',
 
     # formula
-    'formula', 
+    'formula', 'bf', 'set_mecor', 'set_rescor', 'set_nl',
+    'lf', 'nlf', 'acformula',
 
     # priors
     'prior', 'get_prior', 'default_prior',
@@ -244,14 +297,24 @@ __all__ = [
     "posterior_predict", "posterior_epred", "posterior_linpred", "log_lik",
 
     # families
-    'families', 'family', 'brmsfamily',
+    "brmsfamily", "family", "student", "bernoulli", "beta_binomial", "negbinomial",
+    "negbinomial2", "geometric", "discrete_weibull", "com_poisson", "lognormal",
+    "shifted_lognormal", "skew_normal", "exponential", "weibull", "frechet",
+    "gen_extreme_value", "exgaussian", "wiener", "Beta", "xbeta", "dirichlet",
+    "dirichlet2", "logistic_normal", "von_mises", "asym_laplace",
+    "zero_inflated_asym_laplace", "cox", "hurdle_poisson", "hurdle_negbinomial",
+    "hurdle_gamma", "hurdle_lognormal", "hurdle_cumulative", "zero_inflated_beta",
+    "zero_one_inflated_beta", "zero_inflated_poisson", "zero_inflated_negbinomial",
+    "zero_inflated_binomial", "zero_inflated_beta_binomial", "categorical",
+    "multinomial", "dirichlet_multinomial", "cumulative", "sratio", "cratio", "acat",
+    "gaussian", "poisson", "binomial", "Gamma", "inverse_gaussian",
 
     # diagnosis
     'summary', 'fixef', 'ranef', 'prior_summary', 'posterior_summary',
-    'loo', 'loo_compare', 'validate_newdata',
+    'validate_newdata',
 
     # generic helper
-    'call',
+    'call', 'install_rpackage',
 
     # types
     'FitResult', 'FormulaResult', 'PosteriorEpredResult', 'PosteriorPredictResult',
@@ -267,11 +330,9 @@ __all__ = [
     # stan
     'make_stancode',
     
-
-    # Extras
-    "system_fingerprint",
-    "activate_runtime",
-    "install_and_activate_runtime",
+    # Runtime API
+    'runtime',
+    'system_fingerprint',
 
     "__version__",
 ]

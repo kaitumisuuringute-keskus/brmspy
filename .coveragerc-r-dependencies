@@ -1,4 +1,14 @@
 [run]
+source = brmspy
+
+[report]
 include =
-    brmspy/install.py
-    brmspy/binaries/*
+    brmspy/runtime/*
+    brmspy/build/*
+
+[paths]
+brmspy =
+    brmspy
+    /home/runner/work/brmspy/brmspy/brmspy
+    /Users/runner/work/brmspy/brmspy/brmspy
+    D:\a\brmspy\brmspy\brmspy

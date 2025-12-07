@@ -1,6 +1,7 @@
 """
 Pytest configuration and shared fixtures for brmspy tests
 """
+from pathlib import Path
 import pytest
 import sys
 import os
@@ -89,9 +90,49 @@ def pytest_configure(config):
     )
     config.addinivalue_line(
         "markers",
-        "crossplatform: crossplatform test. only runs within githubs cross-platform-tests workflow."
+        "rdeps: rdeps test. only runs within githubs r-dependencies-tests workflow."
     )
 
+@pytest.fixture(autouse=True, scope="module")
+def clean_runtime_dir_between_tests(request):
+    """
+    After each test, remove everything inside get_runtime_base_dir().
+
+    Assumes tests are configured to use a throwaway runtime directory
+    (e.g. via env var) so this doesn't touch real user data.
+    """
+
+    if os.getenv('BRMSPY_DESTRUCTIVE_RDEPS_TESTS') != "1":
+        yield
+        return
+
+    from brmspy.runtime._storage import get_runtime_base_dir
+    import shutil
+
+    base_dir: Path = get_runtime_base_dir()
+
+    # If the dir doesn't exist, nothing to do
+    if not base_dir.exists():
+        yield
+        return
+
+    if ".brmspy" not in str(base_dir):
+        # bail out instead of nuking something sketchy
+        yield
+        return
+
+    # Remove contents, keep the base directory itself
+    for entry in base_dir.iterdir():
+        try:
+            if entry.is_dir():
+                shutil.rmtree(entry, ignore_errors=True)
+            else:
+                entry.unlink(missing_ok=True)
+        except Exception:
+            # make cleanup best-effort, not test-failing
+            pass
+    
+    yield
 
 @pytest.fixture(scope="session")
 def brms_available():
@@ -114,13 +155,13 @@ def pytest_collection_modifyitems(config, items):
     Automatically skip tests when required.
     """
     skip_requires_brms = pytest.mark.skip(reason="brms not installed - run: python -c 'import brmspy; brmspy.install_brms()'")
-    skip_requires_crossplatform = pytest.mark.skip(reason="crossplatform test. only runs within githubs cross-platform-tests workflow.'")
-    skip_only_using_crossplatform = pytest.mark.skip(reason="Running in crossplatform-only mode!'")
+    skip_requires_rdeps = pytest.mark.skip(reason="rdeps test. only runs within githubs rdeps test workflow.'")
+    skip_only_using_rdeps = pytest.mark.skip(reason="Running in rdeps-only mode!'")
     
     user_mark_expr = config.getoption("-m") or ""
-    crossplatform_allowed = (
-        "crossplatform" in user_mark_expr
-        and os.getenv('BRMSPY_CROSSPLATFORM_TESTS') == "1"
+    rdeps_allowed = (
+        "rdeps" in user_mark_expr
+        and os.getenv('BRMSPY_DESTRUCTIVE_RDEPS_TESTS') == "1"
     )
 
     # Try to check if brms is available
@@ -135,8 +176,8 @@ def pytest_collection_modifyitems(config, items):
     for item in items:
         if not brms_is_available and "requires_brms" in item.keywords:
             item.add_marker(skip_requires_brms)
-        if not crossplatform_allowed and "crossplatform" in item.keywords:
-            item.add_marker(skip_requires_crossplatform)
-        if crossplatform_allowed and "crossplatform" not in item.keywords:
-            item.add_marker(skip_only_using_crossplatform)
+        if not rdeps_allowed and "rdeps" in item.keywords:
+            item.add_marker(skip_requires_rdeps)
+        if rdeps_allowed and "rdeps" not in item.keywords:
+            item.add_marker(skip_only_using_rdeps)
             

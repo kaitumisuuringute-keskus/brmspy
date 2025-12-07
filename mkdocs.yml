@@ -47,6 +47,7 @@ theme:
 
 plugins:
   - search
+  - mkdocs-jupyter
   - mkdocstrings:
       handlers:
         python:
@@ -81,6 +82,7 @@ nav:
     - Main Module: api/brms.md
     - Install: api/install.md
     - Types: api/types.md
+    - Diagnostics with ArViz: api/diagnostics-arviz.md
     - BRMS functions:
       - brm: api/brms_functions/brm.md
       - diagnostics: api/brms_functions/diagnostics.md
@@ -94,17 +96,11 @@ nav:
     - Helpers:
       - Conversion: api/helpers/conversion.md
       - Priors: api/helpers/priors.md
-      - RTools (Windows): api/helpers/rtools.md
-      - Singleton: api/helpers/singleton.md
   - Examples:
-    - Google colab: examples/google-colab-example.md
-    - Quick Start: examples/quickstart.md
-    - Advanced Usage: examples/advanced.md
+    - Getting started (Colab): examples/brmspy-google-colab.ipynb
+    - Estimating multivariate models: examples/brmspy-estimating-multivariate-models.ipynb
+    - Variational Inference: examples/brmspy-vi-sampling.ipynb
  
-  - Binaries:
-    - Build: binaries/build.md
-    - Env: binaries/env.md
-    - Use: binaries/use.md
   - Development: development/development.md
   - Changelog: changelog.md
 

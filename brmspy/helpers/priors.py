@@ -1,7 +1,7 @@
 
 import typing
 
-from brmspy.helpers import singleton
+from brmspy.runtime._state import get_brms
 from brmspy.types import PriorSpec
 
 
@@ -92,7 +92,7 @@ def _build_priors(priors: typing.Optional[typing.Sequence[PriorSpec]] = None) ->
     .. [1] brms prior documentation: https://paul-buerkner.github.io/brms/reference/set_prior.html
     .. [2] Stan prior choice recommendations: https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations
     """
-    brms = singleton._get_brms()
+    brms = get_brms()
     if not priors:
         return []
 

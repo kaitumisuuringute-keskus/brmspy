@@ -1,11 +1,62 @@
+"""
+Diagnostic functions for brms models with ArviZ integration.
+
+This module provides diagnostic functions for analyzing fitted brms models.
+All fitted models return `arviz.InferenceData` objects by default through the
+`.idata` attribute, enabling seamless integration with ArviZ's diagnostic toolkit.
+
+ArviZ Integration
+-----------------
+brmspy models work directly with ArviZ functions without conversion:
+
+- **Summary & Convergence**: `az.summary()`, `az.rhat()`, `az.ess()`
+- **Visualization**: `az.plot_trace()`, `az.plot_posterior()`, `az.plot_pair()`
+- **Model Comparison**: `az.loo()`, `az.waic()`, `az.compare()`
+- **Predictive Checks**: `az.plot_ppc()`
+
+**For multivariate models**, use the `var_name` parameter in ArviZ functions
+to specify which response variable to analyze (e.g., `az.loo(model.idata, var_name="y1")`).
+
+Quick Example
+-------------
+```python
+import brmspy
+import arviz as az
+
+# Fit model
+model = brmspy.fit("count ~ zAge + (1|patient)", data=data, family="poisson")
+
+# Diagnostics
+print(az.summary(model.idata))  # Parameter estimates with Rhat, ESS
+az.plot_trace(model.idata)       # MCMC trace plots
+az.plot_ppc(model.idata)         # Posterior predictive check
+
+# Model comparison
+loo = az.loo(model.idata)
+print(loo)
+```
+
+See Also
+--------
+Diagnostics with ArviZ : Complete guide with examples
+    [https://kaitumisuuringute-keskus.github.io/brmspy/api/diagnostics-arviz/](https://kaitumisuuringute-keskus.github.io/brmspy/api/diagnostics-arviz/)
+
+Notes
+-----
+The InferenceData structure contains:
+
+- **posterior**: All parameter samples with brms naming (e.g., `b_Intercept`, `sd_patient__Intercept`)
+- **posterior_predictive**: Posterior predictive samples for each response
+- **log_likelihood**: Pointwise log-likelihood for LOO/WAIC
+- **observed_data**: Original response values
+"""
 from typing import Callable, Dict, Iterable, Optional, Sequence, Union, cast
 import pandas as pd
 import pandas as pd
 import xarray as xr
 import numpy as np
 
-from brmspy.helpers.log import log_warning
-from brmspy.helpers.robject_iter import iterate_robject_to_dataclass
+from brmspy.helpers._robject_iter import iterate_robject_to_dataclass
 from ..helpers.conversion import (
     kwargs_r,
     py_to_r,
@@ -585,261 +636,6 @@ def prior_summary(
     r_fun = cast(Callable, ro.r('brms::prior_summary'))
     r_df = r_fun(obj_r, **kwargs)
     return cast(pd.DataFrame, r_to_py(r_df))
-
-
-def loo(
-    object: Union[FitResult, ro.ListVector],
-    compare: bool = True,
-    resp = None,
-    pointwise: bool = False,
-    moment_match: bool = False,
-    reloo: bool = False,
-    k_threshold: float = 0.7,
-    save_psis: bool = False,
-    moment_match_args = [],
-    reloo_args = [],
-    model_names = None,
-    **kwargs
-) -> LooResult:
-    """
-    Compute efficient leave-one-out cross-validation (LOO-CV) for Bayesian models.
-    
-    Performs approximate LOO-CV using Pareto smoothed importance sampling (PSIS-LOO)
-    from the loo package. Returns a [`LooResult`](brmspy/types.py:521) dataclass with
-    LOO estimates (elpd_loo, p_loo, looic) and diagnostic information including
-    Pareto k diagnostics for identifying problematic observations.
-    
-    [BRMS documentation](https://paulbuerkner.com/brms/reference/loo.brmsfit.html)
-    [LOO package](https://mc-stan.org/loo/reference/loo.html)
-    
-    Parameters
-    ----------
-    object : FitResult or ro.ListVector
-        Fitted model from [`fit()`](brmspy/brms_functions/brm.py:1) or R brmsfit object
-    compare : bool, default=True
-        If True and multiple models provided, compare models using loo_compare.
-        Only relevant when passing multiple models (not yet supported in this wrapper).
-    resp : str or list of str, optional
-        Response variable names for multivariate models. If specified, compute
-        LOO only for these responses.
-    pointwise : bool, default=False
-        If True, compute log-likelihood separately for each observation (slower but
-        uses less memory). Useful when encountering memory issues with large datasets.
-    moment_match : bool, default=False
-        If True, apply moment matching for observations with high Pareto k values
-        (k > k_threshold). Requires `save_pars=save_pars(all=TRUE)` in original fit.
-        Improves accuracy for problematic observations.
-    reloo : bool, default=False
-        If True, refit model excluding observations with high Pareto k values
-        (k > k_threshold). Provides exact LOO for problematic cases but is
-        computationally expensive.
-    k_threshold : float, default=0.7
-        Pareto k threshold above which moment matching or refitting is applied.
-        Values > 0.7 indicate unreliable importance sampling.
-    save_psis : bool, default=False
-        If True, save the PSIS object in the result for further diagnostics.
-    moment_match_args : list, default=[]
-        Additional arguments passed to loo_moment_match if moment_match=True.
-    reloo_args : list, default=[]
-        Additional arguments passed to reloo if reloo=True.
-    model_names : str or list of str, optional
-        Custom names for models when comparing multiple models.
-    **kwargs
-        Additional arguments passed to brms::loo()
-    
-    Returns
-    -------
-    LooResult
-        Dataclass containing:
-        
-        - **elpd_loo** (float): Expected log pointwise predictive density (higher is better)
-        - **p_loo** (float): Effective number of parameters
-        - **looic** (float): LOO information criterion (lower is better, -2 * elpd_loo)
-        - **se_elpd_loo** (float): Standard error of elpd_loo
-        - **se_p_loo** (float): Standard error of p_loo
-        - **se_looic** (float): Standard error of looic
-        - **estimates** (pd.DataFrame): Full estimates table with all metrics
-        - **pointwise** (pd.DataFrame): Pointwise contributions (if requested)
-        - **diagnostics** (pd.DataFrame): Pareto k diagnostics per observation
-        - **psis_object** (Optional): PSIS object if save_psis=True
-    
-    See Also
-    --------
-    brms::loo : R documentation
-        https://paulbuerkner.com/brms/reference/loo.brmsfit.html
-    loo::loo : LOO package documentation
-        https://mc-stan.org/loo/reference/loo.html
-    
-    Examples
-    --------
-    Basic LOO-CV for model comparison:
-    
-    ```python
-    import brmspy
-    
-    model = brmspy.fit("y ~ x1 + x2", data=data, chains=4)
-    
-    # Compute LOO-CV
-    loo_result = brmspy.loo(model)
-    
-    # Print formatted summary
-    print(loo_result)
-    
-    # Access specific metrics
-    print(f"ELPD LOO: {loo_result.elpd_loo:.2f} ± {loo_result.se_elpd_loo:.2f}")
-    print(f"LOOIC: {loo_result.looic:.2f}")
-    print(f"Effective parameters: {loo_result.p_loo:.2f}")
-    ```
-    
-    Check for problematic observations:
-    
-    ```python
-    # Get Pareto k diagnostics
-    diagnostics = loo_result.diagnostics
-    
-    # Find observations with high Pareto k (unreliable importance sampling)
-    problematic = diagnostics[diagnostics['pareto_k'] > 0.7]
-    print(f"Found {len(problematic)} problematic observations")
-    ```
-    
-    Handle problematic observations with moment matching:
-    
-    ```python
-    # Requires save_pars=save_pars(all=TRUE) in original fit
-    model = brmspy.fit(
-        "y ~ x1 + x2",
-        data=data,
-        chains=4,
-        save_pars=brmspy.save_pars(all=True)
-    )
-    
-    # Apply moment matching for high Pareto k values
-    loo_mm = brmspy.loo(model, moment_match=True, k_threshold=0.7)
-    print(loo_mm)
-    ```
-    
-    Memory-efficient computation for large datasets:
-    
-    ```python
-    # Use pointwise computation to reduce memory usage
-    loo_pointwise = brmspy.loo(model, pointwise=True)
-    print(loo_pointwise)
-    ```
-    """
-    obj_r = py_to_r(object)
-    kwargs = kwargs_r({
-        "compare": compare,
-        "resp": resp,
-        "pointwise": pointwise,
-        "moment_match": moment_match,
-        "reloo": reloo,
-        "k_threshold": k_threshold,
-        "save_psis": save_psis,
-        "moment_match_args": moment_match_args,
-        "reloo_args": reloo_args,
-        "model_names": model_names,
-        **kwargs
-    })
-
-    r_fun = cast(Callable, ro.r('brms::loo'))
-    obj_r = r_fun(obj_r, **kwargs)
-
-    _default_get_r = lambda param: f'function(x) x${param}'
-    _get_methods_r: Dict[str, Callable[[str], str]] = {
-        # scalar summaries
-        "elpd_loo":    lambda param: "function(x) x$estimates['elpd_loo', 'Estimate']",
-        "se_elpd_loo": lambda param: "function(x) x$estimates['elpd_loo', 'SE']",
-
-        "p_loo":       lambda param: "function(x) x$estimates['p_loo', 'Estimate']",
-        "se_p_loo":    lambda param: "function(x) x$estimates['p_loo', 'SE']",
-
-        "looic":       lambda param: "function(x) x$estimates['looic', 'Estimate']",
-        "se_looic":    lambda param: "function(x) x$estimates['looic', 'SE']",
-    }
-
-    names = obj_r.names
-    get = lambda param: r_to_py(cast(Callable, ro.r(_get_methods_r.get(param, _default_get_r)(param)))(obj_r))
-    out = iterate_robject_to_dataclass(names=names, get=get, target_dataclass=LooResult, r=obj_r)
-
-    return cast(LooResult, out)
-
-
-def loo_compare(
-    *objects: Union["FitResult", ro.ListVector],
-    criterion: str = "loo",
-    model_names: Optional[Sequence[str]] = None,
-) -> LooCompareResult:
-    """
-    Compare multiple models using approximate LOO cross-validation.
-
-    This function wraps ``brms::loo()`` and ``loo::loo_compare()``:
-
-    1. For each model, call ``brms::loo()`` to obtain a ``loo`` object.
-    2. Call ``loo::loo_compare()`` on the resulting ``loo`` objects.
-    3. Return the comparison matrix as a :class:`pandas.DataFrame`.
-
-    Currently only the ``'loo'`` criterion is supported.
-
-    Parameters
-    ----------
-    *objects : FitResult or rpy2.robjects.ListVector
-        Two or more fitted models to compare. Typically the
-        :class:`FitResult` objects returned by :func:`brmspy.brms.fit`.
-    criterion : {'loo'}, default 'loo'
-        Information criterion to use. For now only ``'loo'`` is supported.
-    model_names : sequence of str, optional
-        Optional model names to use as row labels in the comparison
-        table. If omitted, row names are taken from the R side and may
-        be less informative when called via Python.
-
-    Returns
-    -------
-    LooCompareResult
-        Object holding:
-
-        * ``table``: a :class:`pandas.DataFrame` with one row per model
-          and columns such as ``elpd_diff`` and ``se_diff``.
-        * ``criterion``: the criterion actually used (currently always
-          ``'loo'``).
-
-    Examples
-    --------
-    ```python
-    comp = loo_compare(fit1, fit2, model_names=["pl-only", "pl+subject"])
-    print(comp)
-    ```
-    """
-    if len(objects) < 2:
-        raise ValueError("loo_compare requires at least two models to compare.")
-
-    if criterion.lower() != "loo":
-        raise NotImplementedError("Only criterion='loo' is supported at the moment.")
-
-    r_brms_loo = cast(Callable, ro.r("brms::loo"))
-    r_loo_compare = cast(Callable, ro.r("loo::loo_compare"))
-    r_as_df = cast(Callable, ro.r("as.data.frame"))
-
-    r_models = [py_to_r(obj) for obj in objects]
-    r_loos = [r_brms_loo(m) for m in r_models]
-
-    res_r = r_loo_compare(*r_loos)
-
-    if model_names is None:
-        # We must set defaults, otherwise grazy long strings will be used
-        model_names = [f"model_{i+1}" for i in range(len(objects))]
-
-    if model_names is not None:
-        if len(model_names) != len(r_loos):
-            raise ValueError(
-                f"len(model_names) ({len(model_names)}) "
-                f"does not match number of models ({len(r_loos)})"
-            )
-        set_rownames = cast(Callable, ro.r("function(x, nm) { rownames(x) <- nm; x }"))
-        res_r = set_rownames(res_r, py_to_r(list(model_names)))
-
-    res_df = cast(pd.DataFrame, r_to_py(r_as_df(res_r)))
-
-    return LooCompareResult(table=res_df, criterion=criterion, r=res_r)
 
 
 def validate_newdata(
