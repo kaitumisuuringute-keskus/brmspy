@@ -73,6 +73,7 @@ jobs:
           GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
           COVERAGE_FILE: .coverage.${{ matrix.os }}
           BRMSPY_RTOOLS_INSTALLER_EXE: ${{ env.RTOOLS_INSTALLER_EXE }}
+          RPY2_CFFI_MODE: "ABI"
         # These tests modify the filesystem, dont run in parallel! xdist just gives us separation
         run: >
       
