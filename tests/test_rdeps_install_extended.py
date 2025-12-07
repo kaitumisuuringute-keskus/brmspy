@@ -12,6 +12,7 @@ import pytest
 import platform
 
 
+
 @pytest.mark.rdeps
 class TestGetLinuxRepo:
     """Test Linux repository detection."""
@@ -237,27 +238,27 @@ class TestInstallBrms:
         from brmspy.runtime import install_brms
         from brmspy.runtime import _r_packages, _r_env, _state
         from unittest.mock import patch, MagicMock
-        
+
         mock_install = MagicMock()
         
         with patch.object(_r_packages, 'set_cran_mirror'):
             with patch.object(_r_env, 'forward_github_token'):
                 with patch.object(_r_packages, 'install_package', mock_install):
                     with patch.object(_r_packages, 'install_package_deps'):
-                        with patch.object(_r_packages, 'build_cmdstan'):
-                            with patch.object(_state, 'invalidate_packages'):
-                                
-                                install_brms(
-                                    use_prebuilt=False,
-                                    install_rstan=True
-                                )
-                                
-                                # Should have called install_package for rstan
-                                rstan_calls = [
-                                    call for call in mock_install.call_args_list
-                                    if call[0][0] == "rstan"
-                                ]
-                                assert len(rstan_calls) > 0
+                        with patch.object(_state, 'invalidate_packages'):
+                            
+                            install_brms(
+                                use_prebuilt=False,
+                                install_cmdstanr=False,
+                                install_rstan=True
+                            )
+                            
+                            # Should have called install_package for rstan
+                            rstan_calls = [
+                                call for call in mock_install.call_args_list
+                                if call[0][0] == "rstan"
+                            ]
+                            assert len(rstan_calls) > 0
 
 
 @pytest.mark.rdeps
