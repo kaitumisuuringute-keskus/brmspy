@@ -35,7 +35,7 @@ class TestGitHubReleaseURL:
         ]
         
         for url in invalid_urls:
-            with pytest.raises(ValueError, match="Invalid GitHub release URL"):
+            with pytest.raises(ValueError, match="Malformed GitHub release URL"):
                 parse_release_url(url)
     
     def test_parse_valid_url(self):
