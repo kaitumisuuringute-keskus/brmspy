@@ -42,7 +42,7 @@ def install_traditional(
     ]
 
     # Install packages
-    _r_packages.install_package("brms", version=brms_version)
+    _r_packages.install_package("brms", version=brms_version, repos_extra=repos_cmdstanr)
     _r_packages.install_package_deps("brms", repos_extra=repos_cmdstanr)
     _r_packages.install_package("StanHeaders", repos_extra=repos_cmdstanr)
     
