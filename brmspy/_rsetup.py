@@ -16,32 +16,48 @@ def _initialise_rpaths() -> None:
             return # Let rpy2 fail naturally later if R isn't found
 
     r_home = Path(os.environ["R_HOME"])
+    lib_dir = r_home / "lib"
     system = platform.system()
 
 
-    # ensure LD_LIBRARY_PATH and link
-    
-    # 3. FORCE LINKING (The "methods.so" Fix)
-    # We explicitly load libR into the global process memory. 
-    # This solves the "libR.so not found" error without relying on LD_LIBRARY_PATH race conditions.
-    
-    lib_path = None
-    if system == "Linux":
-        lib_path = r_home / "lib" / "libR.so"
-    elif system == "Darwin":
-        lib_path = r_home / "lib" / "libR.dylib"
-    
-    # Linux/Mac: Pre-load with RTLD_GLOBAL
-    if lib_path and lib_path.exists():
+    # 2. Update LD_LIBRARY_PATH (For child processes)
+    current_ld = os.environ.get("LD_LIBRARY_PATH", "")
+    if str(lib_dir) not in current_ld:
         import ctypes
-        try:
-            # RTLD_GLOBAL (0x100) makes symbols available to subsequently loaded libraries (like methods.so)
-            ctypes.CDLL(str(lib_path), mode=ctypes.RTLD_GLOBAL)
-            # print(f"[brmspy] Pre-linked R library: {lib_path}")
-        except OSError:
-            # If this fails, we just hope the environment is already correct
-            pass
-    
+        new_ld = f"{lib_dir}:{current_ld}" if current_ld else str(lib_dir)
+        os.environ["LD_LIBRARY_PATH"] = new_ld
+
+        # 3. FORCE LINKING (The Nuclear Option)
+        # We explicitly load ALL shared objects in R_HOME/lib into global memory.
+        if system in ("Linux", "Darwin") and lib_dir.exists():
+            
+            # Define extension based on OS
+            ext = ".dylib" if system == "Darwin" else ".so"
+            
+            # PRIORITIZE libR! It must be loaded first or others might fail.
+            core_lib = lib_dir / ("libR" + ext)
+            if core_lib.exists():
+                try:
+                    ctypes.CDLL(str(core_lib), mode=ctypes.RTLD_GLOBAL)
+                    print(f"DEBUG: Pre-loaded Core: {core_lib.name}")
+                except OSError:
+                    pass
+
+            # Now load everything else in that specific folder (BLAS, LAPACK, etc.)
+            # strictly non-recursive to avoid touching R packages.
+            for shared_lib in lib_dir.glob(f"*{ext}"):
+                # Skip libR if we already loaded it
+                if shared_lib.name == core_lib.name:
+                    continue
+                    
+                try:
+                    # RTLD_GLOBAL makes these symbols available to R packages later
+                    ctypes.CDLL(str(shared_lib), mode=ctypes.RTLD_GLOBAL)
+                    print(f"DEBUG: Pre-loaded Dep: {shared_lib.name}")
+                except OSError:
+                    # Some libs might fail if they have circular deps, ignore them.
+                    pass
+
 
 
 def _initialise_r_safe() -> None:
