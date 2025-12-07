@@ -52,9 +52,8 @@ def unload_package(name: str) -> bool:
     Tries: detach -> unloadNamespace -> library.dynam.unload
     Does NOT uninstall.
     """
-    is_tested = ("cmdstanr", "rstan", "brms", "StanHeaders")
 
-    detach_only = False #name not in is_tested
+    detach_only = False
 
     r_code = f"""
       pkg <- "{name}"
@@ -69,12 +68,13 @@ def unload_package(name: str) -> bool:
           if (search_name %in% search()) {{
             detach(search_name,
                    unload = !detach_only,
-                   character.only = TRUE)
+                   character.only = TRUE,
+                   force = TRUE)
           }}
         }}, error = function(e) {{ success <<- FALSE }})
 
         if (detach_only) {{
-          # For data.table: do *not* touch namespace or DLL
+          # do *not* touch namespace or DLL
           return(success)
         }}
 
@@ -163,7 +163,6 @@ function(runtime_root, include_not_loaded = FALSE) {
     """))(libpath.as_posix(), include_not_loaded)
 
     pkgs = [str(v) for v in cast(ro.StrVector, pkgs)]
-
 
     return pkgs
 
