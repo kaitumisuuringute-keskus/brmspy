@@ -11,6 +11,7 @@ import rpy2.robjects as ro
 from brmspy.helpers.log import log_warning
 
 
+
 # === Queries ===
 
 def get_lib_paths() -> list[str]:
@@ -120,18 +121,27 @@ def unload_package(name: str) -> bool:
 
 
 
-def _find_libpath_packages(libpath: Path | None) -> List[str]:
+def _find_libpath_packages(libpath: Path | None, include_not_loaded: bool = False) -> List[str]:
     import rpy2.robjects as ro
     if libpath is None:
         return []
     pkgs = cast(Callable, ro.r("""
-function(runtime_root) {
+function(runtime_root, include_not_loaded = FALSE) {
   lib_root <- file.path(runtime_root, "Rlib")
   lib_root <- normalizePath(lib_root, winslash = "/", mustWork = TRUE)
 
   attached <- sub("^package:", "", grep("^package:", search(), value = TRUE))
   ns <- loadedNamespaces()
   pkgs <- unique(c(attached, ns))
+                               
+  # optionally add packages that are installed in this lib_root
+  if (isTRUE(include_not_loaded)) {
+    inst <- tryCatch(
+      installed.packages(lib.loc = lib_root)[, "Package"],
+      error = function(e) character(0L)
+    )
+    pkgs <- unique(c(pkgs, inst))
+  }
 
   res <- vapply(pkgs, function(p) {
     path <- suppressWarnings(tryCatch(
@@ -150,9 +160,12 @@ function(runtime_root) {
 
   res[!is.na(res)]
 }
-    """))(libpath.as_posix())
+    """))(libpath.as_posix(), include_not_loaded)
 
-    return [str(v) for v in cast(ro.StrVector, pkgs)]
+    pkgs = [str(v) for v in cast(ro.StrVector, pkgs)]
+
+
+    return pkgs
 
 
 def _compute_unload_order(pkgs: List[str] | None) -> List[str] | None:
@@ -164,35 +177,40 @@ def _compute_unload_order(pkgs: List[str] | None) -> List[str] | None:
     fun = cast(Callable, ro.r("""
 function(pkgs) {
   pkgs <- unique(as.character(pkgs))
-
-  # Only use packages that are actually installed
-  ip <- installed.packages(lib.loc = .libPaths(), noCache = TRUE)[, "Package"]
-  pkgs <- intersect(pkgs, ip)
-
   if (!length(pkgs)) return(character(0L))
 
-  # Reverse dependency graph: for each pkg, which pkgs depend ON it
-  deps <- tools::package_dependencies(
-    pkgs,
-    which    = c("Depends", "Imports", "LinkingTo"),
-    recursive = FALSE,
-    reverse   = TRUE
+  # Try to get metadata; if this fails, just treat as "no deps info"
+  ip <- tryCatch(
+    installed.packages(lib.loc = .libPaths(), noCache = TRUE)[, "Package"],
+    error = function(e) character(0L)
   )
 
-  # Keep only edges within our set
-  deps <- lapply(deps, function(x) intersect(x, pkgs))
+  pkgs_with_meta <- intersect(pkgs, ip)
+
+  deps <- vector("list", length(pkgs))
+  names(deps) <- pkgs
+
+  if (length(pkgs_with_meta)) {
+    d <- tools::package_dependencies(
+      pkgs_with_meta,
+      which     = c("Depends", "Imports", "LinkingTo"),
+      recursive = FALSE,
+      reverse   = TRUE
+    )
+    # Keep only edges within our original pkgs set
+    d <- lapply(d, function(x) intersect(x, pkgs))
+    deps[names(d)] <- d
+  }
 
   remaining <- pkgs
   order <- character(0L)
 
   while (length(remaining)) {
-    # Packages that appear as a dependent of someone else
     has_dependents <- unique(unlist(deps[remaining]))
-    # Leaf = no one depends on it -> safe to unload now
     leaves <- setdiff(remaining, has_dependents)
 
     if (!length(leaves)) {
-      # Cycle or weirdness; append whatever is left and break
+      # Cycle or no dep info: just append the rest
       order <- c(order, remaining)
       break
     }
