@@ -12,7 +12,8 @@ def _initialise_rpaths() -> None:
                 ["R", "RHOME"], text=True, timeout=30
             ).strip()
             os.environ["R_HOME"] = r_home
-        except Exception:
+        except Exception as e:
+            print(f"[brmspy][warning] Failed to set R_HOME: {e}")
             return # Let rpy2 fail naturally later if R isn't found
 
     r_home = Path(os.environ["R_HOME"])
@@ -39,9 +40,9 @@ def _initialise_rpaths() -> None:
             if core_lib.exists():
                 try:
                     ctypes.CDLL(str(core_lib), mode=ctypes.RTLD_GLOBAL)
-                    print(f"DEBUG: Pre-loaded Core: {core_lib.name}")
-                except OSError:
-                    pass
+                    print(f"[brmspy][rsetup][debug] Pre-loaded Core: {core_lib.name}")
+                except OSError as e:
+                    print(f"[brmspy][rsetup][warning] Failed to link libR: {e}")
 
             # Now load everything else in that specific folder (BLAS, LAPACK, etc.)
             # strictly non-recursive to avoid touching R packages.
@@ -53,10 +54,10 @@ def _initialise_rpaths() -> None:
                 try:
                     # RTLD_GLOBAL makes these symbols available to R packages later
                     ctypes.CDLL(str(shared_lib), mode=ctypes.RTLD_GLOBAL)
-                    print(f"DEBUG: Pre-loaded Dep: {shared_lib.name}")
-                except OSError:
+                    print(f"[brmspy][rsetup]: Pre-loaded Dep: {shared_lib.name}")
+                except OSError as e:
                     # Some libs might fail if they have circular deps, ignore them.
-                    pass
+                    print(f"[brmspy][rsetup][WARNING] Failed to link libR: {e}")
 
 
 

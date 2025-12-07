@@ -132,6 +132,7 @@ def clean_runtime_dir_between_tests(request):
             # make cleanup best-effort, not test-failing
             pass
     
+    import brmspy # required for r-initialization
     yield
 
 @pytest.fixture(scope="session")
