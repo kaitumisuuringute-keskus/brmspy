@@ -210,7 +210,7 @@ def install_package(
                 raise RuntimeError(f"{name} did not appear after source install.")
             log(f"brmspy: Installed {name} from source.")
         except Exception as e2:
-            log_error(f"Failed to install {name}.")
+            log_error(f"Failed to install {name}: {e2}")
             raise e2
 
 
