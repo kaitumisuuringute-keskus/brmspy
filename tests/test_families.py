@@ -8,7 +8,6 @@ These tests verify:
 - Family object inspection
 """
 import pytest
-from rpy2.robjects import ListVector
 
 
 @pytest.mark.requires_brms
@@ -17,6 +16,8 @@ class TestBrmsfamilyCore:
     
     def test_brmsfamily_basic(self):
         """Test basic brmsfamily() usage"""
+
+        from rpy2.robjects import ListVector
         from brmspy.brms_functions.families import brmsfamily
         
         # Create basic Gaussian family
@@ -29,6 +30,7 @@ class TestBrmsfamilyCore:
     def test_brmsfamily_with_links(self):
         """Test brmsfamily() with various link functions"""
         from brmspy.brms_functions.families import brmsfamily
+        from rpy2.robjects import ListVector
         
         # Test with different links
         family_log = brmsfamily("poisson", link="log")
@@ -42,6 +44,7 @@ class TestBrmsfamilyCore:
     def test_brmsfamily_with_auxiliary_links(self):
         """Test brmsfamily() with auxiliary parameter links"""
         from brmspy.brms_functions.families import brmsfamily
+        from rpy2.robjects import ListVector
         
         # Gaussian with sigma link
         family = brmsfamily(
@@ -69,6 +72,7 @@ class TestFamilyWrappers:
     def test_all_families_construct(self):
         """Test that all family wrapper functions can be instantiated"""
         from brmspy.brms_functions import families
+        from rpy2.robjects import ListVector
         
         # List of all family functions to test
         family_functions = [
@@ -131,6 +135,7 @@ class TestFamilyWrappers:
     def test_common_families_with_custom_links(self):
         """Test common families with custom link functions"""
         from brmspy.brms_functions.families import gaussian, poisson, binomial
+        from rpy2.robjects import ListVector
         
         # Gaussian with log link (non-standard)
         gauss_log = gaussian(link="log")
@@ -206,6 +211,7 @@ class TestFamilyIntegration:
         from brmspy import brms
         from brmspy.brms_functions.families import student
         import arviz as az
+        from rpy2.robjects import ListVector
         
         # Create student family object
         family_obj = student()
@@ -240,7 +246,7 @@ class TestFamilyExtraction:
         """Test family() function to extract family from fitted model"""
         from brmspy import brms
         from brmspy.brms_functions.families import family
-        import arviz as az
+        from rpy2.robjects import ListVector
         
         # Fit a model
         model = brms.fit(
@@ -274,6 +280,7 @@ class TestSpecialFamilies:
             zero_inflated_binomial,
             zero_inflated_beta
         )
+        from rpy2.robjects import ListVector
         
         # Test each zero-inflated family
         zi_pois = zero_inflated_poisson()
@@ -294,6 +301,7 @@ class TestSpecialFamilies:
             hurdle_gamma,
             hurdle_lognormal
         )
+        from rpy2.robjects import ListVector
         
         # Test each hurdle family
         h_pois = hurdle_poisson()
@@ -314,6 +322,7 @@ class TestSpecialFamilies:
             cratio,
             acat
         )
+        from rpy2.robjects import ListVector
         
         # Test each ordinal family
         ord_cum = cumulative()
@@ -333,6 +342,7 @@ class TestSpecialFamilies:
             multinomial,
             dirichlet_multinomial
         )
+        from rpy2.robjects import ListVector
         
         # Test categorical families
         cat = categorical()
@@ -351,6 +361,7 @@ class TestFamilyParameters:
     def test_beta_family_parameters(self):
         """Test Beta family with precision parameter"""
         from brmspy.brms_functions.families import Beta
+        from rpy2.robjects import ListVector
         
         # Beta with default parameters
         beta_default = Beta()
@@ -363,6 +374,7 @@ class TestFamilyParameters:
     def test_gamma_family_parameters(self):
         """Test Gamma family with shape parameter"""
         from brmspy.brms_functions.families import Gamma
+        from rpy2.robjects import ListVector
         
         # Gamma with default parameters
         gamma_default = Gamma()
@@ -375,6 +387,7 @@ class TestFamilyParameters:
     def test_weibull_family_parameters(self):
         """Test Weibull family for survival analysis"""
         from brmspy.brms_functions.families import weibull
+        from rpy2.robjects import ListVector
         
         # Weibull with default parameters
         weib = weibull()
@@ -387,6 +400,7 @@ class TestFamilyParameters:
     def test_threshold_parameter_ordinal(self):
         """Test threshold parameter for ordinal families"""
         from brmspy.brms_functions.families import cumulative
+        from rpy2.robjects import ListVector
         
         # Test different threshold types
         cum_flex = cumulative(threshold="flexible")
@@ -398,6 +412,7 @@ class TestFamilyParameters:
     def test_refcat_parameter(self):
         """Test reference category parameter"""
         from brmspy.brms_functions.families import categorical, multinomial
+        from rpy2.robjects import ListVector
         
         # Test with default refcat (None)
         cat_default = categorical()
@@ -418,6 +433,7 @@ class TestExoticFamilies:
     def test_wiener_diffusion_model(self):
         """Test Wiener diffusion model for reaction time"""
         from brmspy.brms_functions.families import wiener
+        from rpy2.robjects import ListVector
         
         # Wiener with all parameters
         wien = wiener(
@@ -432,6 +448,7 @@ class TestExoticFamilies:
     def test_von_mises_circular(self):
         """Test von Mises for circular/directional data"""
         from brmspy.brms_functions.families import von_mises
+        from rpy2.robjects import ListVector
         
         # Von Mises with default parameters
         vm = von_mises()
@@ -444,6 +461,7 @@ class TestExoticFamilies:
     def test_cox_survival_model(self):
         """Test Cox proportional hazards model"""
         from brmspy.brms_functions.families import cox
+        from rpy2.robjects import ListVector
         
         # Cox model
         cox_model = cox()
@@ -452,6 +470,7 @@ class TestExoticFamilies:
     def test_exgaussian_reaction_time(self):
         """Test ex-Gaussian for reaction time data"""
         from brmspy.brms_functions.families import exgaussian
+        from rpy2.robjects import ListVector
         
         # Ex-Gaussian with all parameters
         exg = exgaussian(
@@ -465,6 +484,7 @@ class TestExoticFamilies:
     def test_asymmetric_laplace_quantile(self):
         """Test asymmetric Laplace for quantile regression"""
         from brmspy.brms_functions.families import asym_laplace
+        from rpy2.robjects import ListVector
         
         # Asymmetric Laplace with quantile parameter
         asym_lap = asym_laplace(

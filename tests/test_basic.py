@@ -8,9 +8,6 @@ These tests check:
 - Helper functions
 """
 import pytest
-import pandas as pd
-import numpy as np
-
 
 
 class TestImports:
