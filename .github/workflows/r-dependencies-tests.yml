@@ -52,6 +52,7 @@ jobs:
           # 3
           R_USERLIBS="${R_HOME_DIR}/r-lib"
           echo "Setting $R_USERLIBS to R_LIBS_USER"
+          mkdir -p "$R_USERLIBS"
           echo "R_LIBS_USER=$R_USERLIBS" >> $GITHUB_ENV
 
           
