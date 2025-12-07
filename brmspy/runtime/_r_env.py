@@ -230,7 +230,7 @@ def set_lib_paths(paths: list[str]) -> None:
     """Set .libPaths() in R."""
     
     current = [str(p) for p in cast(ro.ListVector, ro.r(".libPaths()"))]
-    current = [p for p in current if ".brmspy" not in p]
+    current = [p for p in current if ".brmspy/runtime/" not in p and ".brmspy\\runtime\\" not in p]
     new_paths = list(dict.fromkeys(list(paths) + current))
     r_fun = cast(Callable, ro.r('.libPaths'))
     r_fun(ro.StrVector(new_paths))
