@@ -7,8 +7,7 @@ These tests exercise platform-specific code paths and error handling.
 """
 
 import pytest
-import subprocess
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 
 @pytest.mark.rdeps

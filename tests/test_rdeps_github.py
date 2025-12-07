@@ -9,8 +9,6 @@ triggered with real GitHub API.
 
 import pytest
 from unittest.mock import Mock, patch, MagicMock
-from urllib.error import HTTPError
-from email.message import Message
 
 from brmspy.runtime._github import (
     parse_release_url,

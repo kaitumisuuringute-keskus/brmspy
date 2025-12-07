@@ -22,10 +22,10 @@ def parse_release_url(url: str) -> tuple[str, str, str, str]:
     parsed = urlparse(url)
 
     if parsed.scheme not in {"http", "https"}:
-        raise ValueError(f"Invalid scheme in GitHub release URL: {url}")
+        raise ValueError(f"Malformed GitHub release URL: Invalid scheme: {url}")
 
     if parsed.hostname != "github.com":
-        raise ValueError(f"Unexpected host in GitHub release URL: {parsed.hostname!r}")
+        raise ValueError(f"Malformed GitHub release URL: Unexpected host: {parsed.hostname!r}")
 
     # Split path, ignoring leading slash
     parts = parsed.path.lstrip("/").split("/")
@@ -41,7 +41,7 @@ def parse_release_url(url: str) -> tuple[str, str, str, str]:
         raise ValueError(f"Malformed GitHub release URL path: {parsed.path!r}")
 
     if parts[2] != "releases" or parts[3] != "download":
-        raise ValueError(f"Path does not match releases/download structure: {parsed.path!r}")
+        raise ValueError(f"Malformed GitHub release URL: Path does not match releases/download structure: {parsed.path!r}")
 
     owner, repo, _, _, tag, asset_name = parts[:6]
     return owner, repo, tag, asset_name
