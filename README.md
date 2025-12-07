@@ -17,7 +17,7 @@ This is an early development version of the library, use with caution.
 
 ## Installation
 
-### R Configuration (REQUIRED!)
+### R Configuration
 
 R>=4 is required before installing brmspy.
 
