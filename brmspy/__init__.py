@@ -186,13 +186,32 @@ def _initialise_r_safe() -> None:
     """
     Configure R for safer embedded execution.
 
-    - Force rpy2 ABI mode (must be set before importing rpy2)
+    - Try to enforce rpy2 ABI mode (must be set before importing rpy2)
     - Disable fork-based R parallelism (future::multicore, mclapply)
     - Use future::plan(sequential) if future is available
     - Leave cmdstanr multi-core sampling alone
     """
     import os
     import sys
+
+    if "rpy2" in sys.modules:
+        print(
+            "[brmspy][WARNING] rpy2 was imported before brmspy; cannot enforce "
+            "RPY2_CFFI_MODE (env var). API and BOTH mode are known to cause "
+            "instability, ABI is recommended."
+        )
+    elif os.environ.get('RPY2_CFFI_MODE') in ('BOTH', 'API'):
+        print(
+            "[brmspy][WARNING] RPY2_CFFI_MODE (env var) is set to API/BOTH. "
+            "These modes are known to cause instability and segfaults; "
+            "ABI is recommended."
+        )
+    
+    os.environ.setdefault("RPY2_CFFI_MODE", "ABI")
+
+    # Could also lead to undefined behaviour if >1
+    os.environ.setdefault("OMP_NUM_THREADS", "1")
+    os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
 
     import rpy2.robjects as ro
 
