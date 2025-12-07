@@ -56,11 +56,11 @@ def activate(runtime_path: Path) -> None:
         
         _r_env.set_lib_paths([str(rlib_posix)])
         _r_env.set_cmdstan_path(str(cmdstan_posix))
+        _state.invalidate_packages()
         
         # Verify loadable
         _verify_runtime_loadable()
-        
-        _state.invalidate_packages()
+
         _state.get_brms()
         
     except Exception as e:
