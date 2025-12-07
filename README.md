@@ -17,6 +17,22 @@ This is an early development version of the library, use with caution.
 
 ## Installation
 
+### R Configuration (REQUIRED!)
+
+R>=4 is required before installing brmspy.
+
+If you encounter errors regarding `methods.so`, `R_HOME` you may need to manually point your environment to the R installation.
+
+Run the following in your terminal (works on Linux and macOS):
+
+```bash
+# Set R_HOME and add lib directory to LD_LIBRARY_PATH
+export R_HOME=$(R RHOME)
+export LD_LIBRARY_PATH="${R_HOME}/lib:${LD_LIBRARY_PATH}"
+```
+
+### Python
+
 ```bash
 pip install brmspy
 ```

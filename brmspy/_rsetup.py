@@ -1,73 +1,20 @@
 
 
-def _initialise_rpaths() -> None:
-    import os, subprocess
-    from pathlib import Path
-    import platform
-    import sys
+def _check_rpaths() -> None:
+    import os
 
-    if "rpy2" in sys.modules:
-        # pointless to try
-        return
-
-    # ensure R_HOME
     if not os.environ.get("R_HOME"):
-        try:
-            r_home = subprocess.check_output(
-                ["R", "RHOME"], text=True, timeout=30
-            ).strip()
-            os.environ["R_HOME"] = r_home
-        except Exception as e:
-            print(f"[brmspy][warning] Failed to set R_HOME: {e}")
-            return # Let rpy2 fail naturally later if R isn't found
+        print(
+            "[brmspy][CRITICAL WARNING] R_HOME env var not found! The environment may not work!\n" \
+            "Set using `export R_HOME=$(R RHOME)`"
+        )
+    if not os.environ.get("LD_LIBRARY_PATH"):
+        print(
+            "[brmspy][CRITICAL WARNING] LD_LIBRARY_PATH env var not found! The environment may not work!\n" \
+            'Set using `export LD_LIBRARY_PATH="${R_HOME}/lib:${LD_LIBRARY_PATH}"`'
+        )
+    
         
-
-    r_home = Path(os.environ["R_HOME"])
-    system_lib = r_home / "library"
-    lib_dir = r_home / "lib"
-    system = platform.system()
-
-    if not os.environ.get("R_LIBS"):
-        os.environ["R_LIBS"] = str(system_lib)
-        
-
-    # 2. Update LD_LIBRARY_PATH (For child processes)
-    current_ld = os.environ.get("LD_LIBRARY_PATH", "")
-    if str(lib_dir) not in current_ld:
-        import ctypes
-        new_ld = f"{lib_dir}:{current_ld}" if current_ld else str(lib_dir)
-        os.environ["LD_LIBRARY_PATH"] = new_ld
-
-        # 3. FORCE LINKING (The Nuclear Option)
-        # We explicitly load ALL shared objects in R_HOME/lib into global memory.
-        if system in ("Linux", "Darwin") and lib_dir.exists():
-            
-            # Define extension based on OS
-            ext = ".dylib" if system == "Darwin" else ".so"
-            
-            # PRIORITIZE libR! It must be loaded first or others might fail.
-            core_lib = lib_dir / ("libR" + ext)
-            if core_lib.exists():
-                try:
-                    ctypes.CDLL(str(core_lib), mode=ctypes.RTLD_GLOBAL)
-                    print(f"[brmspy][rsetup][debug] Pre-loaded Core: {core_lib.name}")
-                except OSError as e:
-                    print(f"[brmspy][rsetup][warning] Failed to link libR: {e}")
-
-            # Now load everything else in that specific folder (BLAS, LAPACK, etc.)
-            # strictly non-recursive to avoid touching R packages.
-            for shared_lib in lib_dir.glob(f"*{ext}"):
-                # Skip libR if we already loaded it
-                if shared_lib.name == core_lib.name:
-                    continue
-                    
-                try:
-                    # RTLD_GLOBAL makes these symbols available to R packages later
-                    ctypes.CDLL(str(shared_lib), mode=ctypes.RTLD_GLOBAL)
-                    print(f"[brmspy][rsetup]: Pre-loaded Dep: {shared_lib.name}")
-                except OSError as e:
-                    # Some libs might fail if they have circular deps, ignore them.
-                    print(f"[brmspy][rsetup][WARNING] Failed to link libR: {e}")
 
 
 
@@ -80,7 +27,7 @@ def _initialise_r_safe() -> None:
     - Use future::plan(sequential) if future is available
     - Leave cmdstanr multi-core sampling alone
     """
-    _initialise_rpaths()
+    _check_rpaths()
 
     import os
     import sys

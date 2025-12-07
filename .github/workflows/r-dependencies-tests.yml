@@ -32,6 +32,21 @@ jobs:
         uses: r-lib/actions/setup-r@v2
         with:
           r-version: "release"
+      
+      - name: Fix paths for rpy2 ABI mode
+        if: runner.os != 'Windows'
+        run: |
+          # Find where R is
+          # 1. Capture and set R_HOME explicitly
+          R_HOME_DIR=$(R RHOME)
+          echo "Detected R_HOME: $R_HOME_DIR"
+          echo "R_HOME=$R_HOME_DIR" >> $GITHUB_ENV
+
+          # 2. Update LD_LIBRARY_PATH so ABI mode can find libR.so
+          # The shared library lives in $R_HOME/lib
+          R_LIB_DIR="${R_HOME_DIR}/lib"
+          echo "Adding $R_LIB_DIR to LD_LIBRARY_PATH"
+          echo "LD_LIBRARY_PATH=$R_LIB_DIR:$LD_LIBRARY_PATH" >> $GITHUB_ENV
 
       - name: Cache Rtools 4.5 installer
         if: runner.os == 'Windows'
