@@ -182,6 +182,38 @@ __version__ = "0.2.1"
 __author__ = "Remi Sebastian Kits, Adam Haber"
 __license__ = "Apache-2.0"
 
+
+def _initialise_rpaths() -> None:
+    import os, subprocess
+    from pathlib import Path
+    import platform
+
+    # ensure R_HOME
+    if not os.environ.get("R_HOME"):
+        try:
+            r_home = subprocess.check_output(
+                ["R", "RHOME"], text=True, timeout=30
+            ).strip()
+            os.environ["R_HOME"] = r_home
+        except Exception:
+            return # Let rpy2 fail naturally later if R isn't found
+
+    r_home = Path(os.environ["R_HOME"])
+    system = platform.system()
+
+    # ensure LD_LIBRARY_PATH and link
+    # (this solution probably wont work, but it would be the best)
+    lib_path = r_home / "lib"
+    
+    # Append to existing LD_LIBRARY_PATH
+    current_ld = os.environ.get("LD_LIBRARY_PATH", "")
+    if str(lib_path) not in current_ld:
+        new_ld = f"{lib_path}:{current_ld}" if current_ld else str(lib_path)
+        os.environ["LD_LIBRARY_PATH"] = new_ld
+        print(f"DEBUG: Set LD_LIBRARY_PATH to {new_ld}")
+    
+
+
 def _initialise_r_safe() -> None:
     """
     Configure R for safer embedded execution.
@@ -191,9 +223,12 @@ def _initialise_r_safe() -> None:
     - Use future::plan(sequential) if future is available
     - Leave cmdstanr multi-core sampling alone
     """
+    _initialise_rpaths()
+
     import os
     import sys
 
+    # CFFI MODE
     if "rpy2" in sys.modules:
         if os.environ.get('RPY2_CFFI_MODE') != "ABI":
             print(
@@ -207,9 +242,9 @@ def _initialise_r_safe() -> None:
             "These modes are known to cause instability and segfaults; "
             "ABI is recommended."
         )
-    
     os.environ.setdefault("RPY2_CFFI_MODE", "ABI")
 
+    # THREAD SAFETY
     # Could also lead to undefined behaviour if >1
     os.environ.setdefault("OMP_NUM_THREADS", "1")
     os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
