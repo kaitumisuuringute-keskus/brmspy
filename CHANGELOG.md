@@ -1,3 +1,8 @@
+## 0.2.1 - Stability hotfix
+
+* Try to enforce rpy2 RPY2_CFFI_MODE ABI mode on import with warnings if not possible. API/BOTH can cause instability on linux and macos (Issue: #45)
+
+
 ## 0.2.0 - Runtime Refactor & Formula DSL
 *25.12.07*
 
