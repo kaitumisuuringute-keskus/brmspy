@@ -250,7 +250,7 @@ def install_package_deps(
                 )
             ))
             
-            to_install <- setdiff(pkgs, rownames(installed.packages()))
+            to_install <- setdiff(pkgs, rownames(installed.packages(lib.loc = .libPaths(), noCache = TRUE)))
             if (length(to_install)) {{
                 install.packages(to_install, Ncpus = ncpus, repos = repos, lib = .libPaths())
             }}

@@ -166,7 +166,7 @@ function(pkgs) {
   pkgs <- unique(as.character(pkgs))
 
   # Only use packages that are actually installed
-  ip <- installed.packages()[, "Package"]
+  ip <- installed.packages(lib.loc = .libPaths(), noCache = TRUE)[, "Package"]
   pkgs <- intersect(pkgs, ip)
 
   if (!length(pkgs)) return(character(0L))
