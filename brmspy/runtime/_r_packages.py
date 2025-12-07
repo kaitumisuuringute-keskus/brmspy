@@ -252,7 +252,7 @@ def install_package_deps(
             
             to_install <- setdiff(pkgs, rownames(installed.packages()))
             if (length(to_install)) {{
-                install.packages(to_install, Ncpus = ncpus, repos = repos)
+                install.packages(to_install, Ncpus = ncpus, repos = repos, lib = .libPaths())
             }}
         }}
         """))(which_deps, name, ncpus, repos)
