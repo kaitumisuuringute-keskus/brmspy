@@ -49,9 +49,9 @@ jobs:
           echo "Adding $R_LIB_DIR to LD_LIBRARY_PATH"
           echo "LD_LIBRARY_PATH=$R_LIB_DIR:$LD_LIBRARY_PATH" >> $GITHUB_ENV
 
-          # 3
-          R_USERLIBS="${R_HOME_DIR}/r-lib"
-          echo "Setting $R_USERLIBS to R_LIBS_USER"
+          # 3. Use a writable location for R_LIBS_USER (per-job)
+          R_USERLIBS="${RUNNER_TEMP}/r-lib"
+          echo "Setting R_LIBS_USER to $R_USERLIBS"
           mkdir -p "$R_USERLIBS"
           echo "R_LIBS_USER=$R_USERLIBS" >> $GITHUB_ENV
 
