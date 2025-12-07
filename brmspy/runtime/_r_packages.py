@@ -71,7 +71,7 @@ def install_package(
     version: str | None = None,
     repos_extra: Optional[Union[str, List[Optional[str]], List[str]]] = None
 ) -> None:
-    from brmspy.runtime._r_env import unload_package
+    from brmspy.runtime._r_env import unload_package, get_lib_paths
 
     # Normalise special values that mean "latest / no constraint"
     if version is not None:
@@ -85,6 +85,10 @@ def install_package(
     system = platform.system()
     cores = multiprocessing.cpu_count()
 
+    lib_path = get_lib_paths()
+    print("lib path is", lib_path)
+    lib_path = StrVector(lib_path)
+    
     already_installed = is_package_installed(name)
 
     repos: list[str] = ["https://cloud.r-project.org"]  # good default mirror
@@ -176,6 +180,7 @@ def install_package(
         utils.install_packages(
             StrVector((name,)),
             repos=StrVector(repos),
+            lib=lib_path,
             type=preferred_type,
             Ncpus=cores,
         )
@@ -197,6 +202,7 @@ def install_package(
                 StrVector((name,)),
                 repos=StrVector(repos),
                 # don't set type, let R manage this.
+                lib=lib_path,
                 Ncpus=cores,
             )
             installed_version = get_package_version(name)
