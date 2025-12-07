@@ -55,13 +55,10 @@ def activate(runtime_path: Path) -> None:
         cmdstan_posix = cmdstan.as_posix()
         
         _r_env.set_lib_paths([str(rlib_posix)])
-        _r_env.set_cmdstan_path(str(cmdstan_posix))
         _state.invalidate_packages()
-        
-        # Verify loadable
         _verify_runtime_loadable()
 
-        _state.get_brms()
+        _r_env.set_cmdstan_path(str(cmdstan_posix))
         
     except Exception as e:
         # Rollback
@@ -112,12 +109,9 @@ def _remove_managed_packages() -> None:
 
 def _verify_runtime_loadable() -> None:
     """Verify brms and cmdstanr can be loaded."""
-    from rpy2.robjects.packages import importr
-    try:
-        importr("brms")
-        importr("cmdstanr")
-    except Exception as e:
-        raise RuntimeError(f"Cannot load runtime packages: {e}")
+    _state.get_brms()
+    _state.get_cmdstanr()
+    
 
 
 def _rollback_to_stored_env() -> None:

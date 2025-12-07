@@ -55,17 +55,27 @@ def set_lib_paths(paths: list[str]) -> None:
 
 def set_cmdstan_path(path: str | None) -> None:
     """Set cmdstanr::set_cmdstan_path()."""
+    import logging
     try:
       if path is None:
           path_str = "NULL"
       else:
           path_str = f'"{path}"'
-      ro.r(f'''
-      if (!requireNamespace("cmdstanr", quietly = TRUE)) {{
-        stop("cmdstanr is not available in rlibs")
-      }}
-      cmdstanr::set_cmdstan_path(path={path_str})
-      ''')
+      
+      # Temporarily suppress rpy2 console callbacks
+      original_level = logging.getLogger('rpy2.rinterface_lib.callbacks').level
+      logging.getLogger('rpy2.rinterface_lib.callbacks').setLevel(logging.ERROR)
+      
+      try:
+          ro.r(f'''
+          if (!requireNamespace("cmdstanr", quietly = TRUE)) {{
+            stop("cmdstanr is not available in rlibs")
+          }}
+          cmdstanr::set_cmdstan_path(path={path_str})
+          ''')
+      finally:
+          logging.getLogger('rpy2.rinterface_lib.callbacks').setLevel(original_level)
+          
     except Exception as e:
         log_warning(f"Failed to set cmdstan_path to {path}: {e}")
 

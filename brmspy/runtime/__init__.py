@@ -137,15 +137,13 @@ def get_active_runtime() -> Path | None:
     return status().active_runtime
 
 
-# semi-public
-
 def install_brms(
     *,
     use_prebuilt: bool = False,
     install_rtools: bool = False,
     brms_version: str | None = None,
     cmdstanr_version: str | None = None,
-    install_rstan: bool = True,
+    install_rstan: bool = False,
     install_cmdstanr: bool = True,
     rstan_version: str | None = None,
     activate: bool = True,
