@@ -341,7 +341,7 @@ It is NOT recommended to run installation functions when you have used the sessi
 - `install_brms()` - Install brms, cmdstanr, and CmdStan from source or runtime
 - `install_runtime()` - Install latest runtime for OS
 - `activate_runtime()` - Activate existing prebuilt runtime
-- `deactivate_runtime()` - Deactivate current runtime
+- `deactivate_runtime()` - Deactivate current runtime - May break on windows.
 - `get_brms_version()` - Get installed brms version
 - `find_local_runtime()` - checks if a runtime exists locally in standard directory and returns path if it does
 

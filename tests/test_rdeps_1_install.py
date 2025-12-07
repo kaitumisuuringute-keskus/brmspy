@@ -21,10 +21,10 @@ class TestInstall:
         from brmspy import brms
         import rpy2.robjects.packages as rpackages
         from install_helpers import _remove_deps, _fit_minimal_model
-        _remove_deps()
 
         #brms.install_runtime() # REMOVE BEFORE PUSH
-        
+
+        _remove_deps()
         assert not rpackages.isinstalled("brms")
         assert not rpackages.isinstalled("cmdstanr")
 
