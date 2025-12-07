@@ -93,7 +93,7 @@ import arviz as az
 
 # Fit Poisson model with random effects
 epilepsy = brms.get_brms_data("epilepsy")
-model = brms.fit("count ~ zAge + (1|patient)", data=epilepsy, family="poisson")
+model = brms.brm("count ~ zAge + (1|patient)", data=epilepsy, family="poisson")
 
 # Proper parameter names automatically!
 print(az.summary(model.idata))
@@ -117,7 +117,7 @@ from brmspy import brms, bf, set_rescor
 import arviz as az
 
 # Fit multivariate model
-mv = brms.fit(
+mv = brms.brm(
     bf("mvbind(tarsus, back) ~ sex + (1|p|fosternest)")
     + set_rescor(True),
     data=btdata
@@ -160,7 +160,7 @@ Model heteroscedasticity (variance depends on predictors):
 from brmspy import bf
 
 # Model both mean AND variance
-model = brms.fit(
+model = brms.brm(
     bf("reaction ~ days", sigma = "~ days"),  # sigma varies with days!
     data=sleep_data,
     family="gaussian"
@@ -179,7 +179,7 @@ Full model checking in ~10 lines:
 from brmspy import brms
 import arviz as az
 
-model = brms.fit("count ~ zAge * Trt + (1|patient)", data=epilepsy, family="poisson")
+model = brms.brm("count ~ zAge * Trt + (1|patient)", data=epilepsy, family="poisson")
 
 # Check convergence
 assert az.rhat(model.idata).max() < 1.01, "Convergence issues!"
@@ -189,7 +189,7 @@ assert az.ess(model.idata).min() > 400, "Low effective sample size!"
 az.plot_ppc(model.idata, num_pp_samples=100)
 
 # Model comparison
-model2 = brms.fit("count ~ zAge + Trt + (1|patient)", data=epilepsy, family="poisson")
+model2 = brms.brm("count ~ zAge + Trt + (1|patient)", data=epilepsy, family="poisson")
 comparison = az.compare({"interaction": model.idata, "additive": model2.idata})
 print(comparison)
 #              rank  loo    p_loo  d_loo  weight
@@ -205,14 +205,14 @@ Smooth non-linear relationships with splines:
 from brmspy import brms
 
 # Generalized additive model (GAM) with spline
-model = brms.fit(
+model = brms.brm(
     "y ~ s(x, bs='cr', k=10) + (1 + x | group)",
     data=data,
     family="gaussian"
 )
 
 # Polynomial regression
-poly_model = brms.fit(
+poly_model = brms.brm(
     "y ~ poly(x, 3) + (1|group)",
     data=data
 )
@@ -227,7 +227,7 @@ conditional_effects = brms.call("conditional_effects", model, "x")
 ```python
 from brmspy import prior
 
-model = brms.fit(
+model = brms.brm(
     "count ~ zAge + (1|patient)",
     data=epilepsy,
     priors=[
@@ -276,7 +276,7 @@ bf_back = (
     gaussian()
 )
 
-model = brms.fit(
+model = brms.brm(
     bf_tarsus + bf_back + set_rescor(False),
     data=btdata,
     chains=2,
