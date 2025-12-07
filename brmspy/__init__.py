@@ -201,6 +201,7 @@ def _initialise_rpaths() -> None:
     r_home = Path(os.environ["R_HOME"])
     system = platform.system()
 
+
     # ensure LD_LIBRARY_PATH and link
     # (this solution probably wont work, but it would be the best)
     lib_path = r_home / "lib"
@@ -211,6 +212,27 @@ def _initialise_rpaths() -> None:
         new_ld = f"{lib_path}:{current_ld}" if current_ld else str(lib_path)
         os.environ["LD_LIBRARY_PATH"] = new_ld
         print(f"DEBUG: Set LD_LIBRARY_PATH to {new_ld}")
+
+        # 3. Handle Linking (The tricky part)
+        if system == "Linux":
+            lib_r_path = lib_path / "libR.so"
+
+            if lib_r_path.exists():
+                import ctypes
+                try:
+                    # RTLD_GLOBAL makes symbols available to subsequent loads (like methods.so)
+                    ctypes.CDLL(str(lib_r_path), mode=ctypes.RTLD_GLOBAL)
+                except OSError as e:
+                    print(f"Warning: Failed to pre-load libR.so: {e}")
+
+        elif system == "Darwin": # macOS
+            lib_r_path = lib_path / "libR.dylib"
+            if lib_r_path.exists():
+                import ctypes
+                try:
+                    ctypes.CDLL(str(lib_r_path), mode=ctypes.RTLD_GLOBAL)
+                except OSError:
+                    pass
     
 
 
