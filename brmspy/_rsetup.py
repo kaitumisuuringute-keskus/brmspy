@@ -4,6 +4,11 @@ def _initialise_rpaths() -> None:
     import os, subprocess
     from pathlib import Path
     import platform
+    import sys
+
+    if "rpy2" in sys.modules:
+        # pointless to try
+        return
 
     # ensure R_HOME
     if not os.environ.get("R_HOME"):
@@ -15,11 +20,16 @@ def _initialise_rpaths() -> None:
         except Exception as e:
             print(f"[brmspy][warning] Failed to set R_HOME: {e}")
             return # Let rpy2 fail naturally later if R isn't found
+        
 
     r_home = Path(os.environ["R_HOME"])
+    system_lib = r_home / "library"
     lib_dir = r_home / "lib"
     system = platform.system()
 
+    if not os.environ.get("R_LIBS"):
+        os.environ["R_LIBS"] = str(system_lib)
+        
 
     # 2. Update LD_LIBRARY_PATH (For child processes)
     current_ld = os.environ.get("LD_LIBRARY_PATH", "")
@@ -95,6 +105,7 @@ def _initialise_r_safe() -> None:
     # Could also lead to undefined behaviour if >1
     os.environ.setdefault("OMP_NUM_THREADS", "1")
     os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+
 
     import rpy2.robjects as ro
 
