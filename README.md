@@ -79,6 +79,7 @@ Download Rtools from: https://cran.r-project.org/bin/windows/Rtools/
 - **No reimplementation**: Delegates all modeling logic to real brms. No Python-side reimplementation, no divergence from native behavior
 - **Prebuilt Binaries**: Fast installation with precompiled runtimes (50x faster, ~25 seconds on Google Colab)
 - **Stays true to brms**: Function names, parameters, and returned objects are designed to be as close as possible to brms
+- **Composable formula DSL**: Build multivariate, non-linear, and distributional formulas by simply adding components together, identical to brms
 
 ## Examples
 
