@@ -85,7 +85,7 @@ def install_package(
     system = platform.system()
     cores = multiprocessing.cpu_count()
 
-    lib_path = get_lib_paths()
+    lib_path = [get_lib_paths()[0]]
     print("lib path is", lib_path)
     lib_path = StrVector(lib_path)
     
@@ -252,7 +252,7 @@ def install_package_deps(
             
             to_install <- setdiff(pkgs, rownames(installed.packages(lib.loc = .libPaths(), noCache = TRUE)))
             if (length(to_install)) {{
-                install.packages(to_install, Ncpus = ncpus, repos = repos, lib = .libPaths())
+                install.packages(to_install, Ncpus = ncpus, repos = repos, lib = .libPaths()[1L])
             }}
         }}
         """))(which_deps, name, ncpus, repos)
