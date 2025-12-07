@@ -4,7 +4,7 @@ R package queries and installation. Stateless - no caching.
 
 import platform
 import multiprocessing
-from typing import List, Optional, Union, cast
+from typing import Callable, List, Optional, Union, cast
 
 import rpy2.robjects as ro
 from rpy2.robjects.packages import importr
@@ -208,31 +208,48 @@ def install_package(
             raise e2
 
 
-def install_package_deps(name: str, include_suggests: bool = False) -> None:
+def install_package_deps(
+    name: str,
+    include_suggests: bool = False,
+    repos_extra: Optional[Union[str, List[Optional[str]], List[str]]] = None
+) -> None:
     """Install dependencies of an R package."""
-    which_deps = 'c("Depends", "Imports", "LinkingTo")'
+    which_deps = ["Depends", "Imports", "LinkingTo"]
     if include_suggests:
-        which_deps = 'c("Depends", "Imports", "LinkingTo", "Suggests")'
+        which_deps = ["Depends", "Imports", "LinkingTo", "Suggests"]
 
     ncpus = multiprocessing.cpu_count() - 1
     ncpus = max(1, ncpus)
+
+
+    repos: list[str] = ["https://cloud.r-project.org"]  # good default mirror
+
+    if repos_extra:
+        if isinstance(repos_extra, list):
+            for _r in repos_extra:
+                if isinstance(_r, str) and _r not in repos:
+                    repos.append(_r)
+        elif repos_extra not in repos:
+            repos.append(repos_extra)
     
     try:
-        ro.r(f"""
+        cast(Callable, ro.r(f"""
+        function (which_deps, name, ncpus, repos) {{
             pkgs <- unique(unlist(
                 tools::package_dependencies(
-                    c("{name}"),
+                    c(name),
                     recursive = TRUE,
-                    which = {which_deps},
+                    which = which_deps,
                     db = available.packages()
                 )
             ))
             
             to_install <- setdiff(pkgs, rownames(installed.packages()))
             if (length(to_install)) {{
-                install.packages(to_install, Ncpus = {ncpus})
+                install.packages(to_install, Ncpus = ncpus, repos = repos)
             }}
-        """)
+        }}
+        """))(which_deps, name, ncpus, repos)
     except Exception as e:
         log_warning(str(e))
         return
