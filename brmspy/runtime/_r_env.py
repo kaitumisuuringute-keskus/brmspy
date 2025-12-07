@@ -228,7 +228,7 @@ function(pkgs) {
 def _unload_libpath_packages(libpath: Path | None) -> None:
     if not libpath or not libpath.exists():
         return
-    pkgs = _find_libpath_packages(libpath)
+    pkgs = _find_libpath_packages(libpath, include_not_loaded=True)
     if len(pkgs) == 0:
         return
     pkgs = _compute_unload_order(pkgs)
