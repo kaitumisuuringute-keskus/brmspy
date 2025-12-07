@@ -246,8 +246,6 @@ from brmspy.brms import (
 
     save_rds, read_rds_fit, read_rds_raw,
 
-    families, family, brmsfamily,
-
     FitResult,
     PosteriorEpredResult,
     PosteriorPredictResult,
@@ -263,6 +261,19 @@ from brmspy.brms import (
     PriorSpec,
 
     install_rpackage
+)
+from brmspy.brms_functions.families import (
+    brmsfamily, family, student, bernoulli, beta_binomial, negbinomial,
+    negbinomial2, geometric, discrete_weibull, com_poisson, lognormal,
+    shifted_lognormal, skew_normal, exponential, weibull, frechet,
+    gen_extreme_value, exgaussian, wiener, Beta, xbeta, dirichlet,
+    dirichlet2, logistic_normal, von_mises, asym_laplace,
+    zero_inflated_asym_laplace, cox, hurdle_poisson, hurdle_negbinomial,
+    hurdle_gamma, hurdle_lognormal, hurdle_cumulative, zero_inflated_beta,
+    zero_one_inflated_beta, zero_inflated_poisson, zero_inflated_negbinomial,
+    zero_inflated_binomial, zero_inflated_beta_binomial, categorical,
+    multinomial, dirichlet_multinomial, cumulative, sratio, cratio, acat,
+    gaussian, poisson, binomial, Gamma, inverse_gaussian
 )
 __all__ = [
     # R env
@@ -286,7 +297,17 @@ __all__ = [
     "posterior_predict", "posterior_epred", "posterior_linpred", "log_lik",
 
     # families
-    'families', 'family', 'brmsfamily',
+    "brmsfamily", "family", "student", "bernoulli", "beta_binomial", "negbinomial",
+    "negbinomial2", "geometric", "discrete_weibull", "com_poisson", "lognormal",
+    "shifted_lognormal", "skew_normal", "exponential", "weibull", "frechet",
+    "gen_extreme_value", "exgaussian", "wiener", "Beta", "xbeta", "dirichlet",
+    "dirichlet2", "logistic_normal", "von_mises", "asym_laplace",
+    "zero_inflated_asym_laplace", "cox", "hurdle_poisson", "hurdle_negbinomial",
+    "hurdle_gamma", "hurdle_lognormal", "hurdle_cumulative", "zero_inflated_beta",
+    "zero_one_inflated_beta", "zero_inflated_poisson", "zero_inflated_negbinomial",
+    "zero_inflated_binomial", "zero_inflated_beta_binomial", "categorical",
+    "multinomial", "dirichlet_multinomial", "cumulative", "sratio", "cratio", "acat",
+    "gaussian", "poisson", "binomial", "Gamma", "inverse_gaussian",
 
     # diagnosis
     'summary', 'fixef', 'ranef', 'prior_summary', 'posterior_summary',

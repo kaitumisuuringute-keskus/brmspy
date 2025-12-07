@@ -30,7 +30,19 @@ from brmspy.brms_functions.formula import bf as formula
 from brmspy.brms_functions.prediction import posterior_epred, posterior_linpred, posterior_predict, log_lik
 from brmspy.brms_functions.stan import make_stancode
 from brmspy.brms_functions import families
-from brmspy.brms_functions.families import family, brmsfamily
+from brmspy.brms_functions.families import (
+    brmsfamily, family, student, bernoulli, beta_binomial, negbinomial,
+    negbinomial2, geometric, discrete_weibull, com_poisson, lognormal,
+    shifted_lognormal, skew_normal, exponential, weibull, frechet,
+    gen_extreme_value, exgaussian, wiener, Beta, xbeta, dirichlet,
+    dirichlet2, logistic_normal, von_mises, asym_laplace,
+    zero_inflated_asym_laplace, cox, hurdle_poisson, hurdle_negbinomial,
+    hurdle_gamma, hurdle_lognormal, hurdle_cumulative, zero_inflated_beta,
+    zero_one_inflated_beta, zero_inflated_poisson, zero_inflated_negbinomial,
+    zero_inflated_binomial, zero_inflated_beta_binomial, categorical,
+    multinomial, dirichlet_multinomial, cumulative, sratio, cratio, acat,
+    gaussian, poisson, binomial, Gamma, inverse_gaussian
+)
 from brmspy.runtime._r_packages import install_package as install_rpackage
 
 from brmspy.runtime import (
@@ -83,7 +95,17 @@ __all__ = [
     'call',
 
     # families
-    'families', 'family', 'brmsfamily',
+    "brmsfamily", "family", "student", "bernoulli", "beta_binomial", "negbinomial",
+    "negbinomial2", "geometric", "discrete_weibull", "com_poisson", "lognormal",
+    "shifted_lognormal", "skew_normal", "exponential", "weibull", "frechet",
+    "gen_extreme_value", "exgaussian", "wiener", "Beta", "xbeta", "dirichlet",
+    "dirichlet2", "logistic_normal", "von_mises", "asym_laplace",
+    "zero_inflated_asym_laplace", "cox", "hurdle_poisson", "hurdle_negbinomial",
+    "hurdle_gamma", "hurdle_lognormal", "hurdle_cumulative", "zero_inflated_beta",
+    "zero_one_inflated_beta", "zero_inflated_poisson", "zero_inflated_negbinomial",
+    "zero_inflated_binomial", "zero_inflated_beta_binomial", "categorical",
+    "multinomial", "dirichlet_multinomial", "cumulative", "sratio", "cratio", "acat",
+    "gaussian", "poisson", "binomial", "Gamma", "inverse_gaussian",
 
     # types
     'FitResult', 'FormulaResult', 'PosteriorEpredResult', 'PosteriorPredictResult',
