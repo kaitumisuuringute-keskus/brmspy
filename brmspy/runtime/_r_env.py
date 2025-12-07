@@ -81,7 +81,7 @@ def unload_package(name: str) -> bool:
     Tries: detach -> unloadNamespace -> library.dynam.unload
     Does NOT uninstall.
     """
-    is_tested = ("cmdstanr", "rstan", "brms")
+    is_tested = ("cmdstanr", "rstan", "brms", "StanHeaders")
 
     detach_only = name not in is_tested
 
