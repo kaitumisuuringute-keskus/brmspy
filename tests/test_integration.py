@@ -174,8 +174,8 @@ class TestModelWithRandomEffects:
             formula="y ~ x1 + (1|group)",
             data=sample_dataframe,
             family="gaussian",
-            iter=400,
-            warmup=200,
+            iter=200,
+            warmup=100,
             chains=1,
             silent=2,
             refresh=0
@@ -235,7 +235,9 @@ class TestErrorHandling:
             brmspy.fit(
                 formula="y ~ nonexistent_variable",
                 data=sample_dataframe,
-                family="gaussian"
+                family="gaussian",
+                iter=100,
+                warmup=50
             )
     
     def test_invalid_family_raises_error(self, sample_dataframe):
@@ -246,7 +248,9 @@ class TestErrorHandling:
             brmspy.fit(
                 formula="y ~ x1",
                 data=sample_dataframe,
-                family="not_a_real_family"
+                family="not_a_real_family",
+                iter=100,
+                warmup=50
             )
 
 
@@ -767,7 +771,9 @@ class TestAdditionalFunctions:
                 formula="y ~ x1",
                 data=sample_dataframe,
                 family="gaussian",
-                sample=False
+                sample=False,
+                iter=100,
+                warmup=50
             )
         
             # Verify return type

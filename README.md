@@ -233,9 +233,8 @@ It is NOT recommended to run installation functions when you have used the sessi
 - `ranef()` - Extract group-level (random) effects as xarray
 - `posterior_summary()` - Summary statistics for all parameters
 - `prior_summary()` - Extract prior specifications used in model
-- `loo()` - Leave-one-out cross-validation with PSIS
-- `loo_compare()` - Compare multiple models using LOO-CV
 - `validate_newdata()` - Validate new data for predictions
+- For loo, waic etc use arviz!
 
 ### Prior Functions
 - `prior()` - Define a prior with same syntax as r-s `prior_string`
