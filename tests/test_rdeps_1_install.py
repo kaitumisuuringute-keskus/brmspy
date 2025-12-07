@@ -32,7 +32,7 @@ class TestInstall:
         from brmspy import brms
         from brmspy.runtime._state import get_brms
 
-        brms.install_brms(use_prebuilt=False, install_rstan=True)
+        brms.install_brms(use_prebuilt=False)
 
         assert rpackages.isinstalled("brms")
         assert rpackages.isinstalled("cmdstanr")
