@@ -18,7 +18,7 @@ def get_package_version(name: str) -> str | None:
     """Get installed package version or None."""
     try:
         expr = f"""
-        v <- utils::packageDescription('{name}', fields = 'Version')
+        v <- utils::packageDescription('{name}', fields = 'Version', lib.loc=.libPaths())
         if (is.na(v)) stop('Package not found')
         v
         """
