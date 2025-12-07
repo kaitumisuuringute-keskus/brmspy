@@ -53,8 +53,6 @@ dependencies = [
     "numpy>1.24.4",          # Python 3.10+ compatible
     "pandas>=1.3.0",          # Modern DataFrame API
     "rpy2>=3.5.0",            # Python 3.10+ compatible, R interface
-
-    # Arviz should be made optional in the future. Mandatory for now
     "arviz>=0.15.0"          # Bayesian visualization (replaces pystan viz)
 ]
 
