@@ -8,8 +8,11 @@ from typing import Callable, List, cast
 from brmspy.helpers.log import log_warning
 from brmspy.runtime import _manifest, _r_env, _r_packages, _state, _platform, _config
 
-
-MANAGED_PACKAGES = ("brms", "cmdstanr", "rstan", "StanHeaders", "tibble", "pkgconfig")
+if _platform.get_os() == "macos":
+    # MacOS fails without forced tibble and pkgconfig unloading
+    MANAGED_PACKAGES = ("brms", "cmdstanr", "rstan", "StanHeaders", "tibble", "pkgconfig")
+else:
+    MANAGED_PACKAGES = ("brms", "cmdstanr", "rstan", "StanHeaders")
 
 
 def activate(runtime_path: Path) -> None:

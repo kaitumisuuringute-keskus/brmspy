@@ -68,8 +68,7 @@ def unload_package(name: str) -> bool:
           if (search_name %in% search()) {{
             detach(search_name,
                    unload = !detach_only,
-                   character.only = TRUE,
-                   force = TRUE)
+                   character.only = TRUE)
           }}
         }}, error = function(e) {{ success <<- FALSE }})
 
