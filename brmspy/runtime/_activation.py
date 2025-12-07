@@ -4,8 +4,9 @@ Does NOT touch config - that's the caller's responsibility.
 """
 
 from pathlib import Path
+from typing import Callable, List, cast
 from brmspy.helpers.log import log_warning
-from brmspy.runtime import _manifest, _r_env, _r_packages, _state, _platform
+from brmspy.runtime import _manifest, _r_env, _r_packages, _state, _platform, _config
 
 
 MANAGED_PACKAGES = ("brms", "cmdstanr", "rstan", "StanHeaders")
@@ -75,11 +76,16 @@ def deactivate() -> None:
     Raises:
         RuntimeError: If no stored environment to restore.
     """
+    active_path = _config.get_active_runtime_path()
     stored = _state.get_stored_env()
     if stored is None:
         raise RuntimeError("No runtime is currently active (no stored environment)")
-    
-    _unload_managed_packages()
+
+    if _platform.get_os() != "windows":
+        _r_env._unload_libpath_packages(active_path)
+    else:
+        _unload_managed_packages()
+
     _r_env.set_lib_paths(stored.lib_paths)
     try:
         _r_env.set_cmdstan_path(stored.cmdstan_path)
@@ -97,6 +103,8 @@ def _unload_managed_packages() -> None:
                 _r_env.unload_package(pkg)
             except Exception as e:
                 log_warning(f"{e}")
+
+
 
 def _remove_managed_packages() -> None:
     """removes brms, cmdstanr, rstan if loaded."""

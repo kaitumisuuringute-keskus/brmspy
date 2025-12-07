@@ -4,6 +4,7 @@ Each function does exactly one R operation. Stateless.
 """
 
 import os
+from pathlib import Path
 from typing import Callable, List, cast
 import rpy2.robjects as ro
 
@@ -40,37 +41,6 @@ def is_package_attached(name: str) -> bool:
     res = cast(ro.ListVector, ro.r(expr))
     return str(res[0]).lower().strip() == "true"
 
-
-# === Mutations ===
-
-def set_lib_paths(paths: list[str]) -> None:
-    """Set .libPaths() in R."""
-    
-    current = [str(p) for p in cast(ro.ListVector, ro.r(".libPaths()"))]
-    current = [p for p in current if ".brmspy" not in p]
-    new_paths = list(dict.fromkeys(list(paths) + current))
-    r_fun = cast(Callable, ro.r('.libPaths'))
-    r_fun(ro.StrVector(new_paths))
-
-
-def set_cmdstan_path(path: str | None) -> None:
-    """Set cmdstanr::set_cmdstan_path()."""
-    import logging
-    try:
-      if path is None:
-          path_str = "NULL"
-      else:
-          path_str = f'"{path}"'
-      
-      ro.r(f'''
-      if (!requireNamespace("cmdstanr", quietly = TRUE)) {{
-        stop("cmdstanr is not available in rlibs")
-      }}
-      cmdstanr::set_cmdstan_path(path={path_str})
-      ''')
-      
-    except Exception as e:
-        log_warning(f"Failed to set cmdstan_path to {path}: {e}")
 
 
 def unload_package(name: str) -> bool:
@@ -147,6 +117,144 @@ def unload_package(name: str) -> bool:
         return str(result[0]).lower().strip() == "true"
     except Exception:
         return False
+
+
+
+def _find_libpath_packages(libpath: Path | None) -> List[str]:
+    import rpy2.robjects as ro
+    if libpath is None:
+        return []
+    pkgs = cast(Callable, ro.r("""
+function(runtime_root) {
+  lib_root <- file.path(runtime_root, "Rlib")
+  lib_root <- normalizePath(lib_root, winslash = "/", mustWork = TRUE)
+
+  attached <- sub("^package:", "", grep("^package:", search(), value = TRUE))
+  ns <- loadedNamespaces()
+  pkgs <- unique(c(attached, ns))
+
+  res <- vapply(pkgs, function(p) {
+    path <- suppressWarnings(tryCatch(
+      find.package(p, quiet = TRUE)[1],
+      error = function(e) NA_character_
+    ))
+
+    if (is.na(path) || !nzchar(path)) {
+      return(NA_character_)
+    }
+
+    path <- normalizePath(path, winslash = "/", mustWork = FALSE)
+
+    if (startsWith(path, lib_root)) p else NA_character_
+  }, character(1L))
+
+  res[!is.na(res)]
+}
+    """))(libpath.as_posix())
+
+    return [str(v) for v in cast(ro.StrVector, pkgs)]
+
+
+def _compute_unload_order(pkgs: List[str] | None) -> List[str] | None:
+    if pkgs is None:
+        return None
+    if len(pkgs) == 0:
+        return []
+    import rpy2.robjects as ro
+    fun = cast(Callable, ro.r("""
+function(pkgs) {
+  pkgs <- unique(as.character(pkgs))
+
+  # Only use packages that are actually installed
+  ip <- installed.packages()[, "Package"]
+  pkgs <- intersect(pkgs, ip)
+
+  if (!length(pkgs)) return(character(0L))
+
+  # Reverse dependency graph: for each pkg, which pkgs depend ON it
+  deps <- tools::package_dependencies(
+    pkgs,
+    which    = c("Depends", "Imports", "LinkingTo"),
+    recursive = FALSE,
+    reverse   = TRUE
+  )
+
+  # Keep only edges within our set
+  deps <- lapply(deps, function(x) intersect(x, pkgs))
+
+  remaining <- pkgs
+  order <- character(0L)
+
+  while (length(remaining)) {
+    # Packages that appear as a dependent of someone else
+    has_dependents <- unique(unlist(deps[remaining]))
+    # Leaf = no one depends on it -> safe to unload now
+    leaves <- setdiff(remaining, has_dependents)
+
+    if (!length(leaves)) {
+      # Cycle or weirdness; append whatever is left and break
+      order <- c(order, remaining)
+      break
+    }
+
+    order <- c(order, leaves)
+    remaining <- setdiff(remaining, leaves)
+  }
+
+  order
+}
+"""))
+    lv = cast(ro.StrVector, fun(ro.StrVector(pkgs)))
+    return [str(v) for v in lv]
+
+def _unload_libpath_packages(libpath: Path | None) -> None:
+    if not libpath or not libpath.exists():
+        return
+    pkgs = _find_libpath_packages(libpath)
+    if len(pkgs) == 0:
+        return
+    pkgs = _compute_unload_order(pkgs)
+    if not pkgs:
+        return
+    for pkg in pkgs:
+        try:
+            unload_package(pkg)
+        except Exception as e:
+            log_warning(f"{e}")
+    
+    
+
+# === Mutations ===
+
+def set_lib_paths(paths: list[str]) -> None:
+    """Set .libPaths() in R."""
+    
+    current = [str(p) for p in cast(ro.ListVector, ro.r(".libPaths()"))]
+    current = [p for p in current if ".brmspy" not in p]
+    new_paths = list(dict.fromkeys(list(paths) + current))
+    r_fun = cast(Callable, ro.r('.libPaths'))
+    r_fun(ro.StrVector(new_paths))
+
+
+def set_cmdstan_path(path: str | None) -> None:
+    """Set cmdstanr::set_cmdstan_path()."""
+    import logging
+    try:
+      if path is None:
+          path_str = "NULL"
+      else:
+          path_str = f'"{path}"'
+      
+      ro.r(f'''
+      if (!requireNamespace("cmdstanr", quietly = TRUE)) {{
+        stop("cmdstanr is not available in rlibs")
+      }}
+      cmdstanr::set_cmdstan_path(path={path_str})
+      ''')
+      
+    except Exception as e:
+        log_warning(f"Failed to set cmdstan_path to {path}: {e}")
+
 
 
 def run_gc() -> None:

@@ -44,6 +44,7 @@ def install_traditional(
     # Install packages
     _r_packages.install_package("brms", version=brms_version)
     _r_packages.install_package_deps("brms", repos_extra=repos_cmdstanr)
+    _r_packages.install_package("tibble", repos_extra=repos_cmdstanr)
     
     
     if install_cmdstanr:
