@@ -61,10 +61,12 @@ def set_cmdstan_path(path: str | None) -> None:
       else:
           path_str = f'"{path}"'
       ro.r(f'''
-      if (!requireNamespace("cmdstanr", quietly = TRUE)) {{
-        stop("cmdstanr is not available in rlibs")
-      }}
-      cmdstanr::set_cmdstan_path(path={path_str})
+      suppressWarnings(suppressMessages({{
+        if (!requireNamespace("cmdstanr", quietly = TRUE)) {{
+          stop("cmdstanr is not available in rlibs")
+        }}
+        cmdstanr::set_cmdstan_path(path={path_str})
+      }}))
       ''')
     except Exception as e:
         log_warning(f"Failed to set cmdstan_path to {path}: {e}")
