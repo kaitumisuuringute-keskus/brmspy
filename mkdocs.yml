@@ -82,6 +82,7 @@ nav:
     - Main Module: api/brms.md
     - Install: api/install.md
     - Types: api/types.md
+    - Diagnostics with ArViz: api/diagnostics-arviz.md
     - BRMS functions:
       - brm: api/brms_functions/brm.md
       - diagnostics: api/brms_functions/diagnostics.md

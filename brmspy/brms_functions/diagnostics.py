@@ -1,3 +1,55 @@
+"""
+Diagnostic functions for brms models with ArviZ integration.
+
+This module provides diagnostic functions for analyzing fitted brms models.
+All fitted models return `arviz.InferenceData` objects by default through the
+`.idata` attribute, enabling seamless integration with ArviZ's diagnostic toolkit.
+
+ArviZ Integration
+-----------------
+brmspy models work directly with ArviZ functions without conversion:
+
+- **Summary & Convergence**: `az.summary()`, `az.rhat()`, `az.ess()`
+- **Visualization**: `az.plot_trace()`, `az.plot_posterior()`, `az.plot_pair()`
+- **Model Comparison**: `az.loo()`, `az.waic()`, `az.compare()`
+- **Predictive Checks**: `az.plot_ppc()`
+
+**For multivariate models**, use the `var_name` parameter in ArviZ functions
+to specify which response variable to analyze (e.g., `az.loo(model.idata, var_name="y1")`).
+
+Quick Example
+-------------
+```python
+import brmspy
+import arviz as az
+
+# Fit model
+model = brmspy.fit("count ~ zAge + (1|patient)", data=data, family="poisson")
+
+# Diagnostics
+print(az.summary(model.idata))  # Parameter estimates with Rhat, ESS
+az.plot_trace(model.idata)       # MCMC trace plots
+az.plot_ppc(model.idata)         # Posterior predictive check
+
+# Model comparison
+loo = az.loo(model.idata)
+print(loo)
+```
+
+See Also
+--------
+Diagnostics with ArviZ : Complete guide with examples
+    [https://kaitumisuuringute-keskus.github.io/brmspy/api/diagnostics-arviz/](https://kaitumisuuringute-keskus.github.io/brmspy/api/diagnostics-arviz/)
+
+Notes
+-----
+The InferenceData structure contains:
+
+- **posterior**: All parameter samples with brms naming (e.g., `b_Intercept`, `sd_patient__Intercept`)
+- **posterior_predictive**: Posterior predictive samples for each response
+- **log_likelihood**: Pointwise log-likelihood for LOO/WAIC
+- **observed_data**: Original response values
+"""
 from typing import Callable, Dict, Iterable, Optional, Sequence, Union, cast
 import pandas as pd
 import pandas as pd

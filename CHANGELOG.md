@@ -2,7 +2,7 @@
 
 - removed add_criterion, loo, loo_compare - too unstable and cause segfaults very often. Easy replacements in arviz.
 - get_data, bf, lf, nlf, acformula, set_rescor, set_mecor, set_nl, 
-- Formula addition
+- Formula DSL (formula bits can be added together very similar to brms.)
 
 - install_brms, install_runtime,
     deactivate_runtime, activate_runtime,
