@@ -220,9 +220,9 @@ def install_package_deps(
     repos_extra: Optional[Union[str, List[Optional[str]], List[str]]] = None
 ) -> None:
     """Install dependencies of an R package."""
-    which_deps = ["Depends", "Imports", "LinkingTo"]
+    which_deps = StrVector(["Depends", "Imports", "LinkingTo"])
     if include_suggests:
-        which_deps = ["Depends", "Imports", "LinkingTo", "Suggests"]
+        which_deps = StrVector(["Depends", "Imports", "LinkingTo", "Suggests"])
 
     ncpus = multiprocessing.cpu_count() - 1
     ncpus = max(1, ncpus)
@@ -243,7 +243,7 @@ def install_package_deps(
         function (which_deps, name, ncpus, repos) {{
             pkgs <- unique(unlist(
                 tools::package_dependencies(
-                    c(name),
+                    name,
                     recursive = TRUE,
                     which = which_deps,
                     db = available.packages()
@@ -255,7 +255,7 @@ def install_package_deps(
                 install.packages(to_install, Ncpus = ncpus, repos = repos, lib = .libPaths()[1L])
             }}
         }}
-        """))(which_deps, name, ncpus, repos)
+        """))(which_deps, StrVector([name]), ncpus, StrVector(repos))
     except Exception as e:
         log_warning(str(e))
         return
