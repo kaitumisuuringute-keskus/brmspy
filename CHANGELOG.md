@@ -3,7 +3,6 @@
 
 * Try to enforce rpy2 RPY2_CFFI_MODE ABI mode on import with warnings if not possible. API/BOTH can cause instability on linux and macos (Issue: #45)
 * Added R_HOME and LD_LIBRARY_PATH to github workflows (required on most environments in ABI mode)
-* install_rstan in `install_brms` now defaults to False.
 * The environment now does its best attempts to detect invalid R setups and log them
 
 

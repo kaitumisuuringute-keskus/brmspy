@@ -143,7 +143,7 @@ def install_brms(
     install_rtools: bool = False,
     brms_version: str | None = None,
     cmdstanr_version: str | None = None,
-    install_rstan: bool = False,
+    install_rstan: bool = True,
     install_cmdstanr: bool = True,
     rstan_version: str | None = None,
     activate: bool = True,
