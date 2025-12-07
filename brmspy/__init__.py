@@ -195,11 +195,12 @@ def _initialise_r_safe() -> None:
     import sys
 
     if "rpy2" in sys.modules:
-        print(
-            "[brmspy][WARNING] rpy2 was imported before brmspy; cannot enforce "
-            "RPY2_CFFI_MODE (env var). API and BOTH mode are known to cause "
-            "instability, ABI is recommended."
-        )
+        if os.environ.get('RPY2_CFFI_MODE') != "ABI":
+            print(
+                "[brmspy][WARNING] rpy2 was imported before brmspy; cannot enforce "
+                "RPY2_CFFI_MODE (env var). API and BOTH mode are known to cause "
+                "instability, ABI is recommended."
+            )
     elif os.environ.get('RPY2_CFFI_MODE') in ('BOTH', 'API'):
         print(
             "[brmspy][WARNING] RPY2_CFFI_MODE (env var) is set to API/BOTH. "
