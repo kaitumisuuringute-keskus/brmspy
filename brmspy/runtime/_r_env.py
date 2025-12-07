@@ -54,7 +54,7 @@ def unload_package(name: str) -> bool:
     """
     is_tested = ("cmdstanr", "rstan", "brms", "StanHeaders")
 
-    detach_only = name not in is_tested
+    detach_only = False #name not in is_tested
 
     r_code = f"""
       pkg <- "{name}"
@@ -228,7 +228,7 @@ function(pkgs) {
 def _unload_libpath_packages(libpath: Path | None) -> None:
     if not libpath or not libpath.exists():
         return
-    pkgs = _find_libpath_packages(libpath, include_not_loaded=True)
+    pkgs = _find_libpath_packages(libpath)
     if len(pkgs) == 0:
         return
     pkgs = _compute_unload_order(pkgs)
