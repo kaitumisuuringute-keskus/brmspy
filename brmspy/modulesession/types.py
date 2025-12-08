@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TypedDict, Literal, Dict, Any, List, Optional
 
-CommandType = Literal["CALL", "EVAL", "SHUTDOWN"]
+CommandType = Literal["CALL", "SHUTDOWN"]
 
 
 class ShmRef(TypedDict):
