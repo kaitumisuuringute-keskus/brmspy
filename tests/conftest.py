@@ -167,9 +167,9 @@ def pytest_collection_modifyitems(config, items):
     # Try to check if brms is available
     brms_is_available = False
     try:
-        import rpy2.robjects.packages as rpackages
-        brms = rpackages.importr("brms")
-        brms_is_available = True
+        from brmspy.brms import _get_brms
+        if _get_brms() is not None:
+            brms_is_available = True
     except:
         pass
 

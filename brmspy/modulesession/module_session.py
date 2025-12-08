@@ -3,6 +3,8 @@ from __future__ import annotations
 import atexit
 from contextlib import contextmanager
 import multiprocessing as mp
+from pathlib import Path
+import subprocess
 import uuid
 import weakref
 from multiprocessing.managers import SharedMemoryManager
@@ -14,6 +16,7 @@ from .errors import RSessionError
 from .transport import ShmPool, attach_buffers
 from .worker import worker_main
 import os
+import platform
 
 
 _INTERNAL_ATTRS = {
@@ -29,9 +32,73 @@ _INTERNAL_ATTRS = {
     "_func_cache",
 }
 
+def r_home_from_subprocess() -> Optional[str]:
+    """Return the R home directory from calling 'R RHOME'."""
+    cmd = ('R', 'RHOME')
+    tmp = subprocess.check_output(cmd, universal_newlines=True)
+    # may raise FileNotFoundError, WindowsError, etc
+    r_home = tmp.split(os.linesep)
+    if r_home[0].startswith('WARNING'):
+        res = r_home[1]
+    else:
+        res = r_home[0].strip()
+    return res
+
+def add_env_defaults(overrides: Dict[str, str]) -> Dict[str, str]:
+    """
+    Ensure required R environment variables exist inside overrides.
+    Mutates overrides in-place and returns it.
+
+    - Ensures R_HOME exists (or auto-detects)
+    - Ensures LD_LIBRARY_PATH includes R_HOME/lib (Unix only)
+    """
+    # ---------------------------------------------------------
+    # 1) R_HOME detection / override handling
+    # ---------------------------------------------------------
+    if "R_HOME" not in overrides:
+        r_home = r_home_from_subprocess()
+        if not r_home:
+            raise RuntimeError(
+                "`R_HOME` not provided and cannot auto-detect via subprocess. "
+                "R must be installed or explicitly configured."
+            )
+        r_home_path = Path(r_home)
+        overrides["R_HOME"] = r_home_path.as_posix()
+    else:
+        r_home_path = Path(overrides["R_HOME"])
+
+    # ---------------------------------------------------------
+    # 2) LD_LIBRARY_PATH for Unix-like systems
+    # ---------------------------------------------------------
+    if platform.system() != "Windows":
+        r_lib_dir = (r_home_path / "lib").as_posix()
+
+        if "LD_LIBRARY_PATH" not in overrides:
+            # Take current LD_LIBRARY_PATH from environment
+            current = os.environ.get("LD_LIBRARY_PATH", "")
+        else:
+            current = overrides["LD_LIBRARY_PATH"]
+
+        # Split into entries (ignore empty ones)
+        existing_parts = [p for p in current.split(":") if p]
+
+        # Prepend R_HOME/lib if not already present
+        if r_lib_dir not in existing_parts:
+            new_ld = ":".join([r_lib_dir] + existing_parts)
+        else:
+            new_ld = current  # already included
+
+        overrides["LD_LIBRARY_PATH"] = new_ld
+
+    # ---------------------------------------------------------
+    return overrides
+
+
 @contextmanager
 def with_env(overrides: Dict[str, str]) -> Iterator[None]:
     """Temporarily apply environment overrides, then restore."""
+    overrides = add_env_defaults(overrides)
+
     old = {}
     sentinel = object()
 

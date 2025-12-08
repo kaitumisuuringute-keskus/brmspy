@@ -64,15 +64,15 @@ class TestModuleStructure:
     
     def test_all_exports(self):
         """Test that __all__ is properly defined"""
-        import brmspy
-        assert hasattr(brmspy, '__all__')
-        assert isinstance(brmspy.__all__, list)
+        from brmspy import brms
+        assert hasattr(brms, '__all__')
+        assert isinstance(brms.__all__, list)
         
         # Check key functions are in __all__
-        assert 'fit' in brmspy.__all__
-        assert 'install_brms' in brmspy.__all__
-        assert 'get_brms_data' in brmspy.__all__
-        assert 'get_brms_version' in brmspy.__all__
+        assert 'fit' in brms.__all__
+        assert 'install_brms' in brms.__all__
+        assert 'get_brms_data' in brms.__all__
+        assert 'get_brms_version' in brms.__all__
     
     def test_submodule_structure(self):
         """Test submodule structure"""
@@ -89,31 +89,31 @@ class TestDocumentation:
     
     def test_fit_has_docstring(self):
         """Test fit() has comprehensive docstring"""
-        import brmspy
-        assert brmspy.fit.__doc__ is not None
-        assert len(brmspy.fit.__doc__) > 100
-        assert "Parameters" in brmspy.fit.__doc__
-        assert "Returns" in brmspy.fit.__doc__
-        assert "Examples" in brmspy.fit.__doc__
+        from brmspy import brms
+        assert brms.fit.__doc__ is not None
+        assert len(brms.fit.__doc__) > 100
+        assert "Parameters" in brms.fit.__doc__
+        assert "Returns" in brms.fit.__doc__
+        assert "Examples" in brms.fit.__doc__
     
     def test_install_brms_has_docstring(self):
         """Test install_brms() has docstring"""
-        import brmspy
-        assert brmspy.install_brms.__doc__ is not None
-        assert "version" in brmspy.install_brms.__doc__
-        assert "Examples" in brmspy.install_brms.__doc__
+        from brmspy import brms
+        assert brms.install_brms.__doc__ is not None
+        assert "version" in brms.install_brms.__doc__
+        assert "Examples" in brms.install_brms.__doc__
     
     def test_get_brms_data_has_docstring(self):
         """Test get_brms_data() has docstring"""
-        import brmspy
-        assert brmspy.get_brms_data.__doc__ is not None
-        assert "dataset_name" in brmspy.get_brms_data.__doc__
+        from brmspy import brms
+        assert brms.get_brms_data.__doc__ is not None
+        assert "dataset_name" in brms.get_brms_data.__doc__
     
     def test_summary_has_docstring(self):
         """Test summary() has docstring"""
-        import brmspy
-        assert brmspy.summary.__doc__ is not None
-        assert "summary" in brmspy.summary.__doc__.lower()
+        from brmspy import brms
+        assert brms.summary.__doc__ is not None
+        assert "summary" in brms.summary.__doc__.lower()
 
 
 if __name__ == '__main__':
