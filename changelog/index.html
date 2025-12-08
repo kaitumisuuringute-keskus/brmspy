@@ -82,7 +82,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#020-runtime-refactor-formula-dsl" class="md-skip">
+        <a href="#021-stability-hotfix" class="md-skip">
           Skip to content
         </a>
       
@@ -1234,6 +1234,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#021-stability-hotfix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.2.1 - Stability hotfix
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#020-runtime-refactor-formula-dsl" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1738,6 +1749,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#021-stability-hotfix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.2.1 - Stability hotfix
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#020-runtime-refactor-formula-dsl" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2231,6 +2253,13 @@
 
   <h1>Changelog</h1>
 
+<h2 id="021-stability-hotfix">0.2.1 - Stability hotfix<a class="headerlink" href="#021-stability-hotfix" title="Permanent link">&para;</a></h2>
+<p><em>25.12.07</em></p>
+<ul>
+<li>Try to enforce rpy2 RPY2_CFFI_MODE ABI mode on import with warnings if not possible. API/BOTH can cause instability on linux and macos (Issue: #45)</li>
+<li>Added R_HOME and LD_LIBRARY_PATH to github workflows (required on most environments in ABI mode)</li>
+<li>The environment now does its best attempts to detect invalid R setups and log them</li>
+</ul>
 <h2 id="020-runtime-refactor-formula-dsl">0.2.0 - Runtime Refactor &amp; Formula DSL<a class="headerlink" href="#020-runtime-refactor-formula-dsl" title="Permanent link">&para;</a></h2>
 <p><em>25.12.07</em></p>
 <h3 id="breaking-changes">Breaking Changes<a class="headerlink" href="#breaking-changes" title="Permanent link">&para;</a></h3>

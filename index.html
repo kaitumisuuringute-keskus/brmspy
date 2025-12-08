@@ -442,6 +442,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#r-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#python" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1617,6 +1645,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#r-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#python" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1977,26 +2033,35 @@
 <a href="https://github.com/kaitumisuuringute-keskus/brmspy/actions/workflows/python-test-matrix.yml"><img alt="python-test-matrix" src="https://github.com/kaitumisuuringute-keskus/brmspy/actions/workflows/python-test-matrix.yml/badge.svg" /></a>
 <a href="https://github.com/kaitumisuuringute-keskus/brmspy/actions/workflows/r-dependencies-tests.yml"><img alt="r-dependencies-tests" src="https://github.com/kaitumisuuringute-keskus/brmspy/actions/workflows/r-dependencies-tests.yml/badge.svg" /></a></p>
 <h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>brmspy
+<h3 id="r-configuration">R Configuration<a class="headerlink" href="#r-configuration" title="Permanent link">&para;</a></h3>
+<p>R&gt;=4 is required before installing brmspy.</p>
+<p>On linux and macos you may need to manually point your environment to the R installation.</p>
+<p>Run the following in your terminal:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Set R_HOME and add lib directory to LD_LIBRARY_PATH</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">R_HOME</span><span class="o">=</span><span class="k">$(</span>R<span class="w"> </span>RHOME<span class="k">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">LD_LIBRARY_PATH</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">R_HOME</span><span class="si">}</span><span class="s2">/lib:</span><span class="si">${</span><span class="nv">LD_LIBRARY_PATH</span><span class="si">}</span><span class="s2">&quot;</span>
+</code></pre></div>
+<h3 id="python">Python<a class="headerlink" href="#python" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pip<span class="w"> </span>install<span class="w"> </span>brmspy
 </code></pre></div>
 <p>First-time setup (installs brms, cmdstanr, and CmdStan in R):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">brmspy</span><span class="w"> </span><span class="kn">import</span> <span class="n">brms</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">brms</span><span class="o">.</span><span class="n">install_brms</span><span class="p">()</span> <span class="c1"># requires R to be installed already</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">brmspy</span><span class="w"> </span><span class="kn">import</span> <span class="n">brms</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">brms</span><span class="o">.</span><span class="n">install_brms</span><span class="p">()</span> <span class="c1"># requires R to be installed already</span>
 </code></pre></div>
 <h2 id="prebuilt-runtimes-optional">Prebuilt Runtimes (Optional)<a class="headerlink" href="#prebuilt-runtimes-optional" title="Permanent link">&para;</a></h2>
 <p>For faster installation (~20-60 seconds vs 20-30 minutes), use prebuilt runtime bundles:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">brmspy</span><span class="w"> </span><span class="kn">import</span> <span class="n">brms</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">brms</span><span class="o">.</span><span class="n">install_brms</span><span class="p">(</span><span class="n">use_prebuilt</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">brmspy</span><span class="w"> </span><span class="kn">import</span> <span class="n">brms</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">brms</span><span class="o">.</span><span class="n">install_brms</span><span class="p">(</span><span class="n">use_prebuilt</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="windows-rtools">Windows RTools<a class="headerlink" href="#windows-rtools" title="Permanent link">&para;</a></h2>
 <p>In case you don't have RTools installed, you can use the flag install_rtools = True. This is
 disabled by default, because the flag runs the full rtools installer and modifies system path. 
 Use with caution!</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">brmspy</span><span class="w"> </span><span class="kn">import</span> <span class="n">brms</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">brms</span><span class="o">.</span><span class="n">install_brms</span><span class="p">(</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">use_prebuilt</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">install_rtools</span><span class="o">=</span><span class="kc">True</span> <span class="c1"># works for both prebuilt and compiled binaries.</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">brmspy</span><span class="w"> </span><span class="kn">import</span> <span class="n">brms</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">brms</span><span class="o">.</span><span class="n">install_brms</span><span class="p">(</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">use_prebuilt</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">install_rtools</span><span class="o">=</span><span class="kc">True</span> <span class="c1"># works for both prebuilt and compiled binaries.</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="p">)</span>
 </code></pre></div>
 <h3 id="system-requirements">System Requirements<a class="headerlink" href="#system-requirements" title="Permanent link">&para;</a></h3>
 <p><strong>Linux (x86_64):</strong>
@@ -2026,19 +2091,19 @@ Use with caution!</p>
 <h2 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h2>
 <h3 id="1-quick-start">1. Quick Start<a class="headerlink" href="#1-quick-start" title="Permanent link">&para;</a></h3>
 <p>Basic Bayesian regression with ArviZ diagnostics:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">brmspy</span><span class="w"> </span><span class="kn">import</span> <span class="n">brms</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">arviz</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">az</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Fit Poisson model with random effects</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">epilepsy</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">get_brms_data</span><span class="p">(</span><span class="s2">&quot;epilepsy&quot;</span><span class="p">)</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="n">model</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="s2">&quot;count ~ zAge + (1|patient)&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">epilepsy</span><span class="p">,</span> <span class="n">family</span><span class="o">=</span><span class="s2">&quot;poisson&quot;</span><span class="p">)</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="c1"># Proper parameter names automatically!</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="nb">print</span><span class="p">(</span><span class="n">az</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">idata</span><span class="p">))</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="c1">#                  mean     sd  hdi_3%  hdi_97%  ...  r_hat</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="c1"># b_Intercept     1.234  0.123   1.012    1.456  ...   1.00</span>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="c1"># b_zAge          0.567  0.089   0.398    0.732  ...   1.00</span>
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="c1"># sd_patient__... 0.345  0.067   0.223    0.467  ...   1.00</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">brmspy</span><span class="w"> </span><span class="kn">import</span> <span class="n">brms</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">arviz</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">az</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Fit Poisson model with random effects</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">epilepsy</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">get_brms_data</span><span class="p">(</span><span class="s2">&quot;epilepsy&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">model</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">brm</span><span class="p">(</span><span class="s2">&quot;count ~ zAge + (1|patient)&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">epilepsy</span><span class="p">,</span> <span class="n">family</span><span class="o">=</span><span class="s2">&quot;poisson&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="c1"># Proper parameter names automatically!</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="nb">print</span><span class="p">(</span><span class="n">az</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">idata</span><span class="p">))</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="c1">#                  mean     sd  hdi_3%  hdi_97%  ...  r_hat</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="c1"># b_Intercept     1.234  0.123   1.012    1.456  ...   1.00</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="c1"># b_zAge          0.567  0.089   0.398    0.732  ...   1.00</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="c1"># sd_patient__... 0.345  0.067   0.223    0.467  ...   1.00</span>
 </code></pre></div>
 <h3 id="2-multivariate-models-python-vs-r">2. Multivariate Models (Python vs R)<a class="headerlink" href="#2-multivariate-models-python-vs-r" title="Permanent link">&para;</a></h3>
 <p>Model multiple responses simultaneously with seamless ArviZ integration:</p>
@@ -2047,38 +2112,38 @@ Use with caution!</p>
 <tr>
 <td>
 
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">brmspy</span><span class="w"> </span><span class="kn">import</span> <span class="n">brms</span><span class="p">,</span> <span class="n">bf</span><span class="p">,</span> <span class="n">set_rescor</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">arviz</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">az</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Fit multivariate model</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">mv</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="n">bf</span><span class="p">(</span><span class="s2">&quot;mvbind(tarsus, back) ~ sex + (1|p|fosternest)&quot;</span><span class="p">)</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    <span class="o">+</span> <span class="n">set_rescor</span><span class="p">(</span><span class="kc">True</span><span class="p">),</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    <span class="n">data</span><span class="o">=</span><span class="n">btdata</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="p">)</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="c1"># ArviZ just works!</span>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="n">az</span><span class="o">.</span><span class="n">loo</span><span class="p">(</span><span class="n">mv</span><span class="o">.</span><span class="n">idata</span><span class="p">,</span> <span class="n">var_name</span><span class="o">=</span><span class="s2">&quot;tarsus&quot;</span><span class="p">)</span>
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="n">az</span><span class="o">.</span><span class="n">loo</span><span class="p">(</span><span class="n">mv</span><span class="o">.</span><span class="n">idata</span><span class="p">,</span> <span class="n">var_name</span><span class="o">=</span><span class="s2">&quot;back&quot;</span><span class="p">)</span>
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="n">az</span><span class="o">.</span><span class="n">plot_ppc</span><span class="p">(</span><span class="n">mv</span><span class="o">.</span><span class="n">idata</span><span class="p">,</span> <span class="n">var_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tarsus&quot;</span><span class="p">])</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">brmspy</span><span class="w"> </span><span class="kn">import</span> <span class="n">brms</span><span class="p">,</span> <span class="n">bf</span><span class="p">,</span> <span class="n">set_rescor</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">arviz</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">az</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># Fit multivariate model</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">mv</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">brm</span><span class="p">(</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="n">bf</span><span class="p">(</span><span class="s2">&quot;mvbind(tarsus, back) ~ sex + (1|p|fosternest)&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="o">+</span> <span class="n">set_rescor</span><span class="p">(</span><span class="kc">True</span><span class="p">),</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    <span class="n">data</span><span class="o">=</span><span class="n">btdata</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="p">)</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="c1"># ArviZ just works!</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="n">az</span><span class="o">.</span><span class="n">loo</span><span class="p">(</span><span class="n">mv</span><span class="o">.</span><span class="n">idata</span><span class="p">,</span> <span class="n">var_name</span><span class="o">=</span><span class="s2">&quot;tarsus&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="n">az</span><span class="o">.</span><span class="n">loo</span><span class="p">(</span><span class="n">mv</span><span class="o">.</span><span class="n">idata</span><span class="p">,</span> <span class="n">var_name</span><span class="o">=</span><span class="s2">&quot;back&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="n">az</span><span class="o">.</span><span class="n">plot_ppc</span><span class="p">(</span><span class="n">mv</span><span class="o">.</span><span class="n">idata</span><span class="p">,</span> <span class="n">var_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tarsus&quot;</span><span class="p">])</span>
 </code></pre></div>
 
 </td>
 <td>
 
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nf">library</span><span class="p">(</span><span class="n">brms</span><span class="p">)</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nf">library</span><span class="p">(</span><span class="n">loo</span><span class="p">)</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># Fit multivariate model</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">fit</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">brm</span><span class="p">(</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">  </span><span class="nf">bf</span><span class="p">(</span><span class="nf">mvbind</span><span class="p">(</span><span class="n">tarsus</span><span class="p">,</span><span class="w"> </span><span class="n">back</span><span class="p">)</span><span class="w"> </span><span class="o">~</span><span class="w"> </span><span class="n">sex</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="m">1</span><span class="o">|</span><span class="n">p</span><span class="o">|</span><span class="n">fosternest</span><span class="p">))</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">  </span><span class="o">+</span><span class="w"> </span><span class="nf">set_rescor</span><span class="p">(</span><span class="kc">TRUE</span><span class="p">),</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">  </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BTdata</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="p">)</span>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="c1"># Separate LOO for each response</span>
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="n">loo_tarsus</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">loo</span><span class="p">(</span><span class="n">fit</span><span class="p">,</span><span class="w"> </span><span class="n">resp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;tarsus&quot;</span><span class="p">)</span>
-<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="n">loo_back</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">loo</span><span class="p">(</span><span class="n">fit</span><span class="p">,</span><span class="w"> </span><span class="n">resp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;back&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nf">library</span><span class="p">(</span><span class="n">brms</span><span class="p">)</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nf">library</span><span class="p">(</span><span class="n">loo</span><span class="p">)</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Fit multivariate model</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="n">fit</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">brm</span><span class="p">(</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">  </span><span class="nf">bf</span><span class="p">(</span><span class="nf">mvbind</span><span class="p">(</span><span class="n">tarsus</span><span class="p">,</span><span class="w"> </span><span class="n">back</span><span class="p">)</span><span class="w"> </span><span class="o">~</span><span class="w"> </span><span class="n">sex</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="m">1</span><span class="o">|</span><span class="n">p</span><span class="o">|</span><span class="n">fosternest</span><span class="p">))</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">  </span><span class="o">+</span><span class="w"> </span><span class="nf">set_rescor</span><span class="p">(</span><span class="kc">TRUE</span><span class="p">),</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">  </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BTdata</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="p">)</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="c1"># Separate LOO for each response</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="n">loo_tarsus</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">loo</span><span class="p">(</span><span class="n">fit</span><span class="p">,</span><span class="w"> </span><span class="n">resp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;tarsus&quot;</span><span class="p">)</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="n">loo_back</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">loo</span><span class="p">(</span><span class="n">fit</span><span class="p">,</span><span class="w"> </span><span class="n">resp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;back&quot;</span><span class="p">)</span>
 </code></pre></div>
 
 </td>
@@ -2087,136 +2152,136 @@ Use with caution!</p>
 
 <h3 id="3-distributional-regression">3. Distributional Regression<a class="headerlink" href="#3-distributional-regression" title="Permanent link">&para;</a></h3>
 <p>Model heteroscedasticity (variance depends on predictors):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">brmspy</span><span class="w"> </span><span class="kn">import</span> <span class="n">bf</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="c1"># Model both mean AND variance</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="n">model</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="n">bf</span><span class="p">(</span><span class="s2">&quot;reaction ~ days&quot;</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="s2">&quot;~ days&quot;</span><span class="p">),</span>  <span class="c1"># sigma varies with days!</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="n">data</span><span class="o">=</span><span class="n">sleep_data</span><span class="p">,</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="n">family</span><span class="o">=</span><span class="s2">&quot;gaussian&quot;</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="p">)</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="c1"># Extract distributional parameters</span>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">idata</span><span class="o">.</span><span class="n">posterior</span><span class="o">.</span><span class="n">data_vars</span><span class="p">)</span>
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="c1"># b_Intercept, b_days, b_sigma_Intercept, b_sigma_days, ...</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">brmspy</span><span class="w"> </span><span class="kn">import</span> <span class="n">bf</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="c1"># Model both mean AND variance</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">model</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">brm</span><span class="p">(</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="n">bf</span><span class="p">(</span><span class="s2">&quot;reaction ~ days&quot;</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="s2">&quot;~ days&quot;</span><span class="p">),</span>  <span class="c1"># sigma varies with days!</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>    <span class="n">data</span><span class="o">=</span><span class="n">sleep_data</span><span class="p">,</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    <span class="n">family</span><span class="o">=</span><span class="s2">&quot;gaussian&quot;</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="p">)</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="c1"># Extract distributional parameters</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">idata</span><span class="o">.</span><span class="n">posterior</span><span class="o">.</span><span class="n">data_vars</span><span class="p">)</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="c1"># b_Intercept, b_days, b_sigma_Intercept, b_sigma_days, ...</span>
 </code></pre></div>
 <h3 id="4-complete-diagnostic-workflow-with-arviz">4. Complete Diagnostic Workflow with ArviZ<a class="headerlink" href="#4-complete-diagnostic-workflow-with-arviz" title="Permanent link">&para;</a></h3>
 <p>Full model checking in ~10 lines:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">brmspy</span><span class="w"> </span><span class="kn">import</span> <span class="n">brms</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">arviz</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">az</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">model</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="s2">&quot;count ~ zAge * Trt + (1|patient)&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">epilepsy</span><span class="p">,</span> <span class="n">family</span><span class="o">=</span><span class="s2">&quot;poisson&quot;</span><span class="p">)</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="c1"># Check convergence</span>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="k">assert</span> <span class="n">az</span><span class="o">.</span><span class="n">rhat</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">idata</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mf">1.01</span><span class="p">,</span> <span class="s2">&quot;Convergence issues!&quot;</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="k">assert</span> <span class="n">az</span><span class="o">.</span><span class="n">ess</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">idata</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">400</span><span class="p">,</span> <span class="s2">&quot;Low effective sample size!&quot;</span>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="c1"># Posterior predictive check</span>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="n">az</span><span class="o">.</span><span class="n">plot_ppc</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">idata</span><span class="p">,</span> <span class="n">num_pp_samples</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>
-<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="c1"># Model comparison</span>
-<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="n">model2</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="s2">&quot;count ~ zAge + Trt + (1|patient)&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">epilepsy</span><span class="p">,</span> <span class="n">family</span><span class="o">=</span><span class="s2">&quot;poisson&quot;</span><span class="p">)</span>
-<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="n">comparison</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">compare</span><span class="p">({</span><span class="s2">&quot;interaction&quot;</span><span class="p">:</span> <span class="n">model</span><span class="o">.</span><span class="n">idata</span><span class="p">,</span> <span class="s2">&quot;additive&quot;</span><span class="p">:</span> <span class="n">model2</span><span class="o">.</span><span class="n">idata</span><span class="p">})</span>
-<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="nb">print</span><span class="p">(</span><span class="n">comparison</span><span class="p">)</span>
-<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="c1">#              rank  loo    p_loo  d_loo  weight</span>
-<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="c1"># interaction     0 -456.2   12.3    0.0    0.89</span>
-<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="c1"># additive        1 -461.5   10.8    5.3    0.11</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">brmspy</span><span class="w"> </span><span class="kn">import</span> <span class="n">brms</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">arviz</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">az</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">model</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">brm</span><span class="p">(</span><span class="s2">&quot;count ~ zAge * Trt + (1|patient)&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">epilepsy</span><span class="p">,</span> <span class="n">family</span><span class="o">=</span><span class="s2">&quot;poisson&quot;</span><span class="p">)</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="c1"># Check convergence</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="k">assert</span> <span class="n">az</span><span class="o">.</span><span class="n">rhat</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">idata</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mf">1.01</span><span class="p">,</span> <span class="s2">&quot;Convergence issues!&quot;</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="k">assert</span> <span class="n">az</span><span class="o">.</span><span class="n">ess</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">idata</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">400</span><span class="p">,</span> <span class="s2">&quot;Low effective sample size!&quot;</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="c1"># Posterior predictive check</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="n">az</span><span class="o">.</span><span class="n">plot_ppc</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">idata</span><span class="p">,</span> <span class="n">num_pp_samples</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="c1"># Model comparison</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="n">model2</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">brm</span><span class="p">(</span><span class="s2">&quot;count ~ zAge + Trt + (1|patient)&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">epilepsy</span><span class="p">,</span> <span class="n">family</span><span class="o">=</span><span class="s2">&quot;poisson&quot;</span><span class="p">)</span>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="n">comparison</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">compare</span><span class="p">({</span><span class="s2">&quot;interaction&quot;</span><span class="p">:</span> <span class="n">model</span><span class="o">.</span><span class="n">idata</span><span class="p">,</span> <span class="s2">&quot;additive&quot;</span><span class="p">:</span> <span class="n">model2</span><span class="o">.</span><span class="n">idata</span><span class="p">})</span>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="nb">print</span><span class="p">(</span><span class="n">comparison</span><span class="p">)</span>
+<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="c1">#              rank  loo    p_loo  d_loo  weight</span>
+<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a><span class="c1"># interaction     0 -456.2   12.3    0.0    0.89</span>
+<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a><span class="c1"># additive        1 -461.5   10.8    5.3    0.11</span>
 </code></pre></div>
 <h3 id="5-advanced-formulas-splines-non-linear-effects">5. Advanced Formulas: Splines &amp; Non-linear Effects<a class="headerlink" href="#5-advanced-formulas-splines-non-linear-effects" title="Permanent link">&para;</a></h3>
 <p>Smooth non-linear relationships with splines:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">brmspy</span><span class="w"> </span><span class="kn">import</span> <span class="n">brms</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1"># Generalized additive model (GAM) with spline</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">model</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    <span class="s2">&quot;y ~ s(x, bs=&#39;cr&#39;, k=10) + (1 + x | group)&quot;</span><span class="p">,</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>    <span class="n">family</span><span class="o">=</span><span class="s2">&quot;gaussian&quot;</span>
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="p">)</span>
-<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>
-<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="c1"># Polynomial regression</span>
-<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="n">poly_model</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
-<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>    <span class="s2">&quot;y ~ poly(x, 3) + (1|group)&quot;</span><span class="p">,</span>
-<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>    <span class="n">data</span><span class="o">=</span><span class="n">data</span>
-<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="p">)</span>
-<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>
-<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="c1"># Extract and visualize smooth effects</span>
-<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="n">conditional_effects</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="s2">&quot;conditional_effects&quot;</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">brmspy</span><span class="w"> </span><span class="kn">import</span> <span class="n">brms</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="c1"># Generalized additive model (GAM) with spline</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="n">model</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">brm</span><span class="p">(</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    <span class="s2">&quot;y ~ s(x, bs=&#39;cr&#39;, k=10) + (1 + x | group)&quot;</span><span class="p">,</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>    <span class="n">family</span><span class="o">=</span><span class="s2">&quot;gaussian&quot;</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="p">)</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="c1"># Polynomial regression</span>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="n">poly_model</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">brm</span><span class="p">(</span>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>    <span class="s2">&quot;y ~ poly(x, 3) + (1|group)&quot;</span><span class="p">,</span>
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>    <span class="n">data</span><span class="o">=</span><span class="n">data</span>
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="p">)</span>
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>
+<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="c1"># Extract and visualize smooth effects</span>
+<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a><span class="n">conditional_effects</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="s2">&quot;conditional_effects&quot;</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="additional-features">Additional Features<a class="headerlink" href="#additional-features" title="Permanent link">&para;</a></h3>
 <p><strong>Custom Priors:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">brmspy</span><span class="w"> </span><span class="kn">import</span> <span class="n">prior</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="n">model</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="s2">&quot;count ~ zAge + (1|patient)&quot;</span><span class="p">,</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    <span class="n">data</span><span class="o">=</span><span class="n">epilepsy</span><span class="p">,</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>    <span class="n">priors</span><span class="o">=</span><span class="p">[</span>
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>        <span class="n">prior</span><span class="p">(</span><span class="s2">&quot;normal(0, 0.5)&quot;</span><span class="p">,</span> <span class="n">class_</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">),</span>
-<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>        <span class="n">prior</span><span class="p">(</span><span class="s2">&quot;exponential(1)&quot;</span><span class="p">,</span> <span class="n">class_</span><span class="o">=</span><span class="s2">&quot;sd&quot;</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="s2">&quot;patient&quot;</span><span class="p">)</span>
-<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>    <span class="p">],</span>
-<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>    <span class="n">family</span><span class="o">=</span><span class="s2">&quot;poisson&quot;</span>
-<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">brmspy</span><span class="w"> </span><span class="kn">import</span> <span class="n">prior</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="n">model</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">brm</span><span class="p">(</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="s2">&quot;count ~ zAge + (1|patient)&quot;</span><span class="p">,</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    <span class="n">data</span><span class="o">=</span><span class="n">epilepsy</span><span class="p">,</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    <span class="n">priors</span><span class="o">=</span><span class="p">[</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>        <span class="n">prior</span><span class="p">(</span><span class="s2">&quot;normal(0, 0.5)&quot;</span><span class="p">,</span> <span class="n">class_</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">),</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>        <span class="n">prior</span><span class="p">(</span><span class="s2">&quot;exponential(1)&quot;</span><span class="p">,</span> <span class="n">class_</span><span class="o">=</span><span class="s2">&quot;sd&quot;</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="s2">&quot;patient&quot;</span><span class="p">)</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>    <span class="p">],</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>    <span class="n">family</span><span class="o">=</span><span class="s2">&quot;poisson&quot;</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="p">)</span>
 </code></pre></div></p>
 <p><strong>Predictions:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="n">new_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;zAge&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;patient&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">999</span><span class="p">,</span> <span class="mi">999</span><span class="p">,</span> <span class="mi">999</span><span class="p">]})</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="c1"># Expected value (without observation noise)</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="n">epred</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">posterior_epred</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">newdata</span><span class="o">=</span><span class="n">new_data</span><span class="p">)</span>
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="c1"># Posterior predictive (with noise)</span>
-<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="n">ypred</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">posterior_predict</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">newdata</span><span class="o">=</span><span class="n">new_data</span><span class="p">)</span>
-<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>
-<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="c1"># Access as InferenceData for ArviZ</span>
-<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="n">az</span><span class="o">.</span><span class="n">plot_violin</span><span class="p">(</span><span class="n">epred</span><span class="o">.</span><span class="n">idata</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="n">new_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;zAge&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;patient&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">999</span><span class="p">,</span> <span class="mi">999</span><span class="p">,</span> <span class="mi">999</span><span class="p">]})</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="c1"># Expected value (without observation noise)</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="n">epred</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">posterior_epred</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">newdata</span><span class="o">=</span><span class="n">new_data</span><span class="p">)</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="c1"># Posterior predictive (with noise)</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="n">ypred</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">posterior_predict</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">newdata</span><span class="o">=</span><span class="n">new_data</span><span class="p">)</span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="c1"># Access as InferenceData for ArviZ</span>
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="n">az</span><span class="o">.</span><span class="n">plot_violin</span><span class="p">(</span><span class="n">epred</span><span class="o">.</span><span class="n">idata</span><span class="p">)</span>
 </code></pre></div></p>
 <h3 id="6-maximalist-example-kitchen-sink">6. Maximalist Example: Kitchen Sink<a class="headerlink" href="#6-maximalist-example-kitchen-sink" title="Permanent link">&para;</a></h3>
 <p>Everything at once - multivariate responses, different families, distributional parameters, splines, and complete diagnostics:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">brmspy</span><span class="w"> </span><span class="kn">import</span> <span class="n">brms</span><span class="p">,</span> <span class="n">bf</span><span class="p">,</span> <span class="n">lf</span><span class="p">,</span> <span class="n">set_rescor</span><span class="p">,</span> <span class="n">skew_normal</span><span class="p">,</span> <span class="n">gaussian</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">arviz</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">az</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1"># Load data</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="n">btdata</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span><span class="s2">&quot;BTdata&quot;</span><span class="p">,</span> <span class="n">package</span><span class="o">=</span><span class="s2">&quot;MCMCglmm&quot;</span><span class="p">)</span>
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="n">bf_tarsus</span> <span class="o">=</span> <span class="p">(</span>
-<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>    <span class="n">bf</span><span class="p">(</span><span class="s2">&quot;tarsus ~ sex + (1|p|fosternest) + (1|q|dam)&quot;</span><span class="p">)</span> <span class="o">+</span>
-<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>    <span class="n">lf</span><span class="p">(</span><span class="s2">&quot;sigma ~ 0 + sex&quot;</span><span class="p">)</span> <span class="o">+</span>
-<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>    <span class="n">skew_normal</span><span class="p">()</span>
-<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="p">)</span>
-<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>
-<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a><span class="n">bf_back</span> <span class="o">=</span> <span class="p">(</span>
-<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>    <span class="n">bf</span><span class="p">(</span><span class="s2">&quot;back ~ s(hatchdate) + (1|p|fosternest) + (1|q|dam)&quot;</span><span class="p">)</span> <span class="o">+</span>
-<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a>    <span class="n">gaussian</span><span class="p">()</span>
-<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a><span class="p">)</span>
-<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a>
-<a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a><span class="n">model</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
-<a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a>    <span class="n">bf_tarsus</span> <span class="o">+</span> <span class="n">bf_back</span> <span class="o">+</span> <span class="n">set_rescor</span><span class="p">(</span><span class="kc">False</span><span class="p">),</span>
-<a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a>    <span class="n">data</span><span class="o">=</span><span class="n">btdata</span><span class="p">,</span>
-<a id="__codelineno-12-21" name="__codelineno-12-21" href="#__codelineno-12-21"></a>    <span class="n">chains</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-<a id="__codelineno-12-22" name="__codelineno-12-22" href="#__codelineno-12-22"></a>    <span class="n">control</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;adapt_delta&quot;</span><span class="p">:</span> <span class="mf">0.95</span><span class="p">}</span>
-<a id="__codelineno-12-23" name="__codelineno-12-23" href="#__codelineno-12-23"></a><span class="p">)</span>
-<a id="__codelineno-12-24" name="__codelineno-12-24" href="#__codelineno-12-24"></a>
-<a id="__codelineno-12-25" name="__codelineno-12-25" href="#__codelineno-12-25"></a><span class="c1"># ArviZ diagnostics work seamlessly</span>
-<a id="__codelineno-12-26" name="__codelineno-12-26" href="#__codelineno-12-26"></a><span class="k">for</span> <span class="n">response</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;tarsus&quot;</span><span class="p">,</span> <span class="s2">&quot;back&quot;</span><span class="p">]:</span>
-<a id="__codelineno-12-27" name="__codelineno-12-27" href="#__codelineno-12-27"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">=== </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2"> ===&quot;</span><span class="p">)</span>
-<a id="__codelineno-12-28" name="__codelineno-12-28" href="#__codelineno-12-28"></a>
-<a id="__codelineno-12-29" name="__codelineno-12-29" href="#__codelineno-12-29"></a>    <span class="c1"># Model comparison</span>
-<a id="__codelineno-12-30" name="__codelineno-12-30" href="#__codelineno-12-30"></a>    <span class="n">loo</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">loo</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">idata</span><span class="p">,</span> <span class="n">var_name</span><span class="o">=</span><span class="n">response</span><span class="p">)</span>
-<a id="__codelineno-12-31" name="__codelineno-12-31" href="#__codelineno-12-31"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;LOO: </span><span class="si">{</span><span class="n">loo</span><span class="o">.</span><span class="n">loo</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> ± </span><span class="si">{</span><span class="n">loo</span><span class="o">.</span><span class="n">loo_se</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-12-32" name="__codelineno-12-32" href="#__codelineno-12-32"></a>
-<a id="__codelineno-12-33" name="__codelineno-12-33" href="#__codelineno-12-33"></a>    <span class="c1"># Posterior predictive check</span>
-<a id="__codelineno-12-34" name="__codelineno-12-34" href="#__codelineno-12-34"></a>    <span class="n">az</span><span class="o">.</span><span class="n">plot_ppc</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">idata</span><span class="p">,</span> <span class="n">var_names</span><span class="o">=</span><span class="p">[</span><span class="n">response</span><span class="p">])</span>
-<a id="__codelineno-12-35" name="__codelineno-12-35" href="#__codelineno-12-35"></a>
-<a id="__codelineno-12-36" name="__codelineno-12-36" href="#__codelineno-12-36"></a>    <span class="c1"># Parameter summaries</span>
-<a id="__codelineno-12-37" name="__codelineno-12-37" href="#__codelineno-12-37"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">az</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span>
-<a id="__codelineno-12-38" name="__codelineno-12-38" href="#__codelineno-12-38"></a>        <span class="n">model</span><span class="o">.</span><span class="n">idata</span><span class="p">,</span>
-<a id="__codelineno-12-39" name="__codelineno-12-39" href="#__codelineno-12-39"></a>        <span class="n">var_names</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;b_</span><span class="si">{</span><span class="n">response</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">],</span>
-<a id="__codelineno-12-40" name="__codelineno-12-40" href="#__codelineno-12-40"></a>        <span class="n">filter_vars</span><span class="o">=</span><span class="s2">&quot;like&quot;</span>
-<a id="__codelineno-12-41" name="__codelineno-12-41" href="#__codelineno-12-41"></a>    <span class="p">))</span>
-<a id="__codelineno-12-42" name="__codelineno-12-42" href="#__codelineno-12-42"></a>
-<a id="__codelineno-12-43" name="__codelineno-12-43" href="#__codelineno-12-43"></a><span class="c1"># Visualize non-linear effect</span>
-<a id="__codelineno-12-44" name="__codelineno-12-44" href="#__codelineno-12-44"></a><span class="n">conditional</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="s2">&quot;conditional_effects&quot;</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="s2">&quot;hatchdate&quot;</span><span class="p">,</span> <span class="n">resp</span><span class="o">=</span><span class="s2">&quot;back&quot;</span><span class="p">)</span>
-<a id="__codelineno-12-45" name="__codelineno-12-45" href="#__codelineno-12-45"></a><span class="c1"># Returns proper pandas DataFrame ready for plotting!</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">brmspy</span><span class="w"> </span><span class="kn">import</span> <span class="n">brms</span><span class="p">,</span> <span class="n">bf</span><span class="p">,</span> <span class="n">lf</span><span class="p">,</span> <span class="n">set_rescor</span><span class="p">,</span> <span class="n">skew_normal</span><span class="p">,</span> <span class="n">gaussian</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">arviz</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">az</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="c1"># Load data</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="n">btdata</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span><span class="s2">&quot;BTdata&quot;</span><span class="p">,</span> <span class="n">package</span><span class="o">=</span><span class="s2">&quot;MCMCglmm&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="n">bf_tarsus</span> <span class="o">=</span> <span class="p">(</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>    <span class="n">bf</span><span class="p">(</span><span class="s2">&quot;tarsus ~ sex + (1|p|fosternest) + (1|q|dam)&quot;</span><span class="p">)</span> <span class="o">+</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>    <span class="n">lf</span><span class="p">(</span><span class="s2">&quot;sigma ~ 0 + sex&quot;</span><span class="p">)</span> <span class="o">+</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>    <span class="n">skew_normal</span><span class="p">()</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="p">)</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="n">bf_back</span> <span class="o">=</span> <span class="p">(</span>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>    <span class="n">bf</span><span class="p">(</span><span class="s2">&quot;back ~ s(hatchdate) + (1|p|fosternest) + (1|q|dam)&quot;</span><span class="p">)</span> <span class="o">+</span>
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>    <span class="n">gaussian</span><span class="p">()</span>
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a><span class="p">)</span>
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a>
+<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a><span class="n">model</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">brm</span><span class="p">(</span>
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a>    <span class="n">bf_tarsus</span> <span class="o">+</span> <span class="n">bf_back</span> <span class="o">+</span> <span class="n">set_rescor</span><span class="p">(</span><span class="kc">False</span><span class="p">),</span>
+<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a>    <span class="n">data</span><span class="o">=</span><span class="n">btdata</span><span class="p">,</span>
+<a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a>    <span class="n">chains</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+<a id="__codelineno-13-22" name="__codelineno-13-22" href="#__codelineno-13-22"></a>    <span class="n">control</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;adapt_delta&quot;</span><span class="p">:</span> <span class="mf">0.95</span><span class="p">}</span>
+<a id="__codelineno-13-23" name="__codelineno-13-23" href="#__codelineno-13-23"></a><span class="p">)</span>
+<a id="__codelineno-13-24" name="__codelineno-13-24" href="#__codelineno-13-24"></a>
+<a id="__codelineno-13-25" name="__codelineno-13-25" href="#__codelineno-13-25"></a><span class="c1"># ArviZ diagnostics work seamlessly</span>
+<a id="__codelineno-13-26" name="__codelineno-13-26" href="#__codelineno-13-26"></a><span class="k">for</span> <span class="n">response</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;tarsus&quot;</span><span class="p">,</span> <span class="s2">&quot;back&quot;</span><span class="p">]:</span>
+<a id="__codelineno-13-27" name="__codelineno-13-27" href="#__codelineno-13-27"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">=== </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2"> ===&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-28" name="__codelineno-13-28" href="#__codelineno-13-28"></a>
+<a id="__codelineno-13-29" name="__codelineno-13-29" href="#__codelineno-13-29"></a>    <span class="c1"># Model comparison</span>
+<a id="__codelineno-13-30" name="__codelineno-13-30" href="#__codelineno-13-30"></a>    <span class="n">loo</span> <span class="o">=</span> <span class="n">az</span><span class="o">.</span><span class="n">loo</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">idata</span><span class="p">,</span> <span class="n">var_name</span><span class="o">=</span><span class="n">response</span><span class="p">)</span>
+<a id="__codelineno-13-31" name="__codelineno-13-31" href="#__codelineno-13-31"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;LOO: </span><span class="si">{</span><span class="n">loo</span><span class="o">.</span><span class="n">loo</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> ± </span><span class="si">{</span><span class="n">loo</span><span class="o">.</span><span class="n">loo_se</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-32" name="__codelineno-13-32" href="#__codelineno-13-32"></a>
+<a id="__codelineno-13-33" name="__codelineno-13-33" href="#__codelineno-13-33"></a>    <span class="c1"># Posterior predictive check</span>
+<a id="__codelineno-13-34" name="__codelineno-13-34" href="#__codelineno-13-34"></a>    <span class="n">az</span><span class="o">.</span><span class="n">plot_ppc</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">idata</span><span class="p">,</span> <span class="n">var_names</span><span class="o">=</span><span class="p">[</span><span class="n">response</span><span class="p">])</span>
+<a id="__codelineno-13-35" name="__codelineno-13-35" href="#__codelineno-13-35"></a>
+<a id="__codelineno-13-36" name="__codelineno-13-36" href="#__codelineno-13-36"></a>    <span class="c1"># Parameter summaries</span>
+<a id="__codelineno-13-37" name="__codelineno-13-37" href="#__codelineno-13-37"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">az</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span>
+<a id="__codelineno-13-38" name="__codelineno-13-38" href="#__codelineno-13-38"></a>        <span class="n">model</span><span class="o">.</span><span class="n">idata</span><span class="p">,</span>
+<a id="__codelineno-13-39" name="__codelineno-13-39" href="#__codelineno-13-39"></a>        <span class="n">var_names</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;b_</span><span class="si">{</span><span class="n">response</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">],</span>
+<a id="__codelineno-13-40" name="__codelineno-13-40" href="#__codelineno-13-40"></a>        <span class="n">filter_vars</span><span class="o">=</span><span class="s2">&quot;like&quot;</span>
+<a id="__codelineno-13-41" name="__codelineno-13-41" href="#__codelineno-13-41"></a>    <span class="p">))</span>
+<a id="__codelineno-13-42" name="__codelineno-13-42" href="#__codelineno-13-42"></a>
+<a id="__codelineno-13-43" name="__codelineno-13-43" href="#__codelineno-13-43"></a><span class="c1"># Visualize non-linear effect</span>
+<a id="__codelineno-13-44" name="__codelineno-13-44" href="#__codelineno-13-44"></a><span class="n">conditional</span> <span class="o">=</span> <span class="n">brms</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="s2">&quot;conditional_effects&quot;</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="s2">&quot;hatchdate&quot;</span><span class="p">,</span> <span class="n">resp</span><span class="o">=</span><span class="s2">&quot;back&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-45" name="__codelineno-13-45" href="#__codelineno-13-45"></a><span class="c1"># Returns proper pandas DataFrame ready for plotting!</span>
 </code></pre></div>
 <p><strong>Output shows:</strong>
 - Proper parameter naming: <code>b_tarsus_Intercept</code>, <code>b_tarsus_sex</code>, <code>b_sigma_sex</code>, <code>sd_fosternest__tarsus_Intercept</code>, etc.
@@ -2232,7 +2297,7 @@ Use with caution!</p>
 <li><code>install_brms()</code> - Install brms, cmdstanr, and CmdStan from source or runtime</li>
 <li><code>install_runtime()</code> - Install latest runtime for OS</li>
 <li><code>activate_runtime()</code> - Activate existing prebuilt runtime</li>
-<li><code>deactivate_runtime()</code> - Deactivate current runtime</li>
+<li><code>deactivate_runtime()</code> - Deactivate current runtime - May break on windows.</li>
 <li><code>get_brms_version()</code> - Get installed brms version</li>
 <li><code>find_local_runtime()</code> - checks if a runtime exists locally in standard directory and returns path if it does</li>
 </ul>
@@ -2300,10 +2365,10 @@ Use with caution!</p>
 - numpy &gt;= 1.20.0
 - arviz (optional, for InferenceData)</p>
 <h2 id="development">Development<a class="headerlink" href="#development" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/kaitumisuuringute-keskus/brmspy.git
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="nb">cd</span><span class="w"> </span>brmspy
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>./init-venv.sh
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>pytest<span class="w"> </span>tests/<span class="w"> </span>-v
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/kaitumisuuringute-keskus/brmspy.git
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="nb">cd</span><span class="w"> </span>brmspy
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>./init-venv.sh
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>pytest<span class="w"> </span>tests/<span class="w"> </span>-v
 </code></pre></div>
 <h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
 <p>brmspy uses:
