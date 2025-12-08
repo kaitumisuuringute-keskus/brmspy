@@ -1045,11 +1045,15 @@ def r_to_py(obj):
           rownames = [str(el) for el in obj.rownames]
         else:
           rownames = None
-        return pd.DataFrame(
-            data=np.asarray(obj),
-            columns=colnames,
-            index=rownames
-        )
+
+        if rownames is None and colnames is None:
+            return np.asarray(obj)
+        else:
+            return pd.DataFrame(
+                data=np.asarray(obj),
+                columns=colnames,
+                index=rownames
+            )
 
     if isinstance(obj, ro.DataFrame):
         with localconverter(pandas2ri.converter) as cv:
@@ -1082,7 +1086,10 @@ def r_to_py(obj):
             result = {}
             for name in names:
                 key = str(name) if name not in (None, "") else None
-                result[key] = r_to_py(obj.rx2(name))
+                if obj is ro.NULL:
+                    result[key] = None
+                else:
+                    result[key] = r_to_py(obj.rx2(name))
             return result
 
         # Unnamed → list
