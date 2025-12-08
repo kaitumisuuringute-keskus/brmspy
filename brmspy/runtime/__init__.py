@@ -13,7 +13,9 @@ __all__ = [
 ]
 
 # MUST be called as otherwise the environment gets stuck asking for one
-_r_packages.set_cran_mirror()
+import os
+if os.environ.get("BRMSPY_WORKER") == "1":
+    _r_packages.set_cran_mirror()
 
 
 

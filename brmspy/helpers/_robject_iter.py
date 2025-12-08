@@ -71,7 +71,7 @@ def _matches_iterconf(value: Any, conf: IterConf) -> bool:
     return isinstance(value, conf.cls)
 
 
-_fun_repr = cast(Callable, ro.r('function(x) paste(capture.output(x), collapse = "\\n")'))
+
 def iterate_robject_to_dataclass(
     names: List[str],
     get: Callable[[str], Any],
@@ -87,6 +87,8 @@ def iterate_robject_to_dataclass(
     - `get(param)` should return the R slot already converted via rpy2 (or raw)
     - `target_dataclass` is a @dataclass whose field names mirror the params
     """
+    _fun_repr = cast(Callable, ro.r('function(x) paste(capture.output(x), collapse = "\\n")'))
+
     if target_dataclass is None:
         raise ValueError("target_dataclass must be specified")
 

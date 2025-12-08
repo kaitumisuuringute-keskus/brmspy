@@ -1,8 +1,20 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TypedDict, Literal, Dict, Any, List, Optional
 
 CommandType = Literal["CALL", "SHUTDOWN"]
+
+@dataclass
+class SexpWrapper:
+    _rid: int
+    _repr: str
+
+    def __str(self):
+        return self._repr
+
+    def __repr__(self):
+        return self._repr
 
 
 class ShmRef(TypedDict):

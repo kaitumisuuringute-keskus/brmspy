@@ -1,17 +1,19 @@
 from __future__ import annotations
 
 import atexit
+from contextlib import contextmanager
 import multiprocessing as mp
 import uuid
 import weakref
 from multiprocessing.managers import SharedMemoryManager
 from types import ModuleType
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Iterator, Optional
 
 from .codec import get_default_registry
 from .errors import RSessionError
 from .transport import ShmPool, attach_buffers
 from .worker import worker_main
+import os
 
 
 _INTERNAL_ATTRS = {
@@ -27,6 +29,32 @@ _INTERNAL_ATTRS = {
     "_func_cache",
 }
 
+@contextmanager
+def with_env(overrides: Dict[str, str]) -> Iterator[None]:
+    """Temporarily apply environment overrides, then restore."""
+    old = {}
+    sentinel = object()
+
+    for k, v in overrides.items():
+        old[k] = os.environ.get(k, sentinel)
+        os.environ[k] = v
+
+    try:
+        yield
+    finally:
+        for k, v_old in old.items():
+            if v_old is sentinel:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v_old
+
+
+def spawn_worker(target, args, env_overrides: Dict[str, str]):
+    ctx = mp.get_context("spawn")
+    with with_env(env_overrides):
+        proc = ctx.Process(target=target, args=args, daemon=True)
+        proc.start()
+    return proc
 
 class RModuleSession(ModuleType):
     """
@@ -63,12 +91,16 @@ class RModuleSession(ModuleType):
         parent_conn, child_conn = mp.Pipe()
         self._conn = parent_conn
 
-        proc = mp.Process(
+        env_overrides = {
+            "BRMSPY_WORKER": "1",
+            **(self._runtime_conf.get("env", {})),
+        }
+
+        proc = spawn_worker(
             target=worker_main,
             args=(child_conn, mgr_address, mgr_authkey, self._runtime_conf),
-            daemon=True,
+            env_overrides=env_overrides
         )
-        proc.start()
 
         self._mgr = mgr
         self._proc = proc

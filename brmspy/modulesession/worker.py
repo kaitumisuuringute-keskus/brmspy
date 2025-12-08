@@ -6,6 +6,8 @@ from typing import Any, Dict
 from multiprocessing.managers import SharedMemoryManager
 import importlib
 
+from .worker_sexp_cache import cache_sexp, reattach_sexp
+
 from .codec import get_default_registry
 from .transport import ShmPool, attach_buffers
 from .runtime import configure_r_env, run_startup_scripts
@@ -22,6 +24,9 @@ def worker_main(conn, mgr_address, mgr_authkey, runtime_conf) -> None:
       Those modules are free to use rpy2 / brms / cmdstanr however they like.
     """
 
+    import os
+    os.environ['BRMSPY_WORKER'] = "1"
+
     # 1. Connect to SHM manager
     smm = SharedMemoryManager(address=mgr_address, authkey=mgr_authkey)
     smm.connect()
@@ -34,6 +39,8 @@ def worker_main(conn, mgr_address, mgr_authkey, runtime_conf) -> None:
     reg = get_default_registry()
 
     module_cache: Dict[str, Any] = {}
+
+    from rpy2.rinterface_lib.sexp import Sexp
 
     while True:
         req = conn.recv()
@@ -72,10 +79,18 @@ def worker_main(conn, mgr_address, mgr_authkey, runtime_conf) -> None:
                     )
                     for k, p in req["kwargs"].items()
                 }
+                args = [reattach_sexp(o) for o in args]
+                kwargs = {k: reattach_sexp(v) for k, v in kwargs.items()}
 
                 # resolve "mod:pkg.module.func"
                 target = _resolve_module_target(req["target"], module_cache)
                 out = target(*args, **kwargs)
+
+                if isinstance(out, Sexp):
+                    out = cache_sexp(out)
+                elif hasattr(out, "r") and isinstance(out.r, Sexp):
+                    out.r = cache_sexp(out.r)
+                
 
                 # encode result
                 enc = reg.encode(out, shm_pool)

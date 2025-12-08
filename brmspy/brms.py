@@ -2,7 +2,6 @@
 Main brms module with Pythonic API.
 """
 
-import platform
 from brmspy import runtime
 from brmspy.helpers.log import log_warning
 from brmspy.runtime._state import get_brms as _get_brms
@@ -51,7 +50,9 @@ from brmspy.runtime import (
 )
 
 # Auto-load last runtime on import
-runtime._autoload()
+import os
+if os.environ.get("BRMSPY_WORKER") == "1":
+    runtime._autoload()
 
     
 
@@ -60,7 +61,8 @@ runtime._autoload()
 # This can lead to wild and unexpected behaviour, hence we do R imports when brms.py is imported
 
 try:
-    _get_brms()
+    if os.environ.get("BRMSPY_WORKER") == "1":
+        _get_brms()
 except ImportError:
     log_warning("brmspy: brms and other required libraries are not installed. Please call brmspy.install_brms()")
 

@@ -72,3 +72,4 @@ class PickleCodec:
         length = meta["length"]
         payload = bytes(buf[:length])
         return pickle.loads(payload)
+
