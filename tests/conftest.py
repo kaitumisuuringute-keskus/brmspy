@@ -131,7 +131,7 @@ def clean_runtime_dir_between_tests(request):
         except Exception:
             # make cleanup best-effort, not test-failing
             pass
-    
+
     yield
 
 @pytest.fixture(scope="session")

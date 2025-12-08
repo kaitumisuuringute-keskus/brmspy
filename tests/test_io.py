@@ -5,10 +5,8 @@ These tests verify RDS file saving and loading functionality for brmsfit objects
 """
 import pytest
 import pandas as pd
-import numpy as np
 import os
 import tempfile
-from pathlib import Path
 
 iter = 100
 warmup = 50

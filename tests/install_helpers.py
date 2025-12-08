@@ -34,7 +34,6 @@ def _remove_deps():
     from brmspy.runtime._activation import _unload_managed_packages, _remove_managed_packages
     from brmspy.runtime._state import invalidate_packages
     from brmspy.runtime import get_active_runtime, deactivate_runtime
-    from brmspy.runtime._activation import _unload_managed_packages
 
     if get_active_runtime():
         deactivate_runtime()

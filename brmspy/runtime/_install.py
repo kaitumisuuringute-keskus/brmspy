@@ -36,22 +36,25 @@ def install_traditional(
     if install_rtools and _platform.get_os() == "windows":
         _rtools.ensure_installed()
     
-    # Install packages
-    _r_packages.install_package("brms", version=brms_version)
-    _r_packages.install_package_deps("brms")
-    
     repos_cmdstanr: List[str] = [
-        "https://mc-stan.org/r-packages/",
-        'https://stan-dev.r-universe.dev'
+        'https://stan-dev.r-universe.dev',
+        'https://mc-stan.org/r-packages/'
     ]
+
+    # Install packages
+    _r_packages.install_package("brms", version=brms_version, repos_extra=repos_cmdstanr)
+    _r_packages.install_package_deps("brms", repos_extra=repos_cmdstanr)
+    #_r_packages.install_package("StanHeaders", repos_extra=repos_cmdstanr)
+    
+    
     if install_cmdstanr:
         _r_packages.install_package("cmdstanr", version=cmdstanr_version, repos_extra=repos_cmdstanr)
-        _r_packages.install_package_deps("cmdstanr")
+        _r_packages.install_package_deps("cmdstanr", repos_extra=repos_cmdstanr)
         _r_packages.build_cmdstan()
     
     if install_rstan:
-        _r_packages.install_package("rstan", version=rstan_version)
-        _r_packages.install_package_deps("rstan")
+        _r_packages.install_package("rstan", version=rstan_version, repos_extra=repos_cmdstanr)
+        _r_packages.install_package_deps("rstan", repos_extra=repos_cmdstanr)
     
     _state.invalidate_packages()
     _state.get_brms()

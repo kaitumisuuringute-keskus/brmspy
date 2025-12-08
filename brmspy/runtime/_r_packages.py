@@ -4,7 +4,7 @@ R package queries and installation. Stateless - no caching.
 
 import platform
 import multiprocessing
-from typing import List, Optional, Union, cast
+from typing import Callable, List, Optional, Union, cast
 
 import rpy2.robjects as ro
 from rpy2.robjects.packages import importr
@@ -18,7 +18,7 @@ def get_package_version(name: str) -> str | None:
     """Get installed package version or None."""
     try:
         expr = f"""
-        v <- utils::packageDescription('{name}', fields = 'Version')
+        v <- utils::packageDescription('{name}', fields = 'Version', lib.loc=.libPaths())
         if (is.na(v)) stop('Package not found')
         v
         """
@@ -71,7 +71,7 @@ def install_package(
     version: str | None = None,
     repos_extra: Optional[Union[str, List[Optional[str]], List[str]]] = None
 ) -> None:
-    from brmspy.runtime._r_env import unload_package
+    from brmspy.runtime._r_env import unload_package, get_lib_paths
 
     # Normalise special values that mean "latest / no constraint"
     if version is not None:
@@ -85,6 +85,10 @@ def install_package(
     system = platform.system()
     cores = multiprocessing.cpu_count()
 
+    lib_path = [get_lib_paths()[0]]
+    print("lib path is", lib_path)
+    lib_path = StrVector(lib_path)
+    
     already_installed = is_package_installed(name)
 
     repos: list[str] = ["https://cloud.r-project.org"]  # good default mirror
@@ -176,6 +180,7 @@ def install_package(
         utils.install_packages(
             StrVector((name,)),
             repos=StrVector(repos),
+            lib=lib_path,
             type=preferred_type,
             Ncpus=cores,
         )
@@ -197,6 +202,7 @@ def install_package(
                 StrVector((name,)),
                 repos=StrVector(repos),
                 # don't set type, let R manage this.
+                lib=lib_path,
                 Ncpus=cores,
             )
             installed_version = get_package_version(name)
@@ -204,35 +210,52 @@ def install_package(
                 raise RuntimeError(f"{name} did not appear after source install.")
             log(f"brmspy: Installed {name} from source.")
         except Exception as e2:
-            log_error(f"Failed to install {name}.")
+            log_error(f"Failed to install {name}: {e2}")
             raise e2
 
 
-def install_package_deps(name: str, include_suggests: bool = False) -> None:
+def install_package_deps(
+    name: str,
+    include_suggests: bool = False,
+    repos_extra: Optional[Union[str, List[Optional[str]], List[str]]] = None
+) -> None:
     """Install dependencies of an R package."""
-    which_deps = 'c("Depends", "Imports", "LinkingTo")'
+    which_deps = StrVector(["Depends", "Imports", "LinkingTo"])
     if include_suggests:
-        which_deps = 'c("Depends", "Imports", "LinkingTo", "Suggests")'
+        which_deps = StrVector(["Depends", "Imports", "LinkingTo", "Suggests"])
 
     ncpus = multiprocessing.cpu_count() - 1
     ncpus = max(1, ncpus)
+
+
+    repos: list[str] = ["https://cloud.r-project.org"]  # good default mirror
+
+    if repos_extra:
+        if isinstance(repos_extra, list):
+            for _r in repos_extra:
+                if isinstance(_r, str) and _r not in repos:
+                    repos.append(_r)
+        elif repos_extra not in repos:
+            repos.append(repos_extra)
     
     try:
-        ro.r(f"""
+        cast(Callable, ro.r(f"""
+        function (which_deps, name, ncpus, repos) {{
             pkgs <- unique(unlist(
                 tools::package_dependencies(
-                    c("{name}"),
+                    name,
                     recursive = TRUE,
-                    which = {which_deps},
+                    which = which_deps,
                     db = available.packages()
                 )
             ))
             
-            to_install <- setdiff(pkgs, rownames(installed.packages()))
+            to_install <- setdiff(pkgs, rownames(installed.packages(lib.loc = .libPaths(), noCache = TRUE)))
             if (length(to_install)) {{
-                install.packages(to_install, Ncpus = {ncpus})
+                install.packages(to_install, Ncpus = ncpus, repos = repos, lib = .libPaths()[1L])
             }}
-        """)
+        }}
+        """))(which_deps, StrVector([name]), ncpus, StrVector(repos))
     except Exception as e:
         log_warning(str(e))
         return

@@ -137,8 +137,6 @@ def get_active_runtime() -> Path | None:
     return status().active_runtime
 
 
-# semi-public
-
 def install_brms(
     *,
     use_prebuilt: bool = False,
@@ -207,7 +205,7 @@ def install_brms(
     if "use_prebuilt_binaries" in kwargs:
         use_prebuilt = kwargs['use_prebuilt_binaries']
         log_warning("'use_prebuilt_binaries' is deprecated, please use 'use_prebuilt' instead")
-    from brmspy.runtime import _install, _config, _activation
+    from brmspy.runtime import _install, _config, _activation, get_active_runtime, deactivate_runtime
 
     _r_packages.set_cran_mirror()
     
@@ -220,6 +218,9 @@ def install_brms(
         
         return runtime_path
     else:
+        if get_active_runtime():
+            deactivate_runtime()
+
         _install.install_traditional(
             brms_version=brms_version,
             cmdstanr_version=cmdstanr_version,
@@ -313,6 +314,7 @@ def deactivate_runtime() -> None:
     
     _activation.deactivate()
     _config.set_active_runtime_path(None)
+    _state.invalidate_packages()
 
 
 def status() -> RuntimeStatus:

@@ -59,7 +59,6 @@ class TestBuildManifestHash:
         # Hashes should differ
         assert hash1 != hash2
 
-
 @pytest.mark.rdeps
 class TestBuildRunRJson:
     """Test R JSON execution helper."""
