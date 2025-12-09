@@ -4,8 +4,8 @@ This is the ONLY module with global mutable state.
 """
 
 from typing import Any
-from brmspy.runtime._types import StoredEnv
-from brmspy.runtime import _r_env
+from brmspy._runtime._types import StoredEnv
+from brmspy._runtime import _r_env
 
 
 # === Package singletons (lazy-imported) ===

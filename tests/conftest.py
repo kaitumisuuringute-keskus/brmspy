@@ -106,7 +106,7 @@ def clean_runtime_dir_between_tests(request):
         yield
         return
 
-    from brmspy.runtime._storage import get_runtime_base_dir
+    from brmspy._runtime._storage import get_runtime_base_dir
     import shutil
 
     base_dir: Path = get_runtime_base_dir()

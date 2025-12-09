@@ -3,7 +3,7 @@ import typing
 import pandas as pd
 from .formula import bf
 from ..helpers._priors import _build_priors
-from ..runtime._state import get_brms
+from .._runtime._state import get_brms
 from ..helpers._conversion import (
     py_to_r
 )

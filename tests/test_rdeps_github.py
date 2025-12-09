@@ -10,7 +10,7 @@ triggered with real GitHub API.
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 
-from brmspy.runtime._github import (
+from brmspy._runtime._github import (
     parse_release_url,
     fetch_release_metadata,
     get_asset_sha256,

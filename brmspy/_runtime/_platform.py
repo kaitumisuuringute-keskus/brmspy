@@ -6,7 +6,7 @@ No side effects, no R environment mutation.
 import platform
 import subprocess
 from typing import cast
-from brmspy.runtime._types import SystemInfo
+from brmspy._runtime._types import SystemInfo
 
 
 # === Detection (pure) ===

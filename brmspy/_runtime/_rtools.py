@@ -16,7 +16,7 @@ from typing import Callable, Optional, cast
 from brmspy.helpers.log import log_warning
 from packaging.version import Version
 
-from brmspy.runtime._platform import get_arch, get_os
+from brmspy._runtime._platform import get_arch, get_os
 
 
 # R version range -> Rtools version
@@ -306,7 +306,7 @@ def ensure_installed() -> None:
         return
     
     # Get R version and determine required Rtools version
-    from brmspy.runtime._platform import get_r_version
+    from brmspy._runtime._platform import get_r_version
     r_ver = get_r_version()
     if r_ver is None:
         raise RuntimeError("Cannot determine R version")

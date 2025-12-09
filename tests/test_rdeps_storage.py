@@ -19,7 +19,7 @@ class TestRuntimeDirectoryValidation:
     
     def test_is_runtime_dir_valid(self, tmp_path):
         """Return True for valid runtime directory"""
-        from brmspy.runtime._storage import is_runtime_dir
+        from brmspy._runtime._storage import is_runtime_dir
         
         runtime_dir = tmp_path / "runtime"
         runtime_dir.mkdir()
@@ -29,7 +29,7 @@ class TestRuntimeDirectoryValidation:
     
     def test_is_runtime_dir_no_manifest(self, tmp_path):
         """Return False when manifest missing"""
-        from brmspy.runtime._storage import is_runtime_dir
+        from brmspy._runtime._storage import is_runtime_dir
         
         runtime_dir = tmp_path / "runtime"
         runtime_dir.mkdir()
@@ -38,7 +38,7 @@ class TestRuntimeDirectoryValidation:
     
     def test_is_runtime_dir_not_directory(self, tmp_path):
         """Return False for non-directory"""
-        from brmspy.runtime._storage import is_runtime_dir
+        from brmspy._runtime._storage import is_runtime_dir
         
         file_path = tmp_path / "file.txt"
         file_path.touch()
@@ -52,7 +52,7 @@ class TestHashManagement:
     
     def test_read_stored_hash_missing(self, tmp_path):
         """Return None when hash file doesn't exist"""
-        from brmspy.runtime._storage import read_stored_hash
+        from brmspy._runtime._storage import read_stored_hash
         
         runtime_dir = tmp_path / "runtime"
         runtime_dir.mkdir()
@@ -62,7 +62,7 @@ class TestHashManagement:
     
     def test_read_write_stored_hash(self, tmp_path):
         """Write and read hash file successfully"""
-        from brmspy.runtime._storage import read_stored_hash, write_stored_hash
+        from brmspy._runtime._storage import read_stored_hash, write_stored_hash
         
         runtime_dir = tmp_path / "runtime"
         runtime_dir.mkdir()
@@ -75,7 +75,7 @@ class TestHashManagement:
     
     def test_write_stored_hash_strips_whitespace(self, tmp_path):
         """Strip whitespace from hash when writing"""
-        from brmspy.runtime._storage import read_stored_hash, write_stored_hash
+        from brmspy._runtime._storage import read_stored_hash, write_stored_hash
         
         runtime_dir = tmp_path / "runtime"
         runtime_dir.mkdir()
@@ -93,7 +93,7 @@ class TestInstallFromArchive:
     
     def test_install_from_archive_success(self, tmp_path):
         """Successfully install runtime from archive"""
-        from brmspy.runtime._storage import install_from_archive
+        from brmspy._runtime._storage import install_from_archive
         
         # Create runtime structure
         stage_dir = tmp_path / "stage"
@@ -131,7 +131,7 @@ class TestInstallFromArchive:
     
     def test_install_from_archive_missing_manifest(self, tmp_path):
         """Raise error when archive has no manifest"""
-        from brmspy.runtime._storage import install_from_archive
+        from brmspy._runtime._storage import install_from_archive
         
         # Create runtime without manifest
         stage_dir = tmp_path / "stage"
@@ -151,7 +151,7 @@ class TestInstallFromArchive:
     
     def test_install_from_archive_replaces_existing(self, tmp_path, monkeypatch):
         """Replace existing runtime when installing"""
-        from brmspy.runtime._storage import install_from_archive, get_runtime_base_dir
+        from brmspy._runtime._storage import install_from_archive, get_runtime_base_dir
         
         # Mock base dir to tmp_path
         base_dir = tmp_path / ".brmspy" / "runtime"
@@ -191,7 +191,7 @@ class TestInstallFromDirectory:
     
     def test_install_from_directory_success(self, tmp_path, monkeypatch):
         """Successfully install runtime from directory"""
-        from brmspy.runtime._storage import install_from_directory
+        from brmspy._runtime._storage import install_from_directory
         
         # Mock base dir
         base_dir = tmp_path / ".brmspy" / "runtime"
@@ -218,7 +218,7 @@ class TestInstallFromDirectory:
     
     def test_install_from_directory_same_location(self, tmp_path, monkeypatch):
         """Return same path when already in correct location"""
-        from brmspy.runtime._storage import install_from_directory, get_runtime_path
+        from brmspy._runtime._storage import install_from_directory, get_runtime_path
         
         # Mock base dir
         base_dir = tmp_path / ".brmspy" / "runtime"
@@ -239,7 +239,7 @@ class TestInstallFromDirectory:
     
     def test_install_from_directory_missing_manifest(self, tmp_path):
         """Raise error when source has no manifest"""
-        from brmspy.runtime._storage import install_from_directory
+        from brmspy._runtime._storage import install_from_directory
         
         src_dir = tmp_path / "src"
         src_dir.mkdir()
@@ -254,7 +254,7 @@ class TestRuntimeListing:
     
     def test_list_installed_runtimes_empty(self, tmp_path, monkeypatch):
         """Return empty list when no runtimes installed"""
-        from brmspy.runtime._storage import list_installed_runtimes
+        from brmspy._runtime._storage import list_installed_runtimes
         
         base_dir = tmp_path / ".brmspy" / "runtime"
         monkeypatch.setattr("brmspy.runtime._storage.get_runtime_base_dir", lambda: base_dir)
@@ -264,7 +264,7 @@ class TestRuntimeListing:
     
     def test_list_installed_runtimes_finds_valid(self, tmp_path, monkeypatch):
         """List only valid runtime directories"""
-        from brmspy.runtime._storage import list_installed_runtimes
+        from brmspy._runtime._storage import list_installed_runtimes
         
         base_dir = tmp_path / ".brmspy" / "runtime"
         base_dir.mkdir(parents=True)
@@ -289,7 +289,7 @@ class TestRuntimeListing:
     
     def test_find_runtime_by_fingerprint(self, tmp_path, monkeypatch):
         """Find runtime matching fingerprint"""
-        from brmspy.runtime._storage import find_runtime_by_fingerprint
+        from brmspy._runtime._storage import find_runtime_by_fingerprint
         
         base_dir = tmp_path / ".brmspy" / "runtime"
         base_dir.mkdir(parents=True)
@@ -324,7 +324,7 @@ class TestRuntimeActivation:
     
     def test_activate_validates_structure(self, tmp_path):
         """Activation validates runtime structure"""
-        from brmspy.runtime._activation import activate
+        from brmspy._runtime._activation import activate
         
         # Missing manifest
         runtime_dir = tmp_path / "runtime"
@@ -335,8 +335,8 @@ class TestRuntimeActivation:
     
     def test_activate_validates_fingerprint(self, tmp_path):
         """Activation validates system fingerprint"""
-        from brmspy.runtime._activation import activate
-        from brmspy.runtime._platform import system_fingerprint
+        from brmspy._runtime._activation import activate
+        from brmspy._runtime._platform import system_fingerprint
         
         runtime_dir = tmp_path / "runtime"
         runtime_dir.mkdir()

@@ -44,7 +44,7 @@ class TestErrorHandling:
     def test_brms_not_installed_error_message(self):
         """Test that helpful error is raised when brms is not found"""
         import rpy2.robjects.packages as rpackages
-        from brmspy.runtime._state import get_brms
+        from brmspy._runtime._state import get_brms
         
         # This test might pass if brms IS installed
         # So we'll just check the function exists and can be called

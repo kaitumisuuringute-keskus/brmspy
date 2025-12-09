@@ -18,7 +18,7 @@ class TestGitHubTokenForwarding:
     
     def test_forward_token_when_set(self):
         """Forward GITHUB_TOKEN when set"""
-        from brmspy.runtime._r_env import forward_github_token
+        from brmspy._runtime._r_env import forward_github_token
         import rpy2.robjects as ro
         from typing import cast
         
@@ -49,7 +49,7 @@ class TestGitHubTokenForwarding:
     
     def test_forward_pat_preferred_over_token(self):
         """Forward GITHUB_PAT when both PAT and TOKEN are set"""
-        from brmspy.runtime._r_env import forward_github_token
+        from brmspy._runtime._r_env import forward_github_token
         import rpy2.robjects as ro
         from typing import cast
         
@@ -78,7 +78,7 @@ class TestGitHubTokenForwarding:
     
     def test_forward_token_when_not_set(self):
         """Handle case when neither token is set"""
-        from brmspy.runtime._r_env import forward_github_token
+        from brmspy._runtime._r_env import forward_github_token
         
         original_token = os.environ.get('GITHUB_TOKEN')
         original_pat = os.environ.get('GITHUB_PAT')
@@ -104,7 +104,7 @@ class TestPackageStateChecks:
     
     def test_namespace_loaded_vs_attached(self):
         """Verify distinction between namespace loaded and package attached"""
-        from brmspy.runtime._r_env import is_namespace_loaded, is_package_attached
+        from brmspy._runtime._r_env import is_namespace_loaded, is_package_attached
         import rpy2.robjects as ro
         
         # Load stats with library (loads and attaches)
@@ -126,7 +126,7 @@ class TestPackageStateChecks:
     
     def test_unload_package_not_loaded(self):
         """Unload package that isn't loaded"""
-        from brmspy.runtime._r_env import unload_package
+        from brmspy._runtime._r_env import unload_package
         
         # Try to unload a package that's not loaded
         # Should return False but not raise exception
@@ -135,7 +135,7 @@ class TestPackageStateChecks:
     
     def test_unload_package_loaded(self):
         """Attempt to unload a loaded package"""
-        from brmspy.runtime._r_env import unload_package, is_namespace_loaded
+        from brmspy._runtime._r_env import unload_package, is_namespace_loaded
         import rpy2.robjects as ro
         
         # Load a package
@@ -155,7 +155,7 @@ class TestPackageQueries:
     
     def test_get_package_version_installed(self):
         """Get version of installed package"""
-        from brmspy.runtime._r_packages import get_package_version
+        from brmspy._runtime._r_packages import get_package_version
         
         # stats should always be available
         version = get_package_version("stats")
@@ -168,14 +168,14 @@ class TestPackageQueries:
     
     def test_get_package_version_not_installed(self):
         """Return None for non-installed package"""
-        from brmspy.runtime._r_packages import get_package_version
+        from brmspy._runtime._r_packages import get_package_version
         
         version = get_package_version("nonexistent_package_xyz_123")
         assert version is None
     
     def test_is_package_installed_true(self):
         """Return True for installed package"""
-        from brmspy.runtime._r_packages import is_package_installed
+        from brmspy._runtime._r_packages import is_package_installed
         
         # stats package should always be available
         result = is_package_installed("stats")
@@ -183,7 +183,7 @@ class TestPackageQueries:
     
     def test_is_package_installed_false(self):
         """Return False for non-installed package"""
-        from brmspy.runtime._r_packages import is_package_installed
+        from brmspy._runtime._r_packages import is_package_installed
         
         result = is_package_installed("nonexistent_package_xyz_123")
         assert result is False
@@ -195,7 +195,7 @@ class TestLibPathOperations:
     
     def test_get_lib_paths_returns_list(self):
         """get_lib_paths returns list of strings"""
-        from brmspy.runtime._r_env import get_lib_paths
+        from brmspy._runtime._r_env import get_lib_paths
         
         paths = get_lib_paths()
         
@@ -205,7 +205,7 @@ class TestLibPathOperations:
     
     def test_set_lib_paths_modifies_r_env(self):
         """set_lib_paths modifies R environment"""
-        from brmspy.runtime._r_env import get_lib_paths, set_lib_paths
+        from brmspy._runtime._r_env import get_lib_paths, set_lib_paths
         
         # Save original
         original_paths = get_lib_paths()
@@ -235,7 +235,7 @@ class TestCmdStanPath:
     
     def test_get_cmdstan_path_returns_optional_str(self):
         """get_cmdstan_path returns str or None"""
-        from brmspy.runtime._r_env import get_cmdstan_path
+        from brmspy._runtime._r_env import get_cmdstan_path
         
         path = get_cmdstan_path()
         

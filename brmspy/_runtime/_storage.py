@@ -5,7 +5,7 @@ Runtime directory operations. Disk only, no R, no config.
 import shutil
 import tarfile
 from pathlib import Path
-from brmspy.runtime._platform import get_os
+from brmspy._runtime._platform import get_os
 
 
 def get_runtime_base_dir() -> Path:

@@ -1,7 +1,7 @@
 from typing import Callable, Union, cast
 from rpy2.rinterface import ListSexpVector
 
-from ..runtime._state import get_brms
+from .._runtime._state import get_brms
 from ..helpers._conversion import (
     kwargs_r, py_to_r, r_to_py
 )

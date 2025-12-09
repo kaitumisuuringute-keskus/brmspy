@@ -109,7 +109,7 @@ class TestBuildMetadataCollection:
     def test_collect_runtime_metadata_structure(self):
         """Collect metadata and verify structure (lines 160-166)"""
         from brmspy.build._metadata import collect_runtime_metadata
-        from brmspy.runtime._r_packages import is_package_installed
+        from brmspy._runtime._r_packages import is_package_installed
         
         # Skip if brms or cmdstanr not installed
         if not (is_package_installed("brms") and is_package_installed("cmdstanr")):
@@ -132,7 +132,7 @@ class TestBuildMetadataCollection:
     def test_collect_runtime_metadata_has_required_packages(self):
         """Verify brms and cmdstanr are included in metadata"""
         from brmspy.build._metadata import collect_runtime_metadata
-        from brmspy.runtime._r_packages import is_package_installed
+        from brmspy._runtime._r_packages import is_package_installed
         
         # Skip if brms or cmdstanr not installed
         if not (is_package_installed("brms") and is_package_installed("cmdstanr")):

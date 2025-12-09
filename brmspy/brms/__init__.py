@@ -1,205 +1,21 @@
 import os
 import sys
-from types import ModuleType, SimpleNamespace
-from typing import TYPE_CHECKING, Any, Type, cast
-from contextlib import contextmanager
+from types import ModuleType
+from typing import TYPE_CHECKING, cast
 
 from brmspy.session.module_session import RModuleSession
 
 import os
 import sys
-from types import ModuleType, SimpleNamespace
-from contextlib import contextmanager
-from typing import Any, Dict
-
-
-
-def install_rpy2_stub() -> None:
-    # Never stub in the worker
-    if os.environ.get("BRMSPY_WORKER") == "1":
-        return
-
-    if "rpy2" in sys.modules:
-        # Too late; something already imported the real one
-        return
-
-    # ----------------- helpers / dummy types -----------------
-
-    class Obj:
-        """Minimal placeholder type."""
-        def __init__(*args, **kwargs):
-            pass
-
-    def passthrough(*args, **kwargs):
-        return args[0] if args else None
-
-    @contextmanager
-    def _dummy_localconverter(*args, **kwargs):
-        # So `with localconverter(...):` works
-        yield None
-
-    def _dummy_importr(*args, **kwargs):
-        # If this ever gets called in main, something is wrong – all real
-        # package loading must happen in the worker.
-        raise RuntimeError(
-            "rpy2 stub in main process: `importr` must only be used in worker."
-        )
-
-    class StrVector(Obj):
-        pass
-
-    def _dummy_r(*args, **kwargs):
-        raise RuntimeError(
-            "rpy2 stub in main process: R code must only run inside worker."
-        )
-
-    class _DummyLock:
-        def __enter__(self):
-            return self
-
-        def __exit__(self, exc_type, exc, tb):
-            return False
-
-    # ----------------- structure description -----------------
-
-    # Each node:
-    #   - "package": bool -> whether to set __path__ (so submodules are importable)
-    #   - "attrs":   dict -> attributes to set on the module
-    #   - "factory": callable(fullname) -> object to register in sys.modules
-    #   - "submodules": dict[name -> node]
-    STRUCTURE: Dict[str, Dict[str, Any]] = {
-        "rpy2": {
-            "package": True,
-            "attrs": {},
-            "submodules": {
-                "robjects": {
-                    "package": True,
-                    "attrs": {
-                        # types
-                        "ListVector": Obj,
-                        "DataFrame": Obj,
-                        "Sexp": Obj,
-                        # converters / helpers
-                        "default_converter": _dummy_localconverter,
-                        "passthrough": passthrough,
-                        "pandas2ri": passthrough,
-                        "numpy2ri": passthrough,
-                        # R entrypoint
-                        "r": _dummy_r,
-                    },
-                    "submodules": {
-                        "conversion": {
-                            "package": False,
-                            "attrs": {
-                                "localconverter": _dummy_localconverter,
-                            },
-                            "submodules": {},
-                        },
-                        "functions": {
-                            "package": False,
-                            "attrs": {
-                                "SignatureTranslatedFunction": Obj,
-                            },
-                            "submodules": {},
-                        },
-                        "packages": {
-                            "package": False,
-                            "attrs": {
-                                "importr": _dummy_importr,
-                            },
-                            "submodules": {},
-                        },
-                        "vectors": {
-                            "package": False,
-                            "attrs": {
-                                "StrVector": StrVector,
-                            },
-                            "submodules": {},
-                        },
-                    },
-                },
-                # Commonly-present top-level module in rpy2; keep as empty stub
-                "rinterface": {
-                    "package": True,
-                    "attrs": {},
-                    "submodules": {},
-                },
-                "rinterface_lib": {
-                    "package": True,
-                    "attrs": {},
-                    "submodules": {
-                        "openrlib": {
-                            # openrlib isn't really a module; it's an object.
-                            "factory": lambda fullname: SimpleNamespace(
-                                rlock=_DummyLock()
-                            ),
-                            "attrs": {},
-                            "submodules": {},
-                        },
-                        "sexp": {
-                            "attrs": {
-                                "Sexp": Obj,
-                                "NALogicalType": Obj
-                            },
-                            "submodules": {}
-                        }
-                    },
-                },
-            },
-        }
-    }
-
-    # ----------------- recursive builder -----------------
-
-    def _install_node(
-        name: str,
-        spec: Dict[str, Any],
-        parent_fullname: str | None = None,
-    ) -> Any:
-        fullname = name if parent_fullname is None else f"{parent_fullname}.{name}"
-
-        # If a factory is provided, treat it as a non-Module object in sys.modules
-        factory = spec.get("factory")
-        if factory is not None:
-            obj = factory(fullname)
-            sys.modules[fullname] = obj
-            return obj
-
-        # Otherwise, create a normal module
-        mod = ModuleType(fullname)
-
-        if spec.get("package"):
-            # Mark as "package" so submodules under it are importable
-            mod.__path__ = []  # type: ignore[attr-defined]
-
-        # Attach attributes
-        for attr_name, attr_value in spec.get("attrs", {}).items():
-            setattr(mod, attr_name, attr_value)
-
-        # Register in sys.modules before recursing (for recursive imports)
-        sys.modules[fullname] = mod
-
-        # Recurse into submodules
-        for sub_name, sub_spec in spec.get("submodules", {}).items():
-            child = _install_node(sub_name, sub_spec, fullname)
-            setattr(mod, sub_name, child)
-
-        return mod
-
-    # ----------------- build tree -----------------
-
-    # There is only "rpy2" at the root, but keep it generic.
-    for root_name, root_spec in STRUCTURE.items():
-        _install_node(root_name, root_spec, None)
-
-#install_rpy2_stub()
+from types import ModuleType
 
 # -------------------------------------------------------------------
 # Typing: describe the brms module surface for static analysis
 # -------------------------------------------------------------------
 if TYPE_CHECKING:
     # For type checkers / IDE only – can point to the real brms module
-    from .. import _brms_module
+    import brmspy._brms_module as _brms_module
+    from brmspy._brms_module import *
     BrmsModule = _brms_module
 else:
     # At runtime, just treat it as a generic module
@@ -217,7 +33,7 @@ if os.environ.get("BRMSPY_WORKER") != "1":
     #install_rpy2_stub()
 
     # 2) Import the heavy brms module; it will see stubbed rpy2 in main.
-    from .. import _brms_module as _brms_mod
+    import brmspy._brms_module as _brms_module
 
     # 3) Wrap it in RModuleSession so all calls go to the worker.
     _module_path = "brmspy.brms"
@@ -225,7 +41,7 @@ if os.environ.get("BRMSPY_WORKER") != "1":
     brms = cast(
         BrmsModule,
         RModuleSession(
-            module=_brms_mod,
+            module=_brms_module,
             module_path=_module_path,
             runtime_conf={
                 # TODO: pass R_HOME, startup scripts, etc. here if needed
@@ -237,21 +53,74 @@ else:
     #
     # Here we *do not* install the stub – worker must see real rpy2.
     # BRMSPY_WORKER=1 should be set in the worker's env before import.
-    from .. import _brms_module as brms  # real module
+    import brmspy._brms_module as brms
 
 def active():
     return brms
+
+__all__ = [
+
+    # R env
+    'install_brms', 'install_runtime', 'get_brms_version',  'deactivate_runtime', 'activate_runtime',
+    'find_local_runtime', 'get_active_runtime',
+
+    'install_rpackage',
+
+    # IO
+    'get_brms_data', 'save_rds', 'read_rds_raw', 'read_rds_fit', 'get_data',
+
+    # brm
+    'fit', 'brm',
+
+    # formula
+    'formula', 'bf', 'set_mecor', 'set_rescor', 'set_nl',
+    'lf', 'nlf', 'acformula',
+
+    # priors
+    'prior', 'get_prior', 'default_prior',
+
+    # prediction
+    "posterior_predict", "posterior_epred", "posterior_linpred", "log_lik",
+
+    # diagnosis
+    'summary', 'fixef', 'ranef', 'posterior_summary', 'prior_summary', 'validate_newdata',
+    
+    # generic
+    'call',
+
+    # families
+    "brmsfamily", "family", "student", "bernoulli", "beta_binomial", "negbinomial",
+    "negbinomial2", "geometric", "discrete_weibull", "com_poisson", "lognormal",
+    "shifted_lognormal", "skew_normal", "exponential", "weibull", "frechet",
+    "gen_extreme_value", "exgaussian", "wiener", "Beta", "xbeta", "dirichlet",
+    "dirichlet2", "logistic_normal", "von_mises", "asym_laplace",
+    "zero_inflated_asym_laplace", "cox", "hurdle_poisson", "hurdle_negbinomial",
+    "hurdle_gamma", "hurdle_lognormal", "hurdle_cumulative", "zero_inflated_beta",
+    "zero_one_inflated_beta", "zero_inflated_poisson", "zero_inflated_negbinomial",
+    "zero_inflated_binomial", "zero_inflated_beta_binomial", "categorical",
+    "multinomial", "dirichlet_multinomial", "cumulative", "sratio", "cratio", "acat",
+    "gaussian", "poisson", "binomial", "Gamma", "inverse_gaussian",
+
+    # types
+    'FitResult', 'FormulaResult', 'PosteriorEpredResult', 'PosteriorPredictResult',
+    'PosteriorLinpredResult', 'LogLikResult', 'LooResult', 'LooCompareResult', 'GenericResult', 'RListVectorExtension',
+
+    'IDLinpred',
+    'IDEpred',
+    'IDFit',
+    'IDLogLik',
+    'IDPredict',
+    'PriorSpec',
+
+    # stan
+    'make_stancode',
+
+    '_formula_add'
+]
 
 # Re-export
 
 _this_mod = sys.modules[__name__]
 
-# Prefer the underlying module's __all__ if present
-_export_names = getattr(brms, "__all__", None)
-if _export_names is None:
-    _export_names = [n for n in dir(brms) if not n.startswith("_")]
-
-for name in _export_names:
+for name in __all__:
     setattr(_this_mod, name, getattr(brms, name))
-
-__all__ = list(_export_names)

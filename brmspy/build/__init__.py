@@ -43,7 +43,7 @@ def main():
     out_dir = base_dir
     runtime_version = args.runtime_version
 
-    from brmspy.runtime._r_packages import install_package
+    from brmspy._runtime._r_packages import install_package
     #install_package_deps("brms", include_suggests=False)
     install_package("StanHeaders")
 

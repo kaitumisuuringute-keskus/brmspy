@@ -1,7 +1,7 @@
 
 import typing
 
-from brmspy.runtime._state import get_brms
+from brmspy._runtime._state import get_brms
 from brmspy.types import PriorSpec
 
 

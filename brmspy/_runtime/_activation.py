@@ -6,7 +6,7 @@ Does NOT touch config - that's the caller's responsibility.
 from pathlib import Path
 from typing import Callable, List, cast
 from brmspy.helpers.log import log_warning
-from brmspy.runtime import _manifest, _r_env, _r_packages, _state, _platform, _config
+from brmspy._runtime import _manifest, _r_env, _r_packages, _state, _platform, _config
 
 if _platform.get_os() == "macos":
     # MacOS fails without forced tibble and pkgconfig unloading

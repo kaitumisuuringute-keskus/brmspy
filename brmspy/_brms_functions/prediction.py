@@ -1,7 +1,7 @@
 import typing
 import pandas as pd
 
-from ..runtime._state import get_brms
+from .._runtime._state import get_brms
 from ..helpers._conversion import (
     brms_linpred_to_idata, brms_log_lik_to_idata, brms_epred_to_idata, brms_predict_to_idata,
     kwargs_r, py_to_r

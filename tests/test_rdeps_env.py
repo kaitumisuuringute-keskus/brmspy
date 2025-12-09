@@ -16,7 +16,7 @@ class TestOsArchDetection:
     
     def test_get_os_current_platform(self):
         """Verify OS detection for current platform"""
-        from brmspy.runtime._platform import get_os
+        from brmspy._runtime._platform import get_os
         
         os_name = get_os()
         
@@ -25,7 +25,7 @@ class TestOsArchDetection:
     
     def test_get_arch_current_platform(self):
         """Verify architecture detection for current platform"""
-        from brmspy.runtime._platform import get_arch
+        from brmspy._runtime._platform import get_arch
         
         arch = get_arch()
         
@@ -39,7 +39,7 @@ class TestGetRVersionTuple:
     
     def test_get_r_version_returns_tuple(self):
         """Verify R version is returned as tuple"""
-        from brmspy.runtime._platform import get_r_version
+        from brmspy._runtime._platform import get_r_version
         
         version = get_r_version()
         
@@ -54,7 +54,7 @@ class TestGetRVersionTuple:
     
     def test_get_r_version_handles_r_unavailable(self):
         """Handle R unavailable scenario"""
-        from brmspy.runtime._platform import get_r_version
+        from brmspy._runtime._platform import get_r_version
         
         # Mock rpy2 import failure
         with patch.dict('sys.modules', {'rpy2.robjects': None}):
@@ -69,21 +69,21 @@ class TestRAvailableAndSupported:
     
     def test_is_r_available_current_r(self):
         """Test R availability"""
-        from brmspy.runtime._platform import is_r_available
+        from brmspy._runtime._platform import is_r_available
         
         # R should be available in test environment
         assert is_r_available()
     
     def test_is_r_supported_current_r(self):
         """Test with current R installation"""
-        from brmspy.runtime._platform import is_r_supported
+        from brmspy._runtime._platform import is_r_supported
         
         # Should work with default requirements (R >= 4.0)
         assert is_r_supported(min_version=(4, 0))
     
     def test_is_r_supported_high_requirements(self):
         """Test with very high version requirements"""
-        from brmspy.runtime._platform import is_r_supported
+        from brmspy._runtime._platform import is_r_supported
         
         # R 99.99 definitely not available
         result = is_r_supported(min_version=(99, 99))
@@ -91,7 +91,7 @@ class TestRAvailableAndSupported:
     
     def test_is_r_supported_current_major_high_minor(self):
         """Test minor version check"""
-        from brmspy.runtime._platform import is_r_supported, get_r_version
+        from brmspy._runtime._platform import is_r_supported, get_r_version
         
         version = get_r_version()
         if version:
@@ -107,7 +107,7 @@ class TestGlibcVersion:
     
     def test_get_glibc_version_on_linux(self):
         """Test glibc detection on Linux"""
-        from brmspy.runtime._platform import get_glibc_version, get_os
+        from brmspy._runtime._platform import get_glibc_version, get_os
         import platform
         
         if platform.system() == "Linux":
@@ -128,7 +128,7 @@ class TestClangVersion:
     
     def test_get_clang_version_on_macos(self):
         """Test clang detection on macOS"""
-        from brmspy.runtime._platform import get_clang_version
+        from brmspy._runtime._platform import get_clang_version
         import platform
         
         if platform.system() == "Darwin":
@@ -149,7 +149,7 @@ class TestLinuxToolchain:
     
     def test_is_linux_toolchain_ok_on_linux(self):
         """Test Linux toolchain check"""
-        from brmspy.runtime._platform import is_linux_toolchain_ok
+        from brmspy._runtime._platform import is_linux_toolchain_ok
         import platform
         
         if platform.system() == "Linux":
@@ -168,7 +168,7 @@ class TestMacosToolchain:
     
     def test_is_macos_toolchain_ok_on_macos(self):
         """Test macOS toolchain check"""
-        from brmspy.runtime._platform import is_macos_toolchain_ok
+        from brmspy._runtime._platform import is_macos_toolchain_ok
         import platform
         
         if platform.system() == "Darwin":
@@ -187,7 +187,7 @@ class TestWindowsToolchain:
     
     def test_is_windows_toolchain_ok_checks_rtools(self):
         """Verify Windows checks for Rtools"""
-        from brmspy.runtime._platform import is_windows_toolchain_ok
+        from brmspy._runtime._platform import is_windows_toolchain_ok
         import platform
         
         if platform.system() == "Windows":
@@ -205,14 +205,14 @@ class TestSupportedPlatform:
     
     def test_is_platform_supported_current_system(self):
         """Check current platform support"""
-        from brmspy.runtime._platform import is_platform_supported
+        from brmspy._runtime._platform import is_platform_supported
         
         result = is_platform_supported()
         assert isinstance(result, bool)
     
     def test_is_platform_supported_with_mock_unsupported_os(self):
         """Test with unsupported OS"""
-        from brmspy.runtime._platform import is_platform_supported
+        from brmspy._runtime._platform import is_platform_supported
         import platform as plat
         
         # Mock platform.system to return unsupported OS
@@ -222,7 +222,7 @@ class TestSupportedPlatform:
     
     def test_is_platform_supported_with_mock_unsupported_arch(self):
         """Test with unsupported architecture"""
-        from brmspy.runtime._platform import is_platform_supported
+        from brmspy._runtime._platform import is_platform_supported
         import platform as plat
         
         # Mock unsupported architecture
@@ -238,14 +238,14 @@ class TestToolchainIsCompatible:
     
     def test_is_toolchain_compatible_current_platform(self):
         """Test toolchain check for current platform"""
-        from brmspy.runtime._platform import is_toolchain_compatible
+        from brmspy._runtime._platform import is_toolchain_compatible
         
         result = is_toolchain_compatible()
         assert isinstance(result, bool)
     
     def test_is_toolchain_compatible_unknown_os(self):
         """Return False for unknown OS"""
-        from brmspy.runtime._platform import is_toolchain_compatible
+        from brmspy._runtime._platform import is_toolchain_compatible
         import platform as plat
         
         # Mock unknown OS
@@ -260,7 +260,7 @@ class TestSystemFingerprint:
     
     def test_system_fingerprint_format(self):
         """Verify fingerprint format"""
-        from brmspy.runtime._platform import system_fingerprint
+        from brmspy._runtime._platform import system_fingerprint
         
         fp = system_fingerprint()
         
@@ -272,7 +272,7 @@ class TestSystemFingerprint:
     
     def test_system_fingerprint_when_r_unavailable(self):
         """Raise error when R version unavailable"""
-        from brmspy.runtime._platform import system_fingerprint
+        from brmspy._runtime._platform import system_fingerprint
         
         # Mock get_r_version to return None
         with patch('brmspy.runtime._platform.get_r_version', return_value=None):
@@ -286,7 +286,7 @@ class TestPrebuiltAvailableFor:
     
     def test_is_prebuilt_available_unknown_fingerprint(self):
         """Test prebuilt availability for unknown fingerprint"""
-        from brmspy.runtime._platform import is_prebuilt_available
+        from brmspy._runtime._platform import is_prebuilt_available
         
         # Unknown platform
         result = is_prebuilt_available("unknown-platform-r99.99")
@@ -295,7 +295,7 @@ class TestPrebuiltAvailableFor:
     
     def test_is_prebuilt_available_valid_fingerprint(self):
         """Check availability for valid fingerprints"""
-        from brmspy.runtime._platform import (
+        from brmspy._runtime._platform import (
             is_prebuilt_available,
             PREBUILT_FINGERPRINTS
         )
@@ -318,14 +318,14 @@ class TestCanUsePrebuilt:
     
     def test_can_use_prebuilt_current_system(self):
         """Test prebuilt check for current system"""
-        from brmspy.runtime._platform import can_use_prebuilt
+        from brmspy._runtime._platform import can_use_prebuilt
         
         result = can_use_prebuilt()
         assert isinstance(result, bool)
     
     def test_can_use_prebuilt_unsupported_platform(self):
         """Return False for unsupported platform"""
-        from brmspy.runtime._platform import can_use_prebuilt
+        from brmspy._runtime._platform import can_use_prebuilt
         import platform as plat
         
         # Mock unsupported platform
@@ -335,7 +335,7 @@ class TestCanUsePrebuilt:
     
     def test_can_use_prebuilt_r_unavailable(self):
         """Return False when R unavailable"""
-        from brmspy.runtime._platform import can_use_prebuilt
+        from brmspy._runtime._platform import can_use_prebuilt
         
         # Mock R unavailable
         with patch('brmspy.runtime._platform.is_r_supported', return_value=False):
@@ -344,7 +344,7 @@ class TestCanUsePrebuilt:
     
     def test_can_use_prebuilt_toolchain_incompatible(self):
         """Return False when toolchain incompatible"""
-        from brmspy.runtime._platform import can_use_prebuilt
+        from brmspy._runtime._platform import can_use_prebuilt
         
         # Mock incompatible toolchain
         with patch('brmspy.runtime._platform.is_platform_supported', return_value=True):
@@ -360,8 +360,8 @@ class TestGetSystemInfo:
     
     def test_get_system_info_returns_dataclass(self):
         """Test get_system_info returns SystemInfo dataclass"""
-        from brmspy.runtime._platform import get_system_info
-        from brmspy.runtime._types import SystemInfo
+        from brmspy._runtime._platform import get_system_info
+        from brmspy._runtime._types import SystemInfo
         
         info = get_system_info()
         
@@ -372,7 +372,7 @@ class TestGetSystemInfo:
     
     def test_get_compatibility_issues_returns_list(self):
         """Test get_compatibility_issues returns list of strings"""
-        from brmspy.runtime._platform import get_compatibility_issues
+        from brmspy._runtime._platform import get_compatibility_issues
         
         issues = get_compatibility_issues()
         

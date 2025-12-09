@@ -73,7 +73,7 @@ def install_package(
     version: str | None = None,
     repos_extra: Optional[Union[str, List[Optional[str]], List[str]]] = None
 ) -> None:
-    from brmspy.runtime._r_env import unload_package, get_lib_paths
+    from brmspy._runtime._r_env import unload_package, get_lib_paths
     from rpy2.robjects.packages import importr
     import rpy2.robjects as ro
 

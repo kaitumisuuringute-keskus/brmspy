@@ -19,7 +19,7 @@ class TestGetLinuxRepo:
     
     def test_get_linux_repo_with_os_release(self):
         """Test repository detection with /etc/os-release"""
-        from brmspy.runtime._r_packages import _get_linux_repo
+        from brmspy._runtime._r_packages import _get_linux_repo
         import os
         
         if platform.system() == "Linux" and os.path.exists("/etc/os-release"):
@@ -32,7 +32,7 @@ class TestGetLinuxRepo:
     
     def test_get_linux_repo_fallback(self):
         """Test fallback when /etc/os-release missing"""
-        from brmspy.runtime._r_packages import _get_linux_repo
+        from brmspy._runtime._r_packages import _get_linux_repo
         from unittest.mock import patch
         
         # Mock file not found
@@ -50,7 +50,7 @@ class TestGetBrmsVersion:
     
     def test_get_brms_version_returns_version(self):
         """Test get_package_version returns version string"""
-        from brmspy.runtime._r_packages import get_package_version
+        from brmspy._runtime._r_packages import get_package_version
         
         version = get_package_version("brms")
         
@@ -69,7 +69,7 @@ class TestInstallRPackage:
     
     def test_install_package_already_installed(self):
         """Test package already installed path"""
-        from brmspy.runtime._r_packages import install_package
+        from brmspy._runtime._r_packages import install_package
         
         # Try to install brms which should already be installed from main tests
         # Should detect it's already there and skip
@@ -80,7 +80,7 @@ class TestInstallRPackage:
     
     def test_install_package_version_none_variants(self):
         """Test version=None variants"""
-        from brmspy.runtime._r_packages import install_package
+        from brmspy._runtime._r_packages import install_package
         
         # These should all be treated as "latest"
         # Just test they don't crash - actual installation tested elsewhere
@@ -100,7 +100,7 @@ class TestInstallRPackageDeps:
     
     def test_install_package_deps_basic(self):
         """Test basic dependency installation"""
-        from brmspy.runtime._r_packages import install_package_deps
+        from brmspy._runtime._r_packages import install_package_deps
 
         install_package_deps("brms")
 
@@ -112,7 +112,7 @@ class TestBuildCmdstanr:
     
     def test_build_cmdstan_basic(self):
         """Test CmdStan build process"""
-        from brmspy.runtime._r_packages import build_cmdstan
+        from brmspy._runtime._r_packages import build_cmdstan
         
         # Should complete successfully if cmdstanr already built
         # Or build it if not yet built
@@ -129,8 +129,8 @@ class TestInstallPrebuilt:
     
     def test_install_prebuilt_checks_compatibility(self):
         """Test prebuilt checks system compatibility"""
-        from brmspy.runtime._install import install_runtime
-        from brmspy.runtime import _platform
+        from brmspy._runtime._install import install_runtime
+        from brmspy._runtime import _platform
         
         # Mock incompatible system
         from unittest.mock import patch
@@ -142,8 +142,8 @@ class TestInstallPrebuilt:
     
     def test_install_prebuilt_constructs_url(self):
         """Test URL construction from fingerprint"""
-        from brmspy.runtime._install import install_runtime
-        from brmspy.runtime import _platform, _github, _storage
+        from brmspy._runtime._install import install_runtime
+        from brmspy._runtime import _platform, _github, _storage
         
         # Mock environment to allow test without actual installation
         from unittest.mock import patch, MagicMock
@@ -172,8 +172,8 @@ class TestInstallPrebuilt:
     
     def test_install_prebuilt_handles_failure(self):
         """Test prebuilt installation failure handling"""
-        from brmspy.runtime._install import install_runtime
-        from brmspy.runtime import _platform
+        from brmspy._runtime._install import install_runtime
+        from brmspy._runtime import _platform
         from unittest.mock import patch
         
         with patch.object(_platform, 'can_use_prebuilt', return_value=True):
@@ -192,8 +192,8 @@ class TestInstallBrms:
     
     def test_install_prebuilt_path(self):
         """Test install with prebuilt binaries"""
-        from brmspy.runtime import install_brms
-        from brmspy.runtime import _install
+        from brmspy._runtime import install_brms
+        from brmspy._runtime import _install
         from unittest.mock import patch
         from pathlib import Path
         
@@ -207,8 +207,8 @@ class TestInstallBrms:
     
     def test_install_rtools_flag(self):
         """Test Rtools installation flag"""
-        from brmspy.runtime import install_brms
-        from brmspy.runtime import _rtools, _r_packages, _r_env, _state
+        from brmspy._runtime import install_brms
+        from brmspy._runtime import _rtools, _r_packages, _r_env, _state
         from unittest.mock import patch, MagicMock
         
         if platform.system() != "Windows":
@@ -235,7 +235,7 @@ class TestInstallBrms:
     
     def test_install_rstan_option(self):
         """Test rstan installation option"""
-        from brmspy.runtime import install_brms
+        from brmspy._runtime import install_brms
 
         if platform.system() == "Darwin":
             pytest.skip("No rstan on macos")
@@ -254,7 +254,7 @@ class TestInit:
     
     def test_set_cran_mirror(self):
         """Test set_cran_mirror sets CRAN mirror"""
-        from brmspy.runtime._r_packages import set_cran_mirror
+        from brmspy._runtime._r_packages import set_cran_mirror
         import rpy2.robjects as ro
         
         set_cran_mirror()

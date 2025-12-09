@@ -30,7 +30,7 @@ class TestInstall:
 
         # Import after removal to ensure the library imports without brms installed
         from brmspy import brms
-        from brmspy.runtime._state import get_brms
+        from brmspy._runtime._state import get_brms
 
         brms.install_brms(use_prebuilt=False)
 

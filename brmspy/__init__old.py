@@ -326,14 +326,14 @@ _initialise_r_safe()
 
 # Import brms module for use as: from brmspy import brms
 from brmspy import brms
-from brmspy import runtime
-from brmspy.runtime import (
+from brmspy import _runtime
+from brmspy._runtime import (
     install_brms, install_runtime,
     deactivate_runtime, activate_runtime,
     find_local_runtime, get_active_runtime,
     get_brms_version,
 )
-from brmspy.runtime._platform import system_fingerprint
+from brmspy._runtime._platform import system_fingerprint
 from brmspy.brms import (
     get_brms_data,
     get_data,
@@ -440,7 +440,7 @@ __all__ = [
     'make_stancode',
     
     # Runtime API
-    'runtime',
+    '_runtime',
     'system_fingerprint',
 
     "__version__",

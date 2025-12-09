@@ -6,7 +6,7 @@ import json
 import hashlib
 from pathlib import Path
 from brmspy.helpers.log import log_warning
-from brmspy.runtime._types import RuntimeManifest
+from brmspy._runtime._types import RuntimeManifest
 
 
 def parse_manifest(path: Path) -> RuntimeManifest | None:

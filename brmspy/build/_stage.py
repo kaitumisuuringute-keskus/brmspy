@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 import sys
 
-from brmspy.runtime._platform import system_fingerprint
+from brmspy._runtime._platform import system_fingerprint
 from brmspy.helpers.log import log
 
 
