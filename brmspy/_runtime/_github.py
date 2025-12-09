@@ -7,6 +7,8 @@ import os
 from urllib.parse import urlparse
 import urllib.request
 
+from brmspy.helpers.log import log_warning
+
 
 REPO_OWNER = "kaitumisuuringute-keskus"
 REPO_NAME = "brmspy"
@@ -47,15 +49,16 @@ def parse_release_url(url: str) -> tuple[str, str, str, str]:
     return owner, repo, tag, asset_name
 
 
-def fetch_release_metadata(owner: str, repo: str, tag: str) -> dict:
+def fetch_release_metadata(owner: str, repo: str, tag: str, use_token = True) -> dict:
     """Fetch release metadata from GitHub API (handles auth + retries)."""
     api_url = f"https://api.github.com/repos/{owner}/{repo}/releases/tags/{tag}"
     
     # Prepare headers with auth if available
     headers = {"Accept": "application/vnd.github.v3+json"}
-    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GITHUB_PAT")
-    if token:
-        headers["Authorization"] = f"token {token}"
+    if use_token:
+        token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GITHUB_PAT")
+        if token:
+            headers["Authorization"] = f"token {token}"
     
     req = urllib.request.Request(api_url, headers=headers)
     
@@ -70,8 +73,11 @@ def get_asset_sha256(url: str) -> str | None:
     """Get SHA256 hash from release asset metadata."""
     try:
         owner, repo, tag, asset_name = parse_release_url(url)
-        metadata = fetch_release_metadata(owner, repo, tag)
-        
+        try:
+            metadata = fetch_release_metadata(owner, repo, tag, use_token=False)
+        except:
+            metadata = fetch_release_metadata(owner, repo, tag, use_token=True)
+
         # Find the asset in the release
         for asset in metadata.get("assets", []):
             if asset.get("name") == asset_name:
@@ -79,10 +85,11 @@ def get_asset_sha256(url: str) -> str | None:
                 # a .sha256 file or similar
                 # For now, return None as this needs to be implemented based on
                 # how the releases are structured
-                return None
+                return asset.get("digest")
         
         return None
-    except Exception:
+    except Exception as e:
+        log_warning(f"Could not get asset metadata: {e}")
         return None
 
 

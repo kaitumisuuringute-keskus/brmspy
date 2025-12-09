@@ -31,11 +31,11 @@ def get_package_version(name: str) -> str | None:
         return None
 
 
-def is_package_installed(name: str) -> bool:
+def is_package_installed(name: str, lib_loc = None) -> bool:
     """Check if package is installed."""
     from rpy2.robjects.packages import isinstalled
     try:
-        return isinstalled(name)
+        return isinstalled(name, lib_loc=lib_loc)
     except Exception:
         return False
 
@@ -91,11 +91,11 @@ def install_package(
     system = platform.system()
     cores = multiprocessing.cpu_count()
 
-    lib_path = [get_lib_paths()[0]]
-    print("lib path is", lib_path)
-    lib_path = ro.StrVector(lib_path)
+    lib_path_py = [get_lib_paths()[0]]
+    print("lib path is", lib_path_py)
+    lib_path = ro.StrVector(lib_path_py)
     
-    already_installed = is_package_installed(name)
+    already_installed = is_package_installed(name, lib_loc=lib_path_py[0])
 
     repos: list[str] = ["https://cloud.r-project.org"]  # good default mirror
 

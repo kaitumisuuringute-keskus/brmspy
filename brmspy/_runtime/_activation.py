@@ -61,11 +61,15 @@ def activate(runtime_path: Path) -> None:
         cmdstan_posix = cmdstan.as_posix()
         
         _r_env.set_lib_paths([str(rlib_posix)])
+        log(f"lib paths are {_r_env.get_lib_paths()}")
         _state.invalidate_packages()
-        
+        _verify_runtime_loadable()
+        log(f"Setting cmdstan path to {cmdstan_posix}")
         _r_env.set_cmdstan_path(str(cmdstan_posix))
 
-        _verify_runtime_loadable()
+        
+
+        
         
     except Exception as e:
         # Rollback

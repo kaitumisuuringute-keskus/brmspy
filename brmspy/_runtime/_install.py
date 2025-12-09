@@ -87,18 +87,17 @@ def install_runtime(
     
     # Check if already installed with matching hash
     existing = _storage.find_runtime_by_fingerprint(fingerprint)
-    if existing:
-        url = _github.get_runtime_download_url(fingerprint, version)
-        expected_hash = _github.get_asset_sha256(url)
-        stored_hash = _storage.read_stored_hash(existing)
-        
-        if expected_hash and stored_hash == expected_hash:
-            return existing  # Reuse existing
-    
-    # Download and install
     url = _github.get_runtime_download_url(fingerprint, version)
     expected_hash = _github.get_asset_sha256(url)
-    
+
+    if not expected_hash:
+        raise Exception(f"No expected hash from {url}")
+
+    if existing:
+        stored_hash = _storage.read_stored_hash(existing)
+        if expected_hash and stored_hash == expected_hash:
+            return existing  # Reuse existing
+
     # Download to temp directory
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)

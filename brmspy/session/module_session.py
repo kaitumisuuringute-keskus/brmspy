@@ -33,6 +33,7 @@ _INTERNAL_ATTRS = {
     "_reg",
     "_closed",
     "_func_cache",
+    "_call_remote",
 
     "restart", "shutdown"
 }
@@ -284,7 +285,11 @@ class RModuleSession(ModuleType):
         if self._closed:
             raise RuntimeError("RModuleSession is closed")
 
-        target = f"mod:{self._module_path}.{func_name}"
+        if func_name.startswith("mod:"):
+            target = func_name
+        else:
+            target = f"mod:{self._module_path}.{func_name}"
+    
         req_id = str(uuid.uuid4())
         req = {
             "id": req_id,

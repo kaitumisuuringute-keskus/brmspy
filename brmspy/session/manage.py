@@ -40,10 +40,8 @@ class EnvContext:
         ...
 
     # rpackages
-    def install_rpackage(self, name: str, version: Optional[str], repos_extra: Optional[List[str]] = None) -> None:
-        _rpkg = cast(brms, self.session)._runtime._r_packages
-
-        result = _rpkg.install_package(name, version=version)
+    def install_rpackage(self, name: str, version: Optional[str] = None, repos_extra: Optional[List[str]] = None) -> None:
+        result = self.session._call_remote("mod:brmspy._runtime._r_packages.install_package", name, version=version, repos_extra=repos_extra)
         return result
 
     def uninstall_rpackage(self, name: str):
@@ -125,9 +123,9 @@ class EnvContext:
         with brms.manage() as ctx:
             ctx.install_brms(use_prebuilt=True)
         """
-        _runtime = cast(brms, self.session)._runtime
 
-        result = _runtime.install_brms(
+        result = self.session._call_remote(
+            "mod:brmspy._runtime.install_brms",
             use_prebuilt=use_prebuilt,
             install_rtools=install_rtools,
             brms_version=brms_version,
@@ -138,7 +136,8 @@ class EnvContext:
             activate=activate,
             **kwargs
         )
-        active_runtime = get_active_runtime()
+
+        active_runtime = self.session.get_active_runtime()
         if active_runtime:
             self.session._environment_conf.runtime_path = active_runtime.as_posix()
 
@@ -159,8 +158,7 @@ def _get_session() -> RModuleSession:
 def manage(
     *,
     environment_config: Optional[Union[EnvironmentConfig, Dict[str, str]]] = None,
-    environment_name: Optional[str] = None,
-    transient_lib: bool = False,
+    environment_name: Optional[str] = None
 ) -> Iterator[EnvContext]:
     """
     Run a block in a fresh R session.
@@ -175,22 +173,21 @@ def manage(
     if environment_name and environment_config:
         raise Exception("Only provide one: environment name or environment config")
 
-    if not environment_name:
+    if not environment_name and environment_config:
         overrides = EnvironmentConfig.from_obj(environment_config)
-    else:
+    elif environment_name:
         overrides = get_environment_config(environment_name)
+    else:
+        overrides = None
 
     old_conf = session._environment_conf
 
-    if environment_config:
+    if overrides:
         new_conf = overrides
     else:
         new_conf = old_conf
     
     temp_lib_dir: Optional[Path] = None
-    if transient_lib:
-        temp_lib_dir = Path(tempfile.mkdtemp(prefix="brmspy-r-lib-"))
-        new_conf.env['R_LIBS_USER'] = temp_lib_dir.as_posix()
 
     
     new_conf.env["BRMSPY_AUTOLOAD"] = "0"
@@ -200,11 +197,4 @@ def manage(
 
     ctx = EnvContext(session=session)
 
-    try:
-        yield ctx
-        
-    finally:
-        # restore original runtime config regardless of what happened
-        session.restart(environment_conf=old_conf)
-        if temp_lib_dir is not None:
-            shutil.rmtree(temp_lib_dir, ignore_errors=True)
+    yield ctx

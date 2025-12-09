@@ -124,7 +124,8 @@ __all__ = [
 
     # misc private
     '_formula_add',
-    '_runtime'
+    '_runtime',
+    'status'
 
 ]
 

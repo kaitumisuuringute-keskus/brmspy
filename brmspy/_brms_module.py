@@ -46,7 +46,8 @@ from brmspy._brms_functions.families import (
 )
 
 from brmspy._runtime import (
-    get_brms_version, find_local_runtime, get_active_runtime
+    get_brms_version, find_local_runtime, get_active_runtime,
+    status
 )
 import brmspy._runtime as _runtime
 

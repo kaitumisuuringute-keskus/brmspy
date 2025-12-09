@@ -50,7 +50,7 @@ def worker_main(conn: Connection, mgr_address: Optional[str], mgr_authkey: Optio
     from rpy2.rinterface_lib.sexp import Sexp
 
     import rpy2.rinterface_lib.callbacks
-    rpy2.rinterface_lib.callbacks._WRITECONSOLE_EXCEPTION_LOG = "ASDF"
+    rpy2.rinterface_lib.callbacks._WRITECONSOLE_EXCEPTION_LOG = '[R]: {exception} {exc_value} {traceback}'
 
     try:
         while True:
@@ -72,7 +72,7 @@ def worker_main(conn: Connection, mgr_address: Optional[str], mgr_authkey: Optio
                     break
 
                 elif cmd == "CALL":
-                    print("cmd CALL")
+                    print("REMOTE CALL")
                     # decode Python args
                     args = [
                         reg.decode(

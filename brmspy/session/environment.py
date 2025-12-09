@@ -31,6 +31,9 @@ def get_environment_config(name: str) -> EnvironmentConfig:
     env_dir = base_dir / name
     config_dir = env_dir / "config.json"
 
+    if not config_dir.exists():
+        return EnvironmentConfig(environment_name=name)
+
     with open(config_dir, "r") as f:
         data = json.load(f)
         return EnvironmentConfig.from_dict(data)

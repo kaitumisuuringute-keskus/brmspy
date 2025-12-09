@@ -248,13 +248,32 @@ def _unload_libpath_packages(libpath: Path | None) -> None:
 
 # === Mutations ===
 
+def _is_runtime_path(p: str):
+    return ".brmspy/runtime/" not in p and ".brmspy\\runtime\\" not in p
+
+def _is_environment_path(p: str):
+    return ".brmspy/runtime/" not in p and ".brmspy\\runtime\\" not in p
+
+def _path_priority(p: str) -> int:
+    if _is_environment_path(p):
+        return 0
+    if _is_runtime_path(p):
+        return 1
+    return 2
+
+
 def set_lib_paths(paths: list[str]) -> None:
     """Set .libPaths() in R."""
     import rpy2.robjects as ro
     
     current = [str(p) for p in cast(ro.StrVector, ro.r(".libPaths()"))]
-    current = [p for p in current if ".brmspy/runtime/" not in p and ".brmspy\\runtime\\" not in p]
+    if any(_is_environment_path(p) for p in paths):
+        current = [p for p in current if not _is_environment_path(p)]
+    elif any(_is_runtime_path(p) for p in paths):
+        current = [p for p in current if not _is_runtime_path(p)]
+  
     new_paths = list(dict.fromkeys(list(paths) + current))
+    new_paths = sorted(new_paths, key=_path_priority)
     r_fun = cast(Callable, ro.r('.libPaths'))
     r_fun(ro.StrVector(new_paths))
 
