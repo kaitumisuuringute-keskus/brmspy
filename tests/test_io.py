@@ -109,8 +109,8 @@ class TestReadRDSRaw:
     def test_read_rds_raw_returns_list_vector(self, sample_dataframe):
         """Test that read_rds_raw() returns a raw R ListVector"""
         from brmspy import brms
-        from rpy2.robjects import ListVector
-        
+        from brmspy.session.types import SexpWrapper
+
         # Fit and save a model
         model = brms.fit(
             formula="y ~ x1",
@@ -132,7 +132,7 @@ class TestReadRDSRaw:
             raw_object = brms.read_rds_raw(tmp_path)
             
             # Verify it's a ListVector
-            assert isinstance(raw_object, ListVector)
+            assert isinstance(raw_object, SexpWrapper)
         finally:
             if os.path.exists(tmp_path):
                 os.remove(tmp_path)

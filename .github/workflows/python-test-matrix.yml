@@ -261,7 +261,7 @@ jobs:
           --cov-report=term 
           --cov-report=xml 
           --cov-report=json 
-          --cov-config=.coveragerc-main
+          --cov-config=.coveragerc
       
       - name: Update Coverage Badge
         if: github.event_name == 'push' &&

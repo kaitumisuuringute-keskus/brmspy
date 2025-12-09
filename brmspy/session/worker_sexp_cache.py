@@ -31,4 +31,9 @@ def reattach_sexp(obj: Any) -> Any:
             obj.r = _SEXP_CACHE[obj.r._rid]
         else:
             obj.r = None
+    if isinstance(obj, SexpWrapper):
+        if obj._rid in _SEXP_CACHE:
+            return _SEXP_CACHE[obj._rid]
+        else:
+            return None
     return obj

@@ -1,5 +1,7 @@
 [run]
 source = brmspy
+parallel = True
+concurrency = multiprocessing
 omit =
     brmspy/_runtime/*
     brmspy/_build/*
