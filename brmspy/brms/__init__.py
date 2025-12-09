@@ -1,9 +1,11 @@
+from contextlib import contextmanager
 import os
 import sys
 from types import ModuleType
 from typing import TYPE_CHECKING, cast
 
-from brmspy.session.module_session import RModuleSession
+from brmspy.session.module_session import _INTERNAL_ATTRS, RModuleSession
+from brmspy.session.manage import manage
 
 import os
 import sys
@@ -48,19 +50,31 @@ if os.environ.get("BRMSPY_WORKER") != "1":
             },
         ),
     )
+    _is_main_process = True
 else:
     # WORKER PROCESS
     #
     # Here we *do not* install the stub – worker must see real rpy2.
     # BRMSPY_WORKER=1 should be set in the worker's env before import.
     import brmspy._brms_module as brms
+    _is_main_process = False
 
+
+@contextmanager
+def environment():
+    if not isinstance(brms, RModuleSession):
+        raise Exception("Can't manage environment from WITHIN the environment!")
+    # 1. shut down current session
+    # 2. yield, let the user install/uninstall packages. give them Ctx object with safe 3-4 functions
+    yield
+    # 3. do we need cleanup? since we are on a fresh R session, we could just 'continue'
 
 __all__ = [
 
     # R env
-    'install_brms', 'install_runtime', 'get_brms_version',  'deactivate_runtime', 'activate_runtime',
-    'find_local_runtime', 'get_active_runtime',
+    'get_brms_version', 'find_local_runtime', 'get_active_runtime',
+    'manage', '_is_main_process',
+    
 
     'install_rpackage',
 
@@ -113,7 +127,12 @@ __all__ = [
     # stan
     'make_stancode',
 
-    '_formula_add'
+    
+]
+
+_module_internals = [
+    '_formula_add',
+    '_install_brms', '_install_runtime',  '_deactivate_runtime', '_activate_runtime',
 ]
 
 # Re-export
@@ -121,4 +140,13 @@ __all__ = [
 _this_mod = sys.modules[__name__]
 
 for name in __all__:
+    if name in ['manage', '_is_main_process']:
+        continue
+    setattr(_this_mod, name, getattr(brms, name))
+
+if _is_main_process:
+    for name in _INTERNAL_ATTRS:
+        setattr(_this_mod, name, getattr(brms, name))
+
+for name in _module_internals:
     setattr(_this_mod, name, getattr(brms, name))

@@ -31,6 +31,8 @@ _INTERNAL_ATTRS = {
     "_reg",
     "_closed",
     "_func_cache",
+
+    "restart", "shutdown"
 }
 
 def r_home_from_subprocess() -> Optional[str]:
@@ -135,6 +137,7 @@ class RModuleSession(ModuleType):
 
     _instances: "weakref.WeakSet[RModuleSession]" = weakref.WeakSet()
     _atexit_registered: bool = False
+    _is_rsession: bool = True
 
     def __init__(
         self,
@@ -150,35 +153,16 @@ class RModuleSession(ModuleType):
         self._module_path: str = module_path
         self._runtime_conf: Dict[str, Any] = runtime_conf or {}
 
-        # ---- start SHM manager + worker ----
-        mgr = SharedMemoryManager()
-        mgr.start()
-
-        mgr_address = mgr.address
-        mgr_authkey = mgr._authkey  # type: ignore[attr-defined]
-
-        parent_conn, child_conn = mp.Pipe()
-        self._conn = parent_conn
-
-        env_overrides = {
-            "BRMSPY_WORKER": "1",
-            **(self._runtime_conf.get("env", {})),
-        }
-
-        proc = spawn_worker(
-            target=worker_main,
-            args=(child_conn, mgr_address, mgr_authkey, self._runtime_conf),
-            env_overrides=env_overrides
-        )
-
-        self._mgr = mgr
-        self._proc = proc
-        self._shm_pool = ShmPool(mgr)
-        self._reg = get_default_registry()
-        self._closed = False
+        if "env" not in self._runtime_conf:
+            self._runtime_conf["env"] = {}
+        if "BRMSPY_AUTOLOAD" not in self._runtime_conf["env"]:
+            self._runtime_conf["env"]["BRMSPY_AUTOLOAD"] = "1"
 
         # cache of Python wrappers for functions
         self._func_cache: Dict[str, Callable[..., Any]] = {}
+
+        # start SHM manager + worker
+        self._setup_worker()
 
         # copy attributes so IDEs / dir() see the module surface
         self.__dict__.update(module.__dict__)
@@ -188,6 +172,66 @@ class RModuleSession(ModuleType):
         if not RModuleSession._atexit_registered:
             atexit.register(RModuleSession._cleanup_all)
             RModuleSession._atexit_registered = True
+
+    def _setup_worker(self) -> None:
+        """Start SharedMemoryManager and worker process, wire IPC."""
+        mgr = SharedMemoryManager()
+        mgr.start()
+
+        mgr_address = mgr.address
+        mgr_authkey = mgr._authkey  # type: ignore[attr-defined]
+
+        parent_conn, child_conn = mp.Pipe()
+        self._conn = parent_conn
+
+        env_overrides: Dict[str, str] = {
+            "BRMSPY_WORKER": "1",
+            **self._runtime_conf.get("env", {}),
+        }
+
+        proc = spawn_worker(
+            target=worker_main,
+            args=(child_conn, mgr_address, mgr_authkey, self._runtime_conf),
+            env_overrides=env_overrides,
+        )
+
+        self._mgr = mgr
+        self._proc = proc
+        self._shm_pool = ShmPool(mgr)
+        self._reg = get_default_registry()
+        self._closed = False
+    
+    def _teardown_worker(self) -> None:
+        """Internal helper to stop worker/manager; used by shutdown/restart."""
+        if self._closed:
+            return
+
+        try:
+            req_id = str(uuid.uuid4())
+            self._conn.send(
+                {
+                    "id": req_id,
+                    "cmd": "SHUTDOWN",
+                    "target": "",
+                    "args": [],
+                    "kwargs": {},
+                }
+            )
+            _ = self._conn.recv()
+        except Exception:
+            pass
+
+        try:
+            self._mgr.shutdown()
+        except Exception:
+            pass
+
+        try:
+            self._proc.join(timeout=1.0)
+        except Exception:
+            pass
+
+        self._closed = True
 
     # ----------------- global cleanup -----------------
 
@@ -251,6 +295,10 @@ class RModuleSession(ModuleType):
             or name.startswith("__") and name.endswith("__")
         ):
             return ModuleType.__getattribute__(self, name)
+        
+        if name == 'manage':
+            from brmspy.session.manage import manage
+            return manage
 
         # 2. If we already have a cached wrapper for this name, return it
         func_cache = ModuleType.__getattribute__(self, "_func_cache")
@@ -295,38 +343,30 @@ class RModuleSession(ModuleType):
     # ----------------- lifetime ------------------------
 
     def shutdown(self) -> None:
-        if self._closed:
-            return
-
-        try:
-            req_id = str(uuid.uuid4())
-            self._conn.send(
-                {
-                    "id": req_id,
-                    "cmd": "SHUTDOWN",
-                    "target": "",
-                    "args": [],
-                    "kwargs": {},
-                }
-            )
-            _ = self._conn.recv()
-        except Exception:
-            pass
-
-        try:
-            self._mgr.shutdown()
-        except Exception:
-            pass
-
-        try:
-            self._proc.join(timeout=1.0)
-        except Exception:
-            pass
-
-        self._closed = True
+        self._teardown_worker()
 
     def __del__(self) -> None:
         try:
             self.shutdown()
         except Exception:
             pass
+
+    def restart(self, runtime_conf: Optional[Dict[str, Any]] = None) -> None:
+        """
+        Restart the underlying worker process and shared-memory manager.
+
+        If `runtime_conf` is provided, it replaces the existing configuration
+        for the new worker; otherwise the existing `self._runtime_conf` is reused.
+        """
+        if runtime_conf is not None:
+            self._runtime_conf = runtime_conf
+
+        # Tear down existing worker (if any)
+        self._teardown_worker()
+
+        # Optional: clear wrappers if you want a fully "fresh" view.
+        # They are safe to reuse, but clearing them forces re-resolution.
+        self._func_cache.clear()
+
+        # Start a fresh worker with current runtime_conf
+        self._setup_worker()

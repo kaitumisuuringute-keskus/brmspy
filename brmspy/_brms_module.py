@@ -47,13 +47,16 @@ from brmspy._brms_functions.families import (
 from brmspy._runtime._r_packages import install_package as install_rpackage
 
 from brmspy._runtime import (
-    install_brms, get_brms_version, install_runtime, deactivate_runtime, activate_runtime,
-    get_active_runtime, find_local_runtime
+    install_brms as _install_brms,
+    install_runtime as _install_runtime,
+    deactivate_runtime as _deactivate_runtime,
+    activate_runtime as _activate_runtime,
+    get_active_runtime, find_local_runtime, get_brms_version
 )
 
 # Auto-load last runtime on import
 import os
-if os.environ.get("BRMSPY_WORKER") == "1":
+if os.environ.get("BRMSPY_WORKER") == "1" and os.environ.get("BRMSPY_AUTOLOAD") == "1":
     _runtime._autoload()
 
 
@@ -63,7 +66,7 @@ if os.environ.get("BRMSPY_WORKER") == "1":
 # This can lead to wild and unexpected behaviour, hence we do R imports when brms.py is imported
 
 try:
-    if os.environ.get("BRMSPY_WORKER") == "1":
+    if os.environ.get("BRMSPY_WORKER") == "1" and os.environ.get("BRMSPY_AUTOLOAD") == "1":
         _get_brms()
 except ImportError:
     log_warning("brmspy: brms and other required libraries are not installed. Please call brmspy.install_brms()")
