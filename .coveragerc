@@ -2,6 +2,18 @@
 source = brmspy
 parallel = True
 concurrency = multiprocessing
+sigterm = true
+
 omit =
     brmspy/_runtime/*
     brmspy/_build/*
+
+disable_warnings = no-data-collected
+
+[paths]
+brmspy =
+    brmspy
+    /home/runner/work/brmspy/brmspy/brmspy
+    /Users/runner/work/brmspy/brmspy/brmspy
+    D:\a\brmspy\brmspy\brmspy
+

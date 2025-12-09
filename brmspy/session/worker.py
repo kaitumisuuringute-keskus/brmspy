@@ -10,7 +10,7 @@ from .worker_sexp_cache import cache_sexp, reattach_sexp
 
 from .codec import get_default_registry
 from .transport import ShmPool, attach_buffers
-from .runtime import configure_r_env, run_startup_scripts
+from .runtime import _initialise_r_safe, configure_r_env, run_startup_scripts
 
 
 def worker_main(conn, mgr_address, mgr_authkey, runtime_conf) -> None:
@@ -25,7 +25,11 @@ def worker_main(conn, mgr_address, mgr_authkey, runtime_conf) -> None:
     """
 
     import os
+
     os.environ['BRMSPY_WORKER'] = "1"
+
+    _initialise_r_safe()
+
 
     # 1. Connect to SHM manager
     smm = SharedMemoryManager(address=mgr_address, authkey=mgr_authkey)
@@ -42,95 +46,98 @@ def worker_main(conn, mgr_address, mgr_authkey, runtime_conf) -> None:
 
     from rpy2.rinterface_lib.sexp import Sexp
 
-    while True:
-        req = conn.recv()
-        cmd = req["cmd"]
-        req_id = req["id"]
+    try:
+        while True:
+            req = conn.recv()
+            cmd = req["cmd"]
+            req_id = req["id"]
 
-        try:
-            if cmd == "SHUTDOWN":
+            try:
+                if cmd == "SHUTDOWN":
+                    conn.send(
+                        {
+                            "id": req_id,
+                            "ok": True,
+                            "result": None,
+                            "error": None,
+                            "traceback": None,
+                        }
+                    )
+                    break
+
+                elif cmd == "CALL":
+                    print("cmd CALL")
+                    # decode Python args
+                    args = [
+                        reg.decode(
+                            p["codec"],
+                            p["meta"],
+                            attach_buffers(shm_pool, p["buffers"]),
+                        )
+                        for p in req["args"]
+                    ]
+                    kwargs = {
+                        k: reg.decode(
+                            p["codec"],
+                            p["meta"],
+                            attach_buffers(shm_pool, p["buffers"]),
+                        )
+                        for k, p in req["kwargs"].items()
+                    }
+                    args = [reattach_sexp(o) for o in args]
+                    kwargs = {k: reattach_sexp(v) for k, v in kwargs.items()}
+
+                    # resolve "mod:pkg.module.func"
+                    target = _resolve_module_target(req["target"], module_cache)
+                    out = target(*args, **kwargs)
+
+                    if isinstance(out, Sexp):
+                        out = cache_sexp(out)
+                    elif hasattr(out, "r") and isinstance(out.r, Sexp):
+                        out.r = cache_sexp(out.r)
+
+
+                    # encode result
+                    enc = reg.encode(out, shm_pool)
+                    result_payload = {
+                        "codec": enc.codec,
+                        "meta": enc.meta,
+                        "buffers": [
+                            {"name": b.name, "size": b.size}
+                            for b in enc.buffers
+                        ],
+                    }
+
+                    conn.send(
+                        {
+                            "id": req_id,
+                            "ok": True,
+                            "result": result_payload,
+                            "error": None,
+                            "traceback": None,
+                        }
+                    )
+
+                else:
+                    raise ValueError(f"Unknown command: {cmd!r}")
+
+            except Exception as e:  # noqa: BLE001
+                import traceback
+
+                tb = "".join(
+                    traceback.format_exception(type(e), e, e.__traceback__)
+                )
                 conn.send(
                     {
                         "id": req_id,
-                        "ok": True,
+                        "ok": False,
                         "result": None,
-                        "error": None,
-                        "traceback": None,
+                        "error": str(e),
+                        "traceback": tb,
                     }
                 )
-                break
-
-            elif cmd == "CALL":
-                print("cmd CALL")
-                # decode Python args
-                args = [
-                    reg.decode(
-                        p["codec"],
-                        p["meta"],
-                        attach_buffers(shm_pool, p["buffers"]),
-                    )
-                    for p in req["args"]
-                ]
-                kwargs = {
-                    k: reg.decode(
-                        p["codec"],
-                        p["meta"],
-                        attach_buffers(shm_pool, p["buffers"]),
-                    )
-                    for k, p in req["kwargs"].items()
-                }
-                args = [reattach_sexp(o) for o in args]
-                kwargs = {k: reattach_sexp(v) for k, v in kwargs.items()}
-
-                # resolve "mod:pkg.module.func"
-                target = _resolve_module_target(req["target"], module_cache)
-                out = target(*args, **kwargs)
-
-                if isinstance(out, Sexp):
-                    out = cache_sexp(out)
-                elif hasattr(out, "r") and isinstance(out.r, Sexp):
-                    out.r = cache_sexp(out.r)
-
-
-                # encode result
-                enc = reg.encode(out, shm_pool)
-                result_payload = {
-                    "codec": enc.codec,
-                    "meta": enc.meta,
-                    "buffers": [
-                        {"name": b.name, "size": b.size}
-                        for b in enc.buffers
-                    ],
-                }
-
-                conn.send(
-                    {
-                        "id": req_id,
-                        "ok": True,
-                        "result": result_payload,
-                        "error": None,
-                        "traceback": None,
-                    }
-                )
-
-            else:
-                raise ValueError(f"Unknown command: {cmd!r}")
-
-        except Exception as e:  # noqa: BLE001
-            import traceback
-
-            tb = "".join(
-                traceback.format_exception(type(e), e, e.__traceback__)
-            )
-            conn.send(
-                {
-                    "id": req_id,
-                    "ok": False,
-                    "result": None,
-                    "error": str(e),
-                    "traceback": tb,
-                }
-            )
+    finally:
+        pass
 
 
 def _resolve_module_target(target: str, module_cache: Dict[str, Any]):

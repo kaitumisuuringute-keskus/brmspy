@@ -60,7 +60,7 @@ dependencies = [
 # Development dependencies
 dev = [
     "pytest>=7.0.0",
-    "pytest-cov>=4.0.0",
+    "pytest-cov>=7.0.0",
     "pytest-xdist",
     "black>=23.0.0",
     "ruff>=0.1.0",
@@ -184,23 +184,3 @@ module = [
     "arviz.*",
 ]
 ignore_missing_imports = true
-
-# Coverage configuration
-[tool.coverage.run]
-source = ["brmspy"]
-omit = [
-    "*/tests/*",
-    "*/__pycache__/*",
-    "*/site-packages/*",
-]
-
-[tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "raise AssertionError",
-    "raise NotImplementedError",
-    "if __name__ == .__main__.:",
-    "if TYPE_CHECKING:",
-    "if typing.TYPE_CHECKING:",
-]

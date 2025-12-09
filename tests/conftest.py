@@ -11,6 +11,7 @@ import numpy as np
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+os.environ['BRMSPY_COVERAGE'] = "1"
 
 
 @pytest.fixture

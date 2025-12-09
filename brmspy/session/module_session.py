@@ -120,7 +120,8 @@ def with_env(overrides: Dict[str, str]) -> Iterator[None]:
 def spawn_worker(target, args, env_overrides: Dict[str, str]):
     ctx = mp.get_context("spawn")
     with with_env(env_overrides):
-        proc = ctx.Process(target=target, args=args, daemon=True)
+        daemon = os.environ.get("BRMSPY_COVERAGE") != "1" and not os.environ.get("COVERAGE_PROCESS_START")
+        proc = ctx.Process(target=target, args=args, daemon=daemon)
         proc.start()
     return proc
 
