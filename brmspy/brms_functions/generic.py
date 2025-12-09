@@ -2,7 +2,6 @@ from typing import Any, Callable, cast
 import re
 
 from brmspy.helpers.conversion import kwargs_r, py_to_r, r_to_py
-import rpy2.robjects as ro
 
 
 def sanitised_name(function: str) -> str:
@@ -127,6 +126,7 @@ def call(
     print(result)
     ```
     """
+    import rpy2.robjects as ro
     
     func_name = sanitised_name(function)
     args = [py_to_r(arg) for arg in args]

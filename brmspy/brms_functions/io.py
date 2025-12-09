@@ -1,10 +1,7 @@
 import typing
 import pandas as pd
-import rpy2.robjects.packages as rpackages
-from rpy2.robjects import default_converter, pandas2ri, numpy2ri, ListVector
-from rpy2.robjects.conversion import localconverter
+from rpy2.rinterface import ListSexpVector
 
-from ..runtime._state import get_brms
 from ..helpers.conversion import (
     brmsfit_to_idata,
     kwargs_r,
@@ -13,7 +10,6 @@ from ..helpers.conversion import (
 from ..types import (
     FitResult, RListVectorExtension
 )
-import rpy2.robjects as ro
 
 def get_data(dataset_name: str, **kwargs) -> pd.DataFrame:
     """
@@ -50,6 +46,7 @@ def get_data(dataset_name: str, **kwargs) -> pd.DataFrame:
     get_brms_data
         Convenience wrapper for datasets from the ``brms`` package.
     """
+    import rpy2.robjects as ro
     r_kwargs = kwargs_r(kwargs)
 
     r_data = typing.cast(typing.Callable, ro.r["data"])
@@ -109,7 +106,7 @@ def get_brms_data(dataset_name: str, **kwargs) -> pd.DataFrame:
 
 
 
-def save_rds(object: typing.Union[RListVectorExtension, ListVector], file: str, **kwargs) -> None:
+def save_rds(object: typing.Union[RListVectorExtension, ListSexpVector], file: str, **kwargs) -> None:
     """
     Save brmsfit object or R object to RDS file.
     
@@ -119,10 +116,10 @@ def save_rds(object: typing.Union[RListVectorExtension, ListVector], file: str, 
     
     Parameters
     ----------
-    object : FitResult or ListVector
+    object : FitResult or ListSexpVector
         Object to save. Can be:
         - FitResult from fit() - saves the underlying brmsfit R object
-        - Any R ListVector object
+        - Any R ListSexpVector object
     file : str
         File path where object will be saved. Typically uses .rds extension
         but not required
@@ -142,7 +139,7 @@ def save_rds(object: typing.Union[RListVectorExtension, ListVector], file: str, 
     See Also
     --------
     read_rds_fit : Load saved brmsfit as FitResult
-    read_rds_raw : Load saved object as raw R ListVector
+    read_rds_raw : Load saved object as raw R ListSexpVector
     fit : Fit models that can be saved
     
     Examples
@@ -187,6 +184,7 @@ def save_rds(object: typing.Union[RListVectorExtension, ListVector], file: str, 
     predictions = brms.posterior_predict(loaded_model, newdata=new_data)
     ```
     """
+    import rpy2.robjects as ro
     if isinstance(object, RListVectorExtension):
         brmsfit = object.r
     else:
@@ -198,9 +196,9 @@ def save_rds(object: typing.Union[RListVectorExtension, ListVector], file: str, 
     r_save_rds(brmsfit, file, **kwargs)
 
 
-def read_rds_raw(file: str, **kwargs) -> ListVector:
+def read_rds_raw(file: str, **kwargs) -> ListSexpVector:
     """
-    Load R object from RDS file as raw ListVector.
+    Load R object from RDS file as raw ListSexpVector.
     
     Reads an RDS file and returns the raw R object without any Python conversion
     or processing. Useful when you need direct access to the R object structure
@@ -217,8 +215,8 @@ def read_rds_raw(file: str, **kwargs) -> ListVector:
     
     Returns
     -------
-    ListVector
-        Raw R ListVector object from the RDS file
+    ListSexpVector
+        Raw R ListSexpVector object from the RDS file
     
     See Also
     --------
@@ -236,7 +234,7 @@ def read_rds_raw(file: str, **kwargs) -> ListVector:
     raw_model = brms.read_rds_raw("model.rds")
     
     # Access R object directly (for advanced users)
-    print(type(raw_model))  # rpy2.robjects.vectors.ListVector
+    print(type(raw_model))  # rpy2.robjects.vectors.ListSexpVector
     ```
     
     Inspect object structure before conversion:
@@ -254,6 +252,7 @@ def read_rds_raw(file: str, **kwargs) -> ListVector:
         full_model = brms.read_rds_fit("unknown_object.rds")
     ```
     """
+    import rpy2.robjects as ro
     r_read_rds = typing.cast(typing.Callable, ro.r('readRDS'))
 
     kwargs = kwargs_r(kwargs)

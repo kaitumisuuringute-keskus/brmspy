@@ -1,10 +1,10 @@
 import os
 import sys
 from types import ModuleType, SimpleNamespace
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Type, cast
 from contextlib import contextmanager
 
-from brmspy.modulesession.module_session import RModuleSession
+from brmspy.session.module_session import RModuleSession
 
 __version__ = "0.2.1"
 __author__ = "Remi Sebastian Kits, Adam Haber"
@@ -195,15 +195,15 @@ def install_rpy2_stub() -> None:
     for root_name, root_spec in STRUCTURE.items():
         _install_node(root_name, root_spec, None)
 
-install_rpy2_stub()
+#install_rpy2_stub()
 
 # -------------------------------------------------------------------
 # Typing: describe the brms module surface for static analysis
 # -------------------------------------------------------------------
 if TYPE_CHECKING:
     # For type checkers / IDE only – can point to the real brms module
-    from . import brms as _BrmsModule
-    BrmsModule = _BrmsModule
+    from . import _brms_module
+    BrmsModule = _brms_module
 else:
     # At runtime, just treat it as a generic module
     BrmsModule = ModuleType  # type: ignore[assignment]
@@ -217,10 +217,10 @@ if os.environ.get("BRMSPY_WORKER") != "1":
     #
     # 1) Ensure rpy2 is stubbed before importing brmspy.brms,
     #    so any top-level rpy2 imports in that module are safe.
-    install_rpy2_stub()
+    #install_rpy2_stub()
 
     # 2) Import the heavy brms module; it will see stubbed rpy2 in main.
-    from . import brms as _brms_mod
+    from . import _brms_module as _brms_mod
 
     # 3) Wrap it in RModuleSession so all calls go to the worker.
     _module_path = "brmspy.brms"
@@ -240,7 +240,11 @@ else:
     #
     # Here we *do not* install the stub – worker must see real rpy2.
     # BRMSPY_WORKER=1 should be set in the worker's env before import.
-    from . import brms as brms  # real module
+    from . import _brms_module as brms  # real module
+
+def active():
+    return brms
+
 
 # Export what the package actually provides
 __all__ = ['brms']

@@ -13,7 +13,7 @@ from ..helpers.conversion import (
 from ..types import (
     FitResult, FormulaResult, IDFit, PriorSpec
 )
-from rpy2.robjects import ListVector
+from rpy2.rinterface import ListSexpVector
 from rpy2.rinterface_lib import openrlib
 
 
@@ -32,7 +32,7 @@ def brm(
     formula: Union[FormulaResult, str],
     data: Union[dict, pd.DataFrame],
     priors: Optional[Sequence[PriorSpec]] = None,
-    family: Optional[Union[str, ListVector]] = "gaussian",
+    family: Optional[Union[str, ListSexpVector]] = "gaussian",
     sample_prior: str = "no",
     sample: bool = True,
     backend: str = "cmdstanr",

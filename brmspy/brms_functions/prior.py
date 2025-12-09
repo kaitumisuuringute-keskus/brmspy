@@ -7,7 +7,7 @@ import pandas as pd
 
 from brmspy.helpers.conversion import kwargs_r, py_to_r, r_to_py
 from brmspy.types import FormulaResult, PriorSpec, RListVectorExtension
-import rpy2.robjects as ro
+from rpy2.rinterface import ListSexpVector
 
 
 def prior(
@@ -140,7 +140,7 @@ def get_prior(formula: Union[str, FormulaResult], data=None, family="gaussian", 
         Model formula (e.g., "y ~ x + (1|group)") or FormulaResult object
     data : pd.DataFrame or dict, optional
         Dataset containing model variables. Required for data-dependent priors
-    family : str or ListVector, default="gaussian"
+    family : str or ListSexpVector, default="gaussian"
         Distribution family (e.g., "gaussian", "poisson", "binomial")
     **kwargs
         Additional arguments passed to brms::get_prior()
@@ -194,6 +194,7 @@ def get_prior(formula: Union[str, FormulaResult], data=None, family="gaussian", 
     model = brms.fit("y ~ x", data=df, priors=custom_priors)
     ```
     """
+    import rpy2.robjects as ro
     r_get_prior = cast(Callable, ro.r('brms::get_prior'))
     collected_args = kwargs_r({
         "formula": formula,
@@ -207,7 +208,7 @@ def get_prior(formula: Union[str, FormulaResult], data=None, family="gaussian", 
 
     return df
 
-def default_prior(object: Union[RListVectorExtension, ro.ListVector, FormulaResult, str], data=None, family="gaussian", **kwargs) -> pd.DataFrame:
+def default_prior(object: Union[RListVectorExtension, ListSexpVector, FormulaResult, str], data=None, family="gaussian", **kwargs) -> pd.DataFrame:
     """
     Get default priors for brms model parameters (generic function).
     
@@ -217,12 +218,12 @@ def default_prior(object: Union[RListVectorExtension, ro.ListVector, FormulaResu
     
     Parameters
     ----------
-    object : str, FormulaResult, or ListVector
+    object : str, FormulaResult, or ListSexpVector
         Model specification: formula string, brmsformula object, mvbrmsformula,
         or any object that can be coerced to these classes
     data : pd.DataFrame or dict, optional
         Dataset containing model variables. Required for data-dependent priors
-    family : str or ListVector, default="gaussian"
+    family : str or ListSexpVector, default="gaussian"
         Distribution family (e.g., "gaussian", "poisson", "binomial").
         Can be a list of families for multivariate models
     **kwargs
@@ -267,6 +268,7 @@ def default_prior(object: Union[RListVectorExtension, ro.ListVector, FormulaResu
     priors = brms.default_prior(f, data=df, family="gaussian")
     ```
     """
+    import rpy2.robjects as ro
     r_get_prior = cast(Callable, ro.r('brms::get_prior'))
     collected_args = kwargs_r({
         "data": data,

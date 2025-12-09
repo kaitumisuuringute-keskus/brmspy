@@ -9,8 +9,8 @@ family()
 
 
 from typing import Callable, Optional, Union, cast
-from rpy2.robjects import ListVector
-import rpy2.robjects as ro
+from rpy2.rinterface import ListSexpVector
+
 
 from brmspy.helpers.conversion import kwargs_r
 from brmspy.types import FitResult
@@ -39,7 +39,7 @@ def brmsfamily(
     threshold: str = "flexible",
     refcat: Optional[str] = None,
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """
     Family objects provide a convenient way to specify the details of the models used by many model fitting functions. The family functions presented here are for use with brms only and will **not** work with other model fitting functions such as glm or glmer. However, the standard family functions as described in family will work with brms.
 
@@ -91,6 +91,7 @@ def brmsfamily(
         Currently for experimental purposes only.
 
     """
+    import rpy2.robjects as ro
     r_brmsfamily = cast(Callable, ro.r('brms::brmsfamily'))
 
     collected_args = {
@@ -121,14 +122,15 @@ def brmsfamily(
 
     return r_brmsfamily(**collected_args)
 
-def family(fit: Union[FitResult, ListVector], **kwargs) -> ListVector:
+def family(fit: Union[FitResult, ListSexpVector], **kwargs) -> ListSexpVector:
     """Extract family object from a fitted model.
     
     Parameters
     ----------
-    fit : FitResult or ListVector
+    fit : FitResult or ListSexpVector
         Fitted brms model
     """
+    import rpy2.robjects as ro
     if isinstance(fit, FitResult):
         r_fit = fit.r
     else:
@@ -148,7 +150,7 @@ def student(
     link_sigma: str = "log",
     link_nu: str = "logm1",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Student's t distribution for robust regression.
     
     Parameters
@@ -172,7 +174,7 @@ def student(
 def bernoulli(
     link: str = "logit",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Bernoulli distribution for binary 0/1 outcomes.
     
     Parameters
@@ -191,7 +193,7 @@ def beta_binomial(
     link: str = "logit",
     link_phi: str = "log",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Beta-binomial distribution for overdispersed binomial data.
     
     Parameters
@@ -213,7 +215,7 @@ def negbinomial(
     link: str = "log",
     link_shape: str = "log",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Negative binomial distribution for overdispersed count data.
     
     Parameters
@@ -236,7 +238,7 @@ def negbinomial2(
     link: str = "log",
     link_sigma: str = "log",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     return brmsfamily(
         family="negbinomial2",
         link=link,
@@ -248,7 +250,7 @@ def negbinomial2(
 def geometric(
     link: str = "log",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Geometric distribution for count data (negative binomial with shape=1).
     
     Parameters
@@ -268,7 +270,7 @@ def discrete_weibull(
     link: str = "logit",
     link_shape: str = "log",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     return brmsfamily(
         family="discrete_weibull",
         link=link,
@@ -282,7 +284,7 @@ def com_poisson(
     link: str = "log",
     link_shape: str = "log",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     return brmsfamily(
         family="com_poisson",
         link=link,
@@ -295,7 +297,7 @@ def lognormal(
     link: str = "identity",
     link_sigma: str = "log",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Lognormal distribution for positive continuous data.
     
     Parameters
@@ -318,7 +320,7 @@ def shifted_lognormal(
     link_sigma: str = "log",
     link_ndt: str = "log",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Shifted lognormal distribution with non-decision time parameter.
     
     Parameters
@@ -344,7 +346,7 @@ def skew_normal(
     link_sigma: str = "log",
     link_alpha: str = "identity",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Skew normal distribution for asymmetric continuous data.
     
     Parameters
@@ -368,7 +370,7 @@ def skew_normal(
 def exponential(
     link: str = "log",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Exponential distribution for time-to-event data.
     
     Parameters
@@ -387,7 +389,7 @@ def weibull(
     link: str = "log",
     link_shape: str = "log",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Weibull distribution for survival and reliability analysis.
     
     Parameters
@@ -409,7 +411,7 @@ def frechet(
     link: str = "log",
     link_nu: str = "logm1",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Frechet distribution for extreme value analysis.
     
     Parameters
@@ -432,7 +434,7 @@ def gen_extreme_value(
     link_sigma: str = "log",
     link_xi: str = "log1p",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Generalized extreme value distribution for extreme events.
     
     Parameters
@@ -458,7 +460,7 @@ def exgaussian(
     link_sigma: str = "log",
     link_beta: str = "log",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Ex-Gaussian distribution for reaction time data.
     
     Parameters
@@ -485,7 +487,7 @@ def wiener(
     link_ndt: str = "log",
     link_bias: str = "logit",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Wiener diffusion model for two-choice reaction time data.
     
     Parameters
@@ -513,7 +515,7 @@ def Beta(
     link: str = "logit",
     link_phi: str = "log",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Beta distribution for data between 0 and 1.
     
     Parameters
@@ -536,7 +538,7 @@ def xbeta(
     link_phi: str = "log",
     link_kappa: str = "log",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Extended beta distribution with additional shape parameter.
     
     Parameters
@@ -562,7 +564,7 @@ def dirichlet(
     link_phi: str = "log",
     refcat: Optional[str] = None,
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Dirichlet distribution for compositional data.
     
     Parameters
@@ -589,7 +591,7 @@ def dirichlet2(
     # NOTE: R version uses refcat = NA; here default None
     refcat: Optional[str] = None,
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     return brmsfamily(
         family="dirichlet2",
         link=link,
@@ -603,7 +605,7 @@ def logistic_normal(
     link_sigma: str = "log",
     refcat: Optional[str] = None,
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Logistic-normal distribution for compositional data.
     
     Parameters
@@ -628,7 +630,7 @@ def von_mises(
     link: str = "tan_half",
     link_kappa: str = "log",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Von Mises distribution for circular/directional data.
     
     Parameters
@@ -651,7 +653,7 @@ def asym_laplace(
     link_sigma: str = "log",
     link_quantile: str = "logit",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Asymmetric Laplace distribution for quantile regression.
     
     Parameters
@@ -679,7 +681,7 @@ def zero_inflated_asym_laplace(
     link_quantile: str = "logit",
     link_zi: str = "logit",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     return brmsfamily(
         family="zero_inflated_asym_laplace",
         link=link,
@@ -693,7 +695,7 @@ def zero_inflated_asym_laplace(
 def cox(
     link: str = "log",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Cox proportional hazards model for survival data.
     
     Parameters
@@ -713,7 +715,7 @@ def hurdle_poisson(
     link: str = "log",
     link_hu: str = "logit",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Hurdle Poisson distribution for zero-inflated count data.
     
     Parameters
@@ -736,7 +738,7 @@ def hurdle_negbinomial(
     link_shape: str = "log",
     link_hu: str = "logit",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Hurdle negative binomial for overdispersed zero-inflated count data.
     
     Parameters
@@ -762,7 +764,7 @@ def hurdle_gamma(
     link_shape: str = "log",
     link_hu: str = "logit",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Hurdle Gamma distribution for zero-inflated positive continuous data.
     
     Parameters
@@ -788,7 +790,7 @@ def hurdle_lognormal(
     link_sigma: str = "log",
     link_hu: str = "logit",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Hurdle lognormal for zero-inflated positive continuous data.
     
     Parameters
@@ -815,7 +817,7 @@ def hurdle_cumulative(
     link_disc: str = "log",
     threshold: str = "flexible",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Hurdle cumulative for zero-inflated ordinal data.
     
     Parameters
@@ -844,7 +846,7 @@ def zero_inflated_beta(
     link_phi: str = "log",
     link_zi: str = "logit",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Zero-inflated beta for data between 0 and 1 with excess zeros.
     
     Parameters
@@ -871,7 +873,7 @@ def zero_one_inflated_beta(
     link_zoi: str = "logit",
     link_coi: str = "logit",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Zero-one-inflated beta for data between 0 and 1 with excess zeros and ones.
     
     Parameters
@@ -899,7 +901,7 @@ def zero_inflated_poisson(
     link: str = "log",
     link_zi: str = "logit",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Zero-inflated Poisson for count data with excess zeros.
     
     Parameters
@@ -922,7 +924,7 @@ def zero_inflated_negbinomial(
     link_shape: str = "log",
     link_zi: str = "logit",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Zero-inflated negative binomial for overdispersed count data with excess zeros.
     
     Parameters
@@ -947,7 +949,7 @@ def zero_inflated_binomial(
     link: str = "logit",
     link_zi: str = "logit",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Zero-inflated binomial for binary count data with excess zeros.
     
     Parameters
@@ -970,7 +972,7 @@ def zero_inflated_beta_binomial(
     link_phi: str = "log",
     link_zi: str = "logit",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Zero-inflated beta-binomial for overdispersed binomial data with excess zeros.
     
     Parameters
@@ -995,7 +997,7 @@ def categorical(
     link: str = "logit",
     refcat: Optional[str] = None,
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Categorical distribution for unordered multi-category outcomes.
     
     Parameters
@@ -1017,7 +1019,7 @@ def multinomial(
     link: str = "logit",
     refcat: Optional[str] = None,
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Multinomial distribution for count data across multiple categories.
     
     Parameters
@@ -1040,7 +1042,7 @@ def dirichlet_multinomial(
     link_phi: str = "log",
     refcat: Optional[str] = None,
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Dirichlet-multinomial for overdispersed categorical count data.
     
     Parameters
@@ -1066,7 +1068,7 @@ def cumulative(
     link_disc: str = "log",
     threshold: str = "flexible",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Cumulative (proportional odds) model for ordinal outcomes.
     
     Parameters
@@ -1092,7 +1094,7 @@ def sratio(
     link_disc: str = "log",
     threshold: str = "flexible",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Sequential (stopping) ratio model for ordinal outcomes.
     
     Parameters
@@ -1118,7 +1120,7 @@ def cratio(
     link_disc: str = "log",
     threshold: str = "flexible",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Continuation ratio model for ordinal outcomes.
     
     Parameters
@@ -1144,7 +1146,7 @@ def acat(
     link_disc: str = "log",
     threshold: str = "flexible",
     **kwargs
-) -> ListVector:
+) -> ListSexpVector:
     """Adjacent category model for ordinal outcomes.
     
     Parameters
@@ -1168,7 +1170,7 @@ def gaussian(
     link: str = "identity",
     link_sigma: str = "log",
     **kwargs,
-) -> ListVector:
+) -> ListSexpVector:
     """Gaussian (normal) distribution for continuous data.
     
     Parameters
@@ -1189,7 +1191,7 @@ def gaussian(
 def poisson(
     link: str = "log",
     **kwargs,
-) -> ListVector:
+) -> ListSexpVector:
     """Poisson distribution for count data.
     
     Parameters
@@ -1207,7 +1209,7 @@ def poisson(
 def binomial(
     link: str = "logit",
     **kwargs,
-) -> ListVector:
+) -> ListSexpVector:
     """Binomial distribution for binary count data.
     
     Parameters
@@ -1226,7 +1228,7 @@ def Gamma(
     link: str = "log",
     link_shape: str = "log",
     **kwargs,
-) -> ListVector:
+) -> ListSexpVector:
     """Gamma distribution for positive continuous data.
     
     Parameters
@@ -1248,7 +1250,7 @@ def inverse_gaussian(
     link: str = "1/mu^2",
     link_shape: str = "log",
     **kwargs,
-) -> ListVector:
+) -> ListSexpVector:
     """Inverse Gaussian distribution for positive continuous data.
     
     Parameters

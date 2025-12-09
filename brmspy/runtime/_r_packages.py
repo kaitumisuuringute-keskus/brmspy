@@ -6,9 +6,9 @@ import platform
 import multiprocessing
 from typing import Callable, List, Optional, Union, cast
 
-import rpy2.robjects as ro
-from rpy2.robjects.packages import importr
-from rpy2.robjects.vectors import StrVector
+#import rpy2.robjects as ro
+#from rpy2.robjects.packages import importr
+#from rpy2.robjects.vectors import StrVector
 from brmspy.helpers.log import log, log_error, log_warning
 
 
@@ -16,6 +16,7 @@ from brmspy.helpers.log import log, log_error, log_warning
 
 def get_package_version(name: str) -> str | None:
     """Get installed package version or None."""
+    import rpy2.robjects as ro
     try:
         expr = f"""
         v <- utils::packageDescription('{name}', fields = 'Version', lib.loc=.libPaths())
@@ -44,6 +45,7 @@ def set_cran_mirror(mirror: str | None = None) -> None:
     Set CRAN mirror. 
     Uses Posit Package Manager on Linux for binary packages.
     """
+    import rpy2.robjects as ro
     if mirror is None:
         mirror = "https://cloud.r-project.org"
     ro.r(f'options(repos = c(CRAN = "{mirror}"))')
@@ -72,6 +74,8 @@ def install_package(
     repos_extra: Optional[Union[str, List[Optional[str]], List[str]]] = None
 ) -> None:
     from brmspy.runtime._r_env import unload_package, get_lib_paths
+    from rpy2.robjects.packages import importr
+    import rpy2.robjects as ro
 
     # Normalise special values that mean "latest / no constraint"
     if version is not None:
@@ -87,7 +91,7 @@ def install_package(
 
     lib_path = [get_lib_paths()[0]]
     print("lib path is", lib_path)
-    lib_path = StrVector(lib_path)
+    lib_path = ro.StrVector(lib_path)
     
     already_installed = is_package_installed(name)
 
@@ -127,7 +131,7 @@ def install_package(
         )
 
         # Pass repo vector from Python into R
-        ro.globalenv[".brmspy_repos"] = StrVector(repos)
+        ro.globalenv[".brmspy_repos"] = ro.StrVector(repos)
 
         # Escape double quotes in version spec just in case
         v_escaped = version.replace('"', '\\"')
@@ -178,8 +182,8 @@ def install_package(
         if already_installed and system == "Windows":
             unload_package(name)
         utils.install_packages(
-            StrVector((name,)),
-            repos=StrVector(repos),
+            ro.StrVector((name,)),
+            repos=ro.StrVector(repos),
             lib=lib_path,
             type=preferred_type,
             Ncpus=cores,
@@ -199,8 +203,8 @@ def install_package(
             if already_installed and system == "Windows":
                 unload_package(name)
             utils.install_packages(
-                StrVector((name,)),
-                repos=StrVector(repos),
+                ro.StrVector((name,)),
+                repos=ro.StrVector(repos),
                 # don't set type, let R manage this.
                 lib=lib_path,
                 Ncpus=cores,
@@ -220,9 +224,11 @@ def install_package_deps(
     repos_extra: Optional[Union[str, List[Optional[str]], List[str]]] = None
 ) -> None:
     """Install dependencies of an R package."""
-    which_deps = StrVector(["Depends", "Imports", "LinkingTo"])
+    import rpy2.robjects as ro
+
+    which_deps = ro.StrVector(["Depends", "Imports", "LinkingTo"])
     if include_suggests:
-        which_deps = StrVector(["Depends", "Imports", "LinkingTo", "Suggests"])
+        which_deps = ro.StrVector(["Depends", "Imports", "LinkingTo", "Suggests"])
 
     ncpus = multiprocessing.cpu_count() - 1
     ncpus = max(1, ncpus)
@@ -255,7 +261,7 @@ def install_package_deps(
                 install.packages(to_install, Ncpus = ncpus, repos = repos, lib = .libPaths()[1L])
             }}
         }}
-        """))(which_deps, StrVector([name]), ncpus, StrVector(repos))
+        """))(which_deps, ro.StrVector([name]), ncpus, ro.StrVector(repos))
     except Exception as e:
         log_warning(str(e))
         return
@@ -263,6 +269,8 @@ def install_package_deps(
 
 def build_cmdstan(cores: int | None = None) -> None:
     """Build CmdStan via cmdstanr::install_cmdstan()."""
+    import rpy2.robjects as ro
+
     if cores is None:
         cores = multiprocessing.cpu_count()
         if cores > 4:
@@ -283,6 +291,8 @@ def build_cmdstan(cores: int | None = None) -> None:
     ro.r(f"cmdstanr::install_cmdstan(cores = {cores}, overwrite = FALSE)")
 
 def remove_package(name: str) -> bool:
+    import rpy2.robjects as ro
+    
     r_code = f'''
     (function(pkg) {{
         removed <- FALSE

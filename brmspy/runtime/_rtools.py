@@ -13,8 +13,6 @@ import urllib.request
 from pathlib import Path
 from typing import Callable, Optional, cast
 
-import rpy2.robjects as ro
-
 from brmspy.helpers.log import log_warning
 from packaging.version import Version
 
@@ -265,6 +263,7 @@ def update_paths() -> None:
     """Update PATH in both Python os.environ and R Sys.setenv."""
     if get_os() != "windows":
         return None
+    import rpy2.robjects as ro
 
     current_path = os.environ.get("PATH", "")
     current_entries = current_path.split(os.pathsep) if current_path else []

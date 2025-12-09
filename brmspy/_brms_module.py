@@ -24,6 +24,7 @@ from brmspy.brms_functions.diagnostics import summary, fixef, ranef, posterior_s
 from brmspy.brms_functions.generic import call
 from brmspy.brms_functions.formula import (
     bf, lf, nlf, acformula, set_rescor, set_mecor, set_nl, 
+    _formula_add
 )
 from brmspy.brms_functions.formula import bf as formula
 from brmspy.brms_functions.prediction import posterior_epred, posterior_linpred, posterior_predict, log_lik
@@ -54,7 +55,7 @@ import os
 if os.environ.get("BRMSPY_WORKER") == "1":
     runtime._autoload()
 
-    
+
 
 # R imports must NOT be done lazily!
 # Lazy imports with rpy2 within tqdm loops for example WILL cause segfaults!
@@ -121,5 +122,8 @@ __all__ = [
     'PriorSpec',
 
     # stan
-    'make_stancode'
+    'make_stancode',
+
+
+    '_formula_add'
 ]

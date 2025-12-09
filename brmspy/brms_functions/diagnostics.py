@@ -68,7 +68,7 @@ from ..types import (
     LooResult,
     SummaryResult
 )
-import rpy2.robjects as ro
+from rpy2.rinterface import ListSexpVector
 
 
 
@@ -168,6 +168,7 @@ def summary(model: FitResult, **kwargs) -> SummaryResult:
     ```
     """
     
+    import rpy2.robjects as ro
     kwargs = kwargs_r(kwargs)
     r_summary = cast(Callable, ro.r('summary'))
     summary_r = r_summary(model.r, **kwargs)
@@ -189,7 +190,7 @@ def summary(model: FitResult, **kwargs) -> SummaryResult:
 
 
 def fixef(
-  object: Union[FitResult, ro.ListVector],
+  object: Union[FitResult, ListSexpVector],
   summary = True,
   robust = False,
   probs = (0.025, 0.975),
@@ -297,6 +298,7 @@ def fixef(
     custom_quantile = np.percentile(samples["x1"], 90)
     ```
     """
+    import rpy2.robjects as ro
     obj_r = py_to_r(object)
     kwargs = kwargs_r({
         "summary": summary,
@@ -312,7 +314,7 @@ def fixef(
 
 
 def ranef(
-  object: Union[FitResult, ro.ListVector],
+  object: Union[FitResult, ListSexpVector],
   summary: bool = True,
   robust: bool = False,
   probs = (0.025, 0.975),
@@ -385,6 +387,7 @@ def ranef(
     first_draw = patient_draws.sel(draw=0)
     ```
     """
+    import rpy2.robjects as ro
     obj_r = py_to_r(object)
     kwargs = kwargs_r({
         "summary": summary,
@@ -533,6 +536,7 @@ def posterior_summary(
     print(robust_summary)
     ```
     """
+    import rpy2.robjects as ro
     obj_r = py_to_r(object)
     kwargs = kwargs_r({
         "variable": variable,
@@ -546,7 +550,7 @@ def posterior_summary(
     return cast(pd.DataFrame, r_to_py(r_df))
 
 def prior_summary(
-    object: Union[FitResult, ro.ListVector],
+    object: Union[FitResult, ListSexpVector],
     all = True,
     **kwargs
 ) -> pd.DataFrame:
@@ -561,7 +565,7 @@ def prior_summary(
     
     Parameters
     ----------
-    object : FitResult or ro.ListVector
+    object : FitResult or ListVector
         Fitted model from [`fit()`](brmspy/brms_functions/brm.py:1) or R brmsfit object
     all : bool, default=True
         If True, return all priors including default priors.
@@ -627,6 +631,7 @@ def prior_summary(
     used_priors = brmspy.prior_summary(model)
     ```
     """
+    import rpy2.robjects as ro
     obj_r = py_to_r(object)
     kwargs = kwargs_r({
         "all": all,
@@ -640,7 +645,7 @@ def prior_summary(
 
 def validate_newdata(
   newdata: pd.DataFrame,
-  object: Union[ro.ListVector, FitResult],
+  object: Union[ListSexpVector, FitResult],
   re_formula: Optional[str] = None,
   allow_new_levels: bool = False,
   newdata2: Optional[pd.DataFrame] = None,
@@ -792,6 +797,7 @@ def validate_newdata(
     )
     ```
     """
+    import rpy2.robjects as ro
     r_validate_newdata = cast(Callable, ro.r("brms::validate_newdata"))
     kwargs = kwargs_r({
         "newdata": newdata,

@@ -1,5 +1,5 @@
-from typing import Union, cast
-import rpy2.robjects as ro
+from typing import Callable, Union, cast
+from rpy2.rinterface import ListSexpVector
 
 from ..runtime._state import get_brms
 from ..helpers.conversion import (
@@ -310,3 +310,17 @@ def set_nl(
     })
     formula_obj = brms.set_nl(**formula_args)
     return FormulaResult._formula_parse(formula_obj)
+
+def _formula_add(
+    a: FormulaResult,
+    b: FormulaResult
+) -> FormulaResult:
+    import rpy2.robjects as ro
+    r_fun = cast(Callable, ro.r("function (a, b) a + b"))
+
+    r = r_fun(a.r, b.r)
+
+    return FormulaResult(
+        parts=[a, b],
+        r=r
+    )

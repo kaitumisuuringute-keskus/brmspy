@@ -5,12 +5,14 @@ import pickle
 
 import numpy as np
 
+from brmspy.types import FormulaResult
+
+
 from .base import Encoder, EncodeResult, ShmBlockSpec
 
-
-class NumpyArrayCodec:
+class FormulaCodec:
     def can_encode(self, obj: Any) -> bool:
-        return isinstance(obj, np.ndarray)
+        return isinstance(obj, FormulaResult)
 
     def encode(self, obj: Any, shm_pool: Any) -> EncodeResult:
         arr = np.asarray(obj)
@@ -46,30 +48,3 @@ class NumpyArrayCodec:
         arr = np.frombuffer(view, dtype=dtype)
         arr = arr.reshape(shape)
         return arr
-
-
-class PickleCodec:
-    def can_encode(self, obj: Any) -> bool:
-        # Fallback – always True
-        return True
-
-    def encode(self, obj: Any, shm_pool: Any) -> EncodeResult:
-        data = pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
-        block = shm_pool.alloc(len(data))
-        block.shm.buf[:len(data)] = data
-
-        meta: Dict[str, Any] = {"length": len(data)}
-
-        return EncodeResult(
-            codec="pickle",
-            meta=meta,
-            buffers=[ShmBlockSpec(name=block.name, size=block.size)],
-        )
-
-    def decode(self, meta: Dict[str, Any],
-               buffers: List[memoryview]) -> Any:
-        buf = buffers[0]
-        length = meta["length"]
-        payload = bytes(buf[:length])
-        return pickle.loads(payload)
-

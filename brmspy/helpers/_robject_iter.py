@@ -2,8 +2,8 @@ from dataclasses import dataclass, is_dataclass
 from types import UnionType
 from typing import Any, Callable, Dict, List, Optional, Union, cast, get_args, get_origin
 import pandas as pd
-import rpy2.robjects as ro
 
+from rpy2.rinterface import ListSexpVector
 from brmspy.helpers.log import log_warning
 
 
@@ -76,7 +76,7 @@ def iterate_robject_to_dataclass(
     names: List[str],
     get: Callable[[str], Any],
     target_dataclass: type[Any],
-    r: Optional[ro.ListVector],
+    r: Optional[ListSexpVector],
     iteration_params: Optional[Dict[str, IterConf]] = None
 ):
     """
@@ -87,6 +87,7 @@ def iterate_robject_to_dataclass(
     - `get(param)` should return the R slot already converted via rpy2 (or raw)
     - `target_dataclass` is a @dataclass whose field names mirror the params
     """
+    import rpy2.robjects as ro
     _fun_repr = cast(Callable, ro.r('function(x) paste(capture.output(x), collapse = "\\n")'))
 
     if target_dataclass is None:

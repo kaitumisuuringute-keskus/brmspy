@@ -5,15 +5,6 @@ import re
 import xarray as xr
 import arviz as az
 
-from rpy2.robjects import default_converter, pandas2ri, numpy2ri, ListVector
-import rpy2.robjects as ro
-from rpy2.robjects import pandas2ri
-from rpy2.robjects.conversion import localconverter
-from rpy2.robjects import vectors
-
-from rpy2.robjects.functions import SignatureTranslatedFunction
-
-from brmspy.runtime._state import get_base
 from brmspy.helpers.log import log_warning
 from brmspy.types import IDFit, RListVectorExtension
 
@@ -253,6 +244,7 @@ def _reshape_r_prediction_to_arviz(r_matrix, brmsfit_obj, obs_coords=None):
     """
     # 1. Get dimensions from the model
     # We use R functions to be safe about how brms stored the fit
+    import rpy2.robjects as ro
     try:
         r_nchains = cast(Callable, ro.r('brms::nchains'))
         n_chains = int(r_nchains(brmsfit_obj)[0])
@@ -288,6 +280,9 @@ def _reshape_r_prediction_to_arviz(r_matrix, brmsfit_obj, obs_coords=None):
 
 def brmsfit_to_idata(brmsfit_obj, model_data=None) -> IDFit:
     """Convert brmsfit -> ArviZ InferenceData (uni- and multivariate)."""
+    import rpy2.robjects as ro
+    from rpy2.robjects import pandas2ri
+    from rpy2.robjects.conversion import localconverter
 
     # -------------------------------------------------
     # POSTERIOR (parameters) via posterior::as_draws_df
@@ -899,6 +894,10 @@ def py_to_r(obj):
     kwargs_r : Convert keyword arguments dict for R function calls
     brmspy.brms.fit : Uses this for converting data to R
     """
+    from rpy2.robjects import default_converter, pandas2ri, numpy2ri, ListVector, pandas2ri
+    import rpy2.robjects as ro
+    from rpy2.robjects.conversion import localconverter
+
     if isinstance(obj, RListVectorExtension):
         return obj.r
         
@@ -1031,6 +1030,11 @@ def r_to_py(obj):
     py_to_r : Convert Python objects to R
     brmspy.brms.summary : Returns Python-friendly summary dict
     """
+    from rpy2.robjects import default_converter, pandas2ri, ListVector, pandas2ri, vectors
+    from rpy2.robjects.conversion import localconverter
+    import rpy2.robjects as ro
+    from rpy2.robjects.functions import SignatureTranslatedFunction
+
     if obj is ro.NULL:
         return None
     

@@ -21,7 +21,7 @@ def cache_sexp(obj: 'Sexp') -> SexpWrapper:
     _SEXP_CACHE[obj.rid] = obj
     return SexpWrapper(
         _rid=obj.rid,
-        _repr=obj.__repr__()
+        _repr=str(obj)
     )
 
 def reattach_sexp(obj: Any) -> Any:
@@ -30,5 +30,5 @@ def reattach_sexp(obj: Any) -> Any:
         if obj.r._rid in _SEXP_CACHE:
             obj.r = _SEXP_CACHE[obj.r._rid]
         else:
-            obj.r = NULL
+            obj.r = None
     return obj

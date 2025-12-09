@@ -6,7 +6,7 @@ Each function does exactly one R operation. Stateless.
 import os
 from pathlib import Path
 from typing import Callable, List, cast
-import rpy2.robjects as ro
+
 
 from brmspy.helpers.log import log_warning
 
@@ -16,12 +16,14 @@ from brmspy.helpers.log import log_warning
 
 def get_lib_paths() -> list[str]:
     """Get current .libPaths() from R."""
+    import rpy2.robjects as ro
     result = cast(ro.ListVector, ro.r('.libPaths()'))
     return [str(p) for p in result]
 
 
 def get_cmdstan_path() -> str | None:
     """Get current cmdstanr::cmdstan_path() or None."""
+    import rpy2.robjects as ro
     try:
         result = cast(ro.ListVector, ro.r("suppressWarnings(suppressMessages(cmdstanr::cmdstan_path()))"))
         return str(result[0]) if result else None
@@ -31,13 +33,16 @@ def get_cmdstan_path() -> str | None:
 
 def is_namespace_loaded(name: str) -> bool:
     """Check if package namespace is loaded."""
+    import rpy2.robjects as ro
     expr = f'"{name}" %in% loadedNamespaces()'
+    
     res = cast(ro. ListVector, ro.r(expr))
     return str(res[0]).lower().strip() == "true"
 
 
 def is_package_attached(name: str) -> bool:
     """Check if package is on search path."""
+    import rpy2.robjects as ro
     expr = f'paste0("package:", "{name}") %in% search()'
     res = cast(ro.ListVector, ro.r(expr))
     return str(res[0]).lower().strip() == "true"
@@ -52,6 +57,7 @@ def unload_package(name: str) -> bool:
     Tries: detach -> unloadNamespace -> library.dynam.unload
     Does NOT uninstall.
     """
+    import rpy2.robjects as ro
 
     detach_only = False
 
@@ -244,6 +250,7 @@ def _unload_libpath_packages(libpath: Path | None) -> None:
 
 def set_lib_paths(paths: list[str]) -> None:
     """Set .libPaths() in R."""
+    import rpy2.robjects as ro
     
     current = [str(p) for p in cast(ro.StrVector, ro.r(".libPaths()"))]
     current = [p for p in current if ".brmspy/runtime/" not in p and ".brmspy\\runtime\\" not in p]
@@ -254,7 +261,8 @@ def set_lib_paths(paths: list[str]) -> None:
 
 def set_cmdstan_path(path: str | None) -> None:
     """Set cmdstanr::set_cmdstan_path()."""
-    import logging
+    import rpy2.robjects as ro
+
     try:
       if path is None:
           path_str = "NULL"
@@ -275,6 +283,7 @@ def set_cmdstan_path(path: str | None) -> None:
 
 def run_gc() -> None:
     """Run garbage collection in both Python and R."""
+    import rpy2.robjects as ro
     import gc
     gc.collect()
     try:
@@ -284,6 +293,7 @@ def run_gc() -> None:
 
 def forward_github_token() -> None:
     """Copy GITHUB_TOKEN/GITHUB_PAT to R's Sys.setenv."""
+    import rpy2.robjects as ro
     try:
         kwargs = {}
         pat = os.environ.get("GITHUB_PAT")

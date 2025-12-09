@@ -1,11 +1,13 @@
 """Result types for brmspy functions."""
 
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Mapping, Optional, Union, cast
-import rpy2.robjects as robjects
+from typing import Any, Callable, Dict, List, Optional, Union, cast
 import arviz as az
 import xarray as xr
 import pandas as pd
+from rpy2.rinterface import (ListSexpVector)
+
+from brmspy.session.types import SexpWrapper
 
 
 @dataclass(frozen=True)
@@ -250,6 +252,8 @@ class IDLogLik(az.InferenceData):
 # Function return types
 # ---------------------
 
+ProxyListSexpVector = Union[SexpWrapper, ListSexpVector, None]
+
 @dataclass
 class RListVectorExtension:
     """Generic result container with R objects.
@@ -259,7 +263,7 @@ class RListVectorExtension:
     r : robjects.ListVector
         R object from brms
     """
-    r: robjects.ListVector
+    r: ProxyListSexpVector
 
 @dataclass
 class GenericResult(RListVectorExtension):
@@ -380,6 +384,10 @@ class PosteriorLinpredResult(RListVectorExtension):
     idata: IDLinpred
 
 @dataclass
+class FormulaPart(RListVectorExtension):
+    _repr: str
+
+@dataclass
 class FormulaResult(RListVectorExtension):
     """
     Result from formula() function.
@@ -408,28 +416,50 @@ class FormulaResult(RListVectorExtension):
     model = brms.fit(f, data=df, chains=4)
     ```
     """
-    dict: Dict
+    parts: List['FormulaResult']
 
     @classmethod
-    def _formula_parse(cls, r: Union[str, robjects.ListVector]) -> 'FormulaResult':
-        from .helpers.conversion import r_to_py
-        if isinstance(r, str):
-            r_fun = cast(Callable, robjects.r('brms::bf'))
-            r = cast(robjects.ListVector, r_fun(r))
-        return cls(r=r, dict=cast(dict, r_to_py(r)))
+    def _formula_parse(cls, obj: Union[str, ProxyListSexpVector, 'FormulaResult']) -> 'FormulaResult':
+        if isinstance(obj, FormulaResult):
+            return obj
+        
+        if isinstance(obj, str):
+            from brmspy import active
+            return active().bf(obj)
+        elif isinstance(obj, SexpWrapper):
+            return FormulaResult(
+                r=obj,
+                parts=[]
+            )
+        else:
+            return FormulaResult(
+                r=obj,
+                parts=[]
+            )
+    
+    def _build(self) -> ProxyListSexpVector:
+        it = self.parts
 
+    def __getattribute__(self, name):
+        #if name == "r":
+        #    return self._build()
+        return super().__getattribute__(name)
 
     def __add__(self, other):
-        if isinstance(other, (robjects.ListVector, str)):
+        from brmspy import active
+        if isinstance(other, (ProxyListSexpVector, str)):
             other = FormulaResult._formula_parse(other)
 
         if not isinstance(other, FormulaResult):
             raise ArithmeticError("When adding values to formula, they must be FormulaResult or parseable to FormulaResult")
         
-        plus = cast(Callable, robjects.r('function (a, b) a + b'))
-        combo = plus(self.r, other.r)
+        return active()._formula_add(self, other)
 
-        return FormulaResult._formula_parse(combo)
+    def __str__(self):
+        return str(self.r)
+
+    def __repr__(self):
+        return self.__str__()
 
 
 
@@ -512,7 +542,6 @@ class LooResult(RListVectorExtension):
 class LooCompareResult(RListVectorExtension):
     table: pd.DataFrame
     criterion: str
-    r: robjects.ListVector
 
     def __repr__(self) -> str:
         header = f"Model comparison ({self.criterion.upper()})"

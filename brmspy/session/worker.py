@@ -90,7 +90,7 @@ def worker_main(conn, mgr_address, mgr_authkey, runtime_conf) -> None:
                     out = cache_sexp(out)
                 elif hasattr(out, "r") and isinstance(out.r, Sexp):
                     out.r = cache_sexp(out.r)
-                
+
 
                 # encode result
                 enc = reg.encode(out, shm_pool)
