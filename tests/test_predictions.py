@@ -8,7 +8,7 @@ Tests all prediction and conversion functions:
 - log_lik: Log likelihood
 - Helper conversion functions
 """
-from typing import Callable, cast
+from typing import Any, Callable, cast
 import pytest
 import pandas as pd
 import numpy as np
@@ -22,11 +22,11 @@ class TestPosteriorEpred:
     @pytest.mark.slow
     def test_epred_basic(self, sample_dataframe):
         """Test basic posterior_epred on fitted model"""
-        import brmspy
+        from brmspy import brms
         import arviz as az
         
         # Fit a simple model
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1",
             data=sample_dataframe,
             family="gaussian",
@@ -38,7 +38,7 @@ class TestPosteriorEpred:
         )
         
         # Get expected predictions for original data
-        epred_result = brmspy.posterior_epred(
+        epred_result = brms.posterior_epred(
             model=model,
             newdata=sample_dataframe
         )
@@ -60,10 +60,10 @@ class TestPosteriorEpred:
     @pytest.mark.slow
     def test_epred_newdata(self, sample_dataframe):
         """Test posterior_epred with new data"""
-        import brmspy
+        from brmspy import brms
         
         # Fit model
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1",
             data=sample_dataframe,
             family="gaussian",
@@ -78,7 +78,7 @@ class TestPosteriorEpred:
         newdata = sample_dataframe.head(10)
         
         # Get predictions
-        epred_result = brmspy.posterior_epred(
+        epred_result = brms.posterior_epred(
             model=model,
             newdata=newdata
         )
@@ -95,11 +95,11 @@ class TestPosteriorPredict:
     @pytest.mark.slow
     def test_predict_basic(self, sample_dataframe):
         """Test basic posterior_predict on fitted model"""
-        import brmspy
+        from brmspy import brms
         import arviz as az
         
         # Fit model
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1",
             data=sample_dataframe,
             family="gaussian",
@@ -111,7 +111,7 @@ class TestPosteriorPredict:
         )
         
         # Get posterior predictions
-        pred_result = brmspy.posterior_predict(
+        pred_result = brms.posterior_predict(
             model=model,
             newdata=sample_dataframe
         )
@@ -133,10 +133,10 @@ class TestPosteriorPredict:
     @pytest.mark.slow
     def test_predict_without_newdata(self, sample_dataframe):
         """Test posterior_predict without providing newdata"""
-        import brmspy
+        from brmspy import brms
         
         # Fit model
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1",
             data=sample_dataframe,
             family="gaussian",
@@ -148,7 +148,7 @@ class TestPosteriorPredict:
         )
         
         # Get predictions without newdata (uses original data)
-        pred_result = brmspy.posterior_predict(model=model)
+        pred_result = brms.posterior_predict(model=model)
         
         # Should still work
         assert hasattr(pred_result, 'idata')
@@ -162,11 +162,11 @@ class TestPosteriorLinpred:
     @pytest.mark.slow
     def test_linpred_basic(self, sample_dataframe):
         """Test basic posterior_linpred on fitted model"""
-        import brmspy
+        from brmspy import brms
         import arviz as az
         
         # Fit model
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1",
             data=sample_dataframe,
             family="gaussian",
@@ -178,7 +178,7 @@ class TestPosteriorLinpred:
         )
         
         # Get linear predictions
-        linpred_result = brmspy.posterior_linpred(
+        linpred_result = brms.posterior_linpred(
             model=model,
             newdata=sample_dataframe
         )
@@ -204,11 +204,11 @@ class TestLogLik:
     @pytest.mark.slow
     def test_log_lik_basic(self, sample_dataframe):
         """Test basic log_lik on fitted model"""
-        import brmspy
+        from brmspy import brms
         import arviz as az
         
         # Fit model
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1",
             data=sample_dataframe,
             family="gaussian",
@@ -220,7 +220,7 @@ class TestLogLik:
         )
         
         # Get log likelihood
-        ll_result = brmspy.log_lik(
+        ll_result = brms.log_lik(
             model=model,
             newdata=sample_dataframe
         )
@@ -241,11 +241,10 @@ class TestBrmsfitToIdata:
     @pytest.mark.slow
     def test_complete_idata_conversion(self, sample_dataframe):
         """Test that brmsfit_to_idata creates all groups"""
-        import brmspy
-        from brmspy.helpers._conversion import brmsfit_to_idata
+        from brmspy import brms
         
         # Fit model
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1",
             data=sample_dataframe,
             family="gaussian",
@@ -255,12 +254,8 @@ class TestBrmsfitToIdata:
             silent=2,
             refresh=0
         )
-        
-        # Get brmsfit object
-        brmsfit = model.r
-        
-        # Convert to complete InferenceData
-        idata = brmsfit_to_idata(brmsfit)
+
+        idata = model.idata
         
         # Check all expected groups are present
         assert hasattr(idata, 'posterior'), "Should have posterior group"
@@ -275,14 +270,13 @@ class TestBrmsfitToIdata:
     @pytest.mark.slow
     def test_posterior_predictive_shape(self, sample_dataframe):
         """Test posterior predictive has correct shape"""
-        import brmspy
-        from brmspy.helpers._conversion import brmsfit_to_idata
+        from brmspy import brms
         
         # Fit model with known parameters
         n_chains = 2
         n_draws = 100
         
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1",
             data=sample_dataframe,
             family="gaussian",
@@ -292,8 +286,7 @@ class TestBrmsfitToIdata:
             silent=2,
             refresh=0
         )
-        
-        idata = brmsfit_to_idata(model.r)
+        idata = model.idata
         
         # Check posterior predictive shape
         pp = idata.posterior_predictive['y']
@@ -309,12 +302,12 @@ class TestConversionHelpers:
     @pytest.mark.slow  
     def test_reshape_r_prediction_to_arviz(self, sample_dataframe):
         """Test _reshape_r_prediction_to_arviz function"""
-        import brmspy
-        from brmspy.helpers._conversion import _reshape_r_prediction_to_arviz
-        import rpy2.robjects as ro
+        from brmspy import brms
+        import arviz as az
+        from xarray.core.coordinates import DatasetCoordinates
         
         # Fit model
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1",
             data=sample_dataframe,
             family="gaussian",
@@ -324,36 +317,43 @@ class TestConversionHelpers:
             silent=2,
             refresh=0
         )
+        posterior_predict = brms.posterior_predict(model)
+        idata = posterior_predict.idata
+
+        var_name = list(idata.posterior_predictive.data_vars)[0]
+
+        # Extract as an xarray.DataArray
+        da = idata.posterior_predictive[var_name]
+
+        # Convert to a plain NumPy array
+        reshaped_data = da.values
         
-        # Get a prediction matrix from R
-        r_posterior_predict = cast(Callable, ro.r('brms::posterior_predict'))
-        r_pred = r_posterior_predict(model.r)
-        
-        # Test reshape function
-        reshaped_data, coords, dims = _reshape_r_prediction_to_arviz(
-            r_pred, model.r
+        coords, dims = (
+            idata.posterior_predictive.coords,
+            idata.posterior_predictive.dims
         )
+        
         
         # Check output structure
         assert isinstance(reshaped_data, np.ndarray)
         assert reshaped_data.ndim == 3, "Should be 3D array (chains, draws, obs)"
         
-        assert isinstance(coords, dict)
+        assert isinstance(coords, DatasetCoordinates)
         assert 'chain' in coords
         assert 'draw' in coords
         assert 'obs_id' in coords
         
-        assert dims == ["chain", "draw", "obs_id"]
+        assert list(dims) == ["chain", "draw", "obs_id"]
         
     @pytest.mark.slow
     def test_epred_to_idata_helper(self, sample_dataframe):
         """Test brms_epred_to_idata helper function"""
-        import brmspy
+        from brmspy import brms
         from brmspy.helpers._conversion import brms_epred_to_idata
         import rpy2.robjects as ro
         
         # Fit model
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1",
             data=sample_dataframe,
             family="gaussian",
@@ -363,17 +363,12 @@ class TestConversionHelpers:
             silent=2,
             refresh=0
         )
-        
-        # Get epred from R
-        r_posterior_epred = cast(Callable, ro.r('brms::posterior_epred'))
-        r_epred = r_posterior_epred(model.r)
-        
-        # Convert using helper
-        idata = brms_epred_to_idata(r_epred, model.r)
+
+        idata = brms.posterior_epred(model).idata
         
         # Check structure
         assert hasattr(idata, 'posterior')
-        assert 'epred' in idata.posterior
+        assert 'epred' in cast(Any, idata).posterior
 
 
 @pytest.mark.requires_brms
@@ -388,10 +383,10 @@ class TestPredictionConsistency:
         Epred should give expected value (mean), while predict adds noise.
         Therefore predict should have higher variance.
         """
-        import brmspy
+        from brmspy import brms
         
         # Fit model
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1",
             data=sample_dataframe,
             family="gaussian",
@@ -403,8 +398,8 @@ class TestPredictionConsistency:
         )
         
         # Get both types of predictions
-        epred = brmspy.posterior_epred(model=model, newdata=sample_dataframe)
-        predict = brmspy.posterior_predict(model=model, newdata=sample_dataframe)
+        epred = brms.posterior_epred(model=model, newdata=sample_dataframe)
+        predict = brms.posterior_predict(model=model, newdata=sample_dataframe)
         
         # Extract values
         epred_vals = epred.idata.posterior['epred'].values
@@ -427,10 +422,10 @@ class TestPoissonPredictions:
     @pytest.mark.slow
     def test_poisson_predictions(self, poisson_data):
         """Test prediction functions with Poisson family"""
-        import brmspy
+        from brmspy import brms
         
         # Fit Poisson model
-        model = brmspy.fit(
+        model = brms.fit(
             formula="count ~ predictor",
             data=poisson_data,
             family="poisson",
@@ -442,9 +437,9 @@ class TestPoissonPredictions:
         )
         
         # All prediction types should work
-        epred = brmspy.posterior_epred(model=model, newdata=poisson_data)
-        predict = brmspy.posterior_predict(model=model, newdata=poisson_data)
-        linpred = brmspy.posterior_linpred(model=model, newdata=poisson_data)
+        epred = brms.posterior_epred(model=model, newdata=poisson_data)
+        predict = brms.posterior_predict(model=model, newdata=poisson_data)
+        linpred = brms.posterior_linpred(model=model, newdata=poisson_data)
         
         # Check they all have correct structure
         assert hasattr(epred.idata, 'posterior')

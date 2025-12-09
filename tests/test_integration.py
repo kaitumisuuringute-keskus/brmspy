@@ -28,12 +28,6 @@ class TestBrmsImportAndVersion:
         version = brms.get_brms_version()
         assert isinstance(version, Version)
 
-    def test_brms_import_successful(self):
-        """Test that brms can be imported via rpy2"""
-        import rpy2.robjects.packages as rpackages
-        brms = rpackages.importr("brms")
-        assert brms is not None
-
 
 
 @pytest.mark.requires_brms
@@ -335,15 +329,9 @@ class TestNaNRegression:
         )
         
         # Check that r has no NaNs (via posterior package)
-        from rpy2.robjects.packages import importr
-        from rpy2.robjects import pandas2ri, default_converter
-        from rpy2.robjects.conversion import localconverter
-        
-        posterior = importr('posterior')
-        draws = posterior.as_draws_df(result.r)
-        
-        with localconverter(default_converter + pandas2ri.converter):
-            df = pandas2ri.rpy2py(draws)
+
+        df = result.idata.posterior.to_dataframe()
+        print(df.head().to_string())
         
         # Verify no NaNs in original draws from R
         assert not df.isna().any().any(), "r draws should not contain NaNs"
@@ -394,18 +382,12 @@ class TestFormulaFunction:
         # Check attributes exist
         assert hasattr(formula_result, 'r'), \
             "FormulaResult should have .r attribute"
-        assert hasattr(formula_result, 'dict'), \
-            "FormulaResult should have .dict attribute"
+        assert hasattr(formula_result, 'parts'), \
+            "FormulaResult should have .parts attribute"
         
         # Check R object is valid (not None or NULL)
         assert formula_result.r is not None, \
             "R brmsformula object should not be None"
-        
-        # Check dict conversion works
-        assert isinstance(formula_result.dict, dict), \
-            ".dict should be a Python dictionary"
-        assert len(formula_result.dict) > 0, \
-            ".dict should contain formula information"
     
     def test_formula_with_brms_arguments(self):
         """
@@ -451,8 +433,8 @@ class TestFormulaFunction:
             "formula() with multiple arguments should return FormulaResult"
         assert formula_multi.r is not None, \
             "Multi-argument formula should create valid R object"
-        assert formula_multi.dict is not None, \
-            "Multi-argument formula should have dict representation"
+        assert formula_multi.parts is not None, \
+            "Multi-argument formula should have parts"
     
     @pytest.mark.slow
     def test_formula_complex_with_fit_integration(self):

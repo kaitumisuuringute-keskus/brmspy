@@ -8,7 +8,7 @@ from ..helpers._conversion import (
     r_to_py
 )
 from ..types import (
-    FitResult, RListVectorExtension
+    FitResult, ProxyListSexpVector, RListVectorExtension
 )
 
 def get_data(dataset_name: str, **kwargs) -> pd.DataFrame:
@@ -106,7 +106,7 @@ def get_brms_data(dataset_name: str, **kwargs) -> pd.DataFrame:
 
 
 
-def save_rds(object: typing.Union[RListVectorExtension, ListSexpVector], file: str, **kwargs) -> None:
+def save_rds(object: typing.Union[RListVectorExtension, ProxyListSexpVector], file: str, **kwargs) -> None:
     """
     Save brmsfit object or R object to RDS file.
     

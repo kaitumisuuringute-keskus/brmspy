@@ -12,7 +12,7 @@ from ..types import (
 )
 
 
-def posterior_epred(model: FitResult, newdata: pd.DataFrame, **kwargs) -> PosteriorEpredResult:
+def posterior_epred(model: FitResult, newdata: typing.Optional[pd.DataFrame] = None, **kwargs) -> PosteriorEpredResult:
     """
     Compute expected value of posterior predictive distribution.
     

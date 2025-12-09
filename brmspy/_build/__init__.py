@@ -6,9 +6,9 @@ import argparse
 from pathlib import Path
 import rpy2.robjects as ro
 
-from brmspy.build._metadata import collect_runtime_metadata
-from brmspy.build._stage import stage_runtime_tree
-from brmspy.build._pack import pack_runtime
+from brmspy._build._metadata import collect_runtime_metadata
+from brmspy._build._stage import stage_runtime_tree
+from brmspy._build._pack import pack_runtime
 from brmspy.helpers.log import log
 
 

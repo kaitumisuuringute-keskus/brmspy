@@ -3,8 +3,8 @@ source = brmspy
 
 [report]
 include =
-    brmspy/runtime/*
-    brmspy/build/*
+    brmspy/_runtime/*
+    brmspy/_build/*
 
 [paths]
 brmspy =

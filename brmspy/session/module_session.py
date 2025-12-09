@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import atexit
 from contextlib import contextmanager
+import inspect
 import multiprocessing as mp
 from pathlib import Path
 import subprocess
@@ -261,7 +262,7 @@ class RModuleSession(ModuleType):
         if hasattr(module, name):
             attr = getattr(module, name)
 
-            if callable(attr):
+            if callable(attr) and not inspect.isclass(attr):
                 # wrap callables so they run in worker
                 return self._get_or_create_wrapper(name, attr)
 

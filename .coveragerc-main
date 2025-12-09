@@ -1,5 +1,5 @@
 [run]
 source = brmspy
 omit =
-    brmspy/runtime/*
-    brmspy/build/*
+    brmspy/_runtime/*
+    brmspy/_build/*
