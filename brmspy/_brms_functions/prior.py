@@ -5,7 +5,7 @@ from typing import Any, Callable, Optional, Union, cast
 
 import pandas as pd
 
-from brmspy.helpers.conversion import kwargs_r, py_to_r, r_to_py
+from brmspy.helpers._conversion import kwargs_r, py_to_r, r_to_py
 from brmspy.types import FormulaResult, PriorSpec, RListVectorExtension
 from rpy2.rinterface import ListSexpVector
 

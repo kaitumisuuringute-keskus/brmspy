@@ -40,8 +40,8 @@ class TestFormulaFamilyIntegration:
         - Integration of formula + distributional param + family
         """
         import brmspy
-        from brmspy.brms_functions.formula import bf, lf
-        from brmspy.brms_functions.families import student
+        from brmspy._brms_functions.formula import bf, lf
+        from brmspy._brms_functions.families import student
         import arviz as az
         
         # Load epilepsy dataset
@@ -82,8 +82,8 @@ class TestFormulaFamilyIntegration:
         - Distributional modeling of asymmetry
         """
         import brmspy
-        from brmspy.brms_functions.formula import bf, lf
-        from brmspy.brms_functions.families import skew_normal
+        from brmspy._brms_functions.formula import bf, lf
+        from brmspy._brms_functions.families import skew_normal
         import arviz as az
         
         # Load epilepsy dataset
@@ -124,8 +124,8 @@ class TestFormulaFamilyIntegration:
         - Hierarchical structure + distributional modeling
         """
         import brmspy
-        from brmspy.brms_functions.formula import bf, lf
-        from brmspy.brms_functions.families import zero_inflated_poisson
+        from brmspy._brms_functions.formula import bf, lf
+        from brmspy._brms_functions.families import zero_inflated_poisson
         import arviz as az
         
         # Load epilepsy dataset
@@ -171,8 +171,8 @@ class TestFormulaFamilyIntegration:
         - Formula pattern from brms docs: y ~ a * inv_logit(x * b)
         """
         import brmspy
-        from brmspy.brms_functions.formula import bf, lf, set_nl
-        from brmspy.brms_functions.families import gaussian
+        from brmspy._brms_functions.formula import bf, lf, set_nl
+        from brmspy._brms_functions.families import gaussian
         import arviz as az
         
         # Create synthetic data matching the brms docs example
@@ -230,8 +230,8 @@ class TestFormulaFamilyIntegration:
         - gaussian() family with autocorrelation
         """
         import brmspy
-        from brmspy.brms_functions.formula import bf, acformula
-        from brmspy.brms_functions.families import gaussian
+        from brmspy._brms_functions.formula import bf, acformula
+        from brmspy._brms_functions.families import gaussian
         import arviz as az
         
         # Load epilepsy dataset (has time structure per patient)
@@ -275,8 +275,8 @@ class TestFormulaFamilyIntegration:
         - gaussian() family with measurement error
         """
         import brmspy
-        from brmspy.brms_functions.formula import bf, set_mecor
-        from brmspy.brms_functions.families import gaussian
+        from brmspy._brms_functions.formula import bf, set_mecor
+        from brmspy._brms_functions.families import gaussian
         import arviz as az
         
         # Create synthetic data with measurement error
@@ -333,8 +333,8 @@ class TestFormulaFamilyIntegration:
         - Shared random effects across responses
         """
         import brmspy
-        from brmspy.brms_functions.formula import bf, lf, set_rescor
-        from brmspy.brms_functions.families import poisson, gaussian
+        from brmspy._brms_functions.formula import bf, lf, set_rescor
+        from brmspy._brms_functions.families import poisson, gaussian
         import arviz as az
         
         # Load epilepsy dataset
@@ -386,8 +386,8 @@ class TestFormulaFamilyIntegration:
         - Random effects + distributional modeling
         """
         import brmspy
-        from brmspy.brms_functions.formula import bf, lf
-        from brmspy.brms_functions.families import hurdle_gamma
+        from brmspy._brms_functions.formula import bf, lf
+        from brmspy._brms_functions.families import hurdle_gamma
         import arviz as az
         
         # Create synthetic hurdle data (zeros + positive continuous)
@@ -450,8 +450,8 @@ class TestFormulaFamilyIntegration:
         - Ordinal regression integration
         """
         import brmspy
-        from brmspy.brms_functions.formula import bf
-        from brmspy.brms_functions.families import cumulative
+        from brmspy._brms_functions.formula import bf
+        from brmspy._brms_functions.families import cumulative
         import arviz as az
         
         # Create synthetic ordinal data
@@ -504,8 +504,8 @@ class TestFormulaFamilyIntegration:
         - GAM-style model with hierarchical structure
         """
         import brmspy
-        from brmspy.brms_functions.formula import bf
-        from brmspy.brms_functions.families import poisson
+        from brmspy._brms_functions.formula import bf
+        from brmspy._brms_functions.families import poisson
         import arviz as az
         
         # Load epilepsy dataset

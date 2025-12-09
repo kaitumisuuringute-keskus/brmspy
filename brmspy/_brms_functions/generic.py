@@ -1,7 +1,7 @@
 from typing import Any, Callable, cast
 import re
 
-from brmspy.helpers.conversion import kwargs_r, py_to_r, r_to_py
+from brmspy.helpers._conversion import kwargs_r, py_to_r, r_to_py
 
 
 def sanitised_name(function: str) -> str:

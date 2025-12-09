@@ -1,5 +1,5 @@
 from brmspy.helpers import (
-    _robject_iter, conversion, log, priors
+    _conversion, _priors, _robject_iter, log
 )
 
-__all__ = ['conversion', 'log', 'priors', '_robject_iter']
+__all__ = ['_conversion', 'log', '_priors', '_robject_iter']

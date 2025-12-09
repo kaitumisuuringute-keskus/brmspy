@@ -16,7 +16,7 @@ class TestSummaryFunction:
         - Attributes have correct types
         """
         import brmspy
-        from brmspy.brms_functions.diagnostics import SummaryResult
+        from brmspy._brms_functions.diagnostics import SummaryResult
         import pandas as pd
         
         # Fit a simple model

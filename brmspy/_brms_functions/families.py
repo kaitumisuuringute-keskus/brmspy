@@ -12,7 +12,7 @@ from typing import Callable, Optional, Union, cast
 from rpy2.rinterface import ListSexpVector
 
 
-from brmspy.helpers.conversion import kwargs_r
+from brmspy.helpers._conversion import kwargs_r
 from brmspy.types import FitResult
 
 

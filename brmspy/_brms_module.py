@@ -15,22 +15,22 @@ from brmspy.types import (
     IDPredict,
     PriorSpec
 )
-from brmspy.brms_functions.io import get_brms_data, read_rds_fit, read_rds_raw, save_rds, get_data
-from brmspy.brms_functions.prior import prior, get_prior, default_prior
-from brmspy.brms_functions.brm import brm
-from brmspy.brms_functions.brm import brm as fit
+from brmspy._brms_functions.io import get_brms_data, read_rds_fit, read_rds_raw, save_rds, get_data
+from brmspy._brms_functions.prior import prior, get_prior, default_prior
+from brmspy._brms_functions.brm import brm
+from brmspy._brms_functions.brm import brm as fit
 
-from brmspy.brms_functions.diagnostics import summary, fixef, ranef, posterior_summary, prior_summary, validate_newdata
-from brmspy.brms_functions.generic import call
-from brmspy.brms_functions.formula import (
+from brmspy._brms_functions.diagnostics import summary, fixef, ranef, posterior_summary, prior_summary, validate_newdata
+from brmspy._brms_functions.generic import call
+from brmspy._brms_functions.formula import (
     bf, lf, nlf, acformula, set_rescor, set_mecor, set_nl, 
     _formula_add
 )
-from brmspy.brms_functions.formula import bf as formula
-from brmspy.brms_functions.prediction import posterior_epred, posterior_linpred, posterior_predict, log_lik
-from brmspy.brms_functions.stan import make_stancode
-from brmspy.brms_functions import families
-from brmspy.brms_functions.families import (
+from brmspy._brms_functions.formula import bf as formula
+from brmspy._brms_functions.prediction import posterior_epred, posterior_linpred, posterior_predict, log_lik
+from brmspy._brms_functions.stan import make_stancode
+from brmspy._brms_functions import families
+from brmspy._brms_functions.families import (
     brmsfamily, family, student, bernoulli, beta_binomial, negbinomial,
     negbinomial2, geometric, discrete_weibull, com_poisson, lognormal,
     shifted_lognormal, skew_normal, exponential, weibull, frechet,

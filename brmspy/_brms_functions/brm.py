@@ -4,9 +4,9 @@ import pandas as pd
 
 from .formula import bf
 from brmspy.helpers.log import log, log_warning
-from ..helpers.priors import _build_priors
+from ..helpers._priors import _build_priors
 from ..runtime._state import get_brms, get_cmdstanr, get_rstan
-from ..helpers.conversion import (
+from ..helpers._conversion import (
     brmsfit_to_idata,
     kwargs_r, py_to_r
 )

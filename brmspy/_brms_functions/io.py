@@ -2,7 +2,7 @@ import typing
 import pandas as pd
 from rpy2.rinterface import ListSexpVector
 
-from ..helpers.conversion import (
+from ..helpers._conversion import (
     brmsfit_to_idata,
     kwargs_r,
     r_to_py

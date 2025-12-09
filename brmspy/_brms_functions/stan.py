@@ -2,9 +2,9 @@
 import typing
 import pandas as pd
 from .formula import bf
-from ..helpers.priors import _build_priors
+from ..helpers._priors import _build_priors
 from ..runtime._state import get_brms
-from ..helpers.conversion import (
+from ..helpers._conversion import (
     py_to_r
 )
 from ..types import (

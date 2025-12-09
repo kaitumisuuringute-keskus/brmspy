@@ -371,7 +371,7 @@ from brmspy.brms import (
 
     install_rpackage
 )
-from brmspy.brms_functions.families import (
+from brmspy._brms_functions.families import (
     brmsfamily, family, student, bernoulli, beta_binomial, negbinomial,
     negbinomial2, geometric, discrete_weibull, com_poisson, lognormal,
     shifted_lognormal, skew_normal, exponential, weibull, frechet,

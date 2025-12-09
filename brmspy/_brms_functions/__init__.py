@@ -1,4 +1,4 @@
-from brmspy.brms_functions import (
+from brmspy._brms_functions import (
     brm, diagnostics, families, formula, io, prediction, stan, prior
 )
 

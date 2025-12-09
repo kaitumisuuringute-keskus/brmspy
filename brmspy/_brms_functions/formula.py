@@ -2,7 +2,7 @@ from typing import Callable, Union, cast
 from rpy2.rinterface import ListSexpVector
 
 from ..runtime._state import get_brms
-from ..helpers.conversion import (
+from ..helpers._conversion import (
     kwargs_r, py_to_r, r_to_py
 )
 from ..types import (

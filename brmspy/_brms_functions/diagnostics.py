@@ -57,7 +57,7 @@ import xarray as xr
 import numpy as np
 
 from brmspy.helpers._robject_iter import iterate_robject_to_dataclass
-from ..helpers.conversion import (
+from ..helpers._conversion import (
     kwargs_r,
     py_to_r,
     r_to_py
@@ -209,7 +209,7 @@ def fixef(
     
     Parameters
     ----------
-    object : FitResult or ro.ListVector
+    object : FitResult or ListSexpVector
         Fitted model from [`fit()`](brmspy/brms_functions/brm.py:1) or R brmsfit object
     summary : bool, default=True
         If True, return summary statistics (mean/median, SE/MAD, credible intervals).
@@ -454,7 +454,7 @@ def ranef(
 
 
 def posterior_summary(
-    object: Union[FitResult, ro.ListVector],
+    object: Union[FitResult, ListSexpVector],
     variable = None,
     probs = (0.025, 0.975),
     robust = False,
@@ -472,7 +472,7 @@ def posterior_summary(
     
     Parameters
     ----------
-    object : FitResult or ro.ListVector
+    object : FitResult or ListSexpVector
         Fitted model from [`fit()`](brmspy/brms_functions/brm.py:1) or R brmsfit object
     variable : str or list of str, optional
         Specific variable name(s) to extract. If None, returns all parameters.
@@ -672,7 +672,7 @@ def validate_newdata(
     newdata : pd.DataFrame
         DataFrame containing new data to be validated against the model.
         Must include all predictor variables used in the model formula.
-    object : FitResult or ro.ListVector
+    object : FitResult or ListSexpVector
         Fitted model from [`fit()`](brmspy/brms_functions/brm.py:1) or R brmsfit object
     re_formula : str, optional
         Formula string specifying group-level effects to include in validation.
