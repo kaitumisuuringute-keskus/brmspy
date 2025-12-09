@@ -55,8 +55,6 @@ else:
     # BRMSPY_WORKER=1 should be set in the worker's env before import.
     import brmspy._brms_module as brms
 
-def active():
-    return brms
 
 __all__ = [
 

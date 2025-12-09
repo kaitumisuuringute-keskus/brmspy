@@ -22,10 +22,10 @@ class TestBrmsImportAndVersion:
     
     def test_get_brms_version(self):
         """Test that we can get brms version"""
-        import brmspy
+        from brmspy import brms
         from packaging.version import Version
         
-        version = brmspy.get_brms_version()
+        version = brms.get_brms_version()
         assert isinstance(version, Version)
 
     def test_brms_import_successful(self):
@@ -42,9 +42,9 @@ class TestDataLoading:
     
     def test_get_epilepsy_data(self):
         """Test loading the epilepsy dataset"""
-        import brmspy
+        from brmspy import brms
         
-        epilepsy = brmspy.get_brms_data("epilepsy")
+        epilepsy = brms.get_brms_data("epilepsy")
         
         # Check it's a DataFrame
         assert isinstance(epilepsy, pd.DataFrame)
@@ -59,19 +59,19 @@ class TestDataLoading:
     
     def test_get_kidney_data(self):
         """Test loading the kidney dataset"""
-        import brmspy
+        from brmspy import brms
         
-        kidney = brmspy.get_brms_data("kidney")
+        kidney = brms.get_brms_data("kidney")
         assert isinstance(kidney, pd.DataFrame)
         assert len(kidney) > 0
     
     def test_invalid_dataset_raises_error(self):
         """Test that invalid dataset name raises appropriate error"""
-        import brmspy
+        from brmspy import brms
         
         with pytest.raises(Exception):
             # This should fail - dataset doesn't exist
-            brmspy.get_brms_data("nonexistent_dataset_name_12345")
+            brms.get_brms_data("nonexistent_dataset_name_12345")
 
 
 @pytest.mark.requires_brms
@@ -81,10 +81,10 @@ class TestSimpleModelFitting:
     
     def test_fit_linear_model_minimal(self, sample_dataframe):
         """Test fitting the simplest possible linear model"""
-        import brmspy
+        from brmspy import brms
         
         # Use minimal iterations for faster testing
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1",
             data=sample_dataframe,
             family="gaussian",
@@ -108,9 +108,9 @@ class TestSimpleModelFitting:
     
     def test_fit_poisson_model(self, poisson_data):
         """Test fitting a Poisson regression model"""
-        import brmspy
+        from brmspy import brms
         
-        model = brmspy.fit(
+        model = brms.fit(
             formula="count ~ predictor",
             data=poisson_data,
             family="poisson",
@@ -132,12 +132,12 @@ class TestSimpleModelFitting:
     
     def test_fit_with_priors(self, sample_dataframe):
         """Test fitting model with custom priors"""
-        import brmspy
+        from brmspy import brms
         
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1",
             data=sample_dataframe,
-            priors=[brmspy.prior("normal(0, 5)", "b")],
+            priors=[brms.prior("normal(0, 5)", "b")],
             family="gaussian",
             iter=200,
             warmup=100,
@@ -162,7 +162,7 @@ class TestModelWithRandomEffects:
     
     def test_fit_random_intercept(self, sample_dataframe):
         """Test fitting model with random intercepts"""
-        import brmspy
+        from brmspy import brms
         
         # Add more group variation for better convergence
         sample_dataframe['y'] = (
@@ -170,7 +170,7 @@ class TestModelWithRandomEffects:
             sample_dataframe['group'].map({'G1': -2, 'G2': 2})
         )
         
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1 + (1|group)",
             data=sample_dataframe,
             family="gaussian",
@@ -198,9 +198,9 @@ class TestArVizIntegration:
     @pytest.mark.slow
     def test_arviz_conversion(self, sample_dataframe):
         """Test that model can be converted to arviz InferenceData"""
-        import brmspy
+        from brmspy import brms
         
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1",
             data=sample_dataframe,
             iter=200,
@@ -228,11 +228,11 @@ class TestErrorHandling:
     
     def test_invalid_formula_raises_error(self, sample_dataframe):
         """Test that invalid formula raises error"""
-        import brmspy
+        from brmspy import brms
         
         with pytest.raises(Exception):
             # Invalid variable name
-            brmspy.fit(
+            brms.fit(
                 formula="y ~ nonexistent_variable",
                 data=sample_dataframe,
                 family="gaussian",
@@ -242,10 +242,10 @@ class TestErrorHandling:
     
     def test_invalid_family_raises_error(self, sample_dataframe):
         """Test that invalid family raises error"""
-        import brmspy
+        from brmspy import brms
         
         with pytest.raises(Exception):
-            brmspy.fit(
+            brms.fit(
                 formula="y ~ x1",
                 data=sample_dataframe,
                 family="not_a_real_family",
@@ -261,13 +261,13 @@ class TestRealWorldExample:
     @pytest.mark.slow
     def test_epilepsy_example(self):
         """Test the epilepsy example from README"""
-        import brmspy
+        from brmspy import brms
         
         # Load data
-        epilepsy = brmspy.get_brms_data("epilepsy")
+        epilepsy = brms.get_brms_data("epilepsy")
         
         # Fit model (with reduced iterations for testing)
-        model = brmspy.fit(
+        model = brms.fit(
             formula="count ~ zAge + zBase * Trt + (1|patient)",
             data=epilepsy,
             family="poisson",
@@ -314,7 +314,7 @@ class TestNaNRegression:
         Bug was: df.pivot(index='.draw', columns='.chain', values=col)
         Fix: Renumber draws within each chain before pivoting
         """
-        import brmspy
+        from brmspy import brms
         
         # Create simple test data
         np.random.seed(42)
@@ -323,7 +323,7 @@ class TestNaNRegression:
             'x': np.random.randn(50)
         })
         
-        result = brmspy.fit(
+        result = brms.fit(
             formula="y ~ x",
             data=data,
             family="gaussian",
@@ -381,11 +381,11 @@ class TestFormulaFunction:
         - Valid R brmsformula object
         - Python dict conversion
         """
-        import brmspy
+        from brmspy import brms
         from brmspy.types import FormulaResult
         
         # Create basic formula
-        formula_result = brmspy.formula("y ~ x")
+        formula_result = brms.formula("y ~ x")
         
         # Check return type
         assert isinstance(formula_result, FormulaResult), \
@@ -417,32 +417,32 @@ class TestFormulaFunction:
         - Sparse matrix support (sparse=True)
         - Multiple arguments work together
         """
-        import brmspy
+        from brmspy import brms
         from brmspy.types import FormulaResult
         
         # Test QR decomposition
-        formula_qr = brmspy.formula("y ~ x1 + x2", decomp="QR")
+        formula_qr = brms.formula("y ~ x1 + x2", decomp="QR")
         assert isinstance(formula_qr, FormulaResult), \
             "formula() with decomp should return FormulaResult"
         assert formula_qr.r is not None, \
             "QR decomposition formula should create valid R object"
         
         # Test centering control
-        formula_no_center = brmspy.formula("y ~ x", center=False)
+        formula_no_center = brms.formula("y ~ x", center=False)
         assert isinstance(formula_no_center, FormulaResult), \
             "formula() with center should return FormulaResult"
         assert formula_no_center.r is not None, \
             "Non-centered formula should create valid R object"
         
         # Test sparse matrices
-        formula_sparse = brmspy.formula("y ~ x", sparse=True)
+        formula_sparse = brms.formula("y ~ x", sparse=True)
         assert isinstance(formula_sparse, FormulaResult), \
             "formula() with sparse should return FormulaResult"
         assert formula_sparse.r is not None, \
             "Sparse formula should create valid R object"
         
         # Test multiple arguments together
-        formula_multi = brmspy.formula(
+        formula_multi = brms.formula(
             "y ~ x1 + x2",
             decomp="QR",
             center=False
@@ -465,15 +465,15 @@ class TestFormulaFunction:
         - Model fitting succeeds with FormulaResult input
         - Both approaches (string vs FormulaResult) produce equivalent results
         """
-        import brmspy
+        from brmspy import brms
         from brmspy.types import FormulaResult
         import arviz as az
         
         # Load epilepsy dataset
-        epilepsy = brmspy.get_brms_data("epilepsy")
+        epilepsy = brms.get_brms_data("epilepsy")
         
         # Create formula with random effects
-        formula_obj = brmspy.formula("count ~ zAge + (1|patient)")
+        formula_obj = brms.formula("count ~ zAge + (1|patient)")
         
         # Verify formula object structure
         assert isinstance(formula_obj, FormulaResult), \
@@ -482,7 +482,7 @@ class TestFormulaFunction:
             "Formula R object should be valid"
         
         # Use FormulaResult in fit() - should work like string formula
-        model = brmspy.fit(
+        model = brms.fit(
             formula=formula_obj,
             data=epilepsy,
             family="poisson",
@@ -507,7 +507,7 @@ class TestFormulaFunction:
             "Model should have random effect standard deviation"
         
         # Compare with string formula approach (should be equivalent)
-        model_string = brmspy.fit(
+        model_string = brms.fit(
             formula="count ~ zAge + (1|patient)",
             data=epilepsy,
             family="poisson",
@@ -541,8 +541,8 @@ class TestPriorFunction:
         - Multiple priors in a single model
         - Integration with fit() function
         """
-        import brmspy
-        from brmspy import prior
+        from brmspy import brms
+        from brmspy.brms import prior
         from brmspy.types import PriorSpec
         import arviz as az
         
@@ -567,7 +567,7 @@ class TestPriorFunction:
             "Class parameter should be stored correctly"
         
         # Test that priors work with fit()
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1",
             data=sample_dataframe,
             priors=[prior_intercept, prior_coef],
@@ -603,13 +603,13 @@ class TestPriorFunction:
         - Hierarchical model with (1|group) structure
         - Integration with real brms dataset
         """
-        import brmspy
-        from brmspy import prior
+        from brmspy import brms
+        from brmspy.brms import prior
         from brmspy.types import PriorSpec
         import arviz as az
         
         # Load epilepsy dataset (has patient grouping variable)
-        epilepsy = brmspy.get_brms_data("epilepsy")
+        epilepsy = brms.get_brms_data("epilepsy")
         
         # Create prior specifications including group-level prior
         priors = [
@@ -633,7 +633,7 @@ class TestPriorFunction:
             "Group prior string should be stored correctly"
         
         # Fit hierarchical model with group-level priors
-        model = brmspy.fit(
+        model = brms.fit(
             formula="count ~ zAge + (1|patient)",
             data=epilepsy,
             priors=priors,
@@ -684,11 +684,11 @@ class TestAdditionalFunctions:
         - Returns a non-empty string
         - Contains expected Stan program structure
         """
-        import brmspy
-        from brmspy import prior
+        from brmspy import brms
+        from brmspy.brms import prior
         
         # Test without priors
-        stan_code = brmspy.make_stancode(
+        stan_code = brms.make_stancode(
             formula="y ~ x1",
             data=sample_dataframe,
             priors=[],
@@ -708,7 +708,7 @@ class TestAdditionalFunctions:
         
         # Test with priors
         priors = [prior("normal(0, 1)", class_="b")]
-        stan_code_with_priors = brmspy.make_stancode(
+        stan_code_with_priors = brms.make_stancode(
             formula="y ~ x1",
             data=sample_dataframe,
             priors=priors,
@@ -730,10 +730,10 @@ class TestAdditionalFunctions:
         - Returns FitResult with empty idata
         - R object is valid brmsfit
         """
-        import brmspy
+        from brmspy import brms
         
         # Fit model with sample=False (compile only)
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1",
             data=sample_dataframe,
             family="gaussian",
@@ -741,7 +741,7 @@ class TestAdditionalFunctions:
         )
         
         # Verify return type
-        assert isinstance(model, brmspy.FitResult), \
+        assert isinstance(model, brms.FitResult), \
             "fit(sample=False) should return FitResult"
         
         # Verify R object exists
@@ -763,11 +763,11 @@ class TestAdditionalFunctions:
             from tqdm.auto import tqdm
         except ImportError:
             return
-        import brmspy
+        from brmspy import brms
         
         # Fit model with sample=False (compile only)
         for _ in tqdm(range(2)):
-            model = brmspy.fit(
+            model = brms.fit(
                 formula="y ~ x1",
                 data=sample_dataframe,
                 family="gaussian",
@@ -777,7 +777,7 @@ class TestAdditionalFunctions:
             )
         
             # Verify return type
-            assert isinstance(model, brmspy.FitResult), \
+            assert isinstance(model, brms.FitResult), \
                 "fit(sample=False) should return FitResult"
     
     @pytest.mark.slow
@@ -790,11 +790,11 @@ class TestAdditionalFunctions:
         - Returns valid PosteriorLinpredResult
         - Contains predictions for original observations
         """
-        import brmspy
+        from brmspy import brms
         import arviz as az
         
         # Fit a simple model
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1",
             data=sample_dataframe,
             family="gaussian",
@@ -806,10 +806,10 @@ class TestAdditionalFunctions:
         )
         
         # Get linear predictor without newdata
-        linpred = brmspy.posterior_linpred(model)
+        linpred = brms.posterior_linpred(model)
         
         # Verify return type
-        assert isinstance(linpred, brmspy.PosteriorLinpredResult), \
+        assert isinstance(linpred, brms.PosteriorLinpredResult), \
             "posterior_linpred() should return PosteriorLinpredResult"
         
         # Verify idata exists
@@ -830,11 +830,11 @@ class TestAdditionalFunctions:
         - Returns valid LogLikResult
         - Contains log-likelihood for original observations
         """
-        import brmspy
+        from brmspy import brms
         import arviz as az
         
         # Fit a simple model
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1",
             data=sample_dataframe,
             family="gaussian",
@@ -846,10 +846,10 @@ class TestAdditionalFunctions:
         )
         
         # Get log-likelihood without newdata
-        loglik = brmspy.log_lik(model)
+        loglik = brms.log_lik(model)
         
         # Verify return type
-        assert isinstance(loglik, brmspy.LogLikResult), \
+        assert isinstance(loglik, brms.LogLikResult), \
             "log_lik() should return LogLikResult"
         
         # Verify idata exists

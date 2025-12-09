@@ -27,14 +27,19 @@ class TestImports:
     def test_main_functions_exist(self):
         """Test that main API functions are accessible"""
         import brmspy
-        assert hasattr(brmspy, 'install_brms')
-        assert hasattr(brmspy, 'get_brms_version')
-        assert hasattr(brmspy, 'get_brms_data')
-        assert hasattr(brmspy, 'fit')
-        assert callable(brmspy.install_brms)
-        assert callable(brmspy.get_brms_version)
-        assert callable(brmspy.get_brms_data)
-        assert callable(brmspy.fit)
+        import brmspy.brms
+        assert hasattr(brmspy.brms, 'install_brms')
+        assert hasattr(brmspy.brms, 'get_brms_version')
+        assert hasattr(brmspy.brms, 'get_brms_data')
+        assert hasattr(brmspy.brms, 'brm')
+        assert callable(brmspy.brms.install_brms)
+        assert callable(brmspy.brms.get_brms_version)
+        assert callable(brmspy.brms.get_brms_data)
+        assert callable(brmspy.brms.brm)
+
+        from brmspy import brms
+        assert hasattr(brms, 'brm')
+        assert callable(brms.brm)
 
 
 

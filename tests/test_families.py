@@ -245,8 +245,7 @@ class TestFamilyExtraction:
     def test_family_extraction(self, sample_dataframe):
         """Test family() function to extract family from fitted model"""
         from brmspy import brms
-        from brmspy._brms_functions.families import family
-        from rpy2.robjects import ListVector
+        from brmspy.types import ProxyListSexpVector
         
         # Fit a model
         model = brms.fit(
@@ -261,10 +260,10 @@ class TestFamilyExtraction:
         )
         
         # Extract family from fitted model
-        family_obj = family(model)
+        family_obj = brms.family(model)
         
         # Verify return type
-        assert isinstance(family_obj, ListVector)
+        assert isinstance(family_obj, ProxyListSexpVector)
         assert family_obj is not None
 
 

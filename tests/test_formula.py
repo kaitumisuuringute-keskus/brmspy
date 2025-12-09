@@ -39,19 +39,19 @@ class TestFormulaFamilyIntegration:
         - student() family with modeled degrees of freedom
         - Integration of formula + distributional param + family
         """
-        import brmspy
+        from brmspy import brms
         from brmspy._brms_functions.formula import bf, lf
         from brmspy._brms_functions.families import student
         import arviz as az
         
         # Load epilepsy dataset
-        epilepsy = brmspy.get_brms_data("epilepsy")
+        epilepsy = brms.get_brms_data("epilepsy")
         
         # Create formula with modeled degrees of freedom
         formula = bf("count ~ zAge") + lf("nu ~ zBase", dpar="nu") + student()
         
         # Fit model
-        model = brmspy.fit(
+        model = brms.fit(
             formula=formula,
             data=epilepsy,
             iter=100,
@@ -81,19 +81,19 @@ class TestFormulaFamilyIntegration:
         - skew_normal() family integration
         - Distributional modeling of asymmetry
         """
-        import brmspy
+        from brmspy import brms
         from brmspy._brms_functions.formula import bf, lf
         from brmspy._brms_functions.families import skew_normal
         import arviz as az
         
         # Load epilepsy dataset
-        epilepsy = brmspy.get_brms_data("epilepsy")
+        epilepsy = brms.get_brms_data("epilepsy")
         
         # Create formula with modeled skewness
         formula = bf("count ~ zAge") + lf("alpha ~ Trt", dpar="alpha") + skew_normal()
         
         # Fit model
-        model = brmspy.fit(
+        model = brms.fit(
             formula=formula,
             data=epilepsy,
             iter=100,
@@ -123,13 +123,13 @@ class TestFormulaFamilyIntegration:
         - zero_inflated_poisson() family
         - Hierarchical structure + distributional modeling
         """
-        import brmspy
+        from brmspy import brms
         from brmspy._brms_functions.formula import bf, lf
         from brmspy._brms_functions.families import zero_inflated_poisson
         import arviz as az
         
         # Load epilepsy dataset
-        epilepsy = brmspy.get_brms_data("epilepsy")
+        epilepsy = brms.get_brms_data("epilepsy")
         
         # Create formula with modeled zero-inflation
         formula = bf("count ~ zAge + (1|patient)") + \
@@ -137,7 +137,7 @@ class TestFormulaFamilyIntegration:
                   zero_inflated_poisson()
         
         # Fit model
-        model = brmspy.fit(
+        model = brms.fit(
             formula=formula,
             data=epilepsy,
             iter=100,
@@ -170,7 +170,7 @@ class TestFormulaFamilyIntegration:
         - gaussian() family with non-linear predictor
         - Formula pattern from brms docs: y ~ a * inv_logit(x * b)
         """
-        import brmspy
+        from brmspy import brms
         from brmspy._brms_functions.formula import bf, lf, set_nl
         from brmspy._brms_functions.families import gaussian
         import arviz as az
@@ -199,7 +199,7 @@ class TestFormulaFamilyIntegration:
                   gaussian()
         
         # Fit model
-        model = brmspy.fit(
+        model = brms.fit(
             formula=formula,
             data=data,
             iter=100,
@@ -229,13 +229,13 @@ class TestFormulaFamilyIntegration:
         - ARMA(p,q) specification
         - gaussian() family with autocorrelation
         """
-        import brmspy
+        from brmspy import brms
         from brmspy._brms_functions.formula import bf, acformula
         from brmspy._brms_functions.families import gaussian
         import arviz as az
         
         # Load epilepsy dataset (has time structure per patient)
-        epilepsy = brmspy.get_brms_data("epilepsy")
+        epilepsy = brms.get_brms_data("epilepsy")
         
         # Create formula with autocorrelation
         formula = bf("count ~ zAge + (1|patient)") + \
@@ -243,7 +243,7 @@ class TestFormulaFamilyIntegration:
                   gaussian()
         
         # Fit model
-        model = brmspy.fit(
+        model = brms.fit(
             formula=formula,
             data=epilepsy,
             iter=100,
@@ -274,7 +274,7 @@ class TestFormulaFamilyIntegration:
         - me() syntax in formulas
         - gaussian() family with measurement error
         """
-        import brmspy
+        from brmspy import brms
         from brmspy._brms_functions.formula import bf, set_mecor
         from brmspy._brms_functions.families import gaussian
         import arviz as az
@@ -299,7 +299,7 @@ class TestFormulaFamilyIntegration:
         formula = bf("y ~ me(x, sdx) + z") + set_mecor(True) + gaussian()
         
         # Fit model
-        model = brmspy.fit(
+        model = brms.fit(
             formula=formula,
             data=data,
             iter=100,
@@ -332,13 +332,13 @@ class TestFormulaFamilyIntegration:
         - lf() for distributional parameters in one response
         - Shared random effects across responses
         """
-        import brmspy
+        from brmspy import brms
         from brmspy._brms_functions.formula import bf, lf, set_rescor
         from brmspy._brms_functions.families import poisson, gaussian
         import arviz as az
         
         # Load epilepsy dataset
-        epilepsy = brmspy.get_brms_data("epilepsy")
+        epilepsy = brms.get_brms_data("epilepsy")
         
         # Create multivariate formula with same family (gaussian for both)
         # Note: set_rescor() only works with gaussian or student families
@@ -349,7 +349,7 @@ class TestFormulaFamilyIntegration:
         formula = bf_count + bf_base + set_rescor(True)
         
         # Fit model
-        model = brmspy.fit(
+        model = brms.fit(
             formula=formula,
             data=epilepsy,
             iter=100,
@@ -385,7 +385,7 @@ class TestFormulaFamilyIntegration:
         - hurdle_gamma() family for semi-continuous data
         - Random effects + distributional modeling
         """
-        import brmspy
+        from brmspy import brms
         from brmspy._brms_functions.formula import bf, lf
         from brmspy._brms_functions.families import hurdle_gamma
         import arviz as az
@@ -417,7 +417,7 @@ class TestFormulaFamilyIntegration:
                   hurdle_gamma()
         
         # Fit model
-        model = brmspy.fit(
+        model = brms.fit(
             formula=formula,
             data=data,
             iter=100,
@@ -449,7 +449,7 @@ class TestFormulaFamilyIntegration:
         - Threshold structure specification
         - Ordinal regression integration
         """
-        import brmspy
+        from brmspy import brms
         from brmspy._brms_functions.formula import bf
         from brmspy._brms_functions.families import cumulative
         import arviz as az
@@ -472,7 +472,7 @@ class TestFormulaFamilyIntegration:
         formula = bf("rating ~ age") + cumulative(threshold="equidistant")
         
         # Fit model
-        model = brmspy.fit(
+        model = brms.fit(
             formula=formula,
             data=data,
             iter=100,
@@ -503,19 +503,19 @@ class TestFormulaFamilyIntegration:
         - poisson() family
         - GAM-style model with hierarchical structure
         """
-        import brmspy
+        from brmspy import brms
         from brmspy._brms_functions.formula import bf
         from brmspy._brms_functions.families import poisson
         import arviz as az
         
         # Load epilepsy dataset
-        epilepsy = brmspy.get_brms_data("epilepsy")
+        epilepsy = brms.get_brms_data("epilepsy")
         
         # Create formula with smooth and complex random effects
         formula = bf("count ~ s(zAge) + (1|p|patient) + (1|q|Trt)") + poisson()
         
         # Fit model
-        model = brmspy.fit(
+        model = brms.fit(
             formula=formula,
             data=epilepsy,
             iter=100,

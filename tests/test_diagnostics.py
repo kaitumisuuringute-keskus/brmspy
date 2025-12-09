@@ -15,12 +15,12 @@ class TestSummaryFunction:
         - All expected attributes exist (formula, fixed, spec_pars, random, etc.)
         - Attributes have correct types
         """
-        import brmspy
+        from brmspy import brms
         from brmspy._brms_functions.diagnostics import SummaryResult
         import pandas as pd
         
         # Fit a simple model
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1",
             data=sample_dataframe,
             family="gaussian",
@@ -32,7 +32,7 @@ class TestSummaryFunction:
         )
         
         # Get summary
-        summary = brmspy.summary(model)
+        summary = brms.summary(model)
         
         # Verify return type is Summary dataclass
         assert isinstance(summary, SummaryResult), \
@@ -81,11 +81,11 @@ class TestSummaryFunction:
         - DataFrames contain expected columns (Estimate, Est.Error, etc.)
         - Values are reasonable
         """
-        import brmspy
+        from brmspy import brms
         import pandas as pd
         
         # Fit a simple model
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1",
             data=sample_dataframe,
             family="gaussian",
@@ -97,7 +97,7 @@ class TestSummaryFunction:
         )
         
         # Get summary
-        summary = brmspy.summary(model, prior=True)
+        summary = brms.summary(model, prior=True)
         
         # Test fixed effects access
         fixed = summary.fixed
@@ -146,10 +146,10 @@ class TestSummaryFunction:
         - Output contains expected sections (Formula, Data, Population-Level Effects)
         - Output is human-readable and well-structured
         """
-        import brmspy
+        from brmspy import brms
         
         # Fit a simple model
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1",
             data=sample_dataframe,
             family="gaussian",
@@ -161,7 +161,7 @@ class TestSummaryFunction:
         )
         
         # Get summary
-        summary = brmspy.summary(model)
+        summary = brms.summary(model)
         
         # Get string representation
         summary_str = str(summary)
@@ -220,11 +220,11 @@ class TestFixefFunction:
         - Values are reasonable and numeric
         - Can extract specific parameters with pars argument
         """
-        import brmspy
         import pandas as pd
+        from brmspy import brms
         
         # Fit a simple model
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1",
             data=sample_dataframe,
             family="gaussian",
@@ -236,7 +236,7 @@ class TestFixefFunction:
         )
         
         # Get fixed effects (default: summary=True)
-        fixed_effects = brmspy.fixef(model)
+        fixed_effects = brms.fixef(model)
         
         # Verify return type is DataFrame
         assert isinstance(fixed_effects, pd.DataFrame), \
@@ -274,7 +274,7 @@ class TestFixefFunction:
             "Fixed effects should not contain NaN values"
         
         # Test extracting specific parameters with pars argument
-        x1_only = brmspy.fixef(model, pars=["x1"])
+        x1_only = brms.fixef(model, pars=["x1"])
         assert isinstance(x1_only, pd.DataFrame), \
             "fixef() with pars should return DataFrame"
         assert len(x1_only) == 1, \
@@ -298,7 +298,7 @@ class TestRanefFunction:
         - Contains expected statistics (Estimate, Est.Error, credible intervals)
         - Can select specific groups and statistics
         """
-        import brmspy
+        from brmspy import brms
         import xarray as xr
         
         # Add group variation for better convergence
@@ -308,7 +308,7 @@ class TestRanefFunction:
         )
         
         # Fit a model with random effects
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1 + (1|group)",
             data=sample_dataframe,
             family="gaussian",
@@ -320,7 +320,7 @@ class TestRanefFunction:
         )
         
         # Get random effects (default: summary=True)
-        random_effects = brmspy.ranef(model)
+        random_effects = brms.ranef(model)
         
         # Verify return type is dict
         assert isinstance(random_effects, dict), \
@@ -379,7 +379,7 @@ class TestRanefFunction:
         - Number of draws matches expected posterior samples
         - Can compute custom statistics from raw draws
         """
-        import brmspy
+        from brmspy import brms
         import xarray as xr
         import numpy as np
         
@@ -390,7 +390,7 @@ class TestRanefFunction:
         )
         
         # Fit a model with random effects
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1 + (1|group)",
             data=sample_dataframe,
             family="gaussian",
@@ -402,7 +402,7 @@ class TestRanefFunction:
         )
         
         # Get raw posterior samples (summary=False)
-        random_effects_draws = brmspy.ranef(model, summary=False)
+        random_effects_draws = brms.ranef(model, summary=False)
         
         # Verify return type is dict
         assert isinstance(random_effects_draws, dict), \
@@ -469,11 +469,11 @@ class TestPosteriorSummaryFunction:
         - Has expected columns (Estimate, Est.Error, credible intervals)
         - Can extract specific parameters with variable argument
         """
-        import brmspy
+        from brmspy import brms
         import pandas as pd
         
         # Fit a simple model
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1",
             data=sample_dataframe,
             family="gaussian",
@@ -485,7 +485,7 @@ class TestPosteriorSummaryFunction:
         )
         
         # Get posterior summary for all parameters
-        post_summary = brmspy.posterior_summary(model)
+        post_summary = brms.posterior_summary(model)
         
         # Verify return type is DataFrame
         assert isinstance(post_summary, pd.DataFrame), \
@@ -535,14 +535,14 @@ class TestPriorSummaryFunction:
         - Has expected columns (prior, class, coef, etc.)
         - Can filter to only user-set priors with all=False
         """
-        import brmspy
+        from brmspy import brms
         import pandas as pd
         
         # Fit a model with custom priors
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1",
             data=sample_dataframe,
-            priors=[brmspy.prior("normal(0, 1)", "b")],
+            priors=[brms.prior("normal(0, 1)", "b")],
             family="gaussian",
             iter=100,
             warmup=50,
@@ -552,7 +552,7 @@ class TestPriorSummaryFunction:
         )
         
         # Get prior summary (all priors including defaults)
-        prior_sum = brmspy.prior_summary(model, all=True)
+        prior_sum = brms.prior_summary(model, all=True)
         
         # Verify return type is DataFrame
         assert isinstance(prior_sum, pd.DataFrame), \
@@ -576,7 +576,7 @@ class TestPriorSummaryFunction:
             "Should have at least one prior specification"
         
         # Test getting only user-set priors (all=False)
-        user_priors = brmspy.prior_summary(model, all=False)
+        user_priors = brms.prior_summary(model, all=False)
         assert isinstance(user_priors, pd.DataFrame), \
             "prior_summary(all=False) should return DataFrame"
         
@@ -603,9 +603,10 @@ class TestValidateNewdataFunction:
         """
         import brmspy
         import pandas as pd
+        from brmspy import brms
         
         # Fit a simple model
-        model = brmspy.fit(
+        model = brms.brm(
             formula="y ~ x1 + x2",
             data=sample_dataframe,
             family="gaussian",
@@ -626,7 +627,7 @@ class TestValidateNewdataFunction:
         })
         
         # Validate newdata
-        validated = brmspy.validate_newdata(
+        validated = brms.validate_newdata(
             newdata,
             model,
             check_response=False  # Response not needed for prediction
@@ -660,12 +661,12 @@ class TestValidateNewdataFunction:
         - Error message indicates which variable is missing
         - Validation properly detects incomplete data
         """
-        import brmspy
+        from brmspy import brms
         import pandas as pd
         import pytest
         
         # Fit a model with two predictors
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1 + x2",
             data=sample_dataframe,
             family="gaussian",
@@ -684,7 +685,7 @@ class TestValidateNewdataFunction:
         
         # Validation should raise an error
         with pytest.raises(Exception) as exc_info:
-            brmspy.validate_newdata(
+            brms.validate_newdata(
                 invalid_newdata,
                 model,
                 check_response=False
