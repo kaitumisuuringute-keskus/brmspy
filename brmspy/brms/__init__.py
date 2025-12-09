@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     # For type checkers / IDE only – can point to the real brms module
     import brmspy._brms_module as _brms_module
     from brmspy._brms_module import *
+    from brmspy._brms_module import _runtime, _formula_add
     BrmsModule = _brms_module
 else:
     # At runtime, just treat it as a generic module
@@ -44,10 +45,7 @@ if os.environ.get("BRMSPY_WORKER") != "1":
         BrmsModule,
         RModuleSession(
             module=_brms_module,
-            module_path=_module_path,
-            runtime_conf={
-                # TODO: pass R_HOME, startup scripts, etc. here if needed
-            },
+            module_path=_module_path
         ),
     )
     _is_main_process = True
@@ -74,9 +72,6 @@ __all__ = [
     # R env
     'get_brms_version', 'find_local_runtime', 'get_active_runtime',
     'manage', '_is_main_process',
-    
-
-    'install_rpackage',
 
     # IO
     'get_brms_data', 'save_rds', 'read_rds_raw', 'read_rds_fit', 'get_data',
@@ -127,13 +122,12 @@ __all__ = [
     # stan
     'make_stancode',
 
-    
+    # misc private
+    '_formula_add',
+    '_runtime'
+
 ]
 
-_module_internals = [
-    '_formula_add',
-    '_install_brms', '_install_runtime',  '_deactivate_runtime', '_activate_runtime',
-]
 
 # Re-export
 
@@ -147,6 +141,3 @@ for name in __all__:
 if _is_main_process:
     for name in _INTERNAL_ATTRS:
         setattr(_this_mod, name, getattr(brms, name))
-
-for name in _module_internals:
-    setattr(_this_mod, name, getattr(brms, name))

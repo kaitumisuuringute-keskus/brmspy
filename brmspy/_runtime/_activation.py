@@ -5,7 +5,7 @@ Does NOT touch config - that's the caller's responsibility.
 
 from pathlib import Path
 from typing import Callable, List, cast
-from brmspy.helpers.log import log_warning
+from brmspy.helpers.log import log, log_warning
 from brmspy._runtime import _manifest, _r_env, _r_packages, _state, _platform, _config
 
 if _platform.get_os() == "macos":
@@ -32,7 +32,9 @@ def activate(runtime_path: Path) -> None:
     
     On failure, attempts to restore original environment.
     """
+    log(f"Activating runtime {runtime_path}")
     stored = _state.get_stored_env()
+
     if stored is not None:
         deactivate()
 
@@ -60,9 +62,10 @@ def activate(runtime_path: Path) -> None:
         
         _r_env.set_lib_paths([str(rlib_posix)])
         _state.invalidate_packages()
-        _verify_runtime_loadable()
-
+        
         _r_env.set_cmdstan_path(str(cmdstan_posix))
+
+        _verify_runtime_loadable()
         
     except Exception as e:
         # Rollback

@@ -1,18 +1,62 @@
 from contextlib import contextmanager
+import copy
 from dataclasses import dataclass
 from pathlib import Path
 import tempfile
 import shutil
-from typing import Dict, Generator, Iterator, Optional, Callable, Any, cast
+from typing import Dict, Generator, Iterator, List, Optional, Callable, Any, Union, cast
+from pathlib import Path
 
-from brmspy.session.module_session import RModuleSession
+from brmspy import brms
+from brmspy._runtime import get_active_runtime
+from .environment import get_environment_config
+from .types import EnvironmentConfig
+
+from .module_session import RModuleSession
 
 @dataclass
 class EnvContext:
     """Narrow surface area for R-env mutations."""
     session: RModuleSession
+    _has_imported: bool = False
+
+    # Runtime
+    def install_runtime(self):
+        ...
+
+    def list_environments(self):
+        ...
+
+    def activate_environment(self, name: Optional[str]):
+        ...
+
+    def deactivate_environment(self):
+        ...
+
+    def get_active_environment(self):
+        ...
+
+    def create_environment(self, name: str) -> Path:
+        ...
+
+    # rpackages
+    def install_rpackage(self, name: str, version: Optional[str], repos_extra: Optional[List[str]] = None) -> None:
+        _rpkg = cast(brms, self.session)._runtime._r_packages
+
+        result = _rpkg.install_package(name, version=version)
+        return result
+
+    def uninstall_rpackage(self, name: str):
+        ...
+
+    def list_rpackages(self) -> List[str]:
+        ...
+
+    def import_rpackages(self, *packages: List[str]):
+        ...
 
     
+    # general entrypoint
     def install_brms(
         self,
         *,
@@ -28,8 +72,6 @@ class EnvContext:
     ) -> Path | None:
         """
         Install brms R package, optionally cmdstanr and CmdStan compiler, or rstan.
-
-        WINDOWS WARNING: DO NOT run this if you have 
         
         Parameters
         ----------
@@ -83,8 +125,9 @@ class EnvContext:
         with brms.manage() as ctx:
             ctx.install_brms(use_prebuilt=True)
         """
-        # Pipe through to your existing helper, not hardcoding R here
-        return self.session._install_brms(
+        _runtime = cast(brms, self.session)._runtime
+
+        result = _runtime.install_brms(
             use_prebuilt=use_prebuilt,
             install_rtools=install_rtools,
             brms_version=brms_version,
@@ -95,6 +138,11 @@ class EnvContext:
             activate=activate,
             **kwargs
         )
+        active_runtime = get_active_runtime()
+        if active_runtime:
+            self.session._environment_conf.runtime_path = active_runtime.as_posix()
+
+        return result
 
 
 
@@ -110,7 +158,8 @@ def _get_session() -> RModuleSession:
 @contextmanager
 def manage(
     *,
-    runtime_overrides: Optional[Dict[str, str]] = None,
+    environment_config: Optional[Union[EnvironmentConfig, Dict[str, str]]] = None,
+    environment_name: Optional[str] = None,
     transient_lib: bool = False,
 ) -> Iterator[EnvContext]:
     """
@@ -123,31 +172,39 @@ def manage(
     """
     session = _get_session()
 
-    old_conf = dict(session._runtime_conf)
-    new_conf = dict(old_conf)
+    if environment_name and environment_config:
+        raise Exception("Only provide one: environment name or environment config")
 
+    if not environment_name:
+        overrides = EnvironmentConfig.from_obj(environment_config)
+    else:
+        overrides = get_environment_config(environment_name)
+
+    old_conf = session._environment_conf
+
+    if environment_config:
+        new_conf = overrides
+    else:
+        new_conf = old_conf
+    
     temp_lib_dir: Optional[Path] = None
     if transient_lib:
         temp_lib_dir = Path(tempfile.mkdtemp(prefix="brmspy-r-lib-"))
-        new_conf["R_LIBS_USER"] = temp_lib_dir.as_posix()
+        new_conf.env['R_LIBS_USER'] = temp_lib_dir.as_posix()
 
-    if runtime_overrides:
-        new_conf.update(runtime_overrides)
     
-    if "env" not in new_conf:
-        new_conf['env'] = {}
-    
-    new_conf["env"]["BRMSPY_AUTOLOAD"] = "0"
+    new_conf.env["BRMSPY_AUTOLOAD"] = "0"
 
     # fresh worker with new_conf
-    session.restart(runtime_conf=new_conf)
+    session.restart(environment_conf=new_conf)
 
     ctx = EnvContext(session=session)
 
     try:
         yield ctx
+        
     finally:
         # restore original runtime config regardless of what happened
-        session.restart(runtime_conf=old_conf)
+        session.restart(environment_conf=old_conf)
         if temp_lib_dir is not None:
             shutil.rmtree(temp_lib_dir, ignore_errors=True)

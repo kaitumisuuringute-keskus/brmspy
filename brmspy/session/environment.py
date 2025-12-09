@@ -1,24 +1,106 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple, cast
 
+from brmspy.session.types import EnvironmentConfig
 
-def configure_r_env(runtime_conf: Dict[str, Any]) -> None:
-    import os
 
-    r_home = runtime_conf.get("r_home")
+import os
+
+def get_environment_base_dir() -> Path:
+    """Returns ~/.brmspy/environment/, creating if needed."""
+    base_dir = Path.home() / ".brmspy" / "environment"
+    base_dir.mkdir(parents=True, exist_ok=True)
+    return base_dir
+
+def get_environment_dir(name: str) -> Path:
+    base_dir = get_environment_base_dir()
+    env_dir = base_dir / name
+    return env_dir
+
+def get_environments_state_path() -> Path:
+    return Path.home() / ".brmspy" / "environment_state.json"
+
+def get_environment_userlibs_dir(name: str) -> Path:
+    return get_environment_dir(name=name) / "Rlib"
+
+def get_environment_config(name: str) -> EnvironmentConfig:
+    base_dir = get_environment_base_dir()
+    env_dir = base_dir / name
+    config_dir = env_dir / "config.json"
+
+    with open(config_dir, "r") as f:
+        data = json.load(f)
+        return EnvironmentConfig.from_dict(data)
+
+def save(env_conf: EnvironmentConfig) -> None:
+    base_dir = get_environment_base_dir()
+    env_dir = base_dir / env_conf.environment_name
+    env_rlib_dir = get_environment_userlibs_dir(name=env_conf.environment_name)
+    config_dir = env_dir / "config.json"
+    os.makedirs(env_dir, exist_ok=True)
+    os.makedirs(env_rlib_dir, exist_ok=True)
+
+    with open(config_dir, "w", encoding="utf-8") as f:
+        json.dump(env_conf.to_dict(), f, indent=2, ensure_ascii=False)
+
+
+def save_as_state(env_conf: EnvironmentConfig) -> None:
+    state_path = get_environments_state_path()
+    with open(state_path, "w", encoding="utf-8") as f:
+        json.dump({
+            "active": env_conf.environment_name
+        }, f, indent=2, ensure_ascii=False)
+
+
+def activate(env_conf: EnvironmentConfig) -> None:
+    """only run in worker"""
+    from brmspy._runtime import deactivate_runtime, activate_runtime, status, _r_env
+    _status = status()
+
+    if env_conf.runtime_path:
+        if _status.active_runtime and _status.is_activated:
+            if not _status.active_runtime.samefile(env_conf.runtime_path):
+                if os.environ.get("BRMSPY_AUTOLOAD") == "1":
+                    raise Exception("Can't unload environments when autoload is enabled!")
+                deactivate_runtime()
+                activate_runtime(env_conf.runtime_path)
+    else:
+        if _status.active_runtime and _status.is_activated:
+            if os.environ.get("BRMSPY_AUTOLOAD") == "1":
+                raise Exception("Can't unload environments when autoload is enabled!")
+            deactivate_runtime()
+    
+    userlib_path = get_environment_userlibs_dir(env_conf.environment_name)
+    lib_paths = _r_env.get_lib_paths()
+    lib_paths = [p for p in lib_paths if ".brmspy/environment/" not in p and ".brmspy\\environment\\" not in p]
+    lib_paths.insert(0, userlib_path.as_posix())
+    _r_env.set_lib_paths(lib_paths)
+
+
+    save_as_state(env_conf)
+
+
+
+def configure_r_env(env_conf: EnvironmentConfig) -> None:
+
+    r_home = env_conf.r_home
     if r_home:
         os.environ["R_HOME"] = r_home
+    
+    save(env_conf)
+    activate(env_conf)
 
-    r_libs_user = runtime_conf.get("r_libs_user")
-    if r_libs_user:
-        os.environ["R_LIBS_USER"] = r_libs_user
+    
 
 
-def run_startup_scripts(runtime_conf: Dict[str, Any]) -> None:
-    scripts: List[str] = runtime_conf.get("startup", [])
-    if not scripts:
+
+def run_startup_scripts(env_conf: EnvironmentConfig) -> None:
+    if not env_conf.startup_scripts:
         return
+    scripts: List[str] = env_conf.startup_scripts
 
     import rpy2.robjects as ro
 

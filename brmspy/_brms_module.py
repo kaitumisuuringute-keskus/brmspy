@@ -44,15 +44,13 @@ from brmspy._brms_functions.families import (
     multinomial, dirichlet_multinomial, cumulative, sratio, cratio, acat,
     gaussian, poisson, binomial, Gamma, inverse_gaussian
 )
-from brmspy._runtime._r_packages import install_package as install_rpackage
 
 from brmspy._runtime import (
-    install_brms as _install_brms,
-    install_runtime as _install_runtime,
-    deactivate_runtime as _deactivate_runtime,
-    activate_runtime as _activate_runtime,
-    get_active_runtime, find_local_runtime, get_brms_version
+    get_brms_version, find_local_runtime, get_active_runtime
 )
+import brmspy._runtime as _runtime
+
+
 
 # Auto-load last runtime on import
 import os

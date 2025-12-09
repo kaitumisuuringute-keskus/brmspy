@@ -2,18 +2,21 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from multiprocessing.connection import Connection
+from typing import Any, Dict, Optional
 from multiprocessing.managers import SharedMemoryManager
 import importlib
+
+from .types import EnvironmentConfig
 
 from .worker_sexp_cache import cache_sexp, reattach_sexp
 
 from .codec import get_default_registry
 from .transport import ShmPool, attach_buffers
-from .runtime import _initialise_r_safe, configure_r_env, run_startup_scripts
+from .environment import _initialise_r_safe, configure_r_env, run_startup_scripts
 
 
-def worker_main(conn, mgr_address, mgr_authkey, runtime_conf) -> None:
+def worker_main(conn: Connection, mgr_address: Optional[str], mgr_authkey: Optional[bytes], runtime_conf: EnvironmentConfig) -> None:
     """
     Worker entrypoint.
 
@@ -45,6 +48,9 @@ def worker_main(conn, mgr_address, mgr_authkey, runtime_conf) -> None:
     module_cache: Dict[str, Any] = {}
 
     from rpy2.rinterface_lib.sexp import Sexp
+
+    import rpy2.rinterface_lib.callbacks
+    rpy2.rinterface_lib.callbacks._WRITECONSOLE_EXCEPTION_LOG = "ASDF"
 
     try:
         while True:

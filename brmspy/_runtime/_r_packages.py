@@ -17,6 +17,8 @@ from brmspy.helpers.log import log, log_error, log_warning
 def get_package_version(name: str) -> str | None:
     """Get installed package version or None."""
     import rpy2.robjects as ro
+    if not is_package_installed(name):
+        return None
     try:
         expr = f"""
         v <- utils::packageDescription('{name}', fields = 'Version', lib.loc=.libPaths())

@@ -15,8 +15,8 @@ def get_config_dir() -> Path:
 
 
 def get_config_path() -> Path:
-    """Returns ~/.brmspy/config.json."""
-    return get_config_dir() / "config.json"
+    """Returns ~/.brmspy/runtime_state.json."""
+    return get_config_dir() / "runtime_state.json"
 
 
 def read_config() -> dict:

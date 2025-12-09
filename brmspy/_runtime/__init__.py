@@ -154,8 +154,6 @@ def install_brms(
     """
     Install brms R package, optionally cmdstanr and CmdStan compiler, or rstan.
 
-    WINDOWS WARNING: DO NOT run this if you have 
-    
     Parameters
     ----------
     brms_version : str, default="latest"

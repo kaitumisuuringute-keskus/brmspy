@@ -273,7 +273,7 @@ def set_cmdstan_path(path: str | None) -> None:
       if (!requireNamespace("cmdstanr", quietly = TRUE)) {{
         stop("cmdstanr is not available in rlibs")
       }}
-      cmdstanr::set_cmdstan_path(path={path_str})
+      suppressWarnings(suppressMessages(cmdstanr::set_cmdstan_path(path={path_str})))
       ''')
       
     except Exception as e:

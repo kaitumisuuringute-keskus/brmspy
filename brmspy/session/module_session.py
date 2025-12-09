@@ -10,7 +10,9 @@ import uuid
 import weakref
 from multiprocessing.managers import SharedMemoryManager
 from types import ModuleType
-from typing import Any, Callable, Dict, Iterator, Optional
+from typing import Any, Callable, Dict, Iterator, Optional, Union
+
+from .types import EnvironmentConfig
 
 from .codec import get_default_registry
 from .errors import RSessionError
@@ -23,7 +25,7 @@ import platform
 _INTERNAL_ATTRS = {
     "_module",
     "_module_path",
-    "_runtime_conf",
+    "_environment_conf",
     "_mgr",
     "_proc",
     "_conn",
@@ -93,6 +95,9 @@ def add_env_defaults(overrides: Dict[str, str]) -> Dict[str, str]:
 
         overrides["LD_LIBRARY_PATH"] = new_ld
 
+    if "RPY2_CFFI_MODE" not in overrides:
+        overrides["RPY2_CFFI_MODE"] = "ABI"
+
     # ---------------------------------------------------------
     return overrides
 
@@ -143,20 +148,26 @@ class RModuleSession(ModuleType):
         self,
         module: ModuleType,
         module_path: str,
-        runtime_conf: Optional[Dict[str, Any]] = None,
+        environment_conf: Optional[Union[EnvironmentConfig, Dict[str, Any]]] = None,
     ) -> None:
         # Pretend to be the same module (for IDEs/docs)
         super().__init__(module.__name__, module.__doc__)
 
+        if environment_conf is None:
+            from .environment import get_environment_config
+            try:
+                environment_conf = get_environment_config("default")
+            except:
+                
+                pass
+
         # Store wrapped module and how to import it in worker
         self._module: ModuleType = module
         self._module_path: str = module_path
-        self._runtime_conf: Dict[str, Any] = runtime_conf or {}
+        self._environment_conf: EnvironmentConfig = EnvironmentConfig.from_obj(environment_conf)
 
-        if "env" not in self._runtime_conf:
-            self._runtime_conf["env"] = {}
-        if "BRMSPY_AUTOLOAD" not in self._runtime_conf["env"]:
-            self._runtime_conf["env"]["BRMSPY_AUTOLOAD"] = "1"
+        if "BRMSPY_AUTOLOAD" not in self._environment_conf.env:
+            self._environment_conf.env["BRMSPY_AUTOLOAD"] = "1"
 
         # cache of Python wrappers for functions
         self._func_cache: Dict[str, Callable[..., Any]] = {}
@@ -186,12 +197,12 @@ class RModuleSession(ModuleType):
 
         env_overrides: Dict[str, str] = {
             "BRMSPY_WORKER": "1",
-            **self._runtime_conf.get("env", {}),
+            **self._environment_conf.env,
         }
 
         proc = spawn_worker(
             target=worker_main,
-            args=(child_conn, mgr_address, mgr_authkey, self._runtime_conf),
+            args=(child_conn, mgr_address, mgr_authkey, self._environment_conf),
             env_overrides=env_overrides,
         )
 
@@ -351,15 +362,15 @@ class RModuleSession(ModuleType):
         except Exception:
             pass
 
-    def restart(self, runtime_conf: Optional[Dict[str, Any]] = None) -> None:
+    def restart(self, environment_conf: Optional[Union[Dict[str, Any], EnvironmentConfig]] = None) -> None:
         """
         Restart the underlying worker process and shared-memory manager.
 
-        If `runtime_conf` is provided, it replaces the existing configuration
-        for the new worker; otherwise the existing `self._runtime_conf` is reused.
+        If `environment_conf` is provided, it replaces the existing configuration
+        for the new worker; otherwise the existing `self._environment_conf` is reused.
         """
-        if runtime_conf is not None:
-            self._runtime_conf = runtime_conf
+        if environment_conf is not None:
+            self._environment_conf = EnvironmentConfig.from_obj(environment_conf)
 
         # Tear down existing worker (if any)
         self._teardown_worker()
@@ -368,5 +379,5 @@ class RModuleSession(ModuleType):
         # They are safe to reuse, but clearing them forces re-resolution.
         self._func_cache.clear()
 
-        # Start a fresh worker with current runtime_conf
+        # Start a fresh worker with current env conf
         self._setup_worker()
