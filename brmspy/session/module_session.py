@@ -34,6 +34,8 @@ _INTERNAL_ATTRS = {
     "_closed",
     "_func_cache",
     "_call_remote",
+    "_encode_arg",
+    "_decode_result",
 
     "restart", "shutdown"
 }

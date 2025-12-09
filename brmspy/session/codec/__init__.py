@@ -4,17 +4,7 @@ from typing import Optional
 
 from .base import CodecRegistry
 from .builtin import NumpyArrayCodec, PickleCodec, InferenceDataCodec
+from .registry import get_default_registry
+from .dataclass import *
 
-_default_registry: Optional[CodecRegistry] = None
-
-
-def get_default_registry() -> CodecRegistry:
-    global _default_registry
-    if _default_registry is None:
-        reg = CodecRegistry()
-        reg.register("numpy.ndarray", NumpyArrayCodec())
-        reg.register("pickle", PickleCodec())
-        reg.register("arviz.InferenceData", InferenceDataCodec())
-        
-        _default_registry = reg
-    return _default_registry
+__all__ = ['get_default_registry']

@@ -9,8 +9,10 @@ from brmspy.helpers.log import log_warning
 import xarray as xr
 import arviz as az
 
+from brmspy.types import FitResult
 
-from .base import Encoder, EncodeResult, ShmBlockSpec
+
+from .base import DataclassCodec, Encoder, EncodeResult, ShmBlockSpec
 
 ONE_MB = 1024 * 1024
 
@@ -35,7 +37,7 @@ class NumpyArrayCodec:
         }
 
         return EncodeResult(
-            codec="numpy.ndarray",
+            codec=type(self).__name__,
             meta=meta,
             buffers=[ShmBlockSpec(name=block.name, size=block.size)],
         )
@@ -73,7 +75,7 @@ class PickleCodec:
             )
 
         return EncodeResult(
-            codec="pickle",
+            codec=type(self).__name__,
             meta=meta,
             buffers=[ShmBlockSpec(name=block.name, size=block.size)],
         )
@@ -161,20 +163,13 @@ class InferenceDataCodec(Encoder):
 
             groups_meta[group_name] = g_meta
 
-        if total_bytes > ONE_MB:
-            size_mb = total_bytes / ONE_MB
-            log_warning(
-                f"InferenceDataCodec encoding large InferenceData: "
-                f"size={size_mb:,.2f} MB, groups={list(groups_meta.keys())}"
-            )
-
         meta: Dict[str, Any] = {
             "groups": groups_meta,
             "codec_version": 1,
         }
 
         return EncodeResult(
-            codec="arviz.InferenceData",
+            codec=type(self).__name__,
             meta=meta,
             buffers=buffers,
         )
@@ -226,3 +221,4 @@ class InferenceDataCodec(Encoder):
         # Construct InferenceData from datasets
         idata = az.InferenceData(**groups, warn_on_custom_groups=False)
         return idata
+    
