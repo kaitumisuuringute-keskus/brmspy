@@ -10,29 +10,44 @@ import xarray as xr
 import arviz as az
 
 from brmspy.types import FitResult
-
+from .proxy_types import ShmArray, ShmDataFrameColumns
 
 from .base import DataclassCodec, Encoder, EncodeResult, ShmBlockSpec
 
+
 ONE_MB = 1024 * 1024
+
+
+def array_order(a: np.ndarray) -> str:
+    if a.flags["C_CONTIGUOUS"]:
+        return "C"
+    if a.flags["F_CONTIGUOUS"]:
+        return "F"
+    return "non-contiguous"
+
 
 class NumpyArrayCodec:
     def can_encode(self, obj: Any) -> bool:
         return isinstance(obj, np.ndarray)
 
     def encode(self, obj: Any, shm_pool: Any) -> EncodeResult:
-        arr = np.asarray(obj)
-        data = arr.tobytes(order="C")
-        nbytes = len(data)
+        if isinstance(obj, ShmArray):
+            arr = obj
+            nbytes = obj.block.size
+            block = obj.block
+        else:
+            arr = np.asarray(obj)
+            data = arr.tobytes(order="C")
+            nbytes = len(data)
 
-        # Ask for exactly nbytes; OS may round up internally, that's fine.
-        block = shm_pool.alloc(nbytes)
-        block.shm.buf[:nbytes] = data
+            # Ask for exactly nbytes; OS may round up internally, that's fine.
+            block = shm_pool.alloc(nbytes)
+            block.shm.buf[:nbytes] = data
 
-        meta: Dict[str, Any] = {
+        meta: dict[str, Any] = {
             "dtype": str(arr.dtype),
             "shape": list(arr.shape),
-            "order": "C",
+            "order": array_order(arr),
             "nbytes": nbytes,  # <-- critical
         }
 
@@ -42,18 +57,18 @@ class NumpyArrayCodec:
             buffers=[ShmBlockSpec(name=block.name, size=block.size)],
         )
 
-    def decode(self, meta: Dict[str, Any],
-               buffers: List[memoryview]) -> Any:
+    def decode(self, meta: Dict[str, Any], buffers: List[memoryview]) -> Any:
         buf = buffers[0]
         dtype = np.dtype(meta["dtype"])
         shape = tuple(meta["shape"])
         nbytes = int(meta["nbytes"])
+        order = meta["order"]
 
         # Only use the slice that actually holds array data
         view = buf[:nbytes]
-        arr = np.frombuffer(view, dtype=dtype)
-        arr = arr.reshape(shape)
+        arr = np.ndarray(shape=shape, dtype=dtype, buffer=view, order=order)
         return arr
+
 
 class PickleCodec:
     def can_encode(self, obj: Any) -> bool:
@@ -63,7 +78,7 @@ class PickleCodec:
     def encode(self, obj: Any, shm_pool: Any) -> EncodeResult:
         data = pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
         block = shm_pool.alloc(len(data))
-        block.shm.buf[:len(data)] = data
+        block.shm.buf[: len(data)] = data
 
         meta: Dict[str, Any] = {"length": len(data)}
 
@@ -80,8 +95,7 @@ class PickleCodec:
             buffers=[ShmBlockSpec(name=block.name, size=block.size)],
         )
 
-    def decode(self, meta: Dict[str, Any],
-               buffers: List[memoryview]) -> Any:
+    def decode(self, meta: Dict[str, Any], buffers: List[memoryview]) -> Any:
         buf = buffers[0]
         length = meta["length"]
         payload = bytes(buf[:length])
@@ -117,9 +131,7 @@ class InferenceDataCodec(Encoder):
                     block.shm.buf[:nbytes] = data
 
                     buffer_idx = len(buffers)
-                    buffers.append(
-                        ShmBlockSpec(name=block.name, size=block.size)
-                    )
+                    buffers.append(ShmBlockSpec(name=block.name, size=block.size))
                     total_bytes += nbytes
 
                     g_meta["coords"][cname] = {
@@ -135,7 +147,9 @@ class InferenceDataCodec(Encoder):
                     g_meta["coords"][cname] = {
                         "kind": "pickle",
                         "dims": list(coord.dims),
-                        "payload": pickle.dumps(coord.values, protocol=pickle.HIGHEST_PROTOCOL),
+                        "payload": pickle.dumps(
+                            coord.values, protocol=pickle.HIGHEST_PROTOCOL
+                        ),
                     }
 
             # DATA VARS: main heavy arrays
@@ -148,9 +162,7 @@ class InferenceDataCodec(Encoder):
                 block.shm.buf[:nbytes] = data
 
                 buffer_idx = len(buffers)
-                buffers.append(
-                    ShmBlockSpec(name=block.name, size=block.size)
-                )
+                buffers.append(ShmBlockSpec(name=block.name, size=block.size))
                 total_bytes += nbytes
 
                 g_meta["data_vars"][vname] = {
@@ -174,8 +186,7 @@ class InferenceDataCodec(Encoder):
             buffers=buffers,
         )
 
-    def decode(self, meta: Dict[str, Any],
-               buffers: List[memoryview]) -> Any:
+    def decode(self, meta: Dict[str, Any], buffers: List[memoryview]) -> Any:
         groups_meta = meta["groups"]
         groups: Dict[str, xr.Dataset] = {}
 
@@ -190,10 +201,9 @@ class InferenceDataCodec(Encoder):
                     buf = buffers[cmeta["buffer_idx"]]
                     nbytes = int(cmeta["nbytes"])
                     view = buf[:nbytes]
-                    arr = np.frombuffer(
-                        view,
-                        dtype=np.dtype(cmeta["dtype"])
-                    ).reshape(cmeta["shape"])
+                    arr = np.frombuffer(view, dtype=np.dtype(cmeta["dtype"])).reshape(
+                        cmeta["shape"]
+                    )
                     coords[cname] = (tuple(cmeta["dims"]), arr)
                 elif kind == "pickle":
                     values = pickle.loads(cmeta["payload"])
@@ -206,10 +216,9 @@ class InferenceDataCodec(Encoder):
                 buf = buffers[vmeta["buffer_idx"]]
                 nbytes = int(vmeta["nbytes"])
                 view = buf[:nbytes]
-                arr = np.frombuffer(
-                    view,
-                    dtype=np.dtype(vmeta["dtype"])
-                ).reshape(vmeta["shape"])
+                arr = np.frombuffer(view, dtype=np.dtype(vmeta["dtype"])).reshape(
+                    vmeta["shape"]
+                )
                 data_vars[vname] = (tuple(vmeta["dims"]), arr)
 
             ds = xr.Dataset(
@@ -221,4 +230,3 @@ class InferenceDataCodec(Encoder):
         # Construct InferenceData from datasets
         idata = az.InferenceData(**groups, warn_on_custom_groups=False)
         return idata
-    

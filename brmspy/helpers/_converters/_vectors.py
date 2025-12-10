@@ -1,10 +1,10 @@
 from collections.abc import Mapping
-import os
-from typing import Any, Dict, Union, List, cast
+from typing import TYPE_CHECKING, Any, cast
 from rpy2.rinterface_lib.sexp import NULL
-import rpy2.robjects as ro
-from rpy2.robjects import default_converter, pandas2ri, numpy2ri
-from rpy2.robjects.conversion import localconverter
+
+if TYPE_CHECKING:
+    import rpy2.robjects as ro
+
 
 from brmspy.helpers._converters._converter_types import PyObject
 from brmspy.session.transport import ShmPool
@@ -34,6 +34,10 @@ def _r2py_listvector(
 
 
 def _r2py_vector(obj: ro.vectors.Vector, shm: ShmPool | None = None) -> PyObject:
+    from rpy2.robjects import default_converter
+    from rpy2.robjects.conversion import localconverter
+    import rpy2.robjects as ro
+
     assert not isinstance(obj, ro.ListVector)
 
     obj_any = cast(Any, obj)
@@ -54,6 +58,10 @@ def _r2py_vector(obj: ro.vectors.Vector, shm: ShmPool | None = None) -> PyObject
 
 
 def _py2r_list(obj: list | tuple) -> ro.Sexp:
+    from rpy2.robjects import default_converter, pandas2ri, numpy2ri
+    from rpy2.robjects.conversion import localconverter
+    import rpy2.robjects as ro
+
     if not obj:
         return ro.ListVector({})
 

@@ -3,9 +3,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from multiprocessing.managers import SharedMemoryManager
 from multiprocessing.shared_memory import SharedMemory
-from typing import Dict, List
+from typing import Any, Dict, Generic, List, TypedDict
 
 from .types import ShmRef
+
+import numpy as np
+import pandas as pd
 
 
 @dataclass
@@ -38,8 +41,7 @@ class ShmPool:
         self._blocks.clear()
 
 
-def attach_buffers(pool: ShmPool,
-                   refs: List[ShmRef]) -> List[memoryview]:
+def attach_buffers(pool: ShmPool, refs: List[ShmRef]) -> List[memoryview]:
     views: List[memoryview] = []
     for ref in refs:
         block = pool.attach(ref["name"], ref["size"])

@@ -5,6 +5,7 @@ from typing import TypedDict, Literal, Dict, Any, List, Optional, Union
 
 CommandType = Literal["CALL", "SHUTDOWN"]
 
+
 @dataclass
 class SexpWrapper:
     _rid: int
@@ -58,24 +59,25 @@ class EnvironmentConfig:
             "r_home": self.r_home,
             "startup_scripts": self.startup_scripts or [],
             "runtime_path": self.runtime_path,
-            "env": self.env
+            "env": self.env,
         }
-    
+
     @classmethod
-    def from_dict(cls, obj: Dict[str, Any]) -> 'EnvironmentConfig':
+    def from_dict(cls, obj: Dict[str, Any]) -> "EnvironmentConfig":
         return cls(
-            r_home=obj['r_home'],
-            startup_scripts=obj['startup_scripts'],
-            environment_name=obj['environment_name'],
-            runtime_path=obj['runtime_path'],
-            env=obj['env']
+            r_home=obj["r_home"],
+            startup_scripts=obj["startup_scripts"],
+            environment_name=obj["environment_name"],
+            runtime_path=obj["runtime_path"],
+            env=obj["env"],
         )
-    
+
     @classmethod
-    def from_obj(cls, obj: Optional[Union[Dict[str, Any], 'EnvironmentConfig']]) -> 'EnvironmentConfig':
+    def from_obj(
+        cls, obj: Optional[Union[Dict[str, Any], "EnvironmentConfig"]]
+    ) -> "EnvironmentConfig":
         if obj is None:
             return cls()
         if isinstance(obj, dict):
             return cls.from_dict(obj)
         return obj
-

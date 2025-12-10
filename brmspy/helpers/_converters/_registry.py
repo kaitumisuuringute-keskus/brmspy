@@ -1,8 +1,7 @@
 import os
 from typing import Mapping
 from rpy2.rinterface_lib.sexp import Sexp
-import rpy2.robjects as ro
-from rpy2.robjects.functions import SignatureTranslatedFunction
+from rpy2.rinterface import ListSexpVector, LangSexpVector
 from zmq import NULL
 
 from brmspy.helpers._converters._arrays import (
@@ -26,24 +25,34 @@ from brmspy.session.transport import ShmPool
 from brmspy.types import RListVectorExtension
 
 from ._converter_types import Py2rConverter, PyObject, R2pyConverter
-import rpy2.robjects as ro
 import pandas as pd
 import numpy as np
 
 
-_R2PY_CONVERTERS: dict[type | tuple[type, ...], R2pyConverter] = {
-    ro.ListVector: _r2py_listvector,
-    ro.Matrix: _r2py_matrix,
-    ro.DataFrame: _r2py_dataframe,
-    (ro.Formula, ro.language.LangVector, SignatureTranslatedFunction): _r2py_language,
-    ro.vectors.Vector: _r2py_vector,  # must come AFTER specific vector types
-}
-_PY2R_CONVERTERS: dict[type | tuple[type, ...], Py2rConverter] = {
-    pd.DataFrame: _py2r_dataframe,
-    Mapping: _py2r_mapping,
-    (list, tuple): _py2r_list,
-    np.ndarray: _py2r_numpy,
-}
+_R2PY_CONVERTERS: dict[type | tuple[type, ...], R2pyConverter] = {}
+_PY2R_CONVERTERS: dict[type | tuple[type, ...], Py2rConverter] = {}
+
+if os.environ.get("BRMSPY_WORKER") == "1":
+    import rpy2.robjects as ro
+    from rpy2.robjects.functions import SignatureTranslatedFunction
+
+    _R2PY_CONVERTERS.update(
+        {
+            ListSexpVector: _r2py_listvector,
+            ro.Matrix: _r2py_matrix,
+            ro.DataFrame: _r2py_dataframe,
+            (ro.Formula, LangSexpVector, SignatureTranslatedFunction): _r2py_language,
+            ro.vectors.Vector: _r2py_vector,  # must come AFTER specific vector types
+        }
+    )
+    _PY2R_CONVERTERS.update(
+        {
+            pd.DataFrame: _py2r_dataframe,
+            Mapping: _py2r_mapping,
+            (list, tuple): _py2r_list,
+            np.ndarray: _py2r_numpy,
+        }
+    )
 
 
 def r_to_py(obj: Sexp, shm: ShmPool | None = None) -> PyObject:
@@ -122,6 +131,8 @@ def r_to_py(obj: Sexp, shm: ShmPool | None = None) -> PyObject:
     py_to_r : Convert Python objects to R
     brmspy.brms.summary : Returns Python-friendly summary dict
     """
+    import rpy2.robjects as ro
+
     if obj is ro.NULL:
         return None
 
@@ -142,7 +153,7 @@ def r_to_py(obj: Sexp, shm: ShmPool | None = None) -> PyObject:
     return converter(obj, shm)
 
 
-def py_to_r(obj: PyObject) -> ro.Sexp:
+def py_to_r(obj: PyObject) -> Sexp:
     """
     Convert arbitrary Python objects to R objects via rpy2.
 
@@ -220,6 +231,8 @@ def py_to_r(obj: PyObject) -> ro.Sexp:
     kwargs_r : Convert keyword arguments dict for R function calls
     brmspy.brms.fit : Uses this for converting data to R
     """
+    import rpy2.robjects as ro
+
     if obj is None:
         return ro.NULL
 
