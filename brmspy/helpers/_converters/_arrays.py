@@ -16,7 +16,7 @@ from rpy2.rinterface_lib.sexp import Sexp, NULL
 # CONVERTERS
 
 
-def _r2py_matrix(obj: Matrix, shm: ShmPool | None = None) -> PyObject:
+def _r2py_matrix(obj: "Matrix", shm: ShmPool | None = None) -> PyObject:
     if len(obj.dim) != 2:
         raise Exception("Matrix with dims != 2. Unimplemented conversion")
     if obj.colnames != NULL:
@@ -34,7 +34,7 @@ def _r2py_matrix(obj: Matrix, shm: ShmPool | None = None) -> PyObject:
         return pd.DataFrame(data=np.asarray(obj), columns=colnames, index=rownames)
 
 
-def _r2py_dataframe(obj: DataFrame, shm: ShmPool | None = None) -> PyObject:
+def _r2py_dataframe(obj: "DataFrame", shm: ShmPool | None = None) -> PyObject:
     from rpy2.robjects import pandas2ri
     from rpy2.robjects.conversion import localconverter
 

@@ -3,16 +3,17 @@ from typing import TYPE_CHECKING, Any, cast
 from rpy2.rinterface_lib.sexp import NULL
 
 if TYPE_CHECKING:
-    import rpy2.robjects as ro
+    from rpy2.robjects import ListVector
+    from rpy2.robjects import Vector
 
-
+from rpy2.rinterface_lib.sexp import Sexp
 from brmspy.helpers._converters._converter_types import PyObject
 from brmspy.session.transport import ShmPool
 import numpy as np
 
 
 def _r2py_listvector(
-    obj: ro.ListVector, shm: ShmPool | None = None
+    obj: "ListVector", shm: ShmPool | None = None
 ) -> dict[str, PyObject] | list[PyObject]:
     from ._registry import r_to_py
 
@@ -33,7 +34,7 @@ def _r2py_listvector(
     return [r_to_py(el) for el in obj]
 
 
-def _r2py_vector(obj: ro.vectors.Vector, shm: ShmPool | None = None) -> PyObject:
+def _r2py_vector(obj: "Vector", shm: ShmPool | None = None) -> PyObject:
     from rpy2.robjects import default_converter
     from rpy2.robjects.conversion import localconverter
     import rpy2.robjects as ro
@@ -57,7 +58,7 @@ def _r2py_vector(obj: ro.vectors.Vector, shm: ShmPool | None = None) -> PyObject
     return out
 
 
-def _py2r_list(obj: list | tuple) -> ro.Sexp:
+def _py2r_list(obj: list | tuple) -> Sexp:
     from rpy2.robjects import default_converter, pandas2ri, numpy2ri
     from rpy2.robjects.conversion import localconverter
     import rpy2.robjects as ro
