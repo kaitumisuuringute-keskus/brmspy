@@ -8,13 +8,13 @@ version = "0.2.1"
 description = "Python-first access to R's brms with proper parameter names, ArviZ support, and cmdstanr performance"
 readme = "README.md"
 requires-python = ">=3.10,<3.15"
-license = {text = "Apache-2.0"}
+license = { text = "Apache-2.0" }
 authors = [
-    {name = "Remi Sebastian Kits", email = "remi.sebastian.kits@gmail.com"},
-    {name = "Adam Haber", email = "adamhaber@gmail.com"}
+    { name = "Remi Sebastian Kits", email = "remi.sebastian.kits@gmail.com" },
+    { name = "Adam Haber", email = "adamhaber@gmail.com" },
 ]
 maintainers = [
-    {name = "Remi Sebastian Kits", email = "remi.sebastian.kits@gmail.com"}
+    { name = "Remi Sebastian Kits", email = "remi.sebastian.kits@gmail.com" },
 ]
 keywords = [
     "bayesian",
@@ -24,7 +24,7 @@ keywords = [
     "cmdstan",
     "rpy2",
     "multilevel-models",
-    "statistical-modeling"
+    "statistical-modeling",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -50,10 +50,10 @@ classifiers = [
 
 # Core dependencies - keep minimum versions for broad compatibility
 dependencies = [
-    "numpy>1.24.4",          # Python 3.10+ compatible
-    "pandas>=1.3.0",          # Modern DataFrame API
-    "rpy2>=3.5.0",            # Python 3.10+ compatible, R interface
-    "arviz>=0.15.0"          # Bayesian visualization (replaces pystan viz)
+    "numpy>1.24.4",  # Python 3.10+ compatible
+    "pandas>=1.3.0", # Modern DataFrame API
+    "rpy2>=3.5.0",   # Python 3.10+ compatible, R interface
+    "arviz>=0.15.0", # Bayesian visualization (replaces pystan viz)
 ]
 
 [project.optional-dependencies]
@@ -67,6 +67,7 @@ dev = [
     "mypy>=1.0.0",
     "isort>=5.12.0",
     "pre-commit>=3.0.0",
+    "black",
 ]
 
 
@@ -82,13 +83,11 @@ test = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
     "tqdm",
-    "pytest-xdist>=3.0.0",    # Parallel test execution
+    "pytest-xdist>=3.0.0", # Parallel test execution
 ]
 
 # All optional dependencies
-all = [
-    "brmspy[dev,viz,test]",
-]
+all = ["brmspy[dev,viz,test]"]
 
 [project.urls]
 Homepage = "https://github.com/kaitumisuuringute-keskus/brmspy"
@@ -114,7 +113,7 @@ brmspy = ["py.typed"]
 
 # Black configuration
 [tool.black]
-line-length = 100
+line-length = 88
 target-version = ["py310", "py311", "py312", "py313"]
 include = '\.pyi?$'
 extend-exclude = '''
@@ -133,18 +132,18 @@ extend-exclude = '''
 line-length = 100
 target-version = "py38"
 select = [
-    "E",      # pycodestyle errors
-    "W",      # pycodestyle warnings
-    "F",      # pyflakes
-    "I",      # isort
-    "B",      # flake8-bugbear
-    "C4",     # flake8-comprehensions
-    "UP",     # pyupgrade
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
 ]
 ignore = [
-    "E501",   # line too long (handled by black)
-    "B008",   # do not perform function calls in argument defaults
-    "C901",   # too complex
+    "E501", # line too long (handled by black)
+    "B008", # do not perform function calls in argument defaults
+    "C901", # too complex
 ]
 
 [tool.ruff.per-file-ignores]
@@ -178,9 +177,5 @@ warn_unused_ignores = true
 warn_no_return = true
 
 [[tool.mypy.overrides]]
-module = [
-    "rpy2.*",
-    "cmdstanpy.*",
-    "arviz.*",
-]
+module = ["rpy2.*", "cmdstanpy.*", "arviz.*"]
 ignore_missing_imports = true
