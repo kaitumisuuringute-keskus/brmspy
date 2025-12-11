@@ -205,7 +205,7 @@ class RModuleSession(ModuleType):
             atexit.register(RModuleSession._cleanup_all)
             RModuleSession._atexit_registered = True
 
-    def _setup_worker(self) -> None:
+    def _setup_worker(self, autoload=True) -> None:
         """Start SharedMemoryManager and worker process, wire IPC."""
         mgr = SharedMemoryManager()
         mgr.start()
@@ -231,6 +231,11 @@ class RModuleSession(ModuleType):
             respect_handler_level=True,
         )
         self._log_listener.start()
+
+        if autoload:
+            env_overrides["BRMSPY_AUTOLOAD"] = "1"
+        else:
+            env_overrides["BRMSPY_AUTOLOAD"] = "0"
 
         proc = spawn_worker(
             target=worker_main,
@@ -407,6 +412,7 @@ class RModuleSession(ModuleType):
     def restart(
         self,
         environment_conf: dict[str, Any] | EnvironmentConfig | None = None,
+        autoload: bool = True,
     ) -> None:
         """
         Restart the underlying worker process and shared-memory manager.
@@ -425,4 +431,4 @@ class RModuleSession(ModuleType):
         self._func_cache.clear()
 
         # Start a fresh worker with current env conf
-        self._setup_worker()
+        self._setup_worker(autoload=autoload)

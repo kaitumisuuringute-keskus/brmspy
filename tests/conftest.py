@@ -178,7 +178,8 @@ def pytest_collection_modifyitems(config, items):
 
         if brms.get_brms_version() is not None:
             brms_is_available = True
-    except:
+    except Exception as e:
+        print(f"Failed to set up brms {e}")
         pass
 
     for item in items:

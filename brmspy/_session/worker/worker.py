@@ -112,7 +112,8 @@ def worker_main(
                         for k, p in req["kwargs"].items()
                     }
                     args: list[Any] = reattach_sexp(args)
-                    kwargs: dict[str, Any] = reattach_sexp(args)
+                    kwargs: dict[str, Any] = reattach_sexp(kwargs)
+                    print("kwargs", kwargs)
 
                     # resolve "mod:pkg.module.func"
                     target = _resolve_module_target(req["target"], module_cache)

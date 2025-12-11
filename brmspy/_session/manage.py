@@ -64,7 +64,6 @@ class EnvContext:
         install_cmdstanr: bool = True,
         rstan_version: str | None = None,
         activate: bool = True,
-        **kwargs,
     ) -> Path | None:
         """
         Install brms R package, optionally cmdstanr and CmdStan compiler, or rstan.
@@ -132,7 +131,6 @@ class EnvContext:
             install_cmdstanr=install_cmdstanr,
             rstan_version=rstan_version,
             activate=activate,
-            **kwargs,
         )
 
         active_runtime = self.session.get_active_runtime()
@@ -187,10 +185,8 @@ def manage(
 
     temp_lib_dir: Path | None = None
 
-    new_conf.env["BRMSPY_AUTOLOAD"] = "0"
-
     # fresh worker with new_conf
-    session.restart(environment_conf=new_conf)
+    session.restart(environment_conf=new_conf, autoload=False)
 
     ctx = EnvContext(session=session)
 
