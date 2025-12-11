@@ -17,13 +17,13 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
-from brmspy.session.environment import get_environment_config
+from brmspy._session.environment import get_environment_config
 
 from ..types.errors import RSessionError
 from ..types.session_types import EnvironmentConfig
 from .codec import get_default_registry
 from .transport import ShmPool, attach_buffers
-from brmspy.session.worker import worker_main
+from brmspy._session.worker import worker_main
 
 _INTERNAL_ATTRS = {
     "_module",
@@ -349,7 +349,7 @@ class RModuleSession(ModuleType):
             return ModuleType.__getattribute__(self, name)
 
         if name == "manage":
-            from brmspy.session.manage import manage
+            from brmspy._session.manage import manage
 
             return manage
 

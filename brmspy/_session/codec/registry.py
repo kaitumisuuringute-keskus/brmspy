@@ -1,12 +1,11 @@
-
-from brmspy.session.codec.base import CodecRegistry
-from brmspy.session.codec.builtin import (
+from brmspy._session.codec.base import CodecRegistry
+from brmspy._session.codec.builtin import (
     InferenceDataCodec,
     NumpyArrayCodec,
     PandasDFCodec,
     PickleCodec,
 )
-from brmspy.session.codec.dataclass import register_dataclasses
+from brmspy._session.codec.dataclass import register_dataclasses
 
 _default_registry: CodecRegistry | None = None
 

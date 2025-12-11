@@ -1,6 +1,6 @@
 import os
 from typing import cast
-from brmspy.session.environment import get_environment_userlibs_dir
+from brmspy._session.environment import get_environment_userlibs_dir
 from brmspy.types.session_types import EnvironmentConfig
 
 __all__ = ["run_startup_scripts", "_check_r_setup", "_initialise_r_safe", "activate"]

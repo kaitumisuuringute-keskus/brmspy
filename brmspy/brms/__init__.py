@@ -4,8 +4,8 @@ from contextlib import contextmanager
 from types import ModuleType
 from typing import TYPE_CHECKING, cast
 
-from brmspy.session.manage import manage
-from brmspy.session.session import _INTERNAL_ATTRS, RModuleSession
+from brmspy._session.manage import manage
+from brmspy._session.session import _INTERNAL_ATTRS, RModuleSession
 
 # -------------------------------------------------------------------
 # Typing: describe the brms module surface for static analysis
