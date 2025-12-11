@@ -16,16 +16,16 @@ def get_sexp(ref: SexpWrapper) -> Optional["Sexp"]:
     return NULL
 
 
-def _cache_sexp(obj: "Sexp") -> SexpWrapper:
+def _cache_single(obj: "Sexp") -> SexpWrapper:
     _SEXP_CACHE[obj.rid] = obj
     return SexpWrapper(_rid=obj.rid, _repr=str(obj))
 
 
 def cache_sexp(obj: Any) -> Any:
     if isinstance(obj, Sexp):
-        return cache_sexp(obj)
+        return _cache_single(obj)
     elif hasattr(obj, "r") and isinstance(obj.r, Sexp):
-        obj.r = cache_sexp(obj.r)
+        obj.r = _cache_single(obj.r)
         return obj
     elif isinstance(obj, list):
         return [cache_sexp(o) for o in obj]
@@ -34,7 +34,7 @@ def cache_sexp(obj: Any) -> Any:
     return obj
 
 
-def _reattach_sexp(obj: Any) -> Any:
+def _reattach_sexp_single(obj: Any) -> Any:
 
     if hasattr(obj, "r") and isinstance(obj.r, SexpWrapper):
         if obj.r._rid in _SEXP_CACHE:
@@ -76,7 +76,7 @@ def _reduce_sexp(obj: "Sexp") -> tuple[Callable[..., Any], tuple[Any, ...]]:
     Called by pickle whenever it encounters a Sexp instance.
     Must return (callable, args) or (callable, args, state, ...).
     """
-    wrapper = _cache_sexp(obj)
+    wrapper = _cache_single(obj)
     # On unpickle: callable(*args) → object returned to the unpickler
     return (SexpWrapper, (wrapper._rid, wrapper._repr))
 
