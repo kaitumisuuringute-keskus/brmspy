@@ -1,13 +1,12 @@
-from typing import Any, Union, Sequence, Optional
+from typing import Any, Callable, Union, Sequence, Optional, cast
 import pandas as pd
 
 
 from .formula import bf
 from brmspy.helpers.log import log, log_warning
 from ..helpers._rpy2._priors import _build_priors
-from .._runtime._state import get_brms, get_cmdstanr, get_rstan
 from ..helpers._rpy2._conversion import brmsfit_to_idata, kwargs_r, py_to_r
-from ..types import FitResult, FormulaResult, IDFit, PriorSpec
+from ..types.brms_results import FitResult, FormulaResult, IDFit, PriorSpec
 from rpy2.rinterface import ListSexpVector
 from rpy2.rinterface_lib import openrlib
 
@@ -151,18 +150,25 @@ def brm(
     ```
     """
     import rpy2.robjects as ro
+    import rpy2.robjects.packages as packages
 
-    brms = get_brms()
+    fun_brm = cast(Callable, ro.r("brms::brm"))
 
     if backend == "cmdstanr":
-        cmdstanr = get_cmdstanr()
+        try:
+            cmdstanr = packages.importr("cmdstanr")
+        except:
+            cmdstanr = None
         if cmdstanr is None:
             raise RuntimeError(
                 "cmdstanr backend is not installed! Please run install_brms(install_cmdstanr=True)"
             )
 
     if backend == "rstan":
-        rstan = get_rstan()
+        try:
+            rstan = packages.importr("rstan")
+        except:
+            rstan = None
         if rstan is None:
             raise RuntimeError(
                 "rstan backend is not installed! Please run install_brms(install_rstan=True)"
@@ -210,7 +216,7 @@ def brm(
 
     # Call brms::brm() with all arguments
     with openrlib.rlock:
-        fit = brms.brm(**brm_kwargs)
+        fit = fun_brm(**brm_kwargs)
 
     log("Fit done!")
 

@@ -6,8 +6,8 @@ if TYPE_CHECKING:
 
 from rpy2.rinterface_lib.sexp import Sexp
 from rpy2.rinterface import LangSexpVector
-from brmspy.helpers._rpy2._converters._converter_types import PyObject
-from brmspy.session.transport import ShmPool
+from brmspy.types.rpy2_converters import PyObject
+from brmspy.types.shm import ShmPool
 
 
 def _r2py_fallback(obj: Sexp, shm: ShmPool | None = None) -> PyObject:

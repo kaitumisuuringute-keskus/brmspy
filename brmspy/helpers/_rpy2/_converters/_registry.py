@@ -22,10 +22,10 @@ from brmspy.helpers._rpy2._converters._vectors import (
     _r2py_listvector,
     _r2py_vector,
 )
-from brmspy.session.transport import ShmPool
-from brmspy.types import RListVectorExtension
+from brmspy.types.shm import ShmPool
+from brmspy.types.brms_results import RListVectorExtension
 
-from ._converter_types import Py2rConverter, PyObject, R2pyConverter
+from ....types.rpy2_converters import Py2rConverter, PyObject, R2pyConverter
 import pandas as pd
 import numpy as np
 

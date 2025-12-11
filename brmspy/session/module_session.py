@@ -14,10 +14,10 @@ from multiprocessing.managers import SharedMemoryManager
 from types import ModuleType
 from typing import Any, Callable, Dict, Iterator, Optional, Union
 
-from .types import EnvironmentConfig
+from ..types.session_types import EnvironmentConfig
 
 from .codec import get_default_registry
-from .errors import RSessionError
+from ..types.errors import RSessionError
 from .transport import ShmPool, attach_buffers
 from .worker import worker_main
 import os

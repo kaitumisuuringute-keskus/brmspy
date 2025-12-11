@@ -4,7 +4,7 @@ This is the ONLY module with global mutable state.
 """
 
 from typing import Any
-from brmspy._runtime._types import StoredEnv
+from brmspy.types.runtime import StoredEnv
 from brmspy._runtime import _r_env
 
 
@@ -23,6 +23,7 @@ def get_brms() -> Any:
     if _brms is None:
         try:
             from rpy2.robjects.packages import importr
+
             _brms = importr("brms")
         except Exception as e:
             raise ImportError(
@@ -41,6 +42,7 @@ def get_cmdstanr() -> Any | None:
     if _cmdstanr is None:
         try:
             from rpy2.robjects.packages import importr
+
             _cmdstanr = importr("cmdstanr")
         except Exception:
             pass
@@ -53,6 +55,7 @@ def get_rstan() -> Any | None:
     if _rstan is None:
         try:
             from rpy2.robjects.packages import importr
+
             _rstan = importr("rstan")
         except Exception:
             pass
@@ -64,6 +67,7 @@ def get_base() -> Any:
     global _base
     if _base is None:
         from rpy2.robjects.packages import importr
+
         _base = importr("base")
     return _base
 
@@ -73,6 +77,7 @@ def get_posterior() -> Any:
     global _posterior
     if _posterior is None:
         from rpy2.robjects.packages import importr
+
         _posterior = importr("posterior")
     return _posterior
 

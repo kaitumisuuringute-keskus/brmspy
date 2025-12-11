@@ -11,7 +11,7 @@ from rpy2.rinterface import ListSexpVector
 
 
 from brmspy.helpers._rpy2._conversion import kwargs_r
-from brmspy.types import FitResult
+from brmspy.types.brms_results import FitResult
 
 
 def brmsfamily(

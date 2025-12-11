@@ -37,6 +37,7 @@ layers =
     brmspy._brms_functions
     brmspy.helpers._rpy2
     brmspy.helpers.log
+    brmspy.types
 ignore_imports =
     brmspy.session.manage -> brmspy.brms
 
@@ -57,7 +58,7 @@ layers =
     brmspy._runtime._storage
     brmspy._runtime._config
     brmspy._runtime._platform
-    brmspy._runtime._types
+    brmspy.types.runtime
 
 [importlinter:contract: main-worker-flow]
 name = brmspy worker flow layering

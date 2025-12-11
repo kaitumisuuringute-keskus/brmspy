@@ -2,8 +2,7 @@ from typing import Any, List
 import numpy as np
 import pandas as pd
 
-from brmspy.session.codec.base import ShmBlockSpec
-from brmspy.session.transport import ShmBlock
+from brmspy.types.shm import ShmBlock, ShmBlockSpec
 
 
 class ShmArray(np.ndarray):

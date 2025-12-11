@@ -1,4 +1,4 @@
-from .transport import ShmPool
+from ..types.shm import ShmPool
 
 _shm: ShmPool | None = None
 

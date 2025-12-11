@@ -7,7 +7,7 @@ import arviz as az
 
 from brmspy.helpers._rpy2._converters._registry import py_to_r, r_to_py
 from brmspy.helpers.log import log_warning
-from brmspy.types import IDFit
+from brmspy.types.brms_results import IDFit
 
 
 def _coerce_stan_types(stan_code: str, stan_data: dict) -> dict:

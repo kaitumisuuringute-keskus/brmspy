@@ -8,7 +8,7 @@ from pathlib import Path
 import platform
 import subprocess
 from typing import cast
-from brmspy._runtime._types import SystemInfo
+from brmspy.types.runtime import SystemInfo
 from brmspy.helpers.log import log_warning
 
 

@@ -7,8 +7,8 @@ if TYPE_CHECKING:
     from rpy2.robjects import Vector
 
 from rpy2.rinterface_lib.sexp import Sexp
-from brmspy.helpers._rpy2._converters._converter_types import PyObject
-from brmspy.session.transport import ShmPool
+from brmspy.types.rpy2_converters import PyObject
+from brmspy.types.shm import ShmPool
 import numpy as np
 
 

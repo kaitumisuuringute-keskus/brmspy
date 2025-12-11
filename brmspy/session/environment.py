@@ -4,10 +4,11 @@ import json
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple, cast
 
-from brmspy.session.types import EnvironmentConfig
+from brmspy.types.session_types import EnvironmentConfig
 
 
 import os
+
 
 def get_environment_base_dir() -> Path:
     """Returns ~/.brmspy/environment/, creating if needed."""
@@ -15,16 +16,20 @@ def get_environment_base_dir() -> Path:
     base_dir.mkdir(parents=True, exist_ok=True)
     return base_dir
 
+
 def get_environment_dir(name: str) -> Path:
     base_dir = get_environment_base_dir()
     env_dir = base_dir / name
     return env_dir
 
+
 def get_environments_state_path() -> Path:
     return Path.home() / ".brmspy" / "environment_state.json"
 
+
 def get_environment_userlibs_dir(name: str) -> Path:
     return get_environment_dir(name=name) / "Rlib"
+
 
 def get_environment_config(name: str) -> EnvironmentConfig:
     base_dir = get_environment_base_dir()
@@ -37,6 +42,7 @@ def get_environment_config(name: str) -> EnvironmentConfig:
     with open(config_dir, "r") as f:
         data = json.load(f)
         return EnvironmentConfig.from_dict(data)
+
 
 def save(env_conf: EnvironmentConfig) -> None:
     base_dir = get_environment_base_dir()
@@ -53,21 +59,24 @@ def save(env_conf: EnvironmentConfig) -> None:
 def save_as_state(env_conf: EnvironmentConfig) -> None:
     state_path = get_environments_state_path()
     with open(state_path, "w", encoding="utf-8") as f:
-        json.dump({
-            "active": env_conf.environment_name
-        }, f, indent=2, ensure_ascii=False)
+        json.dump(
+            {"active": env_conf.environment_name}, f, indent=2, ensure_ascii=False
+        )
 
 
 def activate(env_conf: EnvironmentConfig) -> None:
     """only run in worker"""
     from brmspy._runtime import deactivate_runtime, activate_runtime, status, _r_env
+
     _status = status()
 
     if env_conf.runtime_path:
         if _status.active_runtime and _status.is_activated:
             if not _status.active_runtime.samefile(env_conf.runtime_path):
                 if os.environ.get("BRMSPY_AUTOLOAD") == "1":
-                    raise Exception("Can't unload environments when autoload is enabled!")
+                    raise Exception(
+                        "Can't unload environments when autoload is enabled!"
+                    )
                 deactivate_runtime()
                 activate_runtime(env_conf.runtime_path)
     else:
@@ -75,16 +84,18 @@ def activate(env_conf: EnvironmentConfig) -> None:
             if os.environ.get("BRMSPY_AUTOLOAD") == "1":
                 raise Exception("Can't unload environments when autoload is enabled!")
             deactivate_runtime()
-    
+
     userlib_path = get_environment_userlibs_dir(env_conf.environment_name)
     lib_paths = _r_env.get_lib_paths()
-    lib_paths = [p for p in lib_paths if ".brmspy/environment/" not in p and ".brmspy\\environment\\" not in p]
+    lib_paths = [
+        p
+        for p in lib_paths
+        if ".brmspy/environment/" not in p and ".brmspy\\environment\\" not in p
+    ]
     lib_paths.insert(0, userlib_path.as_posix())
     _r_env.set_lib_paths(lib_paths)
 
-
     save_as_state(env_conf)
-
 
 
 def configure_r_env(env_conf: EnvironmentConfig) -> None:
@@ -92,12 +103,9 @@ def configure_r_env(env_conf: EnvironmentConfig) -> None:
     r_home = env_conf.r_home
     if r_home:
         os.environ["R_HOME"] = r_home
-    
+
     save(env_conf)
     activate(env_conf)
-
-    
-
 
 
 def run_startup_scripts(env_conf: EnvironmentConfig) -> None:
@@ -111,9 +119,7 @@ def run_startup_scripts(env_conf: EnvironmentConfig) -> None:
         ro.r(code)
 
 
-def _check_r_setup(
-    verbose: bool = False
-) -> Tuple[bool, List[str]]:
+def _check_r_setup(verbose: bool = False) -> Tuple[bool, List[str]]:
     import shutil, subprocess, os, platform
 
     ok = True
@@ -141,10 +147,7 @@ def _check_r_setup(
     else:
         try:
             proc = subprocess.run(
-                [r_exec, "RHOME"],
-                check=True,
-                capture_output=True,
-                text=True
+                [r_exec, "RHOME"], check=True, capture_output=True, text=True
             )
             r_home_cmd = proc.stdout.strip()
             if not r_home_cmd:
@@ -189,6 +192,7 @@ def _check_r_setup(
 
     return ok, messages
 
+
 def _initialise_r_safe() -> None:
     """
     Configure R for safer embedded execution.
@@ -204,13 +208,13 @@ def _initialise_r_safe() -> None:
 
     # CFFI MODE
     if "rpy2" in sys.modules:
-        if os.environ.get('RPY2_CFFI_MODE') != "ABI":
+        if os.environ.get("RPY2_CFFI_MODE") != "ABI":
             print(
                 "[brmspy][WARNING] rpy2 was imported before brmspy; cannot enforce "
                 "RPY2_CFFI_MODE (env var). API and BOTH mode are known to cause "
                 "instability, ABI is recommended."
             )
-    elif os.environ.get('RPY2_CFFI_MODE') in ('BOTH', 'API'):
+    elif os.environ.get("RPY2_CFFI_MODE") in ("BOTH", "API"):
         print(
             "[brmspy][WARNING] RPY2_CFFI_MODE (env var) is set to API/BOTH. "
             "These modes are known to cause instability and segfaults; "

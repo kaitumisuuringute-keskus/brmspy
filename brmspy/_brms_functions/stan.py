@@ -2,9 +2,8 @@ import typing
 import pandas as pd
 from .formula import bf
 from ..helpers._rpy2._priors import _build_priors
-from .._runtime._state import get_brms
 from ..helpers._rpy2._conversion import py_to_r
-from ..types import FormulaResult, PriorSpec
+from ..types.brms_results import FormulaResult, PriorSpec
 
 
 _formula_fn = bf
@@ -96,7 +95,9 @@ def make_stancode(
     )
     ```
     """
-    brms = get_brms()
+    import rpy2.robjects as ro
+
+    fun_make_stancode = typing.cast(typing.Callable, ro.r("brms::make_stancode"))
 
     data_r = py_to_r(data)
     priors_r = _build_priors(priors)
@@ -108,7 +109,7 @@ def make_stancode(
         formula_obj = _formula_fn(formula, **formula_args).r
 
     if len(priors_r) > 0:
-        return brms.make_stancode(
+        return fun_make_stancode(
             formula=formula_obj,
             data=data_r,
             prior=priors_r,
@@ -116,6 +117,6 @@ def make_stancode(
             sample_prior=sample_prior,
         )[0]
     else:
-        return brms.make_stancode(
+        return fun_make_stancode(
             formula=formula_obj, data=data_r, family=family, sample_prior=sample_prior
         )[0]

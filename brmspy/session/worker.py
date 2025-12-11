@@ -10,7 +10,7 @@ from typing import Any, Dict, Optional
 from multiprocessing.managers import SharedMemoryManager
 import importlib
 
-from .types import EnvironmentConfig
+from ..types.session_types import EnvironmentConfig
 
 from .worker_sexp_cache import cache_sexp, reattach_sexp
 

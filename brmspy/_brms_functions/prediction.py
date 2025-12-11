@@ -1,7 +1,6 @@
 import typing
 import pandas as pd
 
-from .._runtime._state import get_brms
 from ..helpers._rpy2._conversion import (
     brms_linpred_to_idata,
     brms_log_lik_to_idata,
@@ -10,7 +9,7 @@ from ..helpers._rpy2._conversion import (
     kwargs_r,
     py_to_r,
 )
-from ..types import (
+from ..types.brms_results import (
     FitResult,
     IDEpred,
     IDLinpred,
@@ -49,7 +48,6 @@ def posterior_epred(
     """
     import rpy2.robjects as ro
 
-    get_brms()  # Ensure brms is loaded
     m = model.r
     data_r = py_to_r(newdata)
     kwargs = kwargs_r(kwargs)
@@ -91,7 +89,6 @@ def posterior_predict(
     """
     import rpy2.robjects as ro
 
-    get_brms()  # Ensure brms is loaded
     m = model.r
 
     data_r = py_to_r(newdata)
@@ -165,7 +162,6 @@ def posterior_linpred(
     """
     import rpy2.robjects as ro
 
-    get_brms()  # Ensure brms is loaded
     m = model.r
 
     data_r = py_to_r(newdata)
@@ -251,7 +247,6 @@ def log_lik(
     """
     import rpy2.robjects as ro
 
-    get_brms()  # Ensure brms is loaded
     m = model.r
 
     data_r = py_to_r(newdata)

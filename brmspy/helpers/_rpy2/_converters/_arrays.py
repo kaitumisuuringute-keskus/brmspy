@@ -2,9 +2,9 @@ from typing import TYPE_CHECKING, Any, cast
 import pandas as pd
 import numpy as np
 
-from brmspy.session.codec.proxy_types import ShmArray, ShmDataFrameSimple
-from ._converter_types import PyObject
-from brmspy.session.transport import ShmPool
+from brmspy.types.shm_extensions import ShmArray, ShmDataFrameSimple
+from ....types.rpy2_converters import PyObject
+from brmspy.types.shm import ShmPool
 
 if TYPE_CHECKING:
     from rpy2.robjects import DataFrame, Matrix

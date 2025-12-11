@@ -1,9 +1,8 @@
 from typing import Callable, Union, cast
 from rpy2.rinterface import ListSexpVector
 
-from .._runtime._state import get_brms
 from ..helpers._rpy2._conversion import kwargs_r, py_to_r, r_to_py
-from ..types import FormulaResult
+from ..types.brms_results import FormulaResult
 
 
 def bf(formula: str, **formula_args) -> FormulaResult:
@@ -68,9 +67,11 @@ def bf(formula: str, **formula_args) -> FormulaResult:
         )
     ```
     """
-    brms = get_brms()
+    import rpy2.robjects as ro
+
+    fun = cast(Callable, ro.r("brms::bf"))
     formula_args = kwargs_r(formula_args)
-    formula_obj = brms.bf(formula, **formula_args)
+    formula_obj = fun(formula, **formula_args)
     return FormulaResult._formula_parse(formula_obj)
 
 
@@ -109,7 +110,9 @@ def lf(
     --------
     >>> f = bf("y ~ 1") + lf("sigma ~ x", dpar="sigma")
     """
-    brms = get_brms()
+    import rpy2.robjects as ro
+
+    fun = cast(Callable, ro.r("brms::lf"))
 
     r_formulas = [py_to_r(f) for f in formulas]
 
@@ -129,7 +132,7 @@ def lf(
         }
     )
 
-    formula_obj = brms.lf(*r_formulas, **formula_args)
+    formula_obj = fun(*r_formulas, **formula_args)
     return FormulaResult._formula_parse(formula_obj)
 
 
@@ -169,7 +172,9 @@ def nlf(
     --------
     >>> f = bf("y ~ 1") + nlf("sigma ~ a * exp(b * x)")
     """
-    brms = get_brms()
+    import rpy2.robjects as ro
+
+    fun = cast(Callable, ro.r("brms::nlf"))
 
     r_formula = py_to_r(formula)
     r_extra = [py_to_r(x) for x in extra]
@@ -187,7 +192,7 @@ def nlf(
         }
     )
 
-    formula_obj = brms.nlf(r_formula, *r_extra, **formula_args)
+    formula_obj = fun(r_formula, *r_extra, **formula_args)
     return FormulaResult._formula_parse(formula_obj)
 
 
@@ -215,7 +220,9 @@ def acformula(
     --------
     >>> f = bf("y ~ x") + acformula("~ arma(p = 1, q = 1)")
     """
-    brms = get_brms()
+    import rpy2.robjects as ro
+
+    fun = cast(Callable, ro.r("brms::acformula"))
     r_autocor = py_to_r(autocor)
 
     formula_args = kwargs_r(
@@ -224,7 +231,7 @@ def acformula(
         }
     )
 
-    formula_obj = brms.acformula(r_autocor, **formula_args)
+    formula_obj = fun(r_autocor, **formula_args)
     return FormulaResult._formula_parse(formula_obj)
 
 
@@ -246,13 +253,15 @@ def set_rescor(rescor: bool = True) -> FormulaResult:
     --------
     >>> f = bf("y1 ~ x") + bf("y2 ~ z") + set_rescor(True)
     """
-    brms = get_brms()
+    import rpy2.robjects as ro
+
+    fun = cast(Callable, ro.r("brms::set_rescor"))
     formula_args = kwargs_r(
         {
             "rescor": rescor,
         }
     )
-    formula_obj = brms.set_rescor(**formula_args)
+    formula_obj = fun(**formula_args)
     return FormulaResult._formula_parse(formula_obj)
 
 
@@ -274,13 +283,15 @@ def set_mecor(mecor: bool = True) -> FormulaResult:
     --------
     >>> f = bf("y ~ me(x, sdx)") + set_mecor(True)
     """
-    brms = get_brms()
+    import rpy2.robjects as ro
+
+    fun = cast(Callable, ro.r("brms::set_mecor"))
     formula_args = kwargs_r(
         {
             "mecor": mecor,
         }
     )
-    formula_obj = brms.set_mecor(**formula_args)
+    formula_obj = fun(**formula_args)
     return FormulaResult._formula_parse(formula_obj)
 
 
@@ -307,14 +318,16 @@ def set_nl(
     --------
     >>> f = bf("y ~ a * inv_logit(x * b)") + lf("a + b ~ z") + set_nl()
     """
-    brms = get_brms()
+    import rpy2.robjects as ro
+
+    fun = cast(Callable, ro.r("brms::set_nl"))
     formula_args = kwargs_r(
         {
             "dpar": dpar,
             "resp": resp,
         }
     )
-    formula_obj = brms.set_nl(**formula_args)
+    formula_obj = fun(**formula_args)
     return FormulaResult._formula_parse(formula_obj)
 
 

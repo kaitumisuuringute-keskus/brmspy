@@ -59,7 +59,7 @@ import numpy as np
 
 from brmspy.helpers._rpy2._robject_iter import iterate_robject_to_dataclass
 from ..helpers._rpy2._conversion import kwargs_r, py_to_r, r_to_py
-from ..types import FitResult, LooCompareResult, LooResult, SummaryResult
+from ..types.brms_results import FitResult, LooCompareResult, LooResult, SummaryResult
 from rpy2.rinterface import ListSexpVector
 
 

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TypedDict, Literal, Dict, Any, List, Optional, Union
+from typing import Protocol, TypedDict, Literal, Any, runtime_checkable
+
+from brmspy.types.shm import ShmBlockSpec, ShmRef
 
 CommandType = Literal["CALL", "SHUTDOWN"]
 
@@ -18,42 +20,37 @@ class SexpWrapper:
         return self._repr
 
 
-class ShmRef(TypedDict):
-    name: str
-    size: int
-
-
 class PayloadRef(TypedDict):
     codec: str
-    meta: Dict[str, Any]
-    buffers: List[ShmRef]
+    meta: dict[str, Any]
+    buffers: list[ShmRef]
 
 
 class Request(TypedDict):
     id: str
     cmd: CommandType
     target: str
-    args: List[PayloadRef]
-    kwargs: Dict[str, PayloadRef]
+    args: list[PayloadRef]
+    kwargs: dict[str, PayloadRef]
 
 
 class Response(TypedDict):
     id: str
     ok: bool
-    result: Optional[PayloadRef]
-    error: Optional[str]
-    traceback: Optional[str]
+    result: None | PayloadRef
+    error: None | str
+    traceback: None | str
 
 
 @dataclass
 class EnvironmentConfig:
-    r_home: Optional[str] = None
-    startup_scripts: List[str] = field(default_factory=list)
+    r_home: None | str = None
+    startup_scripts: list[str] = field(default_factory=list)
     environment_name: str = "default"
-    runtime_path: Optional[str] = None
-    env: Dict[str, str] = field(default_factory=dict)
+    runtime_path: None | str = None
+    env: dict[str, str] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "environment_name": self.environment_name,
             "r_home": self.r_home,
@@ -63,7 +60,7 @@ class EnvironmentConfig:
         }
 
     @classmethod
-    def from_dict(cls, obj: Dict[str, Any]) -> "EnvironmentConfig":
+    def from_dict(cls, obj: dict[str, Any]) -> "EnvironmentConfig":
         return cls(
             r_home=obj["r_home"],
             startup_scripts=obj["startup_scripts"],
@@ -74,10 +71,32 @@ class EnvironmentConfig:
 
     @classmethod
     def from_obj(
-        cls, obj: Optional[Union[Dict[str, Any], "EnvironmentConfig"]]
+        cls, obj: None | dict[str, Any] | "EnvironmentConfig"
     ) -> "EnvironmentConfig":
         if obj is None:
             return cls()
         if isinstance(obj, dict):
             return cls.from_dict(obj)
         return obj
+
+
+@dataclass
+class EncodeResult:
+    codec: str
+    meta: dict[str, Any]
+    buffers: list[ShmBlockSpec]
+
+
+@runtime_checkable
+class Encoder(Protocol):
+    def can_encode(self, obj: Any) -> bool: ...
+
+    def encode(self, obj: Any, shm_pool: Any) -> EncodeResult: ...
+
+    def decode(
+        self,
+        meta: dict[str, Any],
+        buffers: list[memoryview],
+        buffer_specs: list[dict],
+        shm_pool: Any,
+    ) -> Any: ...

@@ -10,50 +10,52 @@ from pathlib import Path
 from brmspy import brms
 from brmspy._runtime import get_active_runtime
 from .environment import get_environment_config
-from .types import EnvironmentConfig
+from ..types.session_types import EnvironmentConfig
 
 from .module_session import RModuleSession
+
 
 @dataclass
 class EnvContext:
     """Narrow surface area for R-env mutations."""
+
     session: RModuleSession
     _has_imported: bool = False
 
     # Runtime
-    def install_runtime(self):
-        ...
+    def install_runtime(self): ...
 
-    def list_environments(self):
-        ...
+    def list_environments(self): ...
 
-    def activate_environment(self, name: Optional[str]):
-        ...
+    def activate_environment(self, name: Optional[str]): ...
 
-    def deactivate_environment(self):
-        ...
+    def deactivate_environment(self): ...
 
-    def get_active_environment(self):
-        ...
+    def get_active_environment(self): ...
 
-    def create_environment(self, name: str) -> Path:
-        ...
+    def create_environment(self, name: str) -> Path: ...
 
     # rpackages
-    def install_rpackage(self, name: str, version: Optional[str] = None, repos_extra: Optional[List[str]] = None) -> None:
-        result = self.session._call_remote("mod:brmspy._runtime._r_packages.install_package", name, version=version, repos_extra=repos_extra)
+    def install_rpackage(
+        self,
+        name: str,
+        version: Optional[str] = None,
+        repos_extra: Optional[List[str]] = None,
+    ) -> None:
+        result = self.session._call_remote(
+            "mod:brmspy._runtime._r_packages.install_package",
+            name,
+            version=version,
+            repos_extra=repos_extra,
+        )
         return result
 
-    def uninstall_rpackage(self, name: str):
-        ...
+    def uninstall_rpackage(self, name: str): ...
 
-    def list_rpackages(self) -> List[str]:
-        ...
+    def list_rpackages(self) -> List[str]: ...
 
-    def import_rpackages(self, *packages: List[str]):
-        ...
+    def import_rpackages(self, *packages: List[str]): ...
 
-    
     # general entrypoint
     def install_brms(
         self,
@@ -66,11 +68,11 @@ class EnvContext:
         install_cmdstanr: bool = True,
         rstan_version: str | None = None,
         activate: bool = True,
-        **kwargs
+        **kwargs,
     ) -> Path | None:
         """
         Install brms R package, optionally cmdstanr and CmdStan compiler, or rstan.
-        
+
         Parameters
         ----------
         brms_version : str, default="latest"
@@ -86,26 +88,26 @@ class EnvContext:
         rstan_version : str, default="latest"
             rstan version: "latest", "2.32.6", or ">= 2.32.0"
         use_prebuilt: bool, default=False
-            Uses fully prebuilt binaries for cmdstanr and brms and their dependencies. 
-            Ignores system R libraries and uses the latest brms and cmdstanr available 
+            Uses fully prebuilt binaries for cmdstanr and brms and their dependencies.
+            Ignores system R libraries and uses the latest brms and cmdstanr available
             for your system. Requires R>=4 and might not be compatible with some older
             systems or missing toolchains. Can reduce setup time by 50x.
         install_rtools: bool, default=False
-            Installs RTools (windows only) if they cant be found. 
-            WARNING: Modifies system path and runs the full rtools installer. 
+            Installs RTools (windows only) if they cant be found.
+            WARNING: Modifies system path and runs the full rtools installer.
             Use with caution!
-        
+
         Examples
         --------
         Basic installation:
-        
+
         ```python
         from brmspy import brms
         with brms.manage() as ctx:
             ctx.install_brms()
         ```
         Install specific version:
-        
+
         ```python
         with brms.manage() as ctx:
             ctx.install_brms(brms_version="2.23.0")
@@ -134,7 +136,7 @@ class EnvContext:
             install_cmdstanr=install_cmdstanr,
             rstan_version=rstan_version,
             activate=activate,
-            **kwargs
+            **kwargs,
         )
 
         active_runtime = self.session.get_active_runtime()
@@ -144,11 +146,11 @@ class EnvContext:
         return result
 
 
-
 def _get_session() -> RModuleSession:
     # In main process, brms is the proxy; in worker it’s the real module.
     # This should only be used in main.
     from brmspy import brms as _brms  # or just capture outer name
+
     if not _brms._is_main_process:
         raise RuntimeError("environment() is only valid in the main process.")
     return cast(RModuleSession, _brms)
@@ -158,7 +160,7 @@ def _get_session() -> RModuleSession:
 def manage(
     *,
     environment_config: Optional[Union[EnvironmentConfig, Dict[str, str]]] = None,
-    environment_name: Optional[str] = None
+    environment_name: Optional[str] = None,
 ) -> Iterator[EnvContext]:
     """
     Run a block in a fresh R session.
@@ -186,10 +188,9 @@ def manage(
         new_conf = overrides
     else:
         new_conf = old_conf
-    
+
     temp_lib_dir: Optional[Path] = None
 
-    
     new_conf.env["BRMSPY_AUTOLOAD"] = "0"
 
     # fresh worker with new_conf

@@ -4,7 +4,7 @@ import numpy as np
 import arviz as az
 import xarray as xr
 from rpy2.rinterface_lib.sexp import Sexp
-from brmspy.session.transport import ShmPool
+from brmspy.types.shm import ShmPool
 from dataclasses import dataclass
 
 PyObject = Union[

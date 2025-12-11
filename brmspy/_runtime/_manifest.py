@@ -6,19 +6,19 @@ import json
 import hashlib
 from pathlib import Path
 from brmspy.helpers.log import log_warning
-from brmspy._runtime._types import RuntimeManifest
+from brmspy.types.runtime import RuntimeManifest
 
 
 def parse_manifest(path: Path) -> RuntimeManifest | None:
     """Parse manifest.json. Returns None if missing/invalid."""
     if not path.exists():
         return None
-    
+
     data = None
     try:
         with path.open("r", encoding="utf-8") as f:
             data = json.load(f)
-        
+
         return RuntimeManifest(
             runtime_version=data.get("runtime_version", ""),
             fingerprint=data.get("fingerprint", ""),
@@ -50,9 +50,9 @@ def compute_manifest_hash(manifest_dict: dict) -> str:
     """Compute SHA256 of manifest content."""
     # Create a copy without the hash field itself
     data = {k: v for k, v in manifest_dict.items() if k != "manifest_hash"}
-    
+
     # Serialize to JSON in a deterministic way
-    json_str = json.dumps(data, sort_keys=True, separators=(',', ':'))
-    
+    json_str = json.dumps(data, sort_keys=True, separators=(",", ":"))
+
     # Compute SHA256
-    return hashlib.sha256(json_str.encode('utf-8')).hexdigest()
+    return hashlib.sha256(json_str.encode("utf-8")).hexdigest()

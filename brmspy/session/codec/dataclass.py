@@ -1,7 +1,7 @@
 from dataclasses import is_dataclass
 from typing import Any, Tuple
 from brmspy.helpers.log import log_warning
-import brmspy.types as _all_types
+import brmspy.types.brms_results as _all_types
 
 from .base import CodecRegistry, DataclassCodec
 from .builtin import GenericDataClassCodec
@@ -17,7 +17,7 @@ _classes.extend(_generics)
 
 
 def register_dataclasses(registry: CodecRegistry):
-    from brmspy.types import FitResult
+    from brmspy.types.brms_results import FitResult
 
     log_warning(str(_classes))
     # raise Exception()

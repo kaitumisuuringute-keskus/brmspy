@@ -11,9 +11,9 @@ from brmspy.helpers.log import log_warning
 import xarray as xr
 import arviz as az
 
-from brmspy.session.transport import ShmBlock
-from brmspy.types import FitResult
-from .proxy_types import ShmArray, ShmDataFrameColumns, ShmDataFrameSimple
+from brmspy.types.shm import ShmBlock
+from brmspy.types.brms_results import FitResult
+from ...types.shm_extensions import ShmArray, ShmDataFrameColumns, ShmDataFrameSimple
 
 from .base import CodecRegistry, DataclassCodec, Encoder, EncodeResult, ShmBlockSpec
 

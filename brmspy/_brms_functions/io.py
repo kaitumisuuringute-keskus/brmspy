@@ -3,7 +3,7 @@ import pandas as pd
 from rpy2.rinterface import ListSexpVector
 
 from ..helpers._rpy2._conversion import brmsfit_to_idata, kwargs_r, r_to_py
-from ..types import FitResult, ProxyListSexpVector, RListVectorExtension
+from ..types.brms_results import FitResult, ProxyListSexpVector, RListVectorExtension
 
 
 def get_data(dataset_name: str, **kwargs) -> pd.DataFrame:

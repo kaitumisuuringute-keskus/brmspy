@@ -1,12 +1,10 @@
-import typing
-
-from brmspy._runtime._state import get_brms
-from brmspy.types import PriorSpec
+from typing import Callable, Optional, Sequence, cast
+from brmspy.types.brms_results import PriorSpec
 from rpy2.rinterface_lib.sexp import Sexp
 
 
 def _build_priors(
-    priors: typing.Optional[typing.Sequence[PriorSpec]] = None,
+    priors: None | Sequence[PriorSpec] = None,
 ) -> list[Sexp]:
     """
     Build R brms prior object from Python PriorSpec specifications.
@@ -94,21 +92,25 @@ def _build_priors(
     .. [1] brms prior documentation: https://paul-buerkner.github.io/brms/reference/set_prior.html
     .. [2] Stan prior choice recommendations: https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations
     """
-    brms = get_brms()
     if not priors:
         return []
+    import rpy2.robjects as ro
+    from brmspy.helpers._rpy2._converters._registry import r_to_py
+
+    fun_prior_string = cast(Callable, ro.r("brms::prior_string"))
+    fun_is_brmsprior = cast(Callable, ro.r("brms::is_brmsprior"))
 
     prior_objs = []
     for p in priors:
         kwargs = p.to_brms_kwargs()
         # first argument is the prior string
         prior_str = kwargs.pop("prior")
-        prior_obj = brms.prior_string(prior_str, **kwargs)
+        prior_obj = fun_prior_string(prior_str, **kwargs)
         prior_objs.append(prior_obj)
 
     brms_prior = prior_objs[0]
     for p in prior_objs[1:]:
         brms_prior = brms_prior + p
 
-    assert brms.is_brmsprior(brms_prior)
+    assert cast(bool, r_to_py(fun_is_brmsprior(brms_prior)))
     return brms_prior

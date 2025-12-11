@@ -1,41 +1,16 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, is_dataclass
-from typing import Any, Dict, List, Protocol, Type, runtime_checkable
+from dataclasses import is_dataclass
+from typing import Any
 
-
-@dataclass
-class ShmBlockSpec:
-    name: str
-    size: int
-
-
-@dataclass
-class EncodeResult:
-    codec: str
-    meta: Dict[str, Any]
-    buffers: List[ShmBlockSpec]
-
-
-@runtime_checkable
-class Encoder(Protocol):
-    def can_encode(self, obj: Any) -> bool: ...
-
-    def encode(self, obj: Any, shm_pool: Any) -> EncodeResult: ...
-
-    def decode(
-        self,
-        meta: Dict[str, Any],
-        buffers: List[memoryview],
-        buffer_specs: List[dict],
-        shm_pool: Any,
-    ) -> Any: ...
+from brmspy.types.session_types import EncodeResult, Encoder
+from brmspy.types.shm import ShmBlockSpec
 
 
 class CodecRegistry:
     def __init__(self) -> None:
-        self._by_codec: Dict[str, Encoder] = {}
-        self._encoders: List[Encoder] = []
+        self._by_codec: dict[str, Encoder] = {}
+        self._encoders: list[Encoder] = []
 
     def register(self, encoder: Encoder) -> None:
         if hasattr(encoder, "codec") and encoder.codec:  # type: ignore
@@ -62,9 +37,9 @@ class CodecRegistry:
     def decode(
         self,
         codec: str,
-        meta: Dict[str, Any],
-        buffers: List[memoryview],
-        buffer_specs: List[Dict],
+        meta: dict[str, Any],
+        buffers: list[memoryview],
+        buffer_specs: list[dict],
         shm_pool: Any,
     ) -> Any:
         if codec not in self._by_codec:
@@ -82,8 +57,8 @@ class DataclassCodec(Encoder):
 
     def __init__(
         self,
-        cls: Type[Any],
-        field_codecs: Dict[str, str],  # field_name -> codec_name in registry
+        cls: type[Any],
+        field_codecs: dict[str, str],  # field_name -> codec_name in registry
         registry: CodecRegistry,
     ) -> None:
         if not is_dataclass(cls):
@@ -98,8 +73,8 @@ class DataclassCodec(Encoder):
         return isinstance(obj, self._cls)
 
     def encode(self, obj: Any, shm_pool: Any) -> EncodeResult:
-        buffers: List[ShmBlockSpec] = []
-        fields_meta: Dict[str, Any] = {}
+        buffers: list[ShmBlockSpec] = []
+        fields_meta: dict[str, Any] = {}
 
         for field_name, codec_name in self._field_codecs.items():
             value = getattr(obj, field_name)
@@ -119,7 +94,7 @@ class DataclassCodec(Encoder):
 
             buffers.extend(res.buffers)
 
-        meta: Dict[str, Any] = {
+        meta: dict[str, Any] = {
             "cls": self._cls.__qualname__,
             "fields": fields_meta,
         }
@@ -132,13 +107,13 @@ class DataclassCodec(Encoder):
 
     def decode(
         self,
-        meta: Dict[str, Any],
-        buffers: List[memoryview],
-        buffer_specs: List[dict],
+        meta: dict[str, Any],
+        buffers: list[memoryview],
+        buffer_specs: list[dict],
         shm_pool: Any,
     ) -> Any:
-        fields_meta: Dict[str, Any] = meta["fields"]
-        kwargs: Dict[str, Any] = {}
+        fields_meta: dict[str, Any] = meta["fields"]
+        kwargs: dict[str, Any] = {}
 
         for field_name, fmeta in fields_meta.items():
             codec_name = fmeta["codec"]

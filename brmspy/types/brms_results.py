@@ -1,24 +1,24 @@
 """Result types for brmspy functions."""
 
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Union
 import arviz as az
 import xarray as xr
 import pandas as pd
-from rpy2.rinterface import (ListSexpVector)
+from rpy2.rinterface import ListSexpVector
 
-from brmspy.session.types import SexpWrapper
+from brmspy.types.session_types import SexpWrapper
 
 
 @dataclass(frozen=True)
 class PriorSpec:
     """
     Python representation of a brms prior specification.
-    
+
     This dataclass provides a typed interface to brms::prior_string() arguments,
     allowing Python developers to specify priors with IDE autocomplete and
     type checking. Use the `prior()` factory function to create instances.
-    
+
     Attributes
     ----------
     prior : str
@@ -40,30 +40,30 @@ class PriorSpec:
         Lower bound for truncated priors
     ub : float, optional
         Upper bound for truncated priors
-    
+
     See Also
     --------
     prior : Factory function to create PriorSpec instances
     brms::prior_string : R documentation
         https://paulbuerkner.com/brms/reference/prior_string.html
-    
+
     Examples
     --------
     Create prior specifications (prefer using `prior()` function):
-    
+
     ```python
     from brmspy.types import PriorSpec
-    
+
     # Fixed effect prior
     p1 = PriorSpec(prior="normal(0, 1)", class_="b")
-    
+
     # Group-level SD prior
     p2 = PriorSpec(
         prior="exponential(2)",
         class_="sd",
         group="patient"
     )
-    
+
     # Coefficient-specific prior with bounds
     p3 = PriorSpec(
         prior="normal(0, 1)",
@@ -73,6 +73,7 @@ class PriorSpec:
     )
     ```
     """
+
     prior: str
     class_: Optional[str] = None
     coef: Optional[str] = None
@@ -86,15 +87,15 @@ class PriorSpec:
     def to_brms_kwargs(self) -> Dict[str, Any]:
         """
         Convert PriorSpec to keyword arguments for brms::prior_string().
-        
+
         Maps Python dataclass fields to R function arguments, handling
         the `class_` -> `class` parameter name conversion.
-        
+
         Returns
         -------
         dict
             Keyword arguments ready for brms::prior_string()
-        
+
         Examples
         --------
         ```python
@@ -129,13 +130,14 @@ class PriorSpec:
 # az.InferenceData extensions for proper typing in IDEs
 # -----------------------------------------------------
 
+
 class IDFit(az.InferenceData):
     """
     Typed InferenceData for fitted brms models.
-    
+
     Extends arviz.InferenceData with type hints for IDE autocomplete.
     Guarantees the presence of specific data groups returned by `fit()`.
-    
+
     Attributes
     ----------
     posterior : xr.Dataset
@@ -150,25 +152,26 @@ class IDFit(az.InferenceData):
         Coordinate mappings for dimensions
     dims : dict
         Dimension specifications for variables
-    
+
     See Also
     --------
     brmspy.brms.fit : Creates IDFit objects
     arviz.InferenceData : Base class documentation
-    
+
     Examples
     --------
 
     ```python
     from brmspy import brms
     model = brms.fit("y ~ x", data=df, chains=4)
-    
+
     # Type checking and autocomplete
     assert isinstance(model.idata, IDFit)
     print(model.idata.posterior)  # IDE autocomplete works!
     ```
 
     """
+
     posterior: xr.Dataset
     posterior_predictive: xr.Dataset
     log_likelihood: xr.Dataset
@@ -176,76 +179,82 @@ class IDFit(az.InferenceData):
     coords: xr.Dataset
     dims: xr.Dataset
 
+
 class IDEpred(az.InferenceData):
     """
     Typed InferenceData for posterior_epred results.
-    
+
     Contains expected values E[Y|X] without observation noise.
-    
+
     Attributes
     ----------
     posterior : xr.Dataset
         Expected value samples (no observation noise)
-    
+
     See Also
     --------
     brmspy.brms.posterior_epred : Creates IDEpred objects
     """
+
     posterior: xr.Dataset
+
 
 class IDPredict(az.InferenceData):
     """
     Typed InferenceData for posterior_predict results.
-    
+
     Contains posterior predictive samples with observation noise.
-    
+
     Attributes
     ----------
     posterior_predictive : xr.Dataset
         Posterior predictive samples (includes observation noise)
-    
+
     See Also
     --------
     brmspy.brms.posterior_predict : Creates IDPredict objects
     """
+
     posterior_predictive: xr.Dataset
+
 
 class IDLinpred(az.InferenceData):
     """
     Typed InferenceData for posterior_linpred results.
-    
+
     Contains linear predictor values (before applying link function).
-    
+
     Attributes
     ----------
     predictions : xr.Dataset
         Linear predictor samples
-    
+
     See Also
     --------
     brmspy.brms.posterior_linpred : Creates IDLinpred objects
     """
+
     predictions: xr.Dataset
+
 
 class IDLogLik(az.InferenceData):
     """
     Typed InferenceData for log_lik results.
-    
+
     Contains log-likelihood values for model comparison.
-    
+
     Attributes
     ----------
     log_likelihood : xr.Dataset
         Log-likelihood values for each observation
-    
+
     See Also
     --------
     brmspy.brms.log_lik : Creates IDLogLik objects
     arviz.loo : LOO-CV using log-likelihood
     """
+
     log_likelihood: xr.Dataset
-
-
 
 
 # ---------------------
@@ -254,21 +263,24 @@ class IDLogLik(az.InferenceData):
 
 ProxyListSexpVector = Union[SexpWrapper, ListSexpVector, None]
 
+
 @dataclass
 class RListVectorExtension:
     """Generic result container with R objects.
-    
+
     Attributes
     ----------
     r : robjects.ListVector
         R object from brms
     """
+
     r: ProxyListSexpVector
+
 
 @dataclass
 class GenericResult(RListVectorExtension):
     """Generic result container with arviz and R objects.
-    
+
     Attributes
     ----------
     idata : arviz.InferenceData
@@ -276,12 +288,14 @@ class GenericResult(RListVectorExtension):
     r : robjects.ListVector
         R object from brms
     """
+
     idata: az.InferenceData
+
 
 @dataclass
 class FitResult(RListVectorExtension):
     """Result from fit() function.
-    
+
     Attributes
     ----------
     idata : arviz.InferenceData
@@ -290,12 +304,14 @@ class FitResult(RListVectorExtension):
     r : robjects.ListVector
         brmsfit R object from brms::brm()
     """
+
     idata: IDFit
+
 
 @dataclass
 class PosteriorEpredResult(RListVectorExtension):
     """Result from posterior_epred() function.
-    
+
     Attributes
     ----------
     idata : arviz.InferenceData
@@ -303,12 +319,14 @@ class PosteriorEpredResult(RListVectorExtension):
     r : robjects.ListVector
         R matrix from brms::posterior_epred()
     """
+
     idata: IDEpred
+
 
 @dataclass
 class PosteriorPredictResult(RListVectorExtension):
     """Result from posterior_predict() function.
-    
+
     Attributes
     ----------
     idata : arviz.InferenceData
@@ -316,143 +334,151 @@ class PosteriorPredictResult(RListVectorExtension):
     r : robjects.ListVector
         R matrix from brms::posterior_predict()
     """
+
     idata: IDPredict
+
 
 @dataclass
 class LogLikResult(RListVectorExtension):
     """
     Result from log_lik() function.
-    
+
     Attributes
     ----------
     idata : IDLogLik
         arviz InferenceData with log-likelihood values
     r : robjects.ListVector
         R matrix from brms::log_lik()
-    
+
     See Also
     --------
     brmspy.brms.log_lik : Creates LogLikResult objects
-    
+
     Examples
     --------
 
     ```python
     from brmspy import brms
     import arviz as az
-    
+
     model = brms.fit("y ~ x", data=df, chains=4)
     loglik = brms.log_lik(model)
-    
+
     # Use for model comparison
     loo = az.loo(model.idata)
     print(loo)
     ```
 
     """
+
     idata: IDLogLik
+
 
 @dataclass
 class PosteriorLinpredResult(RListVectorExtension):
     """
     Result from posterior_linpred() function.
-    
+
     Attributes
     ----------
     idata : IDLinpred
         arviz InferenceData with linear predictor values
     r : robjects.ListVector
         R matrix from brms::posterior_linpred()
-    
+
     See Also
     --------
     brmspy.brms.posterior_linpred : Creates PosteriorLinpredResult objects
-    
+
     Examples
     --------
 
     ```python
     from brmspy import brms
-    
+
     model = brms.fit("count ~ age", data=df, family="poisson", chains=4)
     linpred = brms.posterior_linpred(model)
-    
+
     # Linear predictor on log scale (for Poisson)
     print(linpred.idata.predictions)
     ```
     """
+
     idata: IDLinpred
+
 
 @dataclass
 class FormulaPart(RListVectorExtension):
     _repr: str
 
+
 @dataclass
 class FormulaResult(RListVectorExtension):
     """
     Result from formula() function.
-    
+
     Attributes
     ----------
     r : robjects.ListVector
         R brmsformula object
     dict : Dict
         Python dictionary representation of formula
-    
+
     See Also
     --------
     brmspy.brms.formula : Creates FormulaResult objects
-    
+
     Examples
     --------
 
     ```python
     from brmspy import brms
-    
+
     # Create formula with options
     f = brms.formula("y ~ x", decomp="QR")
-    
+
     # Use in fit()
     model = brms.fit(f, data=df, chains=4)
     ```
     """
-    parts: List['FormulaResult']
+
+    parts: List["FormulaResult"]
 
     @classmethod
-    def _formula_parse(cls, obj: Union[str, ProxyListSexpVector, 'FormulaResult']) -> 'FormulaResult':
+    def _formula_parse(
+        cls, obj: Union[str, ProxyListSexpVector, "FormulaResult"]
+    ) -> "FormulaResult":
         if isinstance(obj, FormulaResult):
             return obj
-        
+
         if isinstance(obj, str):
             from brmspy import active
+
             return active().bf(obj)
         elif isinstance(obj, SexpWrapper):
-            return FormulaResult(
-                r=obj,
-                parts=[]
-            )
+            return FormulaResult(r=obj, parts=[])
         else:
-            return FormulaResult(
-                r=obj,
-                parts=[]
-            )
-    
+            return FormulaResult(r=obj, parts=[])
+
     def _build(self) -> ProxyListSexpVector:
         it = self.parts
 
     def __getattribute__(self, name):
-        #if name == "r":
+        # if name == "r":
         #    return self._build()
         return super().__getattribute__(name)
 
     def __add__(self, other):
         from brmspy import active
+
         if isinstance(other, (ProxyListSexpVector, str)):
             other = FormulaResult._formula_parse(other)
 
         if not isinstance(other, FormulaResult):
-            raise ArithmeticError("When adding values to formula, they must be FormulaResult or parseable to FormulaResult")
-        
+            raise ArithmeticError(
+                "When adding values to formula, they must be FormulaResult or parseable to FormulaResult"
+            )
+
         return active()._formula_add(self, other)
 
     def __str__(self):
@@ -462,11 +488,9 @@ class FormulaResult(RListVectorExtension):
         return self.__str__()
 
 
-
-
-
 def _indent_block(text: str, prefix: str = "  ") -> str:
     return "\n".join(prefix + line for line in str(text).splitlines())
+
 
 @dataclass
 class SummaryResult(RListVectorExtension):
@@ -500,7 +524,7 @@ class SummaryResult(RListVectorExtension):
     def __repr__(self) -> str:
         # For interactive use, repr == pretty summary
         return self.__str__()
-    
+
 
 @dataclass
 class LooResult(RListVectorExtension):
@@ -514,7 +538,7 @@ class LooResult(RListVectorExtension):
     se_elpd_loo: float
     se_p_loo: float
     se_looic: float
-    
+
     def __repr__(self) -> str:
         """Pretty print LOO-CV results."""
         lines = []
@@ -524,19 +548,27 @@ class LooResult(RListVectorExtension):
         lines.append(f"p_loo:     {self.p_loo:>10.2f}  (SE: {self.se_p_loo:.2f})")
         lines.append(f"LOOIC:     {self.looic:>10.2f}  (SE: {self.se_looic:.2f})")
         lines.append("")
-        
+
         # Show Pareto k diagnostic summary if available
         if isinstance(self.diagnostics, pd.DataFrame) and not self.diagnostics.empty:
-            if 'pareto_k' in self.diagnostics.columns:
-                k_vals = self.diagnostics['pareto_k']
+            if "pareto_k" in self.diagnostics.columns:
+                k_vals = self.diagnostics["pareto_k"]
                 lines.append("Pareto k Diagnostics:")
-                lines.append(f"  Good (k < 0.5):       {(k_vals < 0.5).sum():>5} observations")
-                lines.append(f"  OK (0.5 ≤ k < 0.7):   {((k_vals >= 0.5) & (k_vals < 0.7)).sum():>5} observations")
-                lines.append(f"  Bad (0.7 ≤ k < 1):    {((k_vals >= 0.7) & (k_vals < 1)).sum():>5} observations")
-                lines.append(f"  Very bad (k ≥ 1):     {(k_vals >= 1).sum():>5} observations")
-                
+                lines.append(
+                    f"  Good (k < 0.5):       {(k_vals < 0.5).sum():>5} observations"
+                )
+                lines.append(
+                    f"  OK (0.5 ≤ k < 0.7):   {((k_vals >= 0.5) & (k_vals < 0.7)).sum():>5} observations"
+                )
+                lines.append(
+                    f"  Bad (0.7 ≤ k < 1):    {((k_vals >= 0.7) & (k_vals < 1)).sum():>5} observations"
+                )
+                lines.append(
+                    f"  Very bad (k ≥ 1):     {(k_vals >= 1).sum():>5} observations"
+                )
+
         return "\n".join(lines)
-    
+
 
 @dataclass
 class LooCompareResult(RListVectorExtension):
