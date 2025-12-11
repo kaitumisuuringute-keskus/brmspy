@@ -1,6 +1,7 @@
 """
 Pytest configuration and shared fixtures for brmspy tests
 """
+
 from pathlib import Path
 import pytest
 import sys
@@ -9,26 +10,28 @@ import pandas as pd
 import numpy as np
 
 # Add parent directory to path for imports
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-os.environ['BRMSPY_COVERAGE'] = "1"
+os.environ["BRMSPY_COVERAGE"] = "1"
 
 
 @pytest.fixture
 def sample_dataframe():
     """
     Create a simple DataFrame for testing.
-    
+
     Returns a small dataset with a continuous outcome and predictors.
     """
     np.random.seed(42)
     n = 50
-    data = pd.DataFrame({
-        'y': np.random.normal(10, 2, n),
-        'x1': np.random.normal(0, 1, n),
-        'x2': np.random.choice(['A', 'B'], n),
-        'group': np.repeat(['G1', 'G2'], n//2)
-    })
+    data = pd.DataFrame(
+        {
+            "y": np.random.normal(10, 2, n),
+            "x1": np.random.normal(0, 1, n),
+            "x2": np.random.choice(["A", "B"], n),
+            "group": np.repeat(["G1", "G2"], n // 2),
+        }
+    )
     return data
 
 
@@ -38,9 +41,9 @@ def sample_dict():
     Create a simple dictionary for testing data conversion.
     """
     return {
-        'a': [1, 2, 3, 4, 5],
-        'b': [2.1, 3.2, 4.3, 5.4, 6.5],
-        'c': ['x', 'y', 'z', 'x', 'y']
+        "a": [1, 2, 3, 4, 5],
+        "b": [2.1, 3.2, 4.3, 5.4, 6.5],
+        "c": ["x", "y", "z", "x", "y"],
     }
 
 
@@ -66,11 +69,8 @@ def poisson_data():
     x = np.random.normal(0, 1, n)
     lambda_true = np.exp(1 + 0.5 * x)
     y = np.random.poisson(lambda_true)
-    
-    return pd.DataFrame({
-        'count': y,
-        'predictor': x
-    })
+
+    return pd.DataFrame({"count": y, "predictor": x})
 
 
 def pytest_configure(config):
@@ -78,21 +78,19 @@ def pytest_configure(config):
     Custom pytest configuration.
     """
     config.addinivalue_line(
-        "markers", 
-        "slow: marks tests as slow (deselect with '-m \"not slow\"')"
+        "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')"
+    )
+    config.addinivalue_line(
+        "markers", "integration: marks tests as integration tests requiring R and brms"
+    )
+    config.addinivalue_line(
+        "markers", "requires_brms: marks tests that require brms to be installed"
     )
     config.addinivalue_line(
         "markers",
-        "integration: marks tests as integration tests requiring R and brms"
+        "rdeps: rdeps test. only runs within githubs r-dependencies-tests workflow.",
     )
-    config.addinivalue_line(
-        "markers",
-        "requires_brms: marks tests that require brms to be installed"
-    )
-    config.addinivalue_line(
-        "markers",
-        "rdeps: rdeps test. only runs within githubs r-dependencies-tests workflow."
-    )
+
 
 @pytest.fixture(autouse=True, scope="module")
 def clean_runtime_dir_between_tests(request):
@@ -103,7 +101,7 @@ def clean_runtime_dir_between_tests(request):
     (e.g. via env var) so this doesn't touch real user data.
     """
 
-    if os.getenv('BRMSPY_DESTRUCTIVE_RDEPS_TESTS') != "1":
+    if os.getenv("BRMSPY_DESTRUCTIVE_RDEPS_TESTS") != "1":
         yield
         return
 
@@ -135,18 +133,20 @@ def clean_runtime_dir_between_tests(request):
 
     yield
 
+
 @pytest.fixture(scope="session")
 def brms_available():
     """
     Check if brms is available and can be imported.
-    
+
     Returns True if brms is available, False otherwise.
     This is a session-scoped fixture that only checks once.
     """
     try:
         import rpy2.robjects.packages as rpackages
-        brms = rpackages.importr("brms")
-        return True
+        from brmspy import brms
+
+        return brms.get_brms_version() is not None
     except Exception:
         return False
 
@@ -155,20 +155,26 @@ def pytest_collection_modifyitems(config, items):
     """
     Automatically skip tests when required.
     """
-    skip_requires_brms = pytest.mark.skip(reason="brms not installed - run: python -c 'import brmspy; brmspy.install_brms()'")
-    skip_requires_rdeps = pytest.mark.skip(reason="rdeps test. only runs within githubs rdeps test workflow.'")
+    skip_requires_brms = pytest.mark.skip(
+        reason="brms not installed - run: python -c 'import brmspy; brmspy.install_brms()'"
+    )
+    skip_requires_rdeps = pytest.mark.skip(
+        reason="rdeps test. only runs within githubs rdeps test workflow.'"
+    )
     skip_only_using_rdeps = pytest.mark.skip(reason="Running in rdeps-only mode!'")
-    
+
     user_mark_expr = config.getoption("-m") or ""
     rdeps_allowed = (
-        "rdeps" in user_mark_expr
-        and os.getenv('BRMSPY_DESTRUCTIVE_RDEPS_TESTS') == "1"
+        "rdeps" in user_mark_expr and os.getenv("BRMSPY_DESTRUCTIVE_RDEPS_TESTS") == "1"
     )
 
     # Try to check if brms is available
     brms_is_available = False
     try:
         from brmspy import brms
+
+        with brms.manage(environment_name="_test") as ctx:
+            ctx.install_brms(use_prebuilt=True)
 
         if brms.get_brms_version() is not None:
             brms_is_available = True
@@ -182,4 +188,3 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(skip_requires_rdeps)
         if rdeps_allowed and "rdeps" not in item.keywords:
             item.add_marker(skip_only_using_rdeps)
-            

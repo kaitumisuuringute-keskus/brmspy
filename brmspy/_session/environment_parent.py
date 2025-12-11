@@ -21,6 +21,9 @@ def save(env_conf: EnvironmentConfig) -> None:
     os.makedirs(env_dir, exist_ok=True)
     os.makedirs(env_rlib_dir, exist_ok=True)
 
+    if "BRMSPY_AUTOLOAD" in env_conf.env:
+        del env_conf.env["BRMSPY_AUTOLOAD"]
+
     with open(config_dir, "w", encoding="utf-8") as f:
         json.dump(env_conf.to_dict(), f, indent=2, ensure_ascii=False)
 
