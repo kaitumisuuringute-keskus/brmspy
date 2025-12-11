@@ -7,6 +7,7 @@ from collections.abc import Iterator
 from typing import Literal, Mapping, Sequence, Union, cast
 
 from .brms_results import ProxyListSexpVector
+from rpy2.rinterface_lib.sexp import Sexp
 
 
 __all__ = ["Primitive", "FormulaPart", "FormulaConstruct", "Node"]
@@ -146,7 +147,7 @@ class FormulaConstruct:
                     # All children are leaves -> one summand
                     out: list[FormulaPart | ProxyListSexpVector] = []
                     for child in node:
-                        if isinstance(child, (FormulaPart, ProxyListSexpVector)):
+                        if isinstance(child, (FormulaPart, ProxyListSexpVector, Sexp)):
                             child = cast(FormulaPart | ProxyListSexpVector, child)
                             out.append(child)
                         else:

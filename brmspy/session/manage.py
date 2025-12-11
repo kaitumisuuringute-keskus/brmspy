@@ -8,7 +8,7 @@ from .environment_parent import save, save_as_state
 from .environment import get_environment_config
 
 from ..types.session_types import EnvironmentConfig
-from .module_session import RModuleSession
+from .session import RModuleSession
 
 
 @dataclass

@@ -23,7 +23,7 @@ from ..types.errors import RSessionError
 from ..types.session_types import EnvironmentConfig
 from .codec import get_default_registry
 from .transport import ShmPool, attach_buffers
-from .worker import worker_main
+from brmspy.session.worker import worker_main
 
 _INTERNAL_ATTRS = {
     "_module",

@@ -8,12 +8,16 @@ from multiprocessing.connection import Connection
 from multiprocessing.managers import SharedMemoryManager
 from typing import Any
 
-from ..types.session_types import EnvironmentConfig
-from .codec import get_default_registry
-from .environment_worker import _initialise_r_safe, activate, run_startup_scripts
-from .transport import ShmPool, attach_buffers
-from .worker_logging import setup_worker_logging
-from .worker_sexp_cache import cache_sexp, reattach_sexp
+from ...types.session_types import EnvironmentConfig
+from ..codec import get_default_registry
+from .setup import (
+    _initialise_r_safe,
+    activate,
+    run_startup_scripts,
+)
+from ..transport import ShmPool, attach_buffers
+from .logging import setup_worker_logging
+from .sexp_cache import cache_sexp, reattach_sexp
 
 
 def worker_main(
@@ -61,7 +65,7 @@ def worker_main(
         "[R]: {exception} {exc_value} {traceback}"
     )
 
-    from .._singleton._shm_singleton import _set_shm
+    from ..._singleton._shm_singleton import _set_shm
 
     _set_shm(shm_pool)
 
