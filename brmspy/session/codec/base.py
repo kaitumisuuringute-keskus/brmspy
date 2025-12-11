@@ -19,15 +19,17 @@ class EncodeResult:
 
 @runtime_checkable
 class Encoder(Protocol):
-    def can_encode(self, obj: Any) -> bool:
-        ...
+    def can_encode(self, obj: Any) -> bool: ...
 
-    def encode(self, obj: Any, shm_pool: Any) -> EncodeResult:
-        ...
+    def encode(self, obj: Any, shm_pool: Any) -> EncodeResult: ...
 
-    def decode(self, meta: Dict[str, Any],
-               buffers: List[memoryview]) -> Any:
-        ...
+    def decode(
+        self,
+        meta: Dict[str, Any],
+        buffers: List[memoryview],
+        buffer_specs: List[dict],
+        shm_pool: Any,
+    ) -> Any: ...
 
 
 class CodecRegistry:
@@ -35,13 +37,13 @@ class CodecRegistry:
         self._by_codec: Dict[str, Encoder] = {}
         self._encoders: List[Encoder] = []
 
-    def register(self,  encoder: Encoder) -> None:
-        if hasattr(encoder, 'codec') and encoder.codec: # type: ignore
-            codec_name = encoder.codec # type: ignore
+    def register(self, encoder: Encoder) -> None:
+        if hasattr(encoder, "codec") and encoder.codec:  # type: ignore
+            codec_name = encoder.codec  # type: ignore
         else:
             codec_name = type(encoder).__name__
         self._by_codec[codec_name] = encoder
-        encoder.codec = codec_name # type: ignore
+        encoder.codec = codec_name  # type: ignore
         self._encoders.append(encoder)
 
     def encode(self, obj: Any, shm_pool: Any) -> EncodeResult:
@@ -57,14 +59,19 @@ class CodecRegistry:
             raise RuntimeError("No pickle codec registered")
         return self._by_codec["PickleCodec"].encode(obj, shm_pool)
 
-    def decode(self, codec: str, meta: Dict[str, Any],
-               buffers: List[memoryview]) -> Any:
+    def decode(
+        self,
+        codec: str,
+        meta: Dict[str, Any],
+        buffers: List[memoryview],
+        buffer_specs: List[Dict],
+        shm_pool: Any,
+    ) -> Any:
         if codec not in self._by_codec:
-            raise ValueError(f"Unknown codec: {codec}, available: {list(self._by_codec.keys())}")
-        return self._by_codec[codec].decode(meta, buffers)
-
-
-
+            raise ValueError(
+                f"Unknown codec: {codec}, available: {list(self._by_codec.keys())}"
+            )
+        return self._by_codec[codec].decode(meta, buffers, buffer_specs, shm_pool)
 
 
 class DataclassCodec(Encoder):
@@ -123,8 +130,13 @@ class DataclassCodec(Encoder):
             buffers=buffers,
         )
 
-    def decode(self, meta: Dict[str, Any],
-               buffers: List[memoryview]) -> Any:
+    def decode(
+        self,
+        meta: Dict[str, Any],
+        buffers: List[memoryview],
+        buffer_specs: List[dict],
+        shm_pool: Any,
+    ) -> Any:
         fields_meta: Dict[str, Any] = meta["fields"]
         kwargs: Dict[str, Any] = {}
 
@@ -136,7 +148,9 @@ class DataclassCodec(Encoder):
             value = self._registry.decode(
                 codec_name,
                 fmeta["meta"],
-                buffers[start:start + count],
+                buffers[start : start + count],
+                buffer_specs,
+                shm_pool,
             )
             kwargs[field_name] = value
 

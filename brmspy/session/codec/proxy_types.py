@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, List
 from brmspy.session.transport import ShmBlock
 import numpy as np
 import pandas as pd
@@ -20,6 +20,27 @@ class ShmArray(np.ndarray):
         obj = base.view(ShmArray)
         obj.block = block
         return obj
+
+
+class ShmDataFrameSimple(pd.DataFrame):
+    block: ShmBlock
+
+    @classmethod
+    def from_block(
+        cls,
+        block: ShmBlock,
+        nrows: int,
+        ncols: int,
+        columns: list[Any] | None,
+        index: list[Any] | None,
+        dtype: str | np.dtype,
+    ) -> "ShmDataFrameSimple":
+        _dtype = np.dtype(dtype)
+        arr = ShmArray.from_block(shape=(ncols, nrows), dtype=_dtype, block=block)
+
+        df = ShmDataFrameSimple(data=arr.T, index=index, columns=columns)
+        df.block = block
+        return df
 
 
 class ShmDataFrameColumns(pd.DataFrame):

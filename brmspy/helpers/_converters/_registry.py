@@ -38,9 +38,9 @@ if os.environ.get("BRMSPY_WORKER") == "1":
 
     _R2PY_CONVERTERS.update(
         {
-            ListSexpVector: _r2py_listvector,
-            ro.Matrix: _r2py_matrix,
             ro.DataFrame: _r2py_dataframe,
+            ro.Matrix: _r2py_matrix,
+            ListSexpVector: _r2py_listvector,
             (ro.Formula, LangSexpVector, SignatureTranslatedFunction): _r2py_language,
             ro.vectors.Vector: _r2py_vector,  # must come AFTER specific vector types
         }
@@ -48,9 +48,9 @@ if os.environ.get("BRMSPY_WORKER") == "1":
     _PY2R_CONVERTERS.update(
         {
             pd.DataFrame: _py2r_dataframe,
+            np.ndarray: _py2r_numpy,
             Mapping: _py2r_mapping,
             (list, tuple): _py2r_list,
-            np.ndarray: _py2r_numpy,
         }
     )
 
@@ -132,12 +132,16 @@ def r_to_py(obj: Sexp, shm: ShmPool | None = None) -> PyObject:
     brmspy.brms.summary : Returns Python-friendly summary dict
     """
     import rpy2.robjects as ro
+    from brmspy.session._shm_singleton import _get_shm
 
     if obj is ro.NULL:
         return None
 
     _type = type(obj)
     converter = None
+
+    if shm is None:
+        shm = _get_shm()
 
     if _type in _R2PY_CONVERTERS:
         # O(1) lookup first
@@ -146,10 +150,13 @@ def r_to_py(obj: Sexp, shm: ShmPool | None = None) -> PyObject:
         for _type, _con in _R2PY_CONVERTERS.items():
             if isinstance(obj, _type):
                 converter = _con
+                break
 
     if not converter:
+        print("fallback for", type(obj))
         return _r2py_fallback(obj, shm=shm)
 
+    print("using", converter.__name__)
     return converter(obj, shm)
 
 

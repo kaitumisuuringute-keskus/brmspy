@@ -4,13 +4,15 @@ from typing import Any, Dict, List
 import pickle
 
 import numpy as np
+import pandas as pd
 
 from brmspy.helpers.log import log_warning
 import xarray as xr
 import arviz as az
 
+from brmspy.session.transport import ShmBlock
 from brmspy.types import FitResult
-from .proxy_types import ShmArray, ShmDataFrameColumns
+from .proxy_types import ShmArray, ShmDataFrameColumns, ShmDataFrameSimple
 
 from .base import DataclassCodec, Encoder, EncodeResult, ShmBlockSpec
 
@@ -36,6 +38,7 @@ class NumpyArrayCodec:
             nbytes = obj.block.size
             block = obj.block
         else:
+            raise Exception("DEFAULT!")
             arr = np.asarray(obj)
             data = arr.tobytes(order="C")
             nbytes = len(data)
@@ -57,7 +60,13 @@ class NumpyArrayCodec:
             buffers=[ShmBlockSpec(name=block.name, size=block.size)],
         )
 
-    def decode(self, meta: Dict[str, Any], buffers: List[memoryview]) -> Any:
+    def decode(
+        self,
+        meta: Dict[str, Any],
+        buffers: List[memoryview],
+        buffer_specs: List[dict],
+        shm_pool: Any,
+    ) -> Any:
         buf = buffers[0]
         dtype = np.dtype(meta["dtype"])
         shape = tuple(meta["shape"])
@@ -68,6 +77,85 @@ class NumpyArrayCodec:
         view = buf[:nbytes]
         arr = np.ndarray(shape=shape, dtype=dtype, buffer=view, order=order)
         return arr
+
+
+class PandasDFCodec:
+    def can_encode(self, obj: Any) -> bool:
+        return isinstance(obj, pd.DataFrame)
+
+    def encode(self, obj: Any, shm_pool: Any) -> EncodeResult:
+        assert isinstance(obj, pd.DataFrame)  # assert type
+
+        meta: dict[str, Any] = {
+            "columns": list(obj.columns),
+            "index": list(obj.index),
+            "variant": "single",
+        }
+        buffers: list[ShmBlockSpec] = []
+
+        if isinstance(obj, ShmDataFrameSimple):
+            # single dtype matrix
+            meta["variant"] = "single"
+            meta["dtype"] = str(obj.values.dtype)
+            meta["order"] = array_order(obj.values)
+            spec = ShmBlockSpec(name=obj.block.name, size=obj.block.size)
+            buffers.append(spec)
+        elif isinstance(obj, ShmDataFrameColumns):
+            # per column buffers
+            meta["variant"] = "columnar"
+            meta["order"] = "F"
+            for column in obj.columns:
+                block = obj.blocks_columns[column]
+                spec = ShmBlockSpec(name=block.name, size=block.size)
+                buffers.append(spec)
+        else:
+            raise Exception("DEFAULT")
+            meta["variant"] = "single"
+            meta["dtype"] = "O"
+            meta["order"] = array_order(obj.values)
+            data = obj.values.tobytes(order="C")
+            nbytes = len(data)
+
+            # Ask for exactly nbytes; OS may round up internally, that's fine.
+            block = shm_pool.alloc(nbytes)
+            block.shm.buf[:nbytes] = data
+            spec = ShmBlockSpec(name=block.name, size=nbytes)
+            buffers.append(spec)
+
+        return EncodeResult(codec=type(self).__name__, meta=meta, buffers=buffers)
+
+    def decode(
+        self,
+        meta: Dict[str, Any],
+        buffers: List[memoryview],
+        buffer_specs: List[dict],
+        shm_pool: Any,
+    ) -> Any:
+        if meta.get("variant") == "single":
+            buf = buffers[0]
+            spec = buffer_specs[0]
+            dtype = np.dtype(meta["dtype"])
+            nbytes = spec["size"]
+            order = meta["order"]
+
+            columns = meta["columns"]
+            index = meta["index"]
+            shape = (len(index), len(columns))
+
+            # Only use the slice that actually holds array data
+            view = buf[:nbytes]
+            arr = np.ndarray(shape=shape, dtype=dtype, buffer=view, order=order)
+
+            df = ShmDataFrameSimple(
+                data=arr, index=meta["index"], columns=meta["columns"]
+            )
+            df.block = ShmBlock(name=spec["name"], size=spec["size"], shm=shm_pool)
+
+            return df
+        elif meta.get("variant") == "columnar":
+            raise NotImplemented
+        else:
+            raise Exception(f"Unknown DataFrame variant {meta.get('variant')}")
 
 
 class PickleCodec:
@@ -95,7 +183,13 @@ class PickleCodec:
             buffers=[ShmBlockSpec(name=block.name, size=block.size)],
         )
 
-    def decode(self, meta: Dict[str, Any], buffers: List[memoryview]) -> Any:
+    def decode(
+        self,
+        meta: Dict[str, Any],
+        buffers: List[memoryview],
+        buffer_specs: List[dict],
+        shm_pool: Any,
+    ) -> Any:
         buf = buffers[0]
         length = meta["length"]
         payload = bytes(buf[:length])
@@ -186,7 +280,13 @@ class InferenceDataCodec(Encoder):
             buffers=buffers,
         )
 
-    def decode(self, meta: Dict[str, Any], buffers: List[memoryview]) -> Any:
+    def decode(
+        self,
+        meta: Dict[str, Any],
+        buffers: List[memoryview],
+        buffer_specs: List[dict],
+        shm_pool: Any,
+    ) -> Any:
         groups_meta = meta["groups"]
         groups: Dict[str, xr.Dataset] = {}
 

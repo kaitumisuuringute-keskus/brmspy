@@ -45,10 +45,10 @@ Basic Bayesian regression workflow:
 ```python
     from brmspy import brms
     import arviz as az
-    
+
     # Load example data
     epilepsy = brms.get_brms_data("epilepsy")
-    
+
     # Fit Poisson regression model
     model = brms.fit(
         formula="count ~ zAge + zBase * Trt + (1|patient)",
@@ -57,7 +57,7 @@ Basic Bayesian regression workflow:
         chains=4,
         iter=2000
     )
-    
+
     # Analyze results with ArviZ
     az.summary(model.idata)
     az.plot_trace(model.idata)
@@ -136,10 +136,10 @@ Complete workflow with model diagnostics:
     from brmspy import brms, prior
     import arviz as az
     import pandas as pd
-    
+
     # Load data
     data = brms.get_brms_data("kidney")
-    
+
     # Define model with informative priors
     model = brms.fit(
         formula="time | cens(censored) ~ age + sex + disease + (1 + age | patient)",
@@ -157,15 +157,15 @@ Complete workflow with model diagnostics:
         cores=4,
         seed=42
     )
-    
+
     # Check convergence
     print(az.summary(model.idata, var_names=["b"]))
     assert all(az.rhat(model.idata) < 1.01)
-    
+
     # Visualize results
     az.plot_trace(model.idata, var_names=["b", "sd"])
     az.plot_posterior(model.idata, var_names=["b"])
-    
+
     # Make predictions
     new_patients = pd.DataFrame({
         "age": [50, 60, 70],
@@ -178,7 +178,6 @@ Complete workflow with model diagnostics:
 ```
 """
 
-
 __version__ = "0.2.1"
 __author__ = "Remi Sebastian Kits, Adam Haber"
 __license__ = "Apache-2.0"
@@ -186,6 +185,8 @@ __license__ = "Apache-2.0"
 import os
 import sys
 
+
 def active():
     from brmspy import brms
+
     return brms

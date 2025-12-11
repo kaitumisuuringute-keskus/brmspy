@@ -36,21 +36,23 @@ _INTERNAL_ATTRS = {
     "_call_remote",
     "_encode_arg",
     "_decode_result",
-
-    "restart", "shutdown"
+    "restart",
+    "shutdown",
 }
+
 
 def r_home_from_subprocess() -> Optional[str]:
     """Return the R home directory from calling 'R RHOME'."""
-    cmd = ('R', 'RHOME')
+    cmd = ("R", "RHOME")
     tmp = subprocess.check_output(cmd, universal_newlines=True)
     # may raise FileNotFoundError, WindowsError, etc
     r_home = tmp.split(os.linesep)
-    if r_home[0].startswith('WARNING'):
+    if r_home[0].startswith("WARNING"):
         res = r_home[1]
     else:
         res = r_home[0].strip()
     return res
+
 
 def add_env_defaults(overrides: Dict[str, str]) -> Dict[str, str]:
     """
@@ -130,10 +132,13 @@ def with_env(overrides: Dict[str, str]) -> Iterator[None]:
 def spawn_worker(target, args, env_overrides: Dict[str, str]):
     ctx = mp.get_context("spawn")
     with with_env(env_overrides):
-        daemon = os.environ.get("BRMSPY_COVERAGE") != "1" and not os.environ.get("COVERAGE_PROCESS_START")
+        daemon = os.environ.get("BRMSPY_COVERAGE") != "1" and not os.environ.get(
+            "COVERAGE_PROCESS_START"
+        )
         proc = ctx.Process(target=target, args=args, daemon=daemon)
         proc.start()
     return proc
+
 
 class RModuleSession(ModuleType):
     """
@@ -158,16 +163,19 @@ class RModuleSession(ModuleType):
 
         if environment_conf is None:
             from .environment import get_environment_config
+
             try:
                 environment_conf = get_environment_config("default")
             except:
-                
+
                 pass
 
         # Store wrapped module and how to import it in worker
         self._module: ModuleType = module
         self._module_path: str = module_path
-        self._environment_conf: EnvironmentConfig = EnvironmentConfig.from_obj(environment_conf)
+        self._environment_conf: EnvironmentConfig = EnvironmentConfig.from_obj(
+            environment_conf
+        )
 
         if "BRMSPY_AUTOLOAD" not in self._environment_conf.env:
             self._environment_conf.env["BRMSPY_AUTOLOAD"] = "1"
@@ -180,6 +188,10 @@ class RModuleSession(ModuleType):
 
         # copy attributes so IDEs / dir() see the module surface
         self.__dict__.update(module.__dict__)
+
+        from ._shm_singleton import _set_shm
+
+        _set_shm(self._shm_pool)
 
         # register for global cleanup at exit
         RModuleSession._instances.add(self)
@@ -214,7 +226,7 @@ class RModuleSession(ModuleType):
         self._shm_pool = ShmPool(mgr)
         self._reg = get_default_registry()
         self._closed = False
-    
+
     def _teardown_worker(self) -> None:
         """Internal helper to stop worker/manager; used by shutdown/restart."""
         if self._closed:
@@ -264,10 +276,7 @@ class RModuleSession(ModuleType):
         return {
             "codec": enc.codec,
             "meta": enc.meta,
-            "buffers": [
-                {"name": b.name, "size": b.size}
-                for b in enc.buffers
-            ],
+            "buffers": [{"name": b.name, "size": b.size} for b in enc.buffers],
         }
 
     def _decode_result(self, resp: Dict[str, Any]) -> Any:
@@ -281,6 +290,8 @@ class RModuleSession(ModuleType):
             pres["codec"],
             pres["meta"],
             attach_buffers(self._shm_pool, pres["buffers"]),
+            pres["buffers"],
+            shm_pool=self._shm_pool,
         )
 
     def _call_remote(self, func_name: str, *args, **kwargs) -> Any:
@@ -291,7 +302,7 @@ class RModuleSession(ModuleType):
             target = func_name
         else:
             target = f"mod:{self._module_path}.{func_name}"
-    
+
         req_id = str(uuid.uuid4())
         req = {
             "id": req_id,
@@ -308,14 +319,12 @@ class RModuleSession(ModuleType):
 
     def __getattribute__(self, name: str) -> Any:
         # 1. Always allow access to internal attributes via base implementation
-        if (
-            name in _INTERNAL_ATTRS
-            or name.startswith("__") and name.endswith("__")
-        ):
+        if name in _INTERNAL_ATTRS or name.startswith("__") and name.endswith("__"):
             return ModuleType.__getattribute__(self, name)
-        
-        if name == 'manage':
+
+        if name == "manage":
             from brmspy.session.manage import manage
+
             return manage
 
         # 2. If we already have a cached wrapper for this name, return it
@@ -369,7 +378,10 @@ class RModuleSession(ModuleType):
         except Exception:
             pass
 
-    def restart(self, environment_conf: Optional[Union[Dict[str, Any], EnvironmentConfig]] = None) -> None:
+    def restart(
+        self,
+        environment_conf: Optional[Union[Dict[str, Any], EnvironmentConfig]] = None,
+    ) -> None:
         """
         Restart the underlying worker process and shared-memory manager.
 

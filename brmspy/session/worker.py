@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from multiprocessing.connection import Connection
 from typing import Any, Dict, Optional
 from multiprocessing.managers import SharedMemoryManager
@@ -16,7 +17,12 @@ from .transport import ShmPool, attach_buffers
 from .environment import _initialise_r_safe, configure_r_env, run_startup_scripts
 
 
-def worker_main(conn: Connection, mgr_address: Optional[str], mgr_authkey: Optional[bytes], runtime_conf: EnvironmentConfig) -> None:
+def worker_main(
+    conn: Connection,
+    mgr_address: Optional[str],
+    mgr_authkey: Optional[bytes],
+    runtime_conf: EnvironmentConfig,
+) -> None:
     """
     Worker entrypoint.
 
@@ -29,10 +35,9 @@ def worker_main(conn: Connection, mgr_address: Optional[str], mgr_authkey: Optio
 
     import os
 
-    os.environ['BRMSPY_WORKER'] = "1"
+    os.environ["BRMSPY_WORKER"] = "1"
 
     _initialise_r_safe()
-
 
     # 1. Connect to SHM manager
     smm = SharedMemoryManager(address=mgr_address, authkey=mgr_authkey)
@@ -50,7 +55,14 @@ def worker_main(conn: Connection, mgr_address: Optional[str], mgr_authkey: Optio
     from rpy2.rinterface_lib.sexp import Sexp
 
     import rpy2.rinterface_lib.callbacks
-    rpy2.rinterface_lib.callbacks._WRITECONSOLE_EXCEPTION_LOG = '[R]: {exception} {exc_value} {traceback}'
+
+    rpy2.rinterface_lib.callbacks._WRITECONSOLE_EXCEPTION_LOG = (
+        "[R]: {exception} {exc_value} {traceback}"
+    )
+
+    from ._shm_singleton import _set_shm
+
+    _set_shm(shm_pool)
 
     try:
         while True:
@@ -79,6 +91,8 @@ def worker_main(conn: Connection, mgr_address: Optional[str], mgr_authkey: Optio
                             p["codec"],
                             p["meta"],
                             attach_buffers(shm_pool, p["buffers"]),
+                            p["buffers"],
+                            shm_pool=shm_pool,
                         )
                         for p in req["args"]
                     ]
@@ -87,6 +101,8 @@ def worker_main(conn: Connection, mgr_address: Optional[str], mgr_authkey: Optio
                             p["codec"],
                             p["meta"],
                             attach_buffers(shm_pool, p["buffers"]),
+                            p["buffers"],
+                            shm_pool=shm_pool,
                         )
                         for k, p in req["kwargs"].items()
                     }
@@ -97,11 +113,14 @@ def worker_main(conn: Connection, mgr_address: Optional[str], mgr_authkey: Optio
                     target = _resolve_module_target(req["target"], module_cache)
                     out = target(*args, **kwargs)
 
+                    print("sending", type(out))
+
+                    print("raw out", out)
+
                     if isinstance(out, Sexp):
                         out = cache_sexp(out)
                     elif hasattr(out, "r") and isinstance(out.r, Sexp):
                         out.r = cache_sexp(out.r)
-
 
                     # encode result
                     enc = reg.encode(out, shm_pool)
@@ -109,10 +128,10 @@ def worker_main(conn: Connection, mgr_address: Optional[str], mgr_authkey: Optio
                         "codec": enc.codec,
                         "meta": enc.meta,
                         "buffers": [
-                            {"name": b.name, "size": b.size}
-                            for b in enc.buffers
+                            {"name": b.name, "size": b.size} for b in enc.buffers
                         ],
                     }
+                    print(json.dumps(result_payload))
 
                     conn.send(
                         {
@@ -130,9 +149,7 @@ def worker_main(conn: Connection, mgr_address: Optional[str], mgr_authkey: Optio
             except Exception as e:  # noqa: BLE001
                 import traceback
 
-                tb = "".join(
-                    traceback.format_exception(type(e), e, e.__traceback__)
-                )
+                tb = "".join(traceback.format_exception(type(e), e, e.__traceback__))
                 conn.send(
                     {
                         "id": req_id,
@@ -165,7 +182,5 @@ def _resolve_module_target(target: str, module_cache: Dict[str, Any]):
         module_cache[mod_name] = mod
 
     if not hasattr(mod, func_name):
-        raise AttributeError(
-            f"Module {mod_name!r} has no attribute {func_name!r}"
-        )
+        raise AttributeError(f"Module {mod_name!r} has no attribute {func_name!r}")
     return getattr(mod, func_name)
