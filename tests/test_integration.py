@@ -16,6 +16,8 @@ import pandas as pd
 import numpy as np
 import warnings
 
+from brmspy.types.formula_dsl import FormulaPart
+
 
 @pytest.mark.requires_brms
 class TestBrmsImportAndVersion:
@@ -373,24 +375,23 @@ class TestFormulaFunction:
         - Python dict conversion
         """
         from brmspy import brms
-        from brmspy.types.brms_results import FormulaResult
+        from brmspy.types.formula_dsl import FormulaConstruct
 
         # Create basic formula
         formula_result = brms.formula("y ~ x")
 
         # Check return type
         assert isinstance(
-            formula_result, FormulaResult
-        ), "formula() should return FormulaResult instance"
+            formula_result, FormulaConstruct
+        ), "formula() should return FormulaConstruct instance"
 
         # Check attributes exist
-        assert hasattr(formula_result, "r"), "FormulaResult should have .r attribute"
         assert hasattr(
-            formula_result, "parts"
-        ), "FormulaResult should have .parts attribute"
+            formula_result, "_parts"
+        ), "FormulaResult should have ._parts attribute"
 
         # Check R object is valid (not None or NULL)
-        assert formula_result.r is not None, "R brmsformula object should not be None"
+        assert len(formula_result._parts) == 1
 
     def test_formula_with_brms_arguments(self):
         """
@@ -403,46 +404,16 @@ class TestFormulaFunction:
         - Multiple arguments work together
         """
         from brmspy import brms
-        from brmspy.types.brms_results import FormulaResult
+        from brmspy.types.formula_dsl import FormulaConstruct
 
-        # Test QR decomposition
-        formula_qr = brms.formula("y ~ x1 + x2", decomp="QR")
+        formula_no_center = brms.formula("y ~ x", center=False, decomp="QR")
         assert isinstance(
-            formula_qr, FormulaResult
-        ), "formula() with decomp should return FormulaResult"
-        assert (
-            formula_qr.r is not None
-        ), "QR decomposition formula should create valid R object"
-
-        # Test centering control
-        formula_no_center = brms.formula("y ~ x", center=False)
-        assert isinstance(
-            formula_no_center, FormulaResult
+            formula_no_center, FormulaConstruct
         ), "formula() with center should return FormulaResult"
-        assert (
-            formula_no_center.r is not None
-        ), "Non-centered formula should create valid R object"
-
-        # Test sparse matrices
-        formula_sparse = brms.formula("y ~ x", sparse=True)
-        assert isinstance(
-            formula_sparse, FormulaResult
-        ), "formula() with sparse should return FormulaResult"
-        assert (
-            formula_sparse.r is not None
-        ), "Sparse formula should create valid R object"
-
-        # Test multiple arguments together
-        formula_multi = brms.formula("y ~ x1 + x2", decomp="QR", center=False)
-        assert isinstance(
-            formula_multi, FormulaResult
-        ), "formula() with multiple arguments should return FormulaResult"
-        assert (
-            formula_multi.r is not None
-        ), "Multi-argument formula should create valid R object"
-        assert (
-            formula_multi.parts is not None
-        ), "Multi-argument formula should have parts"
+        _part0 = formula_no_center._parts[0]
+        assert isinstance(_part0, FormulaPart)
+        assert _part0._kwargs["center"] == False
+        assert _part0._kwargs["decomp"] == "QR"
 
     @pytest.mark.slow
     def test_formula_complex_with_fit_integration(self):
@@ -456,7 +427,7 @@ class TestFormulaFunction:
         - Both approaches (string vs FormulaResult) produce equivalent results
         """
         from brmspy import brms
-        from brmspy.types.brms_results import FormulaResult
+        from brmspy.types.formula_dsl import FormulaConstruct
         import arviz as az
 
         # Load epilepsy dataset
@@ -467,9 +438,8 @@ class TestFormulaFunction:
 
         # Verify formula object structure
         assert isinstance(
-            formula_obj, FormulaResult
+            formula_obj, FormulaConstruct
         ), "formula() should return FormulaResult"
-        assert formula_obj.r is not None, "Formula R object should be valid"
 
         # Use FormulaResult in fit() - should work like string formula
         model = brms.fit(

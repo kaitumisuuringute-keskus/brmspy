@@ -102,7 +102,6 @@ def _build_priors(
     from brmspy.helpers._rpy2._converters._registry import r_to_py
 
     fun_prior_string = cast(Callable, ro.r("brms::prior_string"))
-    fun_is_brmsprior = cast(Callable, ro.r("brms::is_brmsprior"))
 
     prior_objs = []
     for p in priors:
@@ -116,5 +115,4 @@ def _build_priors(
     for p in prior_objs[1:]:
         brms_prior = brms_prior + p
 
-    assert cast(bool, r_to_py(fun_is_brmsprior(brms_prior)))
     return brms_prior

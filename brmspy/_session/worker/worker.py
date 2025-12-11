@@ -111,17 +111,13 @@ def worker_main(
                         )
                         for k, p in req["kwargs"].items()
                     }
-                    args = [reattach_sexp(o) for o in args]
-                    kwargs = {k: reattach_sexp(v) for k, v in kwargs.items()}
+                    args: list[Any] = reattach_sexp(args)
+                    kwargs: dict[str, Any] = reattach_sexp(args)
 
                     # resolve "mod:pkg.module.func"
                     target = _resolve_module_target(req["target"], module_cache)
                     out = target(*args, **kwargs)
-
-                    if isinstance(out, Sexp):
-                        out = cache_sexp(out)
-                    elif hasattr(out, "r") and isinstance(out.r, Sexp):
-                        out.r = cache_sexp(out.r)
+                    out = cache_sexp(out)
 
                     # encode result
                     enc = reg.encode(out, shm_pool)
