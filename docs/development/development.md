@@ -70,6 +70,9 @@ brmspy/
 └── tests/                    # Test suite
 ```
 
+### Import graph
+![import-graph-svg](../img/brmspy-import-graph.svg)
+
 ### Core Components
 
 **brmspy/brms.py** - Main module that exports all public functions
