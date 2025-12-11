@@ -12,7 +12,8 @@ pydeps brmspy \
     --noshow \
     --max-cluster-size=1000 \
     --min-cluster-size=2 \
-    --rmprefix brmspy.
+    --rmprefix brmspy. \
+    -x brmspy.types brmspy.helpers.log
 
 # Move and rename the generated SVG
 if [ -f brmspy.svg ]; then

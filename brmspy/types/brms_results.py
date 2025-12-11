@@ -1,10 +1,11 @@
 """Result types for brmspy functions."""
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Union
+
 import arviz as az
-import xarray as xr
 import pandas as pd
+import xarray as xr
 from rpy2.rinterface import ListSexpVector
 
 from brmspy.types.session_types import SexpWrapper
@@ -75,16 +76,16 @@ class PriorSpec:
     """
 
     prior: str
-    class_: Optional[str] = None
-    coef: Optional[str] = None
-    group: Optional[str] = None
-    dpar: Optional[str] = None
-    resp: Optional[str] = None
-    nlpar: Optional[str] = None
-    lb: Optional[float] = None
-    ub: Optional[float] = None
+    class_: str | None = None
+    coef: str | None = None
+    group: str | None = None
+    dpar: str | None = None
+    resp: str | None = None
+    nlpar: str | None = None
+    lb: float | None = None
+    ub: float | None = None
 
-    def to_brms_kwargs(self) -> Dict[str, Any]:
+    def to_brms_kwargs(self) -> dict[str, Any]:
         """
         Convert PriorSpec to keyword arguments for brms::prior_string().
 
@@ -442,7 +443,7 @@ class FormulaResult(RListVectorExtension):
     ```
     """
 
-    parts: List["FormulaResult"]
+    parts: list["FormulaResult"]
 
     @classmethod
     def _formula_parse(
@@ -496,7 +497,7 @@ def _indent_block(text: str, prefix: str = "  ") -> str:
 class SummaryResult(RListVectorExtension):
     formula: str
     data_name: str
-    group: Union[str, List[str]]
+    group: str | list[str]
     nobs: int
     prior: pd.DataFrame
     algorithm: str
@@ -510,11 +511,11 @@ class SummaryResult(RListVectorExtension):
     fixed: pd.DataFrame
     spec_pars: pd.DataFrame
     cor_pars: pd.DataFrame
-    rescor_pars: Optional[pd.DataFrame] = None
-    ngrps: Optional[Dict[str, int]] = None
-    autocor: Optional[dict] = None
-    random: Optional[Dict[str, pd.DataFrame]] = None
-    _str: Optional[str] = None
+    rescor_pars: pd.DataFrame | None = None
+    ngrps: dict[str, int] | None = None
+    autocor: dict | None = None
+    random: dict[str, pd.DataFrame] | None = None
+    _str: str | None = None
 
     def __str__(self) -> str:
         if self._str:
@@ -531,7 +532,7 @@ class LooResult(RListVectorExtension):
     estimates: pd.DataFrame
     pointwise: pd.DataFrame
     diagnostics: pd.DataFrame
-    psis_object: Optional[Any]
+    psis_object: Any | None
     elpd_loo: float
     p_loo: float
     looic: float

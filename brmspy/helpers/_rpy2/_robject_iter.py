@@ -1,9 +1,17 @@
+from collections.abc import Callable
 from dataclasses import dataclass, is_dataclass
 from types import UnionType
-from typing import Any, Callable, Dict, List, Optional, Union, cast, get_args, get_origin
-import pandas as pd
+from typing import (
+    Any,
+    Union,
+    cast,
+    get_args,
+    get_origin,
+)
 
+import pandas as pd
 from rpy2.rinterface import ListSexpVector
+
 from brmspy.helpers.log import log_warning
 
 
@@ -73,11 +81,11 @@ def _matches_iterconf(value: Any, conf: IterConf) -> bool:
 
 
 def iterate_robject_to_dataclass(
-    names: List[str],
+    names: list[str],
     get: Callable[[str], Any],
     target_dataclass: type[Any],
-    r: Optional[ListSexpVector],
-    iteration_params: Optional[Dict[str, IterConf]] = None
+    r: ListSexpVector | None,
+    iteration_params: dict[str, IterConf] | None = None
 ):
     """
     Generic helper to iterate over R summary-like objects and convert them
@@ -99,12 +107,12 @@ def iterate_robject_to_dataclass(
     if iteration_params is None:
         iteration_params = _build_iterconf_from_dataclass(target_dataclass)
 
-    out: Dict[str, Any] = {}
+    out: dict[str, Any] = {}
 
     for param, iterconf in iteration_params.items():
         if param == "_str" and r:
             try:
-                repr = cast(List[str], _fun_repr(r))
+                repr = cast(list[str], _fun_repr(r))
                 repr = str(repr[0])
             except:
                 repr = None

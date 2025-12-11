@@ -1,22 +1,19 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, is_dataclass, fields as dc_fields
-from typing import Any, Dict, List, Literal
 import pickle
+from dataclasses import fields as dc_fields
+from dataclasses import is_dataclass
+from typing import Any, Literal
 
+import arviz as az
 import numpy as np
 import pandas as pd
+import xarray as xr
 
 from brmspy.helpers.log import log_warning
-import xarray as xr
-import arviz as az
 
-from brmspy.types.shm import ShmBlock
-from brmspy.types.brms_results import FitResult
 from ...types.shm_extensions import ShmArray, ShmDataFrameColumns, ShmDataFrameSimple
-
-from .base import CodecRegistry, DataclassCodec, Encoder, EncodeResult, ShmBlockSpec
-
+from .base import CodecRegistry, Encoder, EncodeResult, ShmBlockSpec
 
 ONE_MB = 1024 * 1024
 
@@ -63,9 +60,9 @@ class NumpyArrayCodec:
 
     def decode(
         self,
-        meta: Dict[str, Any],
-        buffers: List[memoryview],
-        buffer_specs: List[dict],
+        meta: dict[str, Any],
+        buffers: list[memoryview],
+        buffer_specs: list[dict],
         shm_pool: Any,
     ) -> Any:
         buf = buffers[0]
@@ -153,9 +150,9 @@ class PandasDFCodec:
 
     def decode(
         self,
-        meta: Dict[str, Any],
-        buffers: List[memoryview],
-        buffer_specs: List[dict],
+        meta: dict[str, Any],
+        buffers: list[memoryview],
+        buffer_specs: list[dict],
         shm_pool: Any,
     ) -> Any:
         if meta.get("variant") == "empty":
@@ -221,7 +218,7 @@ class PickleCodec:
         block = shm_pool.alloc(len(data))
         block.shm.buf[: len(data)] = data
 
-        meta: Dict[str, Any] = {"length": len(data)}
+        meta: dict[str, Any] = {"length": len(data)}
 
         size_bytes = len(data)
         if size_bytes > ONE_MB:
@@ -238,9 +235,9 @@ class PickleCodec:
 
     def decode(
         self,
-        meta: Dict[str, Any],
-        buffers: List[memoryview],
-        buffer_specs: List[dict],
+        meta: dict[str, Any],
+        buffers: list[memoryview],
+        buffer_specs: list[dict],
         shm_pool: Any,
     ) -> Any:
         buf = buffers[0]
@@ -256,14 +253,14 @@ class InferenceDataCodec(Encoder):
         return isinstance(obj, az.InferenceData)
 
     def encode(self, obj: az.InferenceData, shm_pool: Any) -> EncodeResult:
-        buffers: List[ShmBlockSpec] = []
-        groups_meta: Dict[str, Any] = {}
+        buffers: list[ShmBlockSpec] = []
+        groups_meta: dict[str, Any] = {}
         total_bytes = 0
 
         # Walk each group: posterior, posterior_predictive, etc.
         for group_name in obj.groups():
             ds: xr.Dataset = getattr(obj, group_name)
-            g_meta: Dict[str, Any] = {
+            g_meta: dict[str, Any] = {
                 "data_vars": {},
                 "coords": {},
             }
@@ -322,7 +319,7 @@ class InferenceDataCodec(Encoder):
 
             groups_meta[group_name] = g_meta
 
-        meta: Dict[str, Any] = {
+        meta: dict[str, Any] = {
             "groups": groups_meta,
             "codec_version": 1,
         }
@@ -335,13 +332,13 @@ class InferenceDataCodec(Encoder):
 
     def decode(
         self,
-        meta: Dict[str, Any],
-        buffers: List[memoryview],
-        buffer_specs: List[dict],
+        meta: dict[str, Any],
+        buffers: list[memoryview],
+        buffer_specs: list[dict],
         shm_pool: Any,
     ) -> Any:
         groups_meta = meta["groups"]
-        groups: Dict[str, xr.Dataset] = {}
+        groups: dict[str, xr.Dataset] = {}
 
         for group_name, g_meta in groups_meta.items():
             data_vars = {}
@@ -399,7 +396,7 @@ class GenericDataClassCodec(Encoder):
     def __init__(
         self,
         cls: type[Any],
-        registry: "CodecRegistry",
+        registry: CodecRegistry,
         *,
         skip_fields: set[str] | None = None,
     ) -> None:
@@ -411,7 +408,7 @@ class GenericDataClassCodec(Encoder):
         self.codec = f"dataclass::{cls.__module__}.{cls.__qualname__}"
 
         self._skip_fields = skip_fields or set()
-        self._field_names: List[str] = []
+        self._field_names: list[str] = []
 
         # Precompute which fields we actually encode
         for f in dc_fields(cls):
@@ -425,8 +422,8 @@ class GenericDataClassCodec(Encoder):
         return isinstance(obj, self._cls)
 
     def encode(self, obj: Any, shm_pool: Any) -> EncodeResult:
-        buffers: List[ShmBlockSpec] = []
-        fields_meta: Dict[str, Any] = {}
+        buffers: list[ShmBlockSpec] = []
+        fields_meta: dict[str, Any] = {}
 
         for field_name in self._field_names:
             value = getattr(obj, field_name)
@@ -446,7 +443,7 @@ class GenericDataClassCodec(Encoder):
 
             buffers.extend(res.buffers)
 
-        meta: Dict[str, Any] = {
+        meta: dict[str, Any] = {
             "module": self._cls.__module__,
             "qualname": self._cls.__qualname__,
             "fields": fields_meta,
@@ -460,13 +457,13 @@ class GenericDataClassCodec(Encoder):
 
     def decode(
         self,
-        meta: Dict[str, Any],
-        buffers: List[memoryview],
-        buffer_specs: List[dict],
+        meta: dict[str, Any],
+        buffers: list[memoryview],
+        buffer_specs: list[dict],
         shm_pool: Any,
     ) -> Any:
-        fields_meta: Dict[str, Any] = meta["fields"]
-        kwargs: Dict[str, Any] = {}
+        fields_meta: dict[str, Any] = meta["fields"]
+        kwargs: dict[str, Any] = {}
 
         for field_name, fmeta in fields_meta.items():
             codec_name = fmeta["codec"]

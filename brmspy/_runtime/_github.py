@@ -4,11 +4,10 @@ GitHub API operations for runtime downloads.
 
 import json
 import os
-from urllib.parse import urlparse
 import urllib.request
+from urllib.parse import urlparse
 
 from brmspy.helpers.log import log_warning
-
 
 REPO_OWNER = "kaitumisuuringute-keskus"
 REPO_NAME = "brmspy"
@@ -52,16 +51,16 @@ def parse_release_url(url: str) -> tuple[str, str, str, str]:
 def fetch_release_metadata(owner: str, repo: str, tag: str, use_token = True) -> dict:
     """Fetch release metadata from GitHub API (handles auth + retries)."""
     api_url = f"https://api.github.com/repos/{owner}/{repo}/releases/tags/{tag}"
-    
+
     # Prepare headers with auth if available
     headers = {"Accept": "application/vnd.github.v3+json"}
     if use_token:
         token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GITHUB_PAT")
         if token:
             headers["Authorization"] = f"token {token}"
-    
+
     req = urllib.request.Request(api_url, headers=headers)
-    
+
     try:
         with urllib.request.urlopen(req) as response:
             return json.loads(response.read())
@@ -86,7 +85,7 @@ def get_asset_sha256(url: str) -> str | None:
                 # For now, return None as this needs to be implemented based on
                 # how the releases are structured
                 return asset.get("digest")
-        
+
         return None
     except Exception as e:
         log_warning(f"Could not get asset metadata: {e}")

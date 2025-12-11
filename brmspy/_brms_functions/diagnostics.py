@@ -51,16 +51,18 @@ The InferenceData structure contains:
 - **observed_data**: Original response values
 """
 
-from typing import Callable, Dict, Iterable, Optional, Sequence, Union, cast
-import pandas as pd
+from collections.abc import Callable, Iterable
+from typing import cast
+
+import numpy as np
 import pandas as pd
 import xarray as xr
-import numpy as np
+from rpy2.rinterface import ListSexpVector
 
 from brmspy.helpers._rpy2._robject_iter import iterate_robject_to_dataclass
+
 from ..helpers._rpy2._conversion import kwargs_r, py_to_r, r_to_py
-from ..types.brms_results import FitResult, LooCompareResult, LooResult, SummaryResult
-from rpy2.rinterface import ListSexpVector
+from ..types.brms_results import FitResult, SummaryResult
 
 
 def summary(model: FitResult, **kwargs) -> SummaryResult:
@@ -165,7 +167,7 @@ def summary(model: FitResult, **kwargs) -> SummaryResult:
     summary_r = r_summary(model.r, **kwargs)
 
     _default_get_r = lambda param: f"function(x) x${param}"
-    _get_methods_r: Dict[str, Callable[[str], str]] = {
+    _get_methods_r: dict[str, Callable[[str], str]] = {
         # Extract a clean formula string: "y ~ x1 + x2 + ..."
         "formula": lambda param: (
             "function(x) { paste(deparse(x$formula$formula), collapse = ' ') }"
@@ -186,7 +188,7 @@ def summary(model: FitResult, **kwargs) -> SummaryResult:
 
 
 def fixef(
-    object: Union[FitResult, ListSexpVector],
+    object: FitResult | ListSexpVector,
     summary=True,
     robust=False,
     probs=(0.025, 0.975),
@@ -306,14 +308,14 @@ def fixef(
 
 
 def ranef(
-    object: Union[FitResult, ListSexpVector],
+    object: FitResult | ListSexpVector,
     summary: bool = True,
     robust: bool = False,
     probs=(0.025, 0.975),
     pars=None,
     groups=None,
     **kwargs,
-) -> Dict[str, xr.DataArray]:
+) -> dict[str, xr.DataArray]:
     """
     Extract group-level (random) effects as xarray DataArrays.
 
@@ -389,7 +391,7 @@ def ranef(
     r_ranef = cast(Callable, ro.r("ranef"))
     r_list = r_ranef(obj_r, **kwargs)
 
-    out: Dict[str, xr.DataArray] = {}
+    out: dict[str, xr.DataArray] = {}
 
     for name in r_list.names:
         # R 3D array for this grouping factor
@@ -398,7 +400,7 @@ def ranef(
 
         # dimnames is a list of length 3, some entries may be NULL
         dimnames_r = r_arr.do_slot("dimnames")
-        dimnames: list[Optional[list[str]]] = []
+        dimnames: list[list[str] | None] = []
         for dn in dimnames_r:
             if dn == ro.NULL:
                 dimnames.append(None)
@@ -443,7 +445,7 @@ def ranef(
 
 
 def posterior_summary(
-    object: Union[FitResult, ListSexpVector],
+    object: FitResult | ListSexpVector,
     variable=None,
     probs=(0.025, 0.975),
     robust=False,
@@ -538,7 +540,7 @@ def posterior_summary(
 
 
 def prior_summary(
-    object: Union[FitResult, ListSexpVector], all=True, **kwargs
+    object: FitResult | ListSexpVector, all=True, **kwargs
 ) -> pd.DataFrame:
     """
     Extract prior specifications used in a fitted brms model.
@@ -629,10 +631,10 @@ def prior_summary(
 
 def validate_newdata(
     newdata: pd.DataFrame,
-    object: Union[ListSexpVector, FitResult],
-    re_formula: Optional[str] = None,
+    object: ListSexpVector | FitResult,
+    re_formula: str | None = None,
     allow_new_levels: bool = False,
-    newdata2: Optional[pd.DataFrame] = None,
+    newdata2: pd.DataFrame | None = None,
     resp=None,
     check_response=True,
     incl_autocor=True,

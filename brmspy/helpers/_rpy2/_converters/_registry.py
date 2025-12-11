@@ -1,9 +1,10 @@
 import os
-from typing import Mapping
-from rpy2.rinterface_lib.sexp import Sexp
-from rpy2.rinterface import ListSexpVector, LangSexpVector
-from zmq import NULL
+from collections.abc import Mapping
 
+import numpy as np
+import pandas as pd
+from rpy2.rinterface import LangSexpVector, ListSexpVector
+from rpy2.rinterface_lib.sexp import Sexp
 
 from brmspy.helpers._rpy2._converters._arrays import (
     _py2r_dataframe,
@@ -12,23 +13,20 @@ from brmspy.helpers._rpy2._converters._arrays import (
     _r2py_matrix,
 )
 from brmspy.helpers._rpy2._converters._generic import (
+    _py2r_fallback,
     _py2r_mapping,
     _r2py_fallback,
     _r2py_language,
-    _py2r_fallback,
 )
 from brmspy.helpers._rpy2._converters._vectors import (
     _py2r_list,
     _r2py_listvector,
     _r2py_vector,
 )
-from brmspy.types.shm import ShmPool
 from brmspy.types.brms_results import RListVectorExtension
+from brmspy.types.shm import ShmPool
 
 from ....types.rpy2_converters import Py2rConverter, PyObject, R2pyConverter
-import pandas as pd
-import numpy as np
-
 
 _R2PY_CONVERTERS: dict[type | tuple[type, ...], R2pyConverter] = {}
 _PY2R_CONVERTERS: dict[type | tuple[type, ...], Py2rConverter] = {}
@@ -133,7 +131,8 @@ def r_to_py(obj: Sexp, shm: ShmPool | None = None) -> PyObject:
     brmspy.brms.summary : Returns Python-friendly summary dict
     """
     import rpy2.robjects as ro
-    from brmspy.session._shm_singleton import _get_shm
+
+    from brmspy._singleton._shm_singleton import _get_shm
 
     if obj is ro.NULL:
         return None

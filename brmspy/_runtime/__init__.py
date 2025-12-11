@@ -1,10 +1,12 @@
-from pathlib import Path
 import platform
-from brmspy.helpers.log import log_warning
+from pathlib import Path
+
+from packaging.version import Version
+
 from brmspy._runtime import _r_packages, _storage
 from brmspy._runtime._platform import system_fingerprint
-from brmspy.types.runtime import RuntimeStatus, RuntimeManifest, SystemInfo
-from packaging.version import Version
+from brmspy.helpers.log import log_warning
+from brmspy.types.runtime import RuntimeManifest, RuntimeStatus, SystemInfo
 
 __all__ = [
     "install_brms",
@@ -214,11 +216,11 @@ def install_brms(
             "'use_prebuilt_binaries' is deprecated, please use 'use_prebuilt' instead"
         )
     from brmspy._runtime import (
-        _install,
-        _config,
         _activation,
-        get_active_runtime,
+        _config,
+        _install,
         deactivate_runtime,
+        get_active_runtime,
     )
 
     _r_packages.set_cran_mirror()
@@ -275,7 +277,7 @@ def activate_runtime(runtime_path: Path | str | None = None) -> None:
     - Saves runtime_path to ~/.brmspy/config.json
     - Invalidates cached R package singletons
     """
-    from brmspy._runtime import _config, _activation, _storage
+    from brmspy._runtime import _activation, _config, _storage
 
     # Resolve path
     if runtime_path is None:
@@ -321,7 +323,7 @@ def deactivate_runtime() -> None:
     - Clears active_runtime from config
     - Invalidates cached R package singletons
     """
-    from brmspy._runtime import _config, _activation, _state
+    from brmspy._runtime import _activation, _config, _state
 
     if not _state.has_stored_env():
         raise RuntimeError("No runtime is currently active")
@@ -345,7 +347,7 @@ def status() -> RuntimeStatus:
         - Prebuilt compatibility and availability
         - Installed brms/cmdstanr/rstan versions
     """
-    from brmspy._runtime import _config, _platform, _state, _storage, _r_packages
+    from brmspy._runtime import _config, _platform, _r_packages, _state, _storage
 
     system = _platform.get_system_info()
 
@@ -398,7 +400,7 @@ def _autoload() -> None:
     It attempts to restore the last active runtime from config. Failures are
     handled silently to avoid breaking imports.
     """
-    from brmspy._runtime import _config, _activation, _storage
+    from brmspy._runtime import _activation, _config, _storage
 
     path = _config.get_active_runtime_path()
     if path is None:

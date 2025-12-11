@@ -1,7 +1,7 @@
+import builtins
 import logging
 from logging.handlers import QueueHandler
 from multiprocessing.queues import Queue
-import builtins
 
 
 def _print(*values: object, **kwargs):

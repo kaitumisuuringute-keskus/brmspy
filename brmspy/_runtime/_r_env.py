@@ -4,13 +4,11 @@ Each function does exactly one R operation. Stateless.
 """
 
 import os
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, List, cast
-
+from typing import cast
 
 from brmspy.helpers.log import log_warning
-
-
 
 # === Queries ===
 
@@ -35,7 +33,7 @@ def is_namespace_loaded(name: str) -> bool:
     """Check if package namespace is loaded."""
     import rpy2.robjects as ro
     expr = f'"{name}" %in% loadedNamespaces()'
-    
+
     res = cast(ro. ListVector, ro.r(expr))
     return str(res[0]).lower().strip() == "true"
 
@@ -117,16 +115,16 @@ def unload_package(name: str) -> bool:
       
       .unload_pkg(pkg, detach_only)
     """
-    
+
     try:
-        result = cast(List, ro.r(r_code))
+        result = cast(list, ro.r(r_code))
         return str(result[0]).lower().strip() == "true"
     except Exception:
         return False
 
 
 
-def _find_libpath_packages(libpath: Path | None, include_not_loaded: bool = False) -> List[str]:
+def _find_libpath_packages(libpath: Path | None, include_not_loaded: bool = False) -> list[str]:
     import rpy2.robjects as ro
     if libpath is None:
         return []
@@ -172,7 +170,7 @@ function(runtime_root, include_not_loaded = FALSE) {
     return pkgs
 
 
-def _compute_unload_order(pkgs: List[str] | None) -> List[str] | None:
+def _compute_unload_order(pkgs: list[str] | None) -> list[str] | None:
     if pkgs is None:
         return None
     if len(pkgs) == 0:
@@ -243,8 +241,8 @@ def _unload_libpath_packages(libpath: Path | None) -> None:
             unload_package(pkg)
         except Exception as e:
             log_warning(f"{e}")
-    
-    
+
+
 
 # === Mutations ===
 
@@ -265,13 +263,13 @@ def _path_priority(p: str) -> int:
 def set_lib_paths(paths: list[str]) -> None:
     """Set .libPaths() in R."""
     import rpy2.robjects as ro
-    
+
     current = [str(p) for p in cast(ro.StrVector, ro.r(".libPaths()"))]
     if any(_is_environment_path(p) for p in paths):
         current = [p for p in current if not _is_environment_path(p)]
     elif any(_is_runtime_path(p) for p in paths):
         current = [p for p in current if not _is_runtime_path(p)]
-  
+
     new_paths = list(dict.fromkeys(list(paths) + current))
     new_paths = sorted(new_paths, key=_path_priority)
     r_fun = cast(Callable, ro.r('.libPaths'))
@@ -287,14 +285,14 @@ def set_cmdstan_path(path: str | None) -> None:
           path_str = "NULL"
       else:
           path_str = f'"{path}"'
-      
+
       ro.r(f'''
       if (!requireNamespace("cmdstanr", quietly = TRUE)) {{
         stop("cmdstanr is not available in rlibs")
       }}
       suppressWarnings(suppressMessages(cmdstanr::set_cmdstan_path(path={path_str})))
       ''')
-      
+
     except Exception as e:
         log_warning(f"Failed to set cmdstan_path to {path}: {e}")
 
@@ -302,8 +300,9 @@ def set_cmdstan_path(path: str | None) -> None:
 
 def run_gc() -> None:
     """Run garbage collection in both Python and R."""
-    import rpy2.robjects as ro
     import gc
+
+    import rpy2.robjects as ro
     gc.collect()
     try:
         ro.r('gc()')
@@ -317,17 +316,17 @@ def forward_github_token() -> None:
         kwargs = {}
         pat = os.environ.get("GITHUB_PAT")
         token = os.environ.get("GITHUB_TOKEN")
-        
+
         if not pat and not token:
             return
-        
+
         r_setenv = cast(Callable, ro.r("Sys.setenv"))
-        
+
         if pat:
             kwargs["GITHUB_PAT"] = pat
         elif token:
             kwargs["GITHUB_TOKEN"] = token
-        
+
         if kwargs:
             r_setenv(**kwargs)
     except Exception:

@@ -1,3 +1,4 @@
+# ruff: noqa
 """
 Main brms module with Pythonic API.
 """

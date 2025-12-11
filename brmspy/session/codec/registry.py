@@ -1,16 +1,14 @@
-from typing import Optional
 
 from brmspy.session.codec.base import CodecRegistry
 from brmspy.session.codec.builtin import (
     InferenceDataCodec,
     NumpyArrayCodec,
-    PickleCodec,
     PandasDFCodec,
+    PickleCodec,
 )
 from brmspy.session.codec.dataclass import register_dataclasses
 
-
-_default_registry: Optional[CodecRegistry] = None
+_default_registry: CodecRegistry | None = None
 
 
 def get_default_registry() -> CodecRegistry:

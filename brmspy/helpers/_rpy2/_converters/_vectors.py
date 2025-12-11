@@ -1,15 +1,16 @@
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, cast
+
 from rpy2.rinterface_lib.sexp import NULL
 
 if TYPE_CHECKING:
-    from rpy2.robjects import ListVector
-    from rpy2.robjects import Vector
+    from rpy2.robjects import ListVector, Vector
 
+import numpy as np
 from rpy2.rinterface_lib.sexp import Sexp
+
 from brmspy.types.rpy2_converters import PyObject
 from brmspy.types.shm import ShmPool
-import numpy as np
 
 
 def _r2py_listvector(
@@ -35,9 +36,9 @@ def _r2py_listvector(
 
 
 def _r2py_vector(obj: "Vector", shm: ShmPool | None = None) -> PyObject:
+    import rpy2.robjects as ro
     from rpy2.robjects import default_converter
     from rpy2.robjects.conversion import localconverter
-    import rpy2.robjects as ro
 
     assert not isinstance(obj, ro.ListVector)
 
@@ -59,9 +60,9 @@ def _r2py_vector(obj: "Vector", shm: ShmPool | None = None) -> PyObject:
 
 
 def _py2r_list(obj: list | tuple) -> Sexp:
-    from rpy2.robjects import default_converter, pandas2ri, numpy2ri
-    from rpy2.robjects.conversion import localconverter
     import rpy2.robjects as ro
+    from rpy2.robjects import default_converter, numpy2ri, pandas2ri
+    from rpy2.robjects.conversion import localconverter
 
     if not obj:
         return ro.ListVector({})

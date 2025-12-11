@@ -1,6 +1,5 @@
-import logging
 import inspect
-from typing import Optional
+import logging
 
 
 # ANSI color codes
@@ -17,11 +16,11 @@ class BrmspyFormatter(logging.Formatter):
     Custom formatter that formats log messages as [brmspy][method_name] msg.
     Adds color coding for warnings (yellow) and errors (red) when terminal supports it.
     """
-    
+
     def format(self, record):
         # Get method name from record or use the function name
         method_name = getattr(record, 'method_name', record.funcName)
-        
+
         # Determine prefix based on log level
         if record.levelno >= logging.ERROR:
             # Red color for errors and critical
@@ -33,18 +32,18 @@ class BrmspyFormatter(logging.Formatter):
         else:
             # No color for info and debug
             prefix = f'[brmspy][{method_name}]'
-        
+
         prefix = prefix.replace("[<module>]", "")
-        
+
         # Format the message with the custom prefix
         original_format = self._style._fmt
         self._style._fmt = f'{prefix} %(message)s'
-        
+
         result = super().format(record)
-        
+
         # Restore original format
         self._style._fmt = original_format
-        
+
         return result
 
 
@@ -71,20 +70,20 @@ def get_logger() -> logging.Logger:
     >>> logger.info("Starting process")  # Prints: [brmspy][<module>] Starting process
     """
     global _logger
-    
+
     if _logger is None:
         _logger = logging.getLogger('brmspy')
         _logger.setLevel(logging.INFO)
-        
+
         # Only add handler if none exists (avoid duplicate handlers)
         if not _logger.handlers:
             handler = logging.StreamHandler()
             handler.setFormatter(BrmspyFormatter())
             _logger.addHandler(handler)
-        
+
         # Prevent propagation to root logger to avoid duplicate messages
         _logger.propagate = False
-    
+
     return _logger
 
 
@@ -113,7 +112,7 @@ def _get_caller_name() -> str:
     return "unknown"
 
 
-def log(msg: str, method_name: Optional[str] = None, level: int = logging.INFO):
+def log(msg: str, method_name: str | None = None, level: int = logging.INFO):
     """
     Log a message with automatic method name detection.
     
@@ -128,12 +127,12 @@ def log(msg: str, method_name: Optional[str] = None, level: int = logging.INFO):
     """
     if method_name is None:
         method_name = _get_caller_name()
-    
+
     logger = get_logger()
     logger.log(level, msg, extra={'method_name': method_name})
 
 
-def log_info(msg: str, method_name: Optional[str] = None):
+def log_info(msg: str, method_name: str | None = None):
     """
     Log an info message.
     
@@ -147,7 +146,7 @@ def log_info(msg: str, method_name: Optional[str] = None):
     log(msg, method_name=method_name, level=logging.INFO)
 
 
-def log_debug(msg: str, method_name: Optional[str] = None):
+def log_debug(msg: str, method_name: str | None = None):
     """
     Log a debug message.
     
@@ -162,7 +161,7 @@ def log_debug(msg: str, method_name: Optional[str] = None):
     log(msg, method_name=method_name, level=logging.DEBUG)
 
 
-def log_warning(msg: str, method_name: Optional[str] = None):
+def log_warning(msg: str, method_name: str | None = None):
     """
     Log a warning message.
     
@@ -177,7 +176,7 @@ def log_warning(msg: str, method_name: Optional[str] = None):
     log(msg, method_name=method_name, level=logging.WARNING)
 
 
-def log_error(msg: str, method_name: Optional[str] = None):
+def log_error(msg: str, method_name: str | None = None):
     """
     Log an error message.
     
@@ -191,7 +190,7 @@ def log_error(msg: str, method_name: Optional[str] = None):
     log(msg, method_name=method_name, level=logging.ERROR)
 
 
-def log_critical(msg: str, method_name: Optional[str] = None):
+def log_critical(msg: str, method_name: str | None = None):
     """
     Log a critical message.
     
@@ -219,6 +218,7 @@ def set_log_level(level: int):
 
 
 import time
+
 
 class LogTime:
     def __init__(self, name="process"):

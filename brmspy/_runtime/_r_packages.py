@@ -2,15 +2,15 @@
 R package queries and installation. Stateless - no caching.
 """
 
-import platform
 import multiprocessing
-from typing import Callable, List, Optional, Union, cast
+import platform
+from collections.abc import Callable
+from typing import cast
 
 #import rpy2.robjects as ro
 #from rpy2.robjects.packages import importr
 #from rpy2.robjects.vectors import StrVector
 from brmspy.helpers.log import log, log_error, log_warning
-
 
 # === Queries ===
 
@@ -25,7 +25,7 @@ def get_package_version(name: str) -> str | None:
         if (is.na(v)) stop('Package not found')
         v
         """
-        v_str = cast(List, ro.r(expr))[0]
+        v_str = cast(list, ro.r(expr))[0]
         return str(v_str)
     except Exception:
         return None
@@ -58,13 +58,13 @@ def _get_linux_repo() -> str:
     try:
         with open("/etc/os-release") as f:
             lines = f.readlines()
-        
+
         codename = "jammy"  # Default fallback (Ubuntu 22.04)
         for line in lines:
             if line.startswith("VERSION_CODENAME="):
                 codename = line.strip().split("=")[1].strip('"')
                 break
-        
+
         return f"https://packagemanager.posit.co/cran/__linux__/{codename}/latest"
     except FileNotFoundError:
         return "https://packagemanager.posit.co/cran/__linux__/jammy/latest"
@@ -73,11 +73,12 @@ def _get_linux_repo() -> str:
 def install_package(
     name: str,
     version: str | None = None,
-    repos_extra: Optional[Union[str, List[Optional[str]], List[str]]] = None
+    repos_extra: str | list[str | None] | list[str] | None = None
 ) -> None:
-    from brmspy._runtime._r_env import unload_package, get_lib_paths
-    from rpy2.robjects.packages import importr
     import rpy2.robjects as ro
+    from rpy2.robjects.packages import importr
+
+    from brmspy._runtime._r_env import get_lib_paths, unload_package
 
     # Normalise special values that mean "latest / no constraint"
     if version is not None:
@@ -94,7 +95,7 @@ def install_package(
     lib_path_py = [get_lib_paths()[0]]
     print("lib path is", lib_path_py)
     lib_path = ro.StrVector(lib_path_py)
-    
+
     already_installed = is_package_installed(name, lib_loc=lib_path_py[0])
 
     repos: list[str] = ["https://cloud.r-project.org"]  # good default mirror
@@ -223,7 +224,7 @@ def install_package(
 def install_package_deps(
     name: str,
     include_suggests: bool = False,
-    repos_extra: Optional[Union[str, List[Optional[str]], List[str]]] = None
+    repos_extra: str | list[str | None] | list[str] | None = None
 ) -> None:
     """Install dependencies of an R package."""
     import rpy2.robjects as ro
@@ -245,10 +246,10 @@ def install_package_deps(
                     repos.append(_r)
         elif repos_extra not in repos:
             repos.append(repos_extra)
-    
+
     try:
-        cast(Callable, ro.r(f"""
-        function (which_deps, name, ncpus, repos) {{
+        cast(Callable, ro.r("""
+        function (which_deps, name, ncpus, repos) {
             pkgs <- unique(unlist(
                 tools::package_dependencies(
                     name,
@@ -259,10 +260,10 @@ def install_package_deps(
             ))
             
             to_install <- setdiff(pkgs, rownames(installed.packages(lib.loc = .libPaths(), noCache = TRUE)))
-            if (length(to_install)) {{
+            if (length(to_install)) {
                 install.packages(to_install, Ncpus = ncpus, repos = repos, lib = .libPaths()[1L])
-            }}
-        }}
+            }
+        }
         """))(which_deps, ro.StrVector([name]), ncpus, ro.StrVector(repos))
     except Exception as e:
         log_warning(str(e))
@@ -277,9 +278,9 @@ def build_cmdstan(cores: int | None = None) -> None:
         cores = multiprocessing.cpu_count()
         if cores > 4:
             cores -= 1
-    
+
     ro.r("library(cmdstanr)")
-    
+
     if platform.system() == "Windows":
         try:
             ro.r("cmdstanr::check_cmdstan_toolchain(fix = TRUE)")
@@ -289,12 +290,12 @@ def build_cmdstan(cores: int | None = None) -> None:
                 "Please install Rtools from https://cran.r-project.org/bin/windows/Rtools/ "
                 "or run install(install_rtools=True)"
             ) from e
-    
+
     ro.r(f"cmdstanr::install_cmdstan(cores = {cores}, overwrite = FALSE)")
 
 def remove_package(name: str) -> bool:
     import rpy2.robjects as ro
-    
+
     r_code = f'''
     (function(pkg) {{
         removed <- FALSE
@@ -326,7 +327,7 @@ def remove_package(name: str) -> bool:
     '''
 
     try:
-        result = cast(List, ro.r(r_code))
+        result = cast(list, ro.r(r_code))
         return str(result[0]).lower().strip() == "true"
     except Exception:
         return False

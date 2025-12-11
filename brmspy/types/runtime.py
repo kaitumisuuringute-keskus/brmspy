@@ -15,7 +15,7 @@ class SystemInfo:
     arch: str                                  # 'x86_64', 'arm64'
     r_version: tuple[int, int, int] | None     # (4, 3, 2)
     fingerprint: str                           # 'linux-x86_64-r4.3'
-    
+
     # Toolchain (populated based on OS)
     glibc_version: tuple[int, int] | None      # Linux
     clang_version: tuple[int, int] | None      # macOS
@@ -41,18 +41,18 @@ class RuntimeStatus:
     # Active state
     active_runtime: Path | None
     is_activated: bool                         # True if R env currently modified
-    
+
     # System
     system: SystemInfo
-    
+
     # Compatibility
     can_use_prebuilt: bool
     prebuilt_available: bool                   # For this fingerprint
     compatibility_issues: tuple[str, ...]      # Why prebuilt unavailable
-    
+
     # Installed runtimes
     installed_runtimes: tuple[Path, ...]
-    
+
     # Current R package versions
     brms_version: str | None
     cmdstanr_version: str | None

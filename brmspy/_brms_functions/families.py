@@ -6,9 +6,10 @@ Reference:
 family()
 """
 
-from typing import Callable, Optional, Union, cast
-from rpy2.rinterface import ListSexpVector
+from collections.abc import Callable
+from typing import cast
 
+from rpy2.rinterface import ListSexpVector
 
 from brmspy.helpers._rpy2._conversion import kwargs_r
 from brmspy.types.brms_results import FitResult
@@ -16,7 +17,7 @@ from brmspy.types.brms_results import FitResult
 
 def brmsfamily(
     family,
-    link: Optional[str] = None,
+    link: str | None = None,
     link_sigma: str = "log",
     link_shape: str = "log",
     link_nu: str = "logm1",
@@ -35,7 +36,7 @@ def brmsfamily(
     link_alpha: str = "identity",
     link_quantile: str = "logit",
     threshold: str = "flexible",
-    refcat: Optional[str] = None,
+    refcat: str | None = None,
     **kwargs,
 ) -> ListSexpVector:
     """
@@ -122,7 +123,7 @@ def brmsfamily(
     return r_brmsfamily(**collected_args)
 
 
-def family(fit: Union[FitResult, ListSexpVector], **kwargs) -> ListSexpVector:
+def family(fit: FitResult | ListSexpVector, **kwargs) -> ListSexpVector:
     """Extract family object from a fitted model.
 
     Parameters
@@ -506,7 +507,7 @@ def xbeta(
 
 
 def dirichlet(
-    link: str = "logit", link_phi: str = "log", refcat: Optional[str] = None, **kwargs
+    link: str = "logit", link_phi: str = "log", refcat: str | None = None, **kwargs
 ) -> ListSexpVector:
     """Dirichlet distribution for compositional data.
 
@@ -532,7 +533,7 @@ def dirichlet(
 def dirichlet2(
     link: str = "log",
     # NOTE: R version uses refcat = NA; here default None
-    refcat: Optional[str] = None,
+    refcat: str | None = None,
     **kwargs,
 ) -> ListSexpVector:
     return brmsfamily(
@@ -546,7 +547,7 @@ def dirichlet2(
 def logistic_normal(
     link: str = "identity",
     link_sigma: str = "log",
-    refcat: Optional[str] = None,
+    refcat: str | None = None,
     **kwargs,
 ) -> ListSexpVector:
     """Logistic-normal distribution for compositional data.
@@ -908,7 +909,7 @@ def zero_inflated_beta_binomial(
 
 
 def categorical(
-    link: str = "logit", refcat: Optional[str] = None, **kwargs
+    link: str = "logit", refcat: str | None = None, **kwargs
 ) -> ListSexpVector:
     """Categorical distribution for unordered multi-category outcomes.
 
@@ -928,7 +929,7 @@ def categorical(
 
 
 def multinomial(
-    link: str = "logit", refcat: Optional[str] = None, **kwargs
+    link: str = "logit", refcat: str | None = None, **kwargs
 ) -> ListSexpVector:
     """Multinomial distribution for count data across multiple categories.
 
@@ -948,7 +949,7 @@ def multinomial(
 
 
 def dirichlet_multinomial(
-    link: str = "logit", link_phi: str = "log", refcat: Optional[str] = None, **kwargs
+    link: str = "logit", link_phi: str = "log", refcat: str | None = None, **kwargs
 ) -> ListSexpVector:
     """Dirichlet-multinomial for overdispersed categorical count data.
 

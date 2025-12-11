@@ -4,13 +4,13 @@ No side effects, no R environment mutation.
 """
 
 import os
-from pathlib import Path
 import platform
 import subprocess
+from pathlib import Path
 from typing import cast
-from brmspy.types.runtime import SystemInfo
-from brmspy.helpers.log import log_warning
 
+from brmspy.helpers.log import log_warning
+from brmspy.types.runtime import SystemInfo
 
 # === Detection (pure) ===
 
@@ -394,13 +394,13 @@ def _windows_has_rtools(silent=False) -> bool:
         )
     except Exception:
         if not silent:
-            log_warning(f"g++ not found")
+            log_warning("g++ not found")
         return False
 
     # Very rough: we expect mingw in the banner
     if "mingw" not in out.lower():
         if not silent:
-            log_warning(f"mingw not found in g++ banner")
+            log_warning("mingw not found in g++ banner")
         return False
 
     return True

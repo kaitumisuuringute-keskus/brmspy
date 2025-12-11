@@ -8,16 +8,16 @@ import re
 import string
 import subprocess
 import tempfile
-from urllib.error import ContentTooShortError, HTTPError, URLError
 import urllib.request
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional, cast
+from typing import cast
+from urllib.error import ContentTooShortError, HTTPError, URLError
 
-from brmspy.helpers.log import log_warning
 from packaging.version import Version
 
 from brmspy._runtime._platform import get_arch, get_os
-
+from brmspy.helpers.log import log_warning
 
 # R version range -> Rtools version
 RTOOLS_VERSIONS = {
@@ -189,13 +189,13 @@ def get_installed_gxx_version() -> tuple[int, int] | None:
     return None
 
 
-def _stream_download(url: str, dst: Path, timeout: Optional[float] = 30) -> None:
+def _stream_download(url: str, dst: Path, timeout: float | None = 30) -> None:
     """Download URL to dst in chunks, verifying size if Content-Length is present."""
     CHUNK_SIZE = 1024 * 1024  # 1 MB
 
     with urllib.request.urlopen(url, timeout=timeout) as resp, dst.open("wb") as f:
         content_length = resp.headers.get("Content-Length")
-        expected_size: Optional[int] = int(content_length) if content_length else None
+        expected_size: int | None = int(content_length) if content_length else None
 
         total = 0
         while True:
@@ -206,7 +206,7 @@ def _stream_download(url: str, dst: Path, timeout: Optional[float] = 30) -> None
             total += len(chunk)
 
     if expected_size is not None and total != expected_size:
-        raise IOError(
+        raise OSError(
             f"incomplete download: got {total} bytes, expected {expected_size}"
         )
 
@@ -214,7 +214,7 @@ def _stream_download(url: str, dst: Path, timeout: Optional[float] = 30) -> None
 def download_installer(rtools_version: str, max_retries: int = 3) -> Path:
     """Download Rtools installer to temp directory with retries and size check."""
     url = get_download_url(rtools_version)
-    last_err: Optional[Exception] = None
+    last_err: Exception | None = None
 
     for attempt in range(1, max_retries + 1):
         with tempfile.NamedTemporaryFile(suffix=".exe", delete=False) as tmp:
@@ -225,7 +225,7 @@ def download_installer(rtools_version: str, max_retries: int = 3) -> Path:
             # If we got here, download is complete (or server didn't send length).
             return tmp_path
 
-        except (URLError, IOError, ContentTooShortError) as e:
+        except (OSError, URLError, ContentTooShortError) as e:
             last_err = e
             try:
                 tmp_path.unlink(missing_ok=True)

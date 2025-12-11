@@ -37,9 +37,11 @@ layers =
     brmspy._brms_functions
     brmspy.helpers._rpy2
     brmspy.helpers.log
+    brmspy._singleton
     brmspy.types
 ignore_imports =
     brmspy.session.manage -> brmspy.brms
+    brmspy._singleton._brms -> brmspy.brms
 
 [importlinter:contract: runtime-layering]
 name = brmspy runtime layering

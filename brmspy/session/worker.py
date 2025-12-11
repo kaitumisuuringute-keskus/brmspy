@@ -2,30 +2,24 @@
 
 from __future__ import annotations
 
-import json
-import logging
-from logging.handlers import QueueHandler
-from multiprocessing.connection import Connection
-from typing import Any, Dict, Optional
-from multiprocessing.managers import SharedMemoryManager
 import importlib
+import multiprocessing as mp
+from multiprocessing.connection import Connection
+from multiprocessing.managers import SharedMemoryManager
+from typing import Any
 
 from ..types.session_types import EnvironmentConfig
-
-from .worker_sexp_cache import cache_sexp, reattach_sexp
-
 from .codec import get_default_registry
-from .transport import ShmPool, attach_buffers
 from .environment import _initialise_r_safe, configure_r_env, run_startup_scripts
-import multiprocessing as mp
-
+from .transport import ShmPool, attach_buffers
 from .worker_logging import setup_worker_logging
+from .worker_sexp_cache import cache_sexp, reattach_sexp
 
 
 def worker_main(
     conn: Connection,
-    mgr_address: Optional[str],
-    mgr_authkey: Optional[bytes],
+    mgr_address: str | None,
+    mgr_authkey: bytes | None,
     runtime_conf: EnvironmentConfig,
     log_queue: mp.Queue,
 ) -> None:
@@ -58,17 +52,16 @@ def worker_main(
     shm_pool = ShmPool(smm)
     reg = get_default_registry()
 
-    module_cache: Dict[str, Any] = {}
-
-    from rpy2.rinterface_lib.sexp import Sexp
+    module_cache: dict[str, Any] = {}
 
     import rpy2.rinterface_lib.callbacks
+    from rpy2.rinterface_lib.sexp import Sexp
 
     rpy2.rinterface_lib.callbacks._WRITECONSOLE_EXCEPTION_LOG = (
         "[R]: {exception} {exc_value} {traceback}"
     )
 
-    from ._shm_singleton import _set_shm
+    from .._singleton._shm_singleton import _set_shm
 
     _set_shm(shm_pool)
 
@@ -166,7 +159,7 @@ def worker_main(
         pass
 
 
-def _resolve_module_target(target: str, module_cache: Dict[str, Any]):
+def _resolve_module_target(target: str, module_cache: dict[str, Any]):
     """
     Target format: "mod:brmspy.brms.brm"
     """

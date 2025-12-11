@@ -1,22 +1,23 @@
-from typing import Any, Callable, Optional, Union, cast
+from collections.abc import Callable
+from typing import Any, cast
 
 import pandas as pd
+from rpy2.rinterface import ListSexpVector
 
 from brmspy.helpers._rpy2._conversion import kwargs_r, py_to_r, r_to_py
 from brmspy.types.brms_results import FormulaResult, PriorSpec, RListVectorExtension
-from rpy2.rinterface import ListSexpVector
 
 
 def prior(
     prior: str,
-    class_: Optional[str] = None,
-    coef: Optional[str] = None,
-    group: Optional[str] = None,
-    dpar: Optional[str] = None,
-    resp: Optional[str] = None,
-    nlpar: Optional[str] = None,
-    lb: Optional[float] = None,
-    ub: Optional[float] = None,
+    class_: str | None = None,
+    coef: str | None = None,
+    group: str | None = None,
+    dpar: str | None = None,
+    resp: str | None = None,
+    nlpar: str | None = None,
+    lb: float | None = None,
+    ub: float | None = None,
     **kwargs: Any,
 ) -> PriorSpec:
     """
@@ -126,7 +127,7 @@ def prior(
 
 
 def get_prior(
-    formula: Union[str, FormulaResult], data=None, family="gaussian", **kwargs
+    formula: str | FormulaResult, data=None, family="gaussian", **kwargs
 ) -> pd.DataFrame:
     """
     Get default priors for all model parameters.
@@ -208,7 +209,7 @@ def get_prior(
 
 
 def default_prior(
-    object: Union[RListVectorExtension, ListSexpVector, FormulaResult, str],
+    object: RListVectorExtension | ListSexpVector | FormulaResult | str,
     data=None,
     family="gaussian",
     **kwargs,

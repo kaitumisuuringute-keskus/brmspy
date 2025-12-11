@@ -1,28 +1,27 @@
 from __future__ import annotations
 
 import atexit
-from contextlib import contextmanager
 import inspect
 import logging
-from logging.handlers import QueueListener
 import multiprocessing as mp
-from pathlib import Path
+import os
+import platform
 import subprocess
 import uuid
 import weakref
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
+from logging.handlers import QueueListener
 from multiprocessing.managers import SharedMemoryManager
+from pathlib import Path
 from types import ModuleType
-from typing import Any, Callable, Dict, Iterator, Optional, Union
+from typing import Any
 
-from ..types.session_types import EnvironmentConfig
-
-from .codec import get_default_registry
 from ..types.errors import RSessionError
+from ..types.session_types import EnvironmentConfig
+from .codec import get_default_registry
 from .transport import ShmPool, attach_buffers
 from .worker import worker_main
-import os
-import platform
-
 
 _INTERNAL_ATTRS = {
     "_module",
@@ -43,7 +42,7 @@ _INTERNAL_ATTRS = {
 }
 
 
-def r_home_from_subprocess() -> Optional[str]:
+def r_home_from_subprocess() -> str | None:
     """Return the R home directory from calling 'R RHOME'."""
     cmd = ("R", "RHOME")
     tmp = subprocess.check_output(cmd, universal_newlines=True)
@@ -56,7 +55,7 @@ def r_home_from_subprocess() -> Optional[str]:
     return res
 
 
-def add_env_defaults(overrides: Dict[str, str]) -> Dict[str, str]:
+def add_env_defaults(overrides: dict[str, str]) -> dict[str, str]:
     """
     Ensure required R environment variables exist inside overrides.
     Mutates overrides in-place and returns it.
@@ -110,7 +109,7 @@ def add_env_defaults(overrides: Dict[str, str]) -> Dict[str, str]:
 
 
 @contextmanager
-def with_env(overrides: Dict[str, str]) -> Iterator[None]:
+def with_env(overrides: dict[str, str]) -> Iterator[None]:
     """Temporarily apply environment overrides, then restore."""
     overrides = add_env_defaults(overrides)
 
@@ -132,7 +131,7 @@ def with_env(overrides: Dict[str, str]) -> Iterator[None]:
 
 
 def spawn_worker(
-    target, args, env_overrides: Dict[str, str], log_queue: mp.Queue | None = None
+    target, args, env_overrides: dict[str, str], log_queue: mp.Queue | None = None
 ):
     ctx = mp.get_context("spawn")
     with with_env(env_overrides):
@@ -154,7 +153,7 @@ class RModuleSession(ModuleType):
     All R/rpy2/brms logic lives in that module; this class only does IPC.
     """
 
-    _instances: "weakref.WeakSet[RModuleSession]" = weakref.WeakSet()
+    _instances: weakref.WeakSet[RModuleSession] = weakref.WeakSet()
     _atexit_registered: bool = False
     _is_rsession: bool = True
 
@@ -162,7 +161,7 @@ class RModuleSession(ModuleType):
         self,
         module: ModuleType,
         module_path: str,
-        environment_conf: Optional[Union[EnvironmentConfig, Dict[str, Any]]] = None,
+        environment_conf: EnvironmentConfig | dict[str, Any] | None = None,
     ) -> None:
         # Pretend to be the same module (for IDEs/docs)
         super().__init__(module.__name__, module.__doc__)
@@ -187,7 +186,7 @@ class RModuleSession(ModuleType):
             self._environment_conf.env["BRMSPY_AUTOLOAD"] = "1"
 
         # cache of Python wrappers for functions
-        self._func_cache: Dict[str, Callable[..., Any]] = {}
+        self._func_cache: dict[str, Callable[..., Any]] = {}
 
         # start SHM manager + worker
         self._setup_worker()
@@ -195,7 +194,7 @@ class RModuleSession(ModuleType):
         # copy attributes so IDEs / dir() see the module surface
         self.__dict__.update(module.__dict__)
 
-        from ._shm_singleton import _set_shm
+        from .._singleton._shm_singleton import _set_shm
 
         _set_shm(self._shm_pool)
 
@@ -216,7 +215,7 @@ class RModuleSession(ModuleType):
         parent_conn, child_conn = mp.Pipe()
         self._conn = parent_conn
 
-        env_overrides: Dict[str, str] = {
+        env_overrides: dict[str, str] = {
             "BRMSPY_WORKER": "1",
             **self._environment_conf.env,
         }
@@ -297,7 +296,7 @@ class RModuleSession(ModuleType):
 
     # ----------------- IPC helpers --------------------
 
-    def _encode_arg(self, obj: Any) -> Dict[str, Any]:
+    def _encode_arg(self, obj: Any) -> dict[str, Any]:
         enc = self._reg.encode(obj, self._shm_pool)
         return {
             "codec": enc.codec,
@@ -305,7 +304,7 @@ class RModuleSession(ModuleType):
             "buffers": [{"name": b.name, "size": b.size} for b in enc.buffers],
         }
 
-    def _decode_result(self, resp: Dict[str, Any]) -> Any:
+    def _decode_result(self, resp: dict[str, Any]) -> Any:
         if not resp["ok"]:
             raise RSessionError(
                 resp.get("error") or "Worker error",
@@ -406,7 +405,7 @@ class RModuleSession(ModuleType):
 
     def restart(
         self,
-        environment_conf: Optional[Union[Dict[str, Any], EnvironmentConfig]] = None,
+        environment_conf: dict[str, Any] | EnvironmentConfig | None = None,
     ) -> None:
         """
         Restart the underlying worker process and shared-memory manager.

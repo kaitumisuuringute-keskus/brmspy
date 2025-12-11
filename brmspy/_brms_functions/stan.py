@@ -1,21 +1,22 @@
 import typing
-import pandas as pd
-from .formula import bf
-from ..helpers._rpy2._priors import _build_priors
-from ..helpers._rpy2._conversion import py_to_r
-from ..types.brms_results import FormulaResult, PriorSpec
 
+import pandas as pd
+
+from ..helpers._rpy2._conversion import py_to_r
+from ..helpers._rpy2._priors import _build_priors
+from ..types.brms_results import FormulaResult, PriorSpec
+from .formula import bf
 
 _formula_fn = bf
 
 
 def make_stancode(
-    formula: typing.Union[FormulaResult, str],
+    formula: FormulaResult | str,
     data: pd.DataFrame,
-    priors: typing.Optional[typing.Sequence[PriorSpec]] = None,
+    priors: typing.Sequence[PriorSpec] | None = None,
     family: str = "poisson",
     sample_prior: str = "no",
-    formula_args: typing.Optional[dict] = None,
+    formula_args: dict | None = None,
 ) -> str:
     """
     Generate Stan code using brms::make_stancode().

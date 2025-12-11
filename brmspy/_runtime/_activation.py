@@ -4,9 +4,9 @@ Does NOT touch config - that's the caller's responsibility.
 """
 
 from pathlib import Path
-from typing import Callable, List, cast
+
+from brmspy._runtime import _config, _manifest, _platform, _r_env, _r_packages, _state
 from brmspy.helpers.log import log, log_warning
-from brmspy._runtime import _manifest, _r_env, _r_packages, _state, _platform, _config
 
 if _platform.get_os() == "macos":
     # MacOS fails without forced tibble and pkgconfig unloading
@@ -42,24 +42,24 @@ def activate(runtime_path: Path) -> None:
     manifest = _manifest.parse_manifest(runtime_path / "manifest.json")
     if manifest is None:
         raise RuntimeError(f"Invalid manifest in {runtime_path}")
-    
+
     _manifest.validate_manifest(manifest, _platform.system_fingerprint())
-    
+
     # Capture original env (unless already captured from previous activation)
     if not _state.has_stored_env():
         original = _state.capture_current_env()
         _state.store_env(original)
-    
+
     # Attempt activation with rollback on failure
     try:
         _unload_managed_packages()
-        
+
         rlib = runtime_path / "Rlib"
         cmdstan = runtime_path / "cmdstan"
 
         rlib_posix = rlib.as_posix()
         cmdstan_posix = cmdstan.as_posix()
-        
+
         _r_env.set_lib_paths([str(rlib_posix)])
         log(f"lib paths are {_r_env.get_lib_paths()}")
         _state.invalidate_packages()
@@ -67,10 +67,10 @@ def activate(runtime_path: Path) -> None:
         log(f"Setting cmdstan path to {cmdstan_posix}")
         _r_env.set_cmdstan_path(str(cmdstan_posix))
 
-        
 
-        
-        
+
+
+
     except Exception as e:
         # Rollback
         _rollback_to_stored_env()
@@ -130,7 +130,7 @@ def _verify_runtime_loadable() -> None:
     """Verify brms and cmdstanr can be loaded."""
     _state.get_brms()
     _state.get_cmdstanr()
-    
+
 
 
 def _rollback_to_stored_env() -> None:

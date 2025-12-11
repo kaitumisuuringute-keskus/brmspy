@@ -1,15 +1,16 @@
-from typing import Any, Callable, Union, Sequence, Optional, cast
+from collections.abc import Callable, Sequence
+from typing import Any, cast
+
 import pandas as pd
-
-
-from .formula import bf
-from brmspy.helpers.log import log, log_warning
-from ..helpers._rpy2._priors import _build_priors
-from ..helpers._rpy2._conversion import brmsfit_to_idata, kwargs_r, py_to_r
-from ..types.brms_results import FitResult, FormulaResult, IDFit, PriorSpec
 from rpy2.rinterface import ListSexpVector
 from rpy2.rinterface_lib import openrlib
 
+from brmspy.helpers.log import log, log_warning
+
+from ..helpers._rpy2._conversion import brmsfit_to_idata, kwargs_r, py_to_r
+from ..helpers._rpy2._priors import _build_priors
+from ..types.brms_results import FitResult, FormulaResult, IDFit, PriorSpec
+from .formula import bf
 
 _formula_fn = bf
 
@@ -19,21 +20,21 @@ code path used by brmsfit manipulation or creation functions can crash the inter
 Always use `cores >= 2` to force parallel workers and avoid segfaults."""
 
 
-def _warn_cores(cores: Optional[int]):
+def _warn_cores(cores: int | None):
     if cores is None or cores <= 1:
         log_warning(_WARNING_CORES)
 
 
 def brm(
-    formula: Union[FormulaResult, str],
-    data: Union[dict, pd.DataFrame],
-    priors: Optional[Sequence[PriorSpec]] = None,
-    family: Optional[Union[str, ListSexpVector]] = "gaussian",
+    formula: FormulaResult | str,
+    data: dict | pd.DataFrame,
+    priors: Sequence[PriorSpec] | None = None,
+    family: str | ListSexpVector | None = "gaussian",
     sample_prior: str = "no",
     sample: bool = True,
     backend: str = "cmdstanr",
-    formula_args: Optional[dict] = None,
-    cores: Optional[int] = 2,
+    formula_args: dict | None = None,
+    cores: int | None = 2,
     **brm_args,
 ) -> FitResult:
     """

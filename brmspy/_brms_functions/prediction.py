@@ -1,10 +1,11 @@
 import typing
+
 import pandas as pd
 
 from ..helpers._rpy2._conversion import (
+    brms_epred_to_idata,
     brms_linpred_to_idata,
     brms_log_lik_to_idata,
-    brms_epred_to_idata,
     brms_predict_to_idata,
     kwargs_r,
     py_to_r,
@@ -23,7 +24,7 @@ from ..types.brms_results import (
 
 
 def posterior_epred(
-    model: FitResult, newdata: typing.Optional[pd.DataFrame] = None, **kwargs
+    model: FitResult, newdata: pd.DataFrame | None = None, **kwargs
 ) -> PosteriorEpredResult:
     """
     Compute expected value of posterior predictive distribution.
@@ -64,7 +65,7 @@ def posterior_epred(
 
 
 def posterior_predict(
-    model: FitResult, newdata: typing.Optional[pd.DataFrame] = None, **kwargs
+    model: FitResult, newdata: pd.DataFrame | None = None, **kwargs
 ) -> PosteriorPredictResult:
     """
     Generate posterior predictive samples with observation noise.
@@ -110,7 +111,7 @@ def posterior_predict(
 
 
 def posterior_linpred(
-    model: FitResult, newdata: typing.Optional[pd.DataFrame] = None, **kwargs
+    model: FitResult, newdata: pd.DataFrame | None = None, **kwargs
 ) -> PosteriorLinpredResult:
     """
     Compute linear predictor of the model.
@@ -183,7 +184,7 @@ def posterior_linpred(
 
 
 def log_lik(
-    model: FitResult, newdata: typing.Optional[pd.DataFrame] = None, **kwargs
+    model: FitResult, newdata: pd.DataFrame | None = None, **kwargs
 ) -> LogLikResult:
     """
     Compute log-likelihood values.

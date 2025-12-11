@@ -1,17 +1,11 @@
+from collections.abc import Iterator
 from contextlib import contextmanager
-import copy
 from dataclasses import dataclass
 from pathlib import Path
-import tempfile
-import shutil
-from typing import Dict, Generator, Iterator, List, Optional, Callable, Any, Union, cast
-from pathlib import Path
+from typing import cast
 
-from brmspy import brms
-from brmspy._runtime import get_active_runtime
-from .environment import get_environment_config
 from ..types.session_types import EnvironmentConfig
-
+from .environment import get_environment_config
 from .module_session import RModuleSession
 
 
@@ -27,7 +21,7 @@ class EnvContext:
 
     def list_environments(self): ...
 
-    def activate_environment(self, name: Optional[str]): ...
+    def activate_environment(self, name: str | None): ...
 
     def deactivate_environment(self): ...
 
@@ -39,8 +33,8 @@ class EnvContext:
     def install_rpackage(
         self,
         name: str,
-        version: Optional[str] = None,
-        repos_extra: Optional[List[str]] = None,
+        version: str | None = None,
+        repos_extra: list[str] | None = None,
     ) -> None:
         result = self.session._call_remote(
             "mod:brmspy._runtime._r_packages.install_package",
@@ -52,9 +46,9 @@ class EnvContext:
 
     def uninstall_rpackage(self, name: str): ...
 
-    def list_rpackages(self) -> List[str]: ...
+    def list_rpackages(self) -> list[str]: ...
 
-    def import_rpackages(self, *packages: List[str]): ...
+    def import_rpackages(self, *packages: list[str]): ...
 
     # general entrypoint
     def install_brms(
@@ -159,8 +153,8 @@ def _get_session() -> RModuleSession:
 @contextmanager
 def manage(
     *,
-    environment_config: Optional[Union[EnvironmentConfig, Dict[str, str]]] = None,
-    environment_name: Optional[str] = None,
+    environment_config: EnvironmentConfig | dict[str, str] | None = None,
+    environment_name: str | None = None,
 ) -> Iterator[EnvContext]:
     """
     Run a block in a fresh R session.
@@ -189,7 +183,7 @@ def manage(
     else:
         new_conf = old_conf
 
-    temp_lib_dir: Optional[Path] = None
+    temp_lib_dir: Path | None = None
 
     new_conf.env["BRMSPY_AUTOLOAD"] = "0"
 

@@ -1,6 +1,9 @@
-from typing import Callable, Optional, Sequence, cast
-from brmspy.types.brms_results import PriorSpec
+from collections.abc import Callable, Sequence
+from typing import cast
+
 from rpy2.rinterface_lib.sexp import Sexp
+
+from brmspy.types.brms_results import PriorSpec
 
 
 def _build_priors(
@@ -95,6 +98,7 @@ def _build_priors(
     if not priors:
         return []
     import rpy2.robjects as ro
+
     from brmspy.helpers._rpy2._converters._registry import r_to_py
 
     fun_prior_string = cast(Callable, ro.r("brms::prior_string"))

@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple, cast
+from typing import cast
 
 from brmspy.types.session_types import EnvironmentConfig
-
-
-import os
 
 
 def get_environment_base_dir() -> Path:
@@ -39,7 +37,7 @@ def get_environment_config(name: str) -> EnvironmentConfig:
     if not config_dir.exists():
         return EnvironmentConfig(environment_name=name)
 
-    with open(config_dir, "r") as f:
+    with open(config_dir) as f:
         data = json.load(f)
         return EnvironmentConfig.from_dict(data)
 
@@ -66,7 +64,7 @@ def save_as_state(env_conf: EnvironmentConfig) -> None:
 
 def activate(env_conf: EnvironmentConfig) -> None:
     """only run in worker"""
-    from brmspy._runtime import deactivate_runtime, activate_runtime, status, _r_env
+    from brmspy._runtime import _r_env, activate_runtime, deactivate_runtime, status
 
     _status = status()
 
@@ -111,7 +109,7 @@ def configure_r_env(env_conf: EnvironmentConfig) -> None:
 def run_startup_scripts(env_conf: EnvironmentConfig) -> None:
     if not env_conf.startup_scripts:
         return
-    scripts: List[str] = env_conf.startup_scripts
+    scripts: list[str] = env_conf.startup_scripts
 
     import rpy2.robjects as ro
 
@@ -119,11 +117,14 @@ def run_startup_scripts(env_conf: EnvironmentConfig) -> None:
         ro.r(code)
 
 
-def _check_r_setup(verbose: bool = False) -> Tuple[bool, List[str]]:
-    import shutil, subprocess, os, platform
+def _check_r_setup(verbose: bool = False) -> tuple[bool, list[str]]:
+    import os
+    import platform
+    import shutil
+    import subprocess
 
     ok = True
-    messages: List[str] = []
+    messages: list[str] = []
 
     def info(msg: str) -> None:
         if verbose:
@@ -138,7 +139,7 @@ def _check_r_setup(verbose: bool = False) -> Tuple[bool, List[str]]:
 
     # --- 1. Try to locate R and RHOME via the R executable -----------------
     r_exec = shutil.which("R")
-    r_home_cmd: Optional[str] = None
+    r_home_cmd: str | None = None
 
     if not r_exec:
         # Not necessarily fatal if rpy2 was compiled with an absolute R_HOME,

@@ -1,15 +1,16 @@
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Optional
+
 from ..types.session_types import SexpWrapper
 
 if TYPE_CHECKING:
-    from rpy2.rinterface_lib.sexp import Sexp, NULL
+    from rpy2.rinterface_lib.sexp import Sexp
 
 
-_SEXP_CACHE: Dict[int, "Sexp"] = {}
+_SEXP_CACHE: dict[int, "Sexp"] = {}
 
 
 def get_sexp(ref: SexpWrapper) -> Optional["Sexp"]:
-    from rpy2.rinterface_lib.sexp import Sexp, NULL
+    from rpy2.rinterface_lib.sexp import NULL
 
     if ref._rid in _SEXP_CACHE:
         return _SEXP_CACHE[ref._rid]
@@ -22,7 +23,6 @@ def cache_sexp(obj: "Sexp") -> SexpWrapper:
 
 
 def reattach_sexp(obj: Any) -> Any:
-    from rpy2.rinterface_lib.sexp import Sexp, NULL
 
     if hasattr(obj, "r") and isinstance(obj.r, SexpWrapper):
         if obj.r._rid in _SEXP_CACHE:

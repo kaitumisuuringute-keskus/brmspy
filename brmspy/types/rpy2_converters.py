@@ -1,15 +1,17 @@
-from typing import Any, Callable, Dict, Union, List
-import pandas as pd
-import numpy as np
+from collections.abc import Callable
+from typing import Any, Union
+
 import arviz as az
+import numpy as np
+import pandas as pd
 import xarray as xr
 from rpy2.rinterface_lib.sexp import Sexp
+
 from brmspy.types.shm import ShmPool
-from dataclasses import dataclass
 
 PyObject = Union[
-    Dict,
-    List,
+    dict,
+    list,
     str,
     float,
     int,

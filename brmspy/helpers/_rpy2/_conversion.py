@@ -1,11 +1,17 @@
-from typing import cast, Callable, Optional, Dict
-import pandas as pd
-import numpy as np
+# ruff: noqa: F401
 import re
-import xarray as xr
-import arviz as az
+from collections.abc import Callable
+from typing import cast
 
-from brmspy.helpers._rpy2._converters._registry import py_to_r, r_to_py
+import arviz as az
+import numpy as np
+import pandas as pd
+import xarray as xr
+
+from brmspy.helpers._rpy2._converters._registry import (
+    py_to_r,
+    r_to_py,
+)
 from brmspy.helpers.log import log_warning
 from brmspy.types.brms_results import IDFit
 
@@ -848,7 +854,7 @@ def brms_log_lik_to_idata(r_log_lik_obj, brmsfit_obj, newdata=None, var_name="lo
     )
 
 
-def kwargs_r(kwargs: Optional[Dict]) -> Dict:
+def kwargs_r(kwargs: dict | None) -> dict:
     """
     Convert Python keyword arguments to R-compatible format.
 

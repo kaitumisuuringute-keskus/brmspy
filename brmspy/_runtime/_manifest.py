@@ -2,9 +2,10 @@
 Manifest parsing and validation. Pure functions.
 """
 
-import json
 import hashlib
+import json
 from pathlib import Path
+
 from brmspy.helpers.log import log_warning
 from brmspy.types.runtime import RuntimeManifest
 

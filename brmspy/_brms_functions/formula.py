@@ -1,7 +1,7 @@
-from typing import Callable, Union, cast
-from rpy2.rinterface import ListSexpVector
+from collections.abc import Callable
+from typing import cast
 
-from ..helpers._rpy2._conversion import kwargs_r, py_to_r, r_to_py
+from ..helpers._rpy2._conversion import kwargs_r, py_to_r
 from ..types.brms_results import FormulaResult
 
 
@@ -76,14 +76,14 @@ def bf(formula: str, **formula_args) -> FormulaResult:
 
 
 def lf(
-    *formulas: Union[str, FormulaResult, object],
+    *formulas: str | FormulaResult | object,
     flist=None,
-    dpar: Union[str, None] = None,
-    resp: Union[str, None] = None,
-    center: Union[bool, None] = None,
-    cmc: Union[bool, None] = None,
-    sparse: Union[bool, None] = None,
-    decomp: Union[str, None] = None,
+    dpar: str | None = None,
+    resp: str | None = None,
+    center: bool | None = None,
+    cmc: bool | None = None,
+    sparse: bool | None = None,
+    decomp: str | None = None,
 ) -> FormulaResult:
     """
     Specify linear formulas for distributional / non-linear parameters.
@@ -137,12 +137,12 @@ def lf(
 
 
 def nlf(
-    formula: Union[str, object],
-    *extra: Union[str, FormulaResult, object],
+    formula: str | object,
+    *extra: str | FormulaResult | object,
     flist=None,
-    dpar: Union[str, None] = None,
-    resp: Union[str, None] = None,
-    loop: Union[bool, None] = None,
+    dpar: str | None = None,
+    resp: str | None = None,
+    loop: bool | None = None,
 ) -> FormulaResult:
     """
     Specify non-linear formulas for distributional parameters.
@@ -197,8 +197,8 @@ def nlf(
 
 
 def acformula(
-    autocor: Union[str, object],
-    resp: Union[str, None] = None,
+    autocor: str | object,
+    resp: str | None = None,
 ) -> FormulaResult:
     """
     Specify autocorrelation terms to add to a model.
@@ -296,8 +296,8 @@ def set_mecor(mecor: bool = True) -> FormulaResult:
 
 
 def set_nl(
-    dpar: Union[str, None] = None,
-    resp: Union[str, None] = None,
+    dpar: str | None = None,
+    resp: str | None = None,
 ) -> FormulaResult:
     """
     Mark a formula as non-linear (or parts of it).

@@ -1,15 +1,11 @@
-from contextlib import contextmanager
 import os
 import sys
+from contextlib import contextmanager
 from types import ModuleType
 from typing import TYPE_CHECKING, cast
 
-from brmspy.session.module_session import _INTERNAL_ATTRS, RModuleSession
 from brmspy.session.manage import manage
-
-import os
-import sys
-from types import ModuleType
+from brmspy.session.module_session import _INTERNAL_ATTRS, RModuleSession
 
 # -------------------------------------------------------------------
 # Typing: describe the brms module surface for static analysis
@@ -18,7 +14,7 @@ if TYPE_CHECKING:
     # For type checkers / IDE only – can point to the real brms module
     import brmspy.brms._brms_module as _brms_module
     from brmspy.brms._brms_module import *
-    from brmspy.brms._brms_module import _runtime, _formula_add
+    from brmspy.brms._brms_module import _formula_add, _runtime
 
     BrmsModule = _brms_module
 else:

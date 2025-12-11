@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import is_dataclass
 from typing import Any
 
-from brmspy.types.session_types import EncodeResult, Encoder
+from brmspy.types.session_types import Encoder, EncodeResult
 from brmspy.types.shm import ShmBlockSpec
 
 

@@ -4,8 +4,9 @@ from typing import TYPE_CHECKING, Union
 if TYPE_CHECKING:
     from rpy2.robjects import Formula, SignatureTranslatedFunction
 
-from rpy2.rinterface_lib.sexp import Sexp
 from rpy2.rinterface import LangSexpVector
+from rpy2.rinterface_lib.sexp import Sexp
+
 from brmspy.types.rpy2_converters import PyObject
 from brmspy.types.shm import ShmPool
 
@@ -22,7 +23,7 @@ def _r2py_fallback(obj: Sexp, shm: ShmPool | None = None) -> PyObject:
 
 
 def _py2r_fallback(obj: PyObject) -> Sexp:
-    from rpy2.robjects import default_converter, pandas2ri, numpy2ri
+    from rpy2.robjects import default_converter, numpy2ri, pandas2ri
     from rpy2.robjects.conversion import localconverter
 
     with localconverter(
@@ -41,8 +42,9 @@ def _r2py_language(
 def _py2r_mapping(
     obj: Mapping,
 ) -> Sexp:
-    from ._registry import py_to_r
     import rpy2.robjects as ro
+
+    from ._registry import py_to_r
 
     converted = {str(k): py_to_r(v) for k, v in obj.items()}
     return ro.ListVector(converted)

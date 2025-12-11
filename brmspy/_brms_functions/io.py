@@ -1,4 +1,5 @@
 import typing
+
 import pandas as pd
 from rpy2.rinterface import ListSexpVector
 
@@ -101,7 +102,7 @@ def get_brms_data(dataset_name: str, **kwargs) -> pd.DataFrame:
 
 
 def save_rds(
-    object: typing.Union[RListVectorExtension, ProxyListSexpVector], file: str, **kwargs
+    object: RListVectorExtension | ProxyListSexpVector, file: str, **kwargs
 ) -> None:
     """
     Save brmsfit object or R object to RDS file.

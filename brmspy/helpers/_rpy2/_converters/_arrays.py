@@ -1,18 +1,18 @@
 from typing import TYPE_CHECKING, Any, cast
-import pandas as pd
-import numpy as np
 
-from brmspy.types.shm_extensions import ShmArray, ShmDataFrameSimple
-from ....types.rpy2_converters import PyObject
+import numpy as np
+import pandas as pd
+
 from brmspy.types.shm import ShmPool
+from brmspy.types.shm_extensions import ShmArray, ShmDataFrameSimple
+
+from ....types.rpy2_converters import PyObject
 
 if TYPE_CHECKING:
     from rpy2.robjects import DataFrame, Matrix
 
-from rpy2.rinterface_lib.sexp import Sexp, NULL
-from rpy2.rinterface_lib.sexp import SexpVector
 from rpy2.rinterface import SexpVectorWithNumpyInterface
-
+from rpy2.rinterface_lib.sexp import NULL, Sexp, SexpVector
 
 # HELPERS
 
@@ -134,7 +134,7 @@ def _py2r_dataframe(obj: pd.DataFrame) -> Sexp:
 
 
 def _py2r_numpy(obj: np.ndarray) -> Sexp:
-    from rpy2.robjects import pandas2ri, numpy2ri
+    from rpy2.robjects import numpy2ri, pandas2ri
     from rpy2.robjects.conversion import localconverter
 
     with localconverter(pandas2ri.converter + numpy2ri.converter) as cv:

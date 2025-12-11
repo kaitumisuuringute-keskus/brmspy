@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from multiprocessing.managers import SharedMemoryManager
 from multiprocessing.shared_memory import SharedMemory
-from typing import TypedDict, runtime_checkable
+from typing import TypedDict
 
 
 class ShmRef(TypedDict):

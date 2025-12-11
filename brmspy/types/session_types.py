@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Protocol, TypedDict, Literal, Any, runtime_checkable
+from typing import Any, Literal, Protocol, TypedDict, runtime_checkable
 
 from brmspy.types.shm import ShmBlockSpec, ShmRef
 
@@ -60,7 +60,7 @@ class EnvironmentConfig:
         }
 
     @classmethod
-    def from_dict(cls, obj: dict[str, Any]) -> "EnvironmentConfig":
+    def from_dict(cls, obj: dict[str, Any]) -> EnvironmentConfig:
         return cls(
             r_home=obj["r_home"],
             startup_scripts=obj["startup_scripts"],
@@ -71,8 +71,8 @@ class EnvironmentConfig:
 
     @classmethod
     def from_obj(
-        cls, obj: None | dict[str, Any] | "EnvironmentConfig"
-    ) -> "EnvironmentConfig":
+        cls, obj: None | dict[str, Any] | EnvironmentConfig
+    ) -> EnvironmentConfig:
         if obj is None:
             return cls()
         if isinstance(obj, dict):

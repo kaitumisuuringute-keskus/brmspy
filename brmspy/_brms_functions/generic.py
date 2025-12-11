@@ -1,5 +1,6 @@
-from typing import Any, Callable, cast
 import re
+from collections.abc import Callable
+from typing import Any, cast
 
 from brmspy.helpers._rpy2._conversion import kwargs_r, py_to_r, r_to_py
 
@@ -131,7 +132,7 @@ def call(function: str, *args, **kwargs) -> Any:
         r_fun = cast(
             Callable, ro.r(f"suppressWarnings(suppressMessages(brms::{func_name}))")
         )
-    except Exception as e:
+    except Exception:
         r_fun = cast(Callable, ro.r(func_name))
 
     r_result = r_fun(*args, **kwargs)
