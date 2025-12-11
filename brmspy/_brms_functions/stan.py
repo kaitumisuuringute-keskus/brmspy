@@ -109,9 +109,7 @@ def make_stancode(
     else:
         if formula_args is None:
             formula_args = {}
-        formula = FormulaConstruct._formula_parse(
-            FormulaPart("bf", formula, formula_args)
-        )
+        formula = FormulaConstruct._formula_parse(formula)
         formula_obj = _execute_formula(formula)
 
     if len(priors_r) > 0:

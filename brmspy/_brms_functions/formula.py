@@ -1,12 +1,15 @@
 from collections.abc import Callable
 from typing import cast, get_args
 from rpy2.rinterface_lib.sexp import Sexp
+
+from brmspy.types.session_types import SexpWrapper
 from ..helpers._rpy2._conversion import kwargs_r, py_to_r
 from ..types.formula_dsl import (
     _FORMULA_FUNCTION_WHITELIST,
     FormulaConstruct,
     FormulaPart,
 )
+
 from ..types.brms_results import ProxyListSexpVector
 
 

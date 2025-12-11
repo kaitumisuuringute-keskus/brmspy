@@ -4,7 +4,7 @@ brmspy.types.formula_dsl
 
 from dataclasses import dataclass
 from collections.abc import Iterator
-from typing import Literal, Mapping, Sequence, Union, cast
+from typing import Literal, Mapping, Sequence, Union, cast, get_args
 
 from .brms_results import ProxyListSexpVector
 from rpy2.rinterface_lib.sexp import Sexp
@@ -32,6 +32,26 @@ class FormulaPart:
     _fun: _FORMULA_FUNCTION_WHITELIST
     _args: Sequence[Primitive]
     _kwargs: Mapping[str, Primitive]
+
+    def __post_init__(self):
+        # Validate function name first
+        if self._fun not in get_args(_FORMULA_FUNCTION_WHITELIST):
+            raise ValueError(
+                f"FormulaPart._fun must be one of {_FORMULA_FUNCTION_WHITELIST!r}, "
+                f"got {self._fun!r}"
+            )
+
+        # Enforce _args is a list
+        if not isinstance(self._args, list):
+            raise TypeError(
+                f"FormulaPart._args must be a list, got {type(self._args).__name__}"
+            )
+
+        # Enforce _kwargs is a dict
+        if not isinstance(self._kwargs, dict):
+            raise TypeError(
+                f"FormulaPart._kwargs must be a dict, got {type(self._kwargs).__name__}"
+            )
 
     def __str__(self) -> str:
         args = ", ".join(repr(a) for a in self._args)
