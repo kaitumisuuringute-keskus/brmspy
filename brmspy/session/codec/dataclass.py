@@ -1,15 +1,19 @@
 from dataclasses import is_dataclass
+from typing import Any, Tuple
 from brmspy.helpers.log import log_warning
 import brmspy.types as _all_types
 
 from .base import CodecRegistry, DataclassCodec
 from .builtin import GenericDataClassCodec
 
+_generics: list[type[Any]] = [_all_types.RListVectorExtension]
 _classes = [
     t
     for name, t in _all_types.__dict__.items()
-    if isinstance(t, type) and is_dataclass(t)
+    if isinstance(t, type) and is_dataclass(t) and not t in _generics
 ]
+# generics
+_classes.extend(_generics)
 
 
 def register_dataclasses(registry: CodecRegistry):

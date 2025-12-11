@@ -17,7 +17,7 @@ class TestSummaryFunction:
         - Attributes have correct types
         """
         from brmspy import brms
-        from brmspy._brms_functions.diagnostics import SummaryResult
+        from brmspy.types import SummaryResult
         import pandas as pd
 
         # Fit a simple model
@@ -34,6 +34,7 @@ class TestSummaryFunction:
 
         # Get summary
         summary = brms.summary(model)
+        print("summary", summary)
 
         # Verify return type is Summary dataclass
         assert isinstance(

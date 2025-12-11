@@ -102,7 +102,9 @@ class PandasDFCodec:
         }
         buffers: list[ShmBlockSpec] = []
 
-        if isinstance(obj, ShmDataFrameSimple):
+        if obj.empty:
+            meta["variant"] = "empty"
+        elif isinstance(obj, ShmDataFrameSimple):
             # single dtype matrix
             meta["variant"] = "single"
             meta["dtype"] = str(obj.values.dtype)
@@ -158,7 +160,9 @@ class PandasDFCodec:
         buffer_specs: List[dict],
         shm_pool: Any,
     ) -> Any:
-        if meta.get("variant") == "single":
+        if meta.get("variant") == "empty":
+            return pd.DataFrame({})
+        elif meta.get("variant") == "single":
             buf = buffers[0].cast("B")
             spec = buffer_specs[0]
             dtype = np.dtype(meta["dtype"])

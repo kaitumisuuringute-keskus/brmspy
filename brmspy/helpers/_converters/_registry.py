@@ -156,7 +156,6 @@ def r_to_py(obj: Sexp, shm: ShmPool | None = None) -> PyObject:
         print("fallback for", type(obj))
         return _r2py_fallback(obj, shm=shm)
 
-    print("using", converter.__name__)
     return converter(obj, shm)
 
 
