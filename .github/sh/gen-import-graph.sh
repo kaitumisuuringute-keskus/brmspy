@@ -10,7 +10,7 @@ pydeps brmspy \
     --show-deps \
     --cluster \
     --noshow \
-    --max-cluster-size=1000 \
+    --max-cluster-size=20 \
     --min-cluster-size=2 \
     --rmprefix brmspy. \
     -x brmspy.types brmspy.helpers.log

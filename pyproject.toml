@@ -69,6 +69,7 @@ dev = [
     "pre-commit>=3.0.0",
     "black",
     "import-linter",
+    "pydeps",
 ]
 
 

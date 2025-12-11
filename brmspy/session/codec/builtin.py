@@ -11,9 +11,11 @@ import pandas as pd
 import xarray as xr
 
 from brmspy.helpers.log import log_warning
+from brmspy.session.codec.base import CodecRegistry
+from brmspy.types.session_types import EncodeResult, Encoder
 
 from ...types.shm_extensions import ShmArray, ShmDataFrameColumns, ShmDataFrameSimple
-from .base import CodecRegistry, Encoder, EncodeResult, ShmBlockSpec
+from ...types.shm import ShmBlockSpec
 
 ONE_MB = 1024 * 1024
 

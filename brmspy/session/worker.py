@@ -10,7 +10,7 @@ from typing import Any
 
 from ..types.session_types import EnvironmentConfig
 from .codec import get_default_registry
-from .environment import _initialise_r_safe, configure_r_env, run_startup_scripts
+from .environment_worker import _initialise_r_safe, activate, run_startup_scripts
 from .transport import ShmPool, attach_buffers
 from .worker_logging import setup_worker_logging
 from .worker_sexp_cache import cache_sexp, reattach_sexp
@@ -46,7 +46,7 @@ def worker_main(
     smm.connect()
 
     # 2. Optional environment init (R_HOME, R_LIBS_USER, etc.)
-    configure_r_env(runtime_conf)
+    activate(runtime_conf)
     run_startup_scripts(runtime_conf)
 
     shm_pool = ShmPool(smm)

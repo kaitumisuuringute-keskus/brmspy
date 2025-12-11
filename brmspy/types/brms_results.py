@@ -1,7 +1,7 @@
 """Result types for brmspy functions."""
 
 from dataclasses import dataclass
-from typing import Any, Union
+from typing import Any, Protocol, Union, runtime_checkable
 
 import arviz as az
 import pandas as pd
@@ -406,91 +406,6 @@ class PosteriorLinpredResult(RListVectorExtension):
     """
 
     idata: IDLinpred
-
-
-@dataclass
-class FormulaPart(RListVectorExtension):
-    _repr: str
-
-
-@dataclass
-class FormulaResult(RListVectorExtension):
-    """
-    Result from formula() function.
-
-    Attributes
-    ----------
-    r : robjects.ListVector
-        R brmsformula object
-    dict : Dict
-        Python dictionary representation of formula
-
-    See Also
-    --------
-    brmspy.brms.formula : Creates FormulaResult objects
-
-    Examples
-    --------
-
-    ```python
-    from brmspy import brms
-
-    # Create formula with options
-    f = brms.formula("y ~ x", decomp="QR")
-
-    # Use in fit()
-    model = brms.fit(f, data=df, chains=4)
-    ```
-    """
-
-    parts: list["FormulaResult"]
-
-    @classmethod
-    def _formula_parse(
-        cls, obj: Union[str, ProxyListSexpVector, "FormulaResult"]
-    ) -> "FormulaResult":
-        if isinstance(obj, FormulaResult):
-            return obj
-
-        if isinstance(obj, str):
-            from brmspy import active
-
-            return active().bf(obj)
-        elif isinstance(obj, SexpWrapper):
-            return FormulaResult(r=obj, parts=[])
-        else:
-            return FormulaResult(r=obj, parts=[])
-
-    def _build(self) -> ProxyListSexpVector:
-        it = self.parts
-
-    def __getattribute__(self, name):
-        # if name == "r":
-        #    return self._build()
-        return super().__getattribute__(name)
-
-    def __add__(self, other):
-        from brmspy import active
-
-        if isinstance(other, (ProxyListSexpVector, str)):
-            other = FormulaResult._formula_parse(other)
-
-        if not isinstance(other, FormulaResult):
-            raise ArithmeticError(
-                "When adding values to formula, they must be FormulaResult or parseable to FormulaResult"
-            )
-
-        return active()._formula_add(self, other)
-
-    def __str__(self):
-        return str(self.r)
-
-    def __repr__(self):
-        return self.__str__()
-
-
-def _indent_block(text: str, prefix: str = "  ") -> str:
-    return "\n".join(prefix + line for line in str(text).splitlines())
 
 
 @dataclass

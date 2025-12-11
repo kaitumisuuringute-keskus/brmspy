@@ -9,7 +9,6 @@ from brmspy.helpers.log import log_warning
 from brmspy._runtime._state import get_brms as _get_brms
 from brmspy.types.brms_results import (
     FitResult,
-    FormulaResult,
     GenericResult,
     LogLikResult,
     LooResult,
@@ -25,6 +24,7 @@ from brmspy.types.brms_results import (
     IDPredict,
     PriorSpec,
 )
+from brmspy.types.formula_dsl import FormulaConstruct, FormulaPart
 from brmspy._brms_functions.io import (
     get_brms_data,
     read_rds_fit,
@@ -53,7 +53,6 @@ from brmspy._brms_functions.formula import (
     set_rescor,
     set_mecor,
     set_nl,
-    _formula_add,
 )
 from brmspy._brms_functions.formula import bf as formula
 from brmspy._brms_functions.prediction import (

@@ -4,8 +4,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
 
-from ..types.session_types import EnvironmentConfig
+from .environment_parent import save, save_as_state
 from .environment import get_environment_config
+
+from ..types.session_types import EnvironmentConfig
 from .module_session import RModuleSession
 
 
@@ -193,3 +195,6 @@ def manage(
     ctx = EnvContext(session=session)
 
     yield ctx
+
+    save(new_conf)
+    save_as_state(new_conf)

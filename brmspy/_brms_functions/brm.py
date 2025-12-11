@@ -6,11 +6,13 @@ from rpy2.rinterface import ListSexpVector
 from rpy2.rinterface_lib import openrlib
 
 from brmspy.helpers.log import log, log_warning
+from brmspy.types.session_types import SexpWrapper
 
 from ..helpers._rpy2._conversion import brmsfit_to_idata, kwargs_r, py_to_r
 from ..helpers._rpy2._priors import _build_priors
-from ..types.brms_results import FitResult, FormulaResult, IDFit, PriorSpec
-from .formula import bf
+from ..types.brms_results import FitResult, IDFit, PriorSpec, ProxyListSexpVector
+from ..types.formula_dsl import FormulaConstruct
+from .formula import _execute_formula, bf
 
 _formula_fn = bf
 
@@ -26,7 +28,7 @@ def _warn_cores(cores: int | None):
 
 
 def brm(
-    formula: FormulaResult | str,
+    formula: FormulaConstruct | ProxyListSexpVector | str,
     data: dict | pd.DataFrame,
     priors: Sequence[PriorSpec] | None = None,
     family: str | ListSexpVector | None = "gaussian",
@@ -175,13 +177,11 @@ def brm(
                 "rstan backend is not installed! Please run install_brms(install_rstan=True)"
             )
 
-    # Convert formula to brms formula object
-    if isinstance(formula, FormulaResult):
-        formula_obj = formula.r
-    else:
-        if formula_args is None:
-            formula_args = {}
-        formula_obj = _formula_fn(formula, **formula_args).r
+    # Formula checks. These should never be reached in the first place
+    # if they are, the library is calling brm() from main directly without remote call
+    assert not isinstance(formula, SexpWrapper)
+    assert formula is not None
+    formula_obj = _execute_formula(formula)
 
     # Convert data to R format
     data_r = py_to_r(data)

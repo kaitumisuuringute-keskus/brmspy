@@ -4,8 +4,10 @@ from typing import Any, cast
 import pandas as pd
 from rpy2.rinterface import ListSexpVector
 
+from brmspy._brms_functions.formula import _execute_formula
 from brmspy.helpers._rpy2._conversion import kwargs_r, py_to_r, r_to_py
-from brmspy.types.brms_results import FormulaResult, PriorSpec, RListVectorExtension
+from brmspy.types.brms_results import PriorSpec, RListVectorExtension
+from brmspy.types.formula_dsl import FormulaConstruct
 
 
 def prior(
@@ -127,7 +129,7 @@ def prior(
 
 
 def get_prior(
-    formula: str | FormulaResult, data=None, family="gaussian", **kwargs
+    formula: str | FormulaConstruct, data=None, family="gaussian", **kwargs
 ) -> pd.DataFrame:
     """
     Get default priors for all model parameters.
@@ -197,9 +199,11 @@ def get_prior(
     """
     import rpy2.robjects as ro
 
+    formula_obj = _execute_formula(formula)
+
     r_get_prior = cast(Callable, ro.r("brms::get_prior"))
     collected_args = kwargs_r(
-        {"formula": formula, "data": data, "family": family, **kwargs}
+        {"formula": formula_obj, "data": data, "family": family, **kwargs}
     )
 
     df_r = r_get_prior(**collected_args)
@@ -209,7 +213,7 @@ def get_prior(
 
 
 def default_prior(
-    object: RListVectorExtension | ListSexpVector | FormulaResult | str,
+    object: RListVectorExtension | ListSexpVector | FormulaConstruct | str,
     data=None,
     family="gaussian",
     **kwargs,
@@ -278,7 +282,11 @@ def default_prior(
     r_get_prior = cast(Callable, ro.r("brms::get_prior"))
     collected_args = kwargs_r({"data": data, "family": family, **kwargs})
 
-    df_r = r_get_prior(py_to_r(object), **collected_args)
+    obj_resolved = object
+    if isinstance(object, FormulaConstruct):
+        obj_resolved = _execute_formula(object)
+
+    df_r = r_get_prior(py_to_r(obj_resolved), **collected_args)
     df = pd.DataFrame(cast(Any, r_to_py(df_r)))
 
     return df

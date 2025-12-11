@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     # For type checkers / IDE only – can point to the real brms module
     import brmspy.brms._brms_module as _brms_module
     from brmspy.brms._brms_module import *
-    from brmspy.brms._brms_module import _formula_add, _runtime
+    from brmspy.brms._brms_module import _runtime
 
     BrmsModule = _brms_module
 else:
@@ -160,7 +160,8 @@ __all__ = [
     "inverse_gaussian",
     # types
     "FitResult",
-    "FormulaResult",
+    "FormulaConstruct",
+    "FormulaPart",
     "PosteriorEpredResult",
     "PosteriorPredictResult",
     "PosteriorLinpredResult",
@@ -178,7 +179,6 @@ __all__ = [
     # stan
     "make_stancode",
     # misc private
-    "_formula_add",
     "_runtime",
     "status",
 ]

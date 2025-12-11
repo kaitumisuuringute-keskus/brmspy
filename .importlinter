@@ -14,10 +14,28 @@ allowed_importers =
     brmspy.helpers._rpy2
 
 [importlinter:contract:protect-worker]
-name = Protect internal worker imports
+name = Worker only imported from module session
 type = protected
 protected_modules =
     brmspy.session.worker
+allowed_importers =
+    brmspy.session.module_session
+
+[importlinter:contract:protect-worker-deps]
+name = Protect internal worker imports
+type = protected
+protected_modules =
+    brmspy.session.environment_worker
+    brmspy.session.worker_logging
+    brmspy.session.worker_sexp_cache
+allowed_importers =
+    brmspy.session.worker
+
+[importlinter:contract:protect-parent-deps]
+name = Protect internal parent imports
+type = protected
+protected_modules =
+    brmspy.session.environment_main
 allowed_importers =
     brmspy.session.module_session
 
@@ -37,8 +55,8 @@ layers =
     brmspy._brms_functions
     brmspy.helpers._rpy2
     brmspy.helpers.log
-    brmspy._singleton
     brmspy.types
+    
 ignore_imports =
     brmspy.session.manage -> brmspy.brms
     brmspy._singleton._brms -> brmspy.brms
@@ -66,4 +84,11 @@ layers =
 name = brmspy worker flow layering
 type = layers
 layers =
-    
+    brmspy.session.module_session
+    brmspy.session.worker
+    brmspy.session.environment
+    brmspy.session.codec
+    brmspy.session.worker_sexp_cache
+    brmspy.session.worker_logging
+    brmspy._brms_functions
+    brmspy.helpers._rpy2

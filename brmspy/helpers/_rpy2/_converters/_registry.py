@@ -1,10 +1,12 @@
 import os
 from collections.abc import Mapping
+from typing import Callable, cast, get_args
 
 import numpy as np
 import pandas as pd
 from rpy2.rinterface import LangSexpVector, ListSexpVector
 from rpy2.rinterface_lib.sexp import Sexp
+from brmspy.types.formula_dsl import FormulaPart, _FORMULA_FUNCTION_WHITELIST
 
 from brmspy.helpers._rpy2._converters._arrays import (
     _py2r_dataframe,
@@ -24,12 +26,24 @@ from brmspy.helpers._rpy2._converters._vectors import (
     _r2py_vector,
 )
 from brmspy.types.brms_results import RListVectorExtension
+from brmspy.types.formula_dsl import FormulaPart
 from brmspy.types.shm import ShmPool
 
 from ....types.rpy2_converters import Py2rConverter, PyObject, R2pyConverter
 
 _R2PY_CONVERTERS: dict[type | tuple[type, ...], R2pyConverter] = {}
 _PY2R_CONVERTERS: dict[type | tuple[type, ...], Py2rConverter] = {}
+
+
+def _py2r_formula_part(obj: FormulaPart) -> Sexp:
+    import rpy2.robjects as ro
+
+    args = [py_to_r(o) for o in obj._args]
+    kwargs = {k: py_to_r(v) for k, v in obj._kwargs.items()}
+    assert obj._fun in get_args(_FORMULA_FUNCTION_WHITELIST)
+    fun = cast(Callable, ro.r(f"brms::{obj._fun}"))
+    return fun(*args, **kwargs)
+
 
 if os.environ.get("BRMSPY_WORKER") == "1":
     import rpy2.robjects as ro
@@ -46,6 +60,7 @@ if os.environ.get("BRMSPY_WORKER") == "1":
     )
     _PY2R_CONVERTERS.update(
         {
+            FormulaPart: _py2r_formula_part,
             pd.DataFrame: _py2r_dataframe,
             np.ndarray: _py2r_numpy,
             Mapping: _py2r_mapping,

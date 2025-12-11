@@ -17,6 +17,8 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
+from brmspy.session.environment import get_environment_config
+
 from ..types.errors import RSessionError
 from ..types.session_types import EnvironmentConfig
 from .codec import get_default_registry
@@ -167,7 +169,6 @@ class RModuleSession(ModuleType):
         super().__init__(module.__name__, module.__doc__)
 
         if environment_conf is None:
-            from .environment import get_environment_config
 
             try:
                 environment_conf = get_environment_config("default")

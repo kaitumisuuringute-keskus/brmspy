@@ -1,11 +1,16 @@
 from collections.abc import Callable
-from typing import cast
-
+from typing import cast, get_args
+from rpy2.rinterface_lib.sexp import Sexp
 from ..helpers._rpy2._conversion import kwargs_r, py_to_r
-from ..types.brms_results import FormulaResult
+from ..types.formula_dsl import (
+    _FORMULA_FUNCTION_WHITELIST,
+    FormulaConstruct,
+    FormulaPart,
+)
+from ..types.brms_results import ProxyListSexpVector
 
 
-def bf(formula: str, **formula_args) -> FormulaResult:
+def bf(*formula: str, **formula_args) -> FormulaConstruct:
     """
     Set up a model formula for brms package.
 
@@ -67,16 +72,12 @@ def bf(formula: str, **formula_args) -> FormulaResult:
         )
     ```
     """
-    import rpy2.robjects as ro
-
-    fun = cast(Callable, ro.r("brms::bf"))
-    formula_args = kwargs_r(formula_args)
-    formula_obj = fun(formula, **formula_args)
-    return FormulaResult._formula_parse(formula_obj)
+    part = FormulaPart(_fun="bf", _args=list(formula), _kwargs=formula_args)
+    return FormulaConstruct._formula_parse(part)
 
 
 def lf(
-    *formulas: str | FormulaResult | object,
+    *formulas: str | FormulaConstruct | FormulaPart | ProxyListSexpVector,
     flist=None,
     dpar: str | None = None,
     resp: str | None = None,
@@ -84,7 +85,7 @@ def lf(
     cmc: bool | None = None,
     sparse: bool | None = None,
     decomp: str | None = None,
-) -> FormulaResult:
+) -> FormulaConstruct:
     """
     Specify linear formulas for distributional / non-linear parameters.
 
@@ -110,40 +111,25 @@ def lf(
     --------
     >>> f = bf("y ~ 1") + lf("sigma ~ x", dpar="sigma")
     """
-    import rpy2.robjects as ro
-
-    fun = cast(Callable, ro.r("brms::lf"))
-
-    r_formulas = [py_to_r(f) for f in formulas]
-
-    r_flist = None
-    if flist is not None:
-        r_flist = [py_to_r(f) for f in flist]
-
-    formula_args = kwargs_r(
-        {
-            "flist": r_flist,
-            "dpar": dpar,
-            "resp": resp,
-            "center": center,
-            "cmc": cmc,
-            "sparse": sparse,
-            "decomp": decomp,
-        }
-    )
-
-    formula_obj = fun(*r_formulas, **formula_args)
-    return FormulaResult._formula_parse(formula_obj)
+    formula_args = {
+        "flist": flist,
+        "dpar": dpar,
+        "resp": resp,
+        "center": center,
+        "cmc": cmc,
+        "sparse": sparse,
+        "decomp": decomp,
+    }
+    return FormulaConstruct._formula_parse(FormulaPart("lf", formulas, formula_args))
 
 
 def nlf(
-    formula: str | object,
-    *extra: str | FormulaResult | object,
+    *formulas: str | FormulaConstruct | FormulaPart | ProxyListSexpVector,
     flist=None,
     dpar: str | None = None,
     resp: str | None = None,
     loop: bool | None = None,
-) -> FormulaResult:
+) -> FormulaConstruct:
     """
     Specify non-linear formulas for distributional parameters.
 
@@ -172,34 +158,19 @@ def nlf(
     --------
     >>> f = bf("y ~ 1") + nlf("sigma ~ a * exp(b * x)")
     """
-    import rpy2.robjects as ro
-
-    fun = cast(Callable, ro.r("brms::nlf"))
-
-    r_formula = py_to_r(formula)
-    r_extra = [py_to_r(x) for x in extra]
-
-    r_flist = None
-    if flist is not None:
-        r_flist = [py_to_r(f) for f in flist]
-
-    formula_args = kwargs_r(
-        {
-            "flist": r_flist,
-            "dpar": dpar,
-            "resp": resp,
-            "loop": loop,
-        }
-    )
-
-    formula_obj = fun(r_formula, *r_extra, **formula_args)
-    return FormulaResult._formula_parse(formula_obj)
+    formula_args = {
+        "flist": flist,
+        "dpar": dpar,
+        "resp": resp,
+        "loop": loop,
+    }
+    return FormulaConstruct._formula_parse(FormulaPart("nlf", formulas, formula_args))
 
 
 def acformula(
-    autocor: str | object,
+    autocor: str,
     resp: str | None = None,
-) -> FormulaResult:
+) -> FormulaConstruct:
     """
     Specify autocorrelation terms to add to a model.
 
@@ -220,22 +191,13 @@ def acformula(
     --------
     >>> f = bf("y ~ x") + acformula("~ arma(p = 1, q = 1)")
     """
-    import rpy2.robjects as ro
-
-    fun = cast(Callable, ro.r("brms::acformula"))
-    r_autocor = py_to_r(autocor)
-
-    formula_args = kwargs_r(
-        {
-            "resp": resp,
-        }
+    formula_args = {"resp": resp}
+    return FormulaConstruct._formula_parse(
+        FormulaPart("acformula", [autocor], formula_args)
     )
 
-    formula_obj = fun(r_autocor, **formula_args)
-    return FormulaResult._formula_parse(formula_obj)
 
-
-def set_rescor(rescor: bool = True) -> FormulaResult:
+def set_rescor(rescor: bool = True) -> FormulaConstruct:
     """
     Control residual correlations in multivariate models.
 
@@ -253,19 +215,13 @@ def set_rescor(rescor: bool = True) -> FormulaResult:
     --------
     >>> f = bf("y1 ~ x") + bf("y2 ~ z") + set_rescor(True)
     """
-    import rpy2.robjects as ro
-
-    fun = cast(Callable, ro.r("brms::set_rescor"))
-    formula_args = kwargs_r(
-        {
-            "rescor": rescor,
-        }
-    )
-    formula_obj = fun(**formula_args)
-    return FormulaResult._formula_parse(formula_obj)
+    formula_args = {
+        "rescor": rescor,
+    }
+    return FormulaConstruct._formula_parse(FormulaPart("set_rescor", [], formula_args))
 
 
-def set_mecor(mecor: bool = True) -> FormulaResult:
+def set_mecor(mecor: bool = True) -> FormulaConstruct:
     """
     Control correlations between latent me-terms.
 
@@ -283,22 +239,16 @@ def set_mecor(mecor: bool = True) -> FormulaResult:
     --------
     >>> f = bf("y ~ me(x, sdx)") + set_mecor(True)
     """
-    import rpy2.robjects as ro
-
-    fun = cast(Callable, ro.r("brms::set_mecor"))
-    formula_args = kwargs_r(
-        {
-            "mecor": mecor,
-        }
-    )
-    formula_obj = fun(**formula_args)
-    return FormulaResult._formula_parse(formula_obj)
+    formula_args = {
+        "mecor": mecor,
+    }
+    return FormulaConstruct._formula_parse(FormulaPart("set_mecor", [], formula_args))
 
 
 def set_nl(
     dpar: str | None = None,
     resp: str | None = None,
-) -> FormulaResult:
+) -> FormulaConstruct:
     """
     Mark a formula as non-linear (or parts of it).
 
@@ -318,24 +268,41 @@ def set_nl(
     --------
     >>> f = bf("y ~ a * inv_logit(x * b)") + lf("a + b ~ z") + set_nl()
     """
-    import rpy2.robjects as ro
-
-    fun = cast(Callable, ro.r("brms::set_nl"))
-    formula_args = kwargs_r(
-        {
-            "dpar": dpar,
-            "resp": resp,
-        }
-    )
-    formula_obj = fun(**formula_args)
-    return FormulaResult._formula_parse(formula_obj)
+    formula_args = {
+        "dpar": dpar,
+        "resp": resp,
+    }
+    return FormulaConstruct._formula_parse(FormulaPart("set_nl", [], formula_args))
 
 
-def _formula_add(a: FormulaResult, b: FormulaResult) -> FormulaResult:
-    import rpy2.robjects as ro
+from typing import Callable, cast
 
-    r_fun = cast(Callable, ro.r("function (a, b) a + b"))
 
-    r = r_fun(a.r, b.r)
+from brmspy.types.brms_results import ProxyListSexpVector
+from brmspy.types.formula_dsl import FormulaConstruct, FormulaPart
+from rpy2.rinterface_lib.sexp import NULL, Sexp
+import rpy2.robjects as ro
 
-    return FormulaResult(parts=[a, b], r=r)
+
+def _execute_formula(formula: FormulaConstruct | Sexp | str) -> Sexp:
+    if isinstance(formula, Sexp):
+        return formula
+    if isinstance(formula, str):
+        formula = FormulaConstruct._formula_parse(formula)
+
+    fun_add = cast(Callable[[Sexp, Sexp], Sexp], ro.r("function (a, b) a + b"))
+
+    result: Sexp | None = None
+    for summand in formula:
+
+        subresult: Sexp = py_to_r(summand[0])
+        for part in summand[1:]:
+            subresult = fun_add(subresult, py_to_r(part))
+
+        if result is None:
+            result = subresult
+        else:
+            result = fun_add(result, subresult)
+
+    assert result is not None
+    return result
