@@ -28,12 +28,13 @@ RTOOLS_VERSIONS = {
     (4, 5): "45",
     (4, 6): "46",
     (4, 7): "47",
-    (4, 8): "48"
+    (4, 8): "48",
 }
 RTOOLS_SUBDIRS = [
     os.path.join("usr", "bin"),
     os.path.join("mingw64", "bin"),
 ]
+
 
 def _windows_drives() -> list[str]:
     """Return a list of existing drive roots like ['C:\\', 'D:\\', ...]."""
@@ -43,6 +44,7 @@ def _windows_drives() -> list[str]:
         if Path(root).exists():
             drives.append(root)
     return drives
+
 
 def _candidate_rtools_paths() -> list[str]:
     """Generate all plausible Rtools bin paths across all drives."""
@@ -56,19 +58,21 @@ def _candidate_rtools_paths() -> list[str]:
                 candidates.append(os.path.join(base2, sub))
     return candidates
 
+
 def get_required_version(r_version: tuple[int, int, int] | Version) -> str | None:
     """Map R version to required Rtools version."""
     if isinstance(r_version, Version):
         major, minor = r_version.major, r_version.minor
     else:
         major, minor, _ = r_version
-    
+
     # Find the appropriate Rtools version
     for (r_major, r_minor), rtools_ver in sorted(RTOOLS_VERSIONS.items(), reverse=True):
         if major > r_major or (major == r_major and minor >= r_minor):
             return rtools_ver
-    
+
     return None
+
 
 RTOOLS_FALLBACK_URLS = {
     "40": "https://cran.r-project.org/bin/windows/Rtools/rtools40-x86_64.exe",
@@ -79,6 +83,7 @@ RTOOLS_FALLBACK_URLS = {
 }
 
 RTOOLS_BASE = "https://cran.r-project.org/bin/windows/Rtools"
+
 
 def _discover_rtools_installer(
     rtools_version: str,
@@ -113,7 +118,7 @@ def _discover_rtools_installer(
 
     # Split by arch:
     aarch64_candidates = [m for m in matches if "-aarch64-" in m]
-    x86_candidates     = [m for m in matches if "-aarch64-" not in m]
+    x86_candidates = [m for m in matches if "-aarch64-" not in m]
 
     if aarch64:
         candidates = aarch64_candidates or x86_candidates
@@ -126,6 +131,7 @@ def _discover_rtools_installer(
     # Lexicographically last is usually the newest build
     filename = sorted(candidates)[-1]
     return index_url + filename
+
 
 def get_download_url(rtools_version: str) -> str:
     """Get download URL for Rtools version."""
@@ -148,18 +154,20 @@ def is_installed() -> bool:
     """Check if Rtools is installed (make + mingw g++ on PATH)."""
     try:
         # Check for make
-        subprocess.run(["make", "--version"], 
-                      capture_output=True, check=True, timeout=10)
-        
+        subprocess.run(
+            ["make", "--version"], capture_output=True, check=True, timeout=10
+        )
+
         # Check for mingw g++
-        result = subprocess.run(["g++", "--version"],
-                               capture_output=True, text=True, check=True, timeout=10)
-        
+        result = subprocess.run(
+            ["g++", "--version"], capture_output=True, text=True, check=True, timeout=10
+        )
+
         # Verify it's mingw
         output = result.stdout.lower()
         if "mingw" in output or "rtools" in output:
             return True
-        
+
         return False
     except Exception:
         return False
@@ -233,7 +241,6 @@ def download_installer(rtools_version: str, max_retries: int = 3) -> Path:
     ) from last_err
 
 
-
 def run_installer(installer: Path, rtools_version: str, silent: bool = True) -> None:
     """Run Rtools installer safely on Windows and CI."""
     system_drive = os.environ.get("SystemDrive", "C:")
@@ -247,13 +254,15 @@ def run_installer(installer: Path, rtools_version: str, silent: bool = True) -> 
     args = [str(installer)]
 
     if silent:
-        args.extend([
-            "/SP-",               # skip intro dialog (CRITICAL)
-            "/VERYSILENT",
-            "/SUPPRESSMSGBOXES",
-            "/NORESTART",
-            f"/DIR={install_dir}",  # no inner quotes
-        ])
+        args.extend(
+            [
+                "/SP-",  # skip intro dialog (CRITICAL)
+                "/VERYSILENT",
+                "/SUPPRESSMSGBOXES",
+                "/NORESTART",
+                f"/DIR={install_dir}",  # no inner quotes
+            ]
+        )
 
     # 5 minute timeout - Rtools installers typically complete in 1-3 minutes
     subprocess.run(args, check=True, timeout=300)
@@ -299,22 +308,23 @@ def ensure_installed() -> None:
     """
     if platform.system() != "Windows":
         return
-    
+
     # Check if already installed
     if is_installed():
         update_paths()
         return
-    
+
     # Get R version and determine required Rtools version
     from brmspy._runtime._platform import get_r_version
+
     r_ver = get_r_version()
     if r_ver is None:
         raise RuntimeError("Cannot determine R version")
-    
+
     rtools_ver = get_required_version(r_ver)
     if rtools_ver is None:
         raise RuntimeError(f"No Rtools version available for R {r_ver}")
-    
+
     # Download and install
     installer = download_installer(rtools_ver)
     try:
@@ -322,36 +332,10 @@ def ensure_installed() -> None:
     finally:
         if installer.exists():
             installer.unlink()
-    
+
     # Update paths
     update_paths()
-    
+
     # Verify installation
     if not is_installed():
         raise RuntimeError("Rtools installation failed")
-    
-
-
-def _windows_has_rtools(silent=False) -> bool:
-    # Fast path: RTOOLS*_HOME
-    for name in ("RTOOLS47_HOME", "RTOOLS46_HOME", "RTOOLS45_HOME", "RTOOLS44_HOME", "RTOOLS43_HOME", "RTOOLS42_HOME", "RTOOLS40_HOME"):
-        home = os.environ.get(name)
-        if home:
-            make = Path(home) / "usr" / "bin" / "make.exe"
-            if make.exists():
-                return True
-
-    try:
-        out = subprocess.check_output(["g++", "--version"], text=True, shell=True, timeout=5)
-    except Exception:
-        if not silent:
-            log_warning(f"g++ not found")
-        return False
-
-    # Very rough: we expect mingw in the banner
-    if "mingw" not in out.lower():
-        if not silent:
-            log_warning(f"mingw not found in g++ banner")
-        return False
-
-    return True

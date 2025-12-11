@@ -3,13 +3,17 @@ System and environment detection. All functions are pure.
 No side effects, no R environment mutation.
 """
 
+import os
+from pathlib import Path
 import platform
 import subprocess
 from typing import cast
 from brmspy._runtime._types import SystemInfo
+from brmspy.helpers.log import log_warning
 
 
 # === Detection (pure) ===
+
 
 def get_os() -> str:
     """Returns 'linux', 'macos', or 'windows'."""
@@ -37,6 +41,7 @@ def get_r_version() -> tuple[int, int, int] | None:
     """Returns R version tuple or None if R not available."""
     try:
         import rpy2.robjects as ro
+
         r_major = cast(ro.ListVector, ro.r("R.Version()$major"))
         r_minor = cast(ro.ListVector, ro.r("R.Version()$minor"))
         major = int(r_major[0])
@@ -121,23 +126,22 @@ def get_system_info() -> SystemInfo:
     arch = get_arch()
     r_ver = get_r_version()
     fp = system_fingerprint() if r_ver else f"{os_name}-{arch}-rUNK"
-    
+
     # Collect toolchain info based on OS
     glibc_ver = None
     clang_ver = None
     gxx_ver = None
     has_rtools = False
-    
+
     if os_name == "linux":
         glibc_ver = get_glibc_version()
         gxx_ver = get_gxx_version()
     elif os_name == "macos":
         clang_ver = get_clang_version()
     elif os_name == "windows":
-        from ._rtools import _windows_has_rtools
         has_rtools = _windows_has_rtools(silent=True)
         gxx_ver = get_gxx_version()
-    
+
     return SystemInfo(
         os=os_name,
         arch=arch,
@@ -152,24 +156,21 @@ def get_system_info() -> SystemInfo:
 
 # === Boolean queries (for status, no exceptions) ===
 
+
 def is_platform_supported() -> bool:
     """True if OS/arch combination is supported."""
     os_name = get_os()
     arch = get_arch()
     supported_os = ("linux", "macos", "windows")
-    supported_os_arch = {
-        "windows": {"x86_64"},
-        "linux": {"x86_64"},
-        "macos": {"arm64"}
-    }
-    
+    supported_os_arch = {"windows": {"x86_64"}, "linux": {"x86_64"}, "macos": {"arm64"}}
+
     if os_name not in supported_os:
         return False
-    
+
     supported_archs = supported_os_arch.get(os_name, set())
     if arch not in supported_archs:
         return False
-    
+
     return True
 
 
@@ -197,11 +198,11 @@ def is_linux_toolchain_ok() -> bool:
     glibc = get_glibc_version()
     if glibc is None or glibc < (2, 27):
         return False
-    
+
     gxx = get_gxx_version()
     if gxx is None or gxx < (9, 0):
         return False
-    
+
     return True
 
 
@@ -211,17 +212,16 @@ def is_macos_toolchain_ok() -> bool:
         subprocess.check_output(["xcode-select", "-p"], text=True, timeout=10)
     except Exception:
         return False
-    
+
     clang = get_clang_version()
     if clang is None or clang < (11, 0):
         return False
-    
+
     return True
 
 
 def is_windows_toolchain_ok() -> bool:
     """True if Rtools with g++ >= 9."""
-    from ._rtools import _windows_has_rtools
     if not _windows_has_rtools(silent=True):
         return False
     gxx_version = get_gxx_version()
@@ -267,18 +267,18 @@ def is_prebuilt_available(fingerprint: str) -> bool:
 def get_compatibility_issues() -> list[str]:
     """Return list of human-readable compatibility issues."""
     issues = []
-    
+
     if not is_platform_supported():
         os_name = get_os()
         arch = get_arch()
         issues.append(f"Unsupported platform: {os_name}-{arch}")
-    
+
     if not is_r_available():
         issues.append("R is not available")
     elif not is_r_supported():
         r_ver = get_r_version()
         issues.append(f"R version {r_ver} is too old (need >= 4.0)")
-    
+
     if not is_toolchain_compatible():
         os_name = get_os()
         if os_name == "linux":
@@ -299,11 +299,12 @@ def get_compatibility_issues() -> list[str]:
         elif os_name == "windows":
             if not is_windows_toolchain_ok():
                 issues.append("Rtools not found or insufficient version")
-    
+
     return issues
 
 
 # === Guard functions (raise on failure) ===
+
 
 def require_platform_supported() -> None:
     """Raise RuntimeError with actionable message if unsupported."""
@@ -332,7 +333,7 @@ def require_r_available(min_version: tuple[int, int] = (4, 0)) -> None:
 def require_toolchain_compatible() -> None:
     """Raise RuntimeError with install instructions if toolchain insufficient."""
     os_name = get_os()
-    
+
     if os_name == "linux":
         if not is_linux_toolchain_ok():
             glibc = get_glibc_version()
@@ -365,6 +366,41 @@ def require_prebuilt_compatible() -> None:
     can_use = can_use_prebuilt()
     if issues or not can_use:
         raise RuntimeError(
-            "System cannot use prebuilt runtimes:\n" +
-            "\n".join(f"  - {issue}" for issue in issues)
+            "System cannot use prebuilt runtimes:\n"
+            + "\n".join(f"  - {issue}" for issue in issues)
         )
+
+
+def _windows_has_rtools(silent=False) -> bool:
+    # Fast path: RTOOLS*_HOME
+    for name in (
+        "RTOOLS47_HOME",
+        "RTOOLS46_HOME",
+        "RTOOLS45_HOME",
+        "RTOOLS44_HOME",
+        "RTOOLS43_HOME",
+        "RTOOLS42_HOME",
+        "RTOOLS40_HOME",
+    ):
+        home = os.environ.get(name)
+        if home:
+            make = Path(home) / "usr" / "bin" / "make.exe"
+            if make.exists():
+                return True
+
+    try:
+        out = subprocess.check_output(
+            ["g++", "--version"], text=True, shell=True, timeout=5
+        )
+    except Exception:
+        if not silent:
+            log_warning(f"g++ not found")
+        return False
+
+    # Very rough: we expect mingw in the banner
+    if "mingw" not in out.lower():
+        if not silent:
+            log_warning(f"mingw not found in g++ banner")
+        return False
+
+    return True
