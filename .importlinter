@@ -17,28 +17,28 @@ allowed_importers =
 name = Worker only imported from module session
 type = protected
 protected_modules =
-    brmspy.session.worker
+    brmspy._session.worker
 allowed_importers =
-    brmspy.session.session
+    brmspy._session.session
 
 [importlinter:contract:protect-worker-deps]
 name = Protect internal worker imports
 type = protected
 protected_modules =
-    brmspy.session.worker.setup
-    brmspy.session.worker.logging
-    brmspy.session.worker.sexp_cache
+    brmspy._session.worker.setup
+    brmspy._session.worker.logging
+    brmspy._session.worker.sexp_cache
 allowed_importers =
-    brmspy.session.worker
+    brmspy._session.worker
 
 [importlinter:contract:protect-parent-deps]
 name = Protect internal parent imports
 type = protected
 protected_modules =
-    brmspy.session.environment_parent
+    brmspy._session.environment_parent
 allowed_importers =
-    brmspy.session.session
-    brmspy.session.manage
+    brmspy._session.session
+    brmspy._session.manage
 
 [importlinter:contract:acyclic_siblings]
 name = acyclic siblings contract
@@ -50,7 +50,7 @@ name = brmspy general layering
 type = layers
 layers =
     brmspy.brms
-    brmspy.session
+    brmspy._session
     brmspy._build
     brmspy._runtime
     brmspy._brms_functions
@@ -59,14 +59,14 @@ layers =
     brmspy.types
     
 ignore_imports =
-    brmspy.session.manage -> brmspy.brms
+    brmspy._session.manage -> brmspy.brms
     brmspy._singleton._brms -> brmspy.brms
 
 [importlinter:contract: runtime-layering]
 name = brmspy runtime layering
 type = layers
 layers =
-    brmspy.session
+    brmspy._session
     brmspy._runtime._activation
     brmspy._runtime._install
     brmspy._runtime._download
@@ -85,11 +85,11 @@ layers =
 name = brmspy worker flow layering
 type = layers
 layers =
-    brmspy.session.session
-    brmspy.session.worker.worker
-    brmspy.session.environment
-    brmspy.session.codec
-    brmspy.session.worker.sexp_cache
-    brmspy.session.worker.logging
+    brmspy._session.session
+    brmspy._session.worker.worker
+    brmspy._session.environment
+    brmspy._session.codec
+    brmspy._session.worker.sexp_cache
+    brmspy._session.worker.logging
     brmspy._brms_functions
     brmspy.helpers._rpy2
