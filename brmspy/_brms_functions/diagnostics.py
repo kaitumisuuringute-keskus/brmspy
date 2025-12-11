@@ -50,39 +50,29 @@ The InferenceData structure contains:
 - **log_likelihood**: Pointwise log-likelihood for LOO/WAIC
 - **observed_data**: Original response values
 """
+
 from typing import Callable, Dict, Iterable, Optional, Sequence, Union, cast
 import pandas as pd
 import pandas as pd
 import xarray as xr
 import numpy as np
 
-from brmspy.helpers._robject_iter import iterate_robject_to_dataclass
-from ..helpers._conversion import (
-    kwargs_r,
-    py_to_r,
-    r_to_py
-)
-from ..types import (
-    FitResult,
-    LooCompareResult,
-    LooResult,
-    SummaryResult
-)
+from brmspy.helpers._rpy2._robject_iter import iterate_robject_to_dataclass
+from ..helpers._rpy2._conversion import kwargs_r, py_to_r, r_to_py
+from ..types import FitResult, LooCompareResult, LooResult, SummaryResult
 from rpy2.rinterface import ListSexpVector
-
-
 
 
 def summary(model: FitResult, **kwargs) -> SummaryResult:
     """
     Generate comprehensive summary statistics for fitted brms model.
-    
+
     Returns a `SummaryResult` dataclass containing model information,
     parameter estimates, and diagnostic information. The SummaryResult object provides
     pretty printing via `str()` or `print()` and structured access to all components.
-    
+
     [BRMS documentation and parameters](https://paulbuerkner.com/brms/reference/summary.brmsfit.html)
-    
+
     Parameters
     ----------
     model : FitResult
@@ -91,12 +81,12 @@ def summary(model: FitResult, **kwargs) -> SummaryResult:
         Additional arguments passed to brms::summary(), such as:
         - probs: Quantiles for credible intervals, e.g., `probs=(0.025, 0.975)`
         - robust: Use robust estimates (median, MAD), default False
-    
+
     Returns
     -------
     SummaryResult
         A dataclass containing:
-        
+
         - **formula** (str): Model formula as string
         - **data_name** (str): Name of the data object used
         - **group** (str): Grouping structure information
@@ -116,65 +106,65 @@ def summary(model: FitResult, **kwargs) -> SummaryResult:
         - **spec_pars** (pd.DataFrame): Family-specific parameters (e.g., sigma)
         - **cor_pars** (pd.DataFrame): Correlation parameters if present
         - **random** (dict): Group-level (random) effects by grouping variable
-    
+
     See Also
     --------
     brms::summary.brmsfit : R documentation
         https://paulbuerkner.com/brms/reference/summary.brmsfit.html
-    
+
     Examples
     --------
     Basic usage with pretty printing:
-    
+
     ```python
     import brmspy
-    
+
     model = brmspy.fit("y ~ x", data=data, chains=4)
     summary = brmspy.summary(model)
-    
+
     # Pretty print full summary
     print(summary)
     ```
-    
+
     Access specific components:
-    
+
     ```python
     # Get population-level effects as DataFrame
     fixed_effects = summary.fixed
     print(fixed_effects)
-    
+
     # Get family-specific parameters (e.g., sigma)
     spec_params = summary.spec_pars
     print(spec_params)
-    
+
     # Access random effects (if present)
     random_effects = summary.random
     for group_name, group_df in random_effects.items():
         print(f"Random effects for {group_name}:")
         print(group_df)
-    
+
     # Check model metadata
     print(f"Formula: {summary.formula}")
     print(f"Total draws: {summary.total_ndraws}")
     print(f"Rhat reported: {summary.has_rhat}")
     ```
-    
+
     Custom credible intervals:
-    
+
     ```python
     # Use 90% credible intervals instead of default 95%
     summary_90 = brmspy.summary(model, probs=(0.05, 0.95))
     print(summary_90.fixed)
     ```
     """
-    
+
     import rpy2.robjects as ro
+
     kwargs = kwargs_r(kwargs)
-    r_summary = cast(Callable, ro.r('summary'))
+    r_summary = cast(Callable, ro.r("summary"))
     summary_r = r_summary(model.r, **kwargs)
 
-
-    _default_get_r = lambda param: f'function(x) x${param}'
+    _default_get_r = lambda param: f"function(x) x${param}"
     _get_methods_r: Dict[str, Callable[[str], str]] = {
         # Extract a clean formula string: "y ~ x1 + x2 + ..."
         "formula": lambda param: (
@@ -183,30 +173,36 @@ def summary(model: FitResult, **kwargs) -> SummaryResult:
     }
 
     names = summary_r.names
-    get = lambda param: r_to_py(cast(Callable, ro.r(_get_methods_r.get(param, _default_get_r)(param)))(summary_r))
-    out = iterate_robject_to_dataclass(names=names, get=get, target_dataclass=SummaryResult, r=summary_r)
+    get = lambda param: r_to_py(
+        cast(Callable, ro.r(_get_methods_r.get(param, _default_get_r)(param)))(
+            summary_r
+        )
+    )
+    out = iterate_robject_to_dataclass(
+        names=names, get=get, target_dataclass=SummaryResult, r=summary_r
+    )
 
     return cast(SummaryResult, out)
 
 
 def fixef(
-  object: Union[FitResult, ListSexpVector],
-  summary = True,
-  robust = False,
-  probs = (0.025, 0.975),
-  pars = None,
-  **kwargs
+    object: Union[FitResult, ListSexpVector],
+    summary=True,
+    robust=False,
+    probs=(0.025, 0.975),
+    pars=None,
+    **kwargs,
 ) -> pd.DataFrame:
     """
     Extract population-level (fixed) effects estimates from a fitted brms model.
-    
+
     Returns a pandas DataFrame containing estimates and uncertainty intervals for
     all population-level parameters (fixed effects). By default, returns summary
     statistics (mean, standard error, credible intervals). Can also return raw
     posterior samples when `summary=False`.
-    
+
     [BRMS documentation](https://paulbuerkner.com/brms/reference/fixef.brmsfit.html)
-    
+
     Parameters
     ----------
     object : FitResult or ListSexpVector
@@ -225,7 +221,7 @@ def fixef(
         Useful for subsetting when you only need specific coefficients.
     **kwargs
         Additional arguments passed to brms::fixef()
-    
+
     Returns
     -------
     pd.DataFrame
@@ -233,26 +229,26 @@ def fixef(
             DataFrame with parameters as rows and columns for Estimate, Est.Error,
             Q2.5, Q97.5 (or other quantiles specified in `probs`), and optionally
             Rhat and Bulk_ESS/Tail_ESS diagnostics.
-        
+
         When `summary=False`:
             DataFrame with posterior samples where rows are iterations and columns
             are parameters. Shape is (n_iterations × n_parameters).
-    
+
     See Also
     --------
     brms::fixef.brmsfit : R documentation
         https://paulbuerkner.com/brms/reference/fixef.brmsfit.html
     summary() : Full model summary with all parameter types
-    
+
     Examples
     --------
     Basic usage with summary statistics:
-    
+
     ```python
     import brmspy
-    
+
     model = brmspy.fit("y ~ x1 + x2", data=data, chains=4)
-    
+
     # Get fixed effects summary
     fixed_effects = brmspy.fixef(model)
     print(fixed_effects)
@@ -261,66 +257,62 @@ def fixef(
     # x1          0.456789   0.098765  0.263456   0.65012
     # x2         -0.234567   0.087654 -0.406789  -0.06234
     ```
-    
+
     Get specific parameters only:
-    
+
     ```python
     # Extract only specific coefficients
     x1_x2_effects = brmspy.fixef(model, pars=["x1", "x2"])
     print(x1_x2_effects)
     ```
-    
+
     Use robust estimates (median and MAD):
-    
+
     ```python
     # Use median and MAD instead of mean and SD
     robust_effects = brmspy.fixef(model, robust=True)
     print(robust_effects)
     ```
-    
+
     Custom credible intervals:
-    
+
     ```python
     # Get 90% credible intervals
     effects_90 = brmspy.fixef(model, probs=(0.05, 0.95))
     print(effects_90)
     ```
-    
+
     Get raw posterior samples:
-    
+
     ```python
     # Get full posterior samples matrix
     samples = brmspy.fixef(model, summary=False)
     print(samples.shape)  # (n_iterations, n_parameters)
-    
+
     # Can then compute custom statistics
     import numpy as np
     custom_quantile = np.percentile(samples["x1"], 90)
     ```
     """
     import rpy2.robjects as ro
+
     obj_r = py_to_r(object)
-    kwargs = kwargs_r({
-        "summary": summary,
-        "robust": robust,
-        "probs": probs,
-        "pars": pars,
-        **kwargs
-    })
-    r_fixef = cast(Callable, ro.r('fixef'))
+    kwargs = kwargs_r(
+        {"summary": summary, "robust": robust, "probs": probs, "pars": pars, **kwargs}
+    )
+    r_fixef = cast(Callable, ro.r("fixef"))
     r_df = r_fixef(obj_r, **kwargs)
     return cast(pd.DataFrame, r_to_py(r_df))
 
 
-
 def ranef(
-  object: Union[FitResult, ListSexpVector],
-  summary: bool = True,
-  robust: bool = False,
-  probs = (0.025, 0.975),
-  pars = None,
-  groups = None,
-  **kwargs
+    object: Union[FitResult, ListSexpVector],
+    summary: bool = True,
+    robust: bool = False,
+    probs=(0.025, 0.975),
+    pars=None,
+    groups=None,
+    **kwargs,
 ) -> Dict[str, xr.DataArray]:
     """
     Extract group-level (random) effects as xarray DataArrays.
@@ -388,16 +380,13 @@ def ranef(
     ```
     """
     import rpy2.robjects as ro
-    obj_r = py_to_r(object)
-    kwargs = kwargs_r({
-        "summary": summary,
-        "robust": robust,
-        "probs": probs,
-        "pars": pars,
-        **kwargs
-    })
 
-    r_ranef = cast(Callable, ro.r('ranef'))
+    obj_r = py_to_r(object)
+    kwargs = kwargs_r(
+        {"summary": summary, "robust": robust, "probs": probs, "pars": pars, **kwargs}
+    )
+
+    r_ranef = cast(Callable, ro.r("ranef"))
     r_list = r_ranef(obj_r, **kwargs)
 
     out: Dict[str, xr.DataArray] = {}
@@ -455,21 +444,21 @@ def ranef(
 
 def posterior_summary(
     object: Union[FitResult, ListSexpVector],
-    variable = None,
-    probs = (0.025, 0.975),
-    robust = False,
-    **kwargs
+    variable=None,
+    probs=(0.025, 0.975),
+    robust=False,
+    **kwargs,
 ) -> pd.DataFrame:
     """
     Extract posterior summary statistics for all or selected model parameters.
-    
+
     Provides a DataFrame with estimates, standard errors, and credible intervals
     for all parameters in a brms model, including fixed effects, random effects,
     and auxiliary parameters. More comprehensive than [`fixef()`](brmspy/brms_functions/diagnostics.py:137)
     or [`ranef()`](brmspy/brms_functions/diagnostics.py:260) as it covers all parameter types.
-    
+
     [BRMS documentation](https://paulbuerkner.com/brms/reference/posterior_summary.brmsfit.html)
-    
+
     Parameters
     ----------
     object : FitResult or ListSexpVector
@@ -483,49 +472,49 @@ def posterior_summary(
         If True, use median and MAD instead of mean and SD for summary statistics.
     **kwargs
         Additional arguments passed to brms::posterior_summary()
-    
+
     Returns
     -------
     pd.DataFrame
         DataFrame with parameters as rows and columns for Estimate, Est.Error,
         and quantiles (e.g., Q2.5, Q97.5). Includes all model parameters:
         population-level effects, group-level effects, and auxiliary parameters.
-    
+
     See Also
     --------
     brms::posterior_summary : R documentation
         https://paulbuerkner.com/brms/reference/posterior_summary.brmsfit.html
     [`fixef()`](brmspy/brms_functions/diagnostics.py:137) : Extract only population-level effects
     [`ranef()`](brmspy/brms_functions/diagnostics.py:260) : Extract only group-level effects
-    
+
     Examples
     --------
     Get summary for all parameters:
-    
+
     ```python
     import brmspy
-    
+
     model = brmspy.fit("y ~ x1 + (1|group)", data=data, chains=4)
-    
+
     # Get all parameter summaries
     all_params = brmspy.posterior_summary(model)
     print(all_params)
     ```
-    
+
     Extract specific parameters:
-    
+
     ```python
     # Get summary for specific parameters
     intercept = brmspy.posterior_summary(model, variable="b_Intercept")
     print(intercept)
-    
+
     # Multiple parameters
     fixed_only = brmspy.posterior_summary(model, variable=["b_Intercept", "b_x1"])
     print(fixed_only)
     ```
-    
+
     Custom credible intervals with robust estimates:
-    
+
     ```python
     # 90% intervals with median/MAD
     robust_summary = brmspy.posterior_summary(
@@ -537,32 +526,29 @@ def posterior_summary(
     ```
     """
     import rpy2.robjects as ro
-    obj_r = py_to_r(object)
-    kwargs = kwargs_r({
-        "variable": variable,
-        "probs": probs,
-        "robust": robust,
-        **kwargs
-    })
 
-    r_fun = cast(Callable, ro.r('brms::posterior_summary'))
+    obj_r = py_to_r(object)
+    kwargs = kwargs_r(
+        {"variable": variable, "probs": probs, "robust": robust, **kwargs}
+    )
+
+    r_fun = cast(Callable, ro.r("brms::posterior_summary"))
     r_df = r_fun(obj_r, **kwargs)
     return cast(pd.DataFrame, r_to_py(r_df))
 
+
 def prior_summary(
-    object: Union[FitResult, ListSexpVector],
-    all = True,
-    **kwargs
+    object: Union[FitResult, ListSexpVector], all=True, **kwargs
 ) -> pd.DataFrame:
     """
     Extract prior specifications used in a fitted brms model.
-    
+
     Returns a DataFrame containing all prior distributions that were used
     (either explicitly set or defaults) when fitting the model. Useful for
     documenting model specifications and understanding which priors were applied.
-    
+
     [BRMS documentation](https://paulbuerkner.com/brms/reference/prior_summary.brmsfit.html)
-    
+
     Parameters
     ----------
     object : FitResult or ListVector
@@ -572,7 +558,7 @@ def prior_summary(
         If False, return only explicitly set priors.
     **kwargs
         Additional arguments passed to brms::prior_summary()
-    
+
     Returns
     -------
     pd.DataFrame
@@ -586,87 +572,85 @@ def prior_summary(
         - nlpar: Non-linear parameter (if applicable)
         - lb/ub: Bounds for truncated priors
         - source: Origin of prior (default, user, etc.)
-    
+
     See Also
     --------
     brms::prior_summary : R documentation
         https://paulbuerkner.com/brms/reference/prior_summary.brmsfit.html
     [`get_prior()`](brmspy/brms_functions/prior.py:1) : Get prior structure before fitting
     [`default_prior()`](brmspy/brms_functions/prior.py:1) : Get default priors for a model
-    
+
     Examples
     --------
     Get all priors used in a model:
-    
+
     ```python
     import brmspy
-    
+
     model = brmspy.fit(
         "y ~ x1 + (1|group)",
         data=data,
         priors=[brmspy.prior("normal(0, 1)", "b")],
         chains=4
     )
-    
+
     # Get all priors (including defaults)
     priors = brmspy.prior_summary(model)
     print(priors)
     ```
-    
+
     Get only explicitly set priors:
-    
+
     ```python
     # Get only user-specified priors
     user_priors = brmspy.prior_summary(model, all=False)
     print(user_priors)
     ```
-    
+
     Compare with what would be used before fitting:
-    
+
     ```python
     # Before fitting - check default priors
     default_priors = brmspy.get_prior("y ~ x1", data=data)
-    
+
     # After fitting - see what was actually used
     used_priors = brmspy.prior_summary(model)
     ```
     """
     import rpy2.robjects as ro
-    obj_r = py_to_r(object)
-    kwargs = kwargs_r({
-        "all": all,
-        **kwargs
-    })
 
-    r_fun = cast(Callable, ro.r('brms::prior_summary'))
+    obj_r = py_to_r(object)
+    kwargs = kwargs_r({"all": all, **kwargs})
+
+    r_fun = cast(Callable, ro.r("brms::prior_summary"))
     r_df = r_fun(obj_r, **kwargs)
     return cast(pd.DataFrame, r_to_py(r_df))
 
 
 def validate_newdata(
-  newdata: pd.DataFrame,
-  object: Union[ListSexpVector, FitResult],
-  re_formula: Optional[str] = None,
-  allow_new_levels: bool = False,
-  newdata2: Optional[pd.DataFrame] = None,
-  resp = None,
-  check_response = True,
-  incl_autocor = True,
-  group_vars = None,
-  req_vars = None,
-  **kwargs
+    newdata: pd.DataFrame,
+    object: Union[ListSexpVector, FitResult],
+    re_formula: Optional[str] = None,
+    allow_new_levels: bool = False,
+    newdata2: Optional[pd.DataFrame] = None,
+    resp=None,
+    check_response=True,
+    incl_autocor=True,
+    group_vars=None,
+    req_vars=None,
+    **kwargs,
 ) -> pd.DataFrame:
     """
     Validate new data for predictions from a fitted brms model.
-    
+
     Ensures that new data contains all required variables and has the correct
     structure for making predictions. Checks variable types, factor levels,
     grouping variables, and autocorrelation structures. This function is primarily
     used internally by prediction methods but can be called directly for debugging
     or validation purposes.
-    
+
     [BRMS documentation](https://paulbuerkner.com/brms/reference/validate_newdata.html)
-    
+
     Parameters
     ----------
     newdata : pd.DataFrame
@@ -702,13 +686,13 @@ def validate_newdata(
         excluded by other parameters).
     **kwargs
         Additional arguments passed to brms::validate_newdata()
-    
+
     Returns
     -------
     pd.DataFrame
         Validated DataFrame based on newdata, potentially with added or
         modified columns to ensure compatibility with the model.
-    
+
     Raises
     ------
     ValueError
@@ -718,48 +702,48 @@ def validate_newdata(
         (when allow_new_levels=False)
     ValueError
         If grouping variables have invalid structure
-    
+
     See Also
     --------
     brms::validate_newdata : R documentation
         https://paulbuerkner.com/brms/reference/validate_newdata.html
     [`posterior_predict()`](brmspy/brms_functions/prediction.py:1) : Uses validate_newdata internally
     [`posterior_epred()`](brmspy/brms_functions/prediction.py:1) : Uses validate_newdata internally
-    
+
     Examples
     --------
     Basic validation for prediction data:
-    
+
     ```python
     import brmspy
     import pandas as pd
-    
+
     # Fit model
     model = brmspy.fit("y ~ x1 + x2", data=train_data, chains=4)
-    
+
     # Prepare new data
     new_data = pd.DataFrame({
         'x1': [1.0, 2.0, 3.0],
         'x2': [0.5, 1.0, 1.5]
     })
-    
+
     # Validate before prediction
     validated_data = brmspy.validate_newdata(new_data, model)
     print(validated_data)
     ```
-    
+
     Validate with group-level effects:
-    
+
     ```python
     # Model with random effects
     model = brmspy.fit("y ~ x + (1|group)", data=train_data, chains=4)
-    
+
     # New data with grouping variable
     new_data = pd.DataFrame({
         'x': [1.0, 2.0],
         'group': ['A', 'B']  # Must match training data groups
     })
-    
+
     # Validate - will error if groups A or B weren't in training
     validated_data = brmspy.validate_newdata(
         new_data,
@@ -767,29 +751,29 @@ def validate_newdata(
         allow_new_levels=False
     )
     ```
-    
+
     Allow new levels for population-level predictions:
-    
+
     ```python
     # Allow new group levels (makes population-level predictions only)
     new_data_with_new_groups = pd.DataFrame({
         'x': [3.0, 4.0],
         'group': ['C', 'D']  # New groups not in training
     })
-    
+
     validated_data = brmspy.validate_newdata(
         new_data_with_new_groups,
         model,
         allow_new_levels=True
     )
     ```
-    
+
     Skip response variable checking:
-    
+
     ```python
     # When making predictions, response not needed
     new_data = pd.DataFrame({'x1': [1.0, 2.0]})
-    
+
     validated_data = brmspy.validate_newdata(
         new_data,
         model,
@@ -798,19 +782,22 @@ def validate_newdata(
     ```
     """
     import rpy2.robjects as ro
+
     r_validate_newdata = cast(Callable, ro.r("brms::validate_newdata"))
-    kwargs = kwargs_r({
-        "newdata": newdata,
-        "object": object,
-        "re_formula": re_formula,
-        "allow_new_levels": allow_new_levels,
-        "newdata2": newdata2,
-        "resp": resp,
-        "check_response": check_response,
-        "incl_autocor": incl_autocor,
-        "group_vars": group_vars,
-        "req_vars": req_vars,
-        **kwargs
-    })
+    kwargs = kwargs_r(
+        {
+            "newdata": newdata,
+            "object": object,
+            "re_formula": re_formula,
+            "allow_new_levels": allow_new_levels,
+            "newdata2": newdata2,
+            "resp": resp,
+            "check_response": check_response,
+            "incl_autocor": incl_autocor,
+            "group_vars": group_vars,
+            "req_vars": req_vars,
+            **kwargs,
+        }
+    )
     res_r = r_validate_newdata(**kwargs)
     return cast(pd.DataFrame, r_to_py(res_r))

@@ -1,18 +1,14 @@
-
 import typing
 import pandas as pd
 from .formula import bf
-from ..helpers._priors import _build_priors
+from ..helpers._rpy2._priors import _build_priors
 from .._runtime._state import get_brms
-from ..helpers._conversion import (
-    py_to_r
-)
-from ..types import (
-    FormulaResult, PriorSpec
-)
+from ..helpers._rpy2._conversion import py_to_r
+from ..types import FormulaResult, PriorSpec
 
 
 _formula_fn = bf
+
 
 def make_stancode(
     formula: typing.Union[FormulaResult, str],
@@ -20,15 +16,15 @@ def make_stancode(
     priors: typing.Optional[typing.Sequence[PriorSpec]] = None,
     family: str = "poisson",
     sample_prior: str = "no",
-    formula_args: typing.Optional[dict] = None
+    formula_args: typing.Optional[dict] = None,
 ) -> str:
     """
     Generate Stan code using brms::make_stancode().
-    
+
     Useful for inspecting the generated Stan model before fitting,
     understanding the model structure, or using the code with other
     Stan interfaces.
-    
+
     Parameters
     ----------
     formula : str or FormulaResult
@@ -46,41 +42,41 @@ def make_stancode(
         - "only": Sample from prior only (no data)
     formula_args : dict, optional
         Additional arguments passed to formula()
-    
+
     Returns
     -------
     str
         Complete Stan program code as string
-    
+
     See Also
     --------
     brms::make_stancode : R documentation
         https://paulbuerkner.com/brms/reference/make_stancode.html
     fit : Fit model instead of just generating code
     make_standata : Generate Stan data block
-    
+
     Examples
     --------
     Generate Stan code for simple model:
-    
+
     ```python
     from brmspy import brms
     epilepsy = brms.get_brms_data("epilepsy")
-    
+
     stan_code = brms.make_stancode(
         formula="count ~ zAge + zBase * Trt + (1|patient)",
         data=epilepsy,
         family="poisson"
     )
-    
+
     print(stan_code[:500])  # Print first 500 characters
     ```
 
     With custom priors:
-    
+
     ```python
         from brmspy import prior
-        
+
         stan_code = brms.make_stancode(
             formula="count ~ zAge",
             data=epilepsy,
@@ -111,13 +107,15 @@ def make_stancode(
             formula_args = {}
         formula_obj = _formula_fn(formula, **formula_args).r
 
-
     if len(priors_r) > 0:
         return brms.make_stancode(
-            formula=formula_obj, data=data_r, prior=priors_r, family=family, sample_prior=sample_prior
+            formula=formula_obj,
+            data=data_r,
+            prior=priors_r,
+            family=family,
+            sample_prior=sample_prior,
         )[0]
     else:
         return brms.make_stancode(
             formula=formula_obj, data=data_r, family=family, sample_prior=sample_prior
         )[0]
-

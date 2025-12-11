@@ -8,7 +8,7 @@ class TestDataConversion:
 
     def test_convert_dataframe_to_r(self, sample_dataframe):
         """Test DataFrame to R conversion"""
-        from brmspy.helpers._conversion import py_to_r
+        from brmspy.helpers._rpy2._conversion import py_to_r
         from rpy2.robjects import DataFrame as RDataFrame
 
         r_data = py_to_r(sample_dataframe)
@@ -16,7 +16,7 @@ class TestDataConversion:
 
     def test_convert_dict_to_r(self, sample_dict):
         """Test dict to R list conversion"""
-        from brmspy.helpers._conversion import py_to_r
+        from brmspy.helpers._rpy2._conversion import py_to_r
         from rpy2.robjects import ListVector
 
         r_data = py_to_r(sample_dict)
@@ -28,7 +28,7 @@ class TestTypeCoercion:
 
     def test_coerce_types_basic(self):
         """Test basic type coercion from Stan code"""
-        from brmspy.helpers._conversion import _coerce_stan_types
+        from brmspy.helpers._rpy2._conversion import _coerce_stan_types
 
         # Simple Stan code with int and real types
         stan_code = """
@@ -58,7 +58,7 @@ class TestTypeCoercion:
 
     def test_coerce_types_preserves_arrays(self):
         """Test that arrays are preserved correctly"""
-        from brmspy.helpers._conversion import _coerce_stan_types
+        from brmspy.helpers._rpy2._conversion import _coerce_stan_types
 
         stan_code = """
         data {
@@ -80,7 +80,7 @@ class TestTypeCoercion:
 
     def test_coerce_int_array(self):
         """Test coercion of int arrays"""
-        from brmspy.helpers._conversion import _coerce_stan_types
+        from brmspy.helpers._rpy2._conversion import _coerce_stan_types
 
         stan_code = """
         data {
@@ -108,7 +108,7 @@ class TestTypeCoercion:
 
     def test_coerce_mixed_types(self):
         """Test coercion with mixed int and real types"""
-        from brmspy.helpers._conversion import _coerce_stan_types
+        from brmspy.helpers._rpy2._conversion import _coerce_stan_types
 
         stan_code = """
         data {
@@ -143,7 +143,7 @@ class TestTypeCoercion:
 
     def test_coerce_handles_non_numpy(self):
         """Test coercion handles non-numpy types"""
-        from brmspy.helpers._conversion import _coerce_stan_types
+        from brmspy.helpers._rpy2._conversion import _coerce_stan_types
 
         stan_code = """
         data {
@@ -174,7 +174,7 @@ class TestTypeCoercion:
         Regression test for issue where old parser captured 'array' as type
         instead of 'int', causing Stan runtime errors.
         """
-        from brmspy.helpers._conversion import _coerce_stan_types
+        from brmspy.helpers._rpy2._conversion import _coerce_stan_types
 
         # New Stan array syntax
         stan_code = """

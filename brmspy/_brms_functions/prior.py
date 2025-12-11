@@ -1,11 +1,8 @@
-
-
-
 from typing import Any, Callable, Optional, Union, cast
 
 import pandas as pd
 
-from brmspy.helpers._conversion import kwargs_r, py_to_r, r_to_py
+from brmspy.helpers._rpy2._conversion import kwargs_r, py_to_r, r_to_py
 from brmspy.types import FormulaResult, PriorSpec, RListVectorExtension
 from rpy2.rinterface import ListSexpVector
 
@@ -20,7 +17,7 @@ def prior(
     nlpar: Optional[str] = None,
     lb: Optional[float] = None,
     ub: Optional[float] = None,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> PriorSpec:
     """
     Create a brms-style prior specification.
@@ -124,16 +121,19 @@ def prior(
         nlpar=nlpar,
         lb=lb,
         ub=ub,
-        **kwargs
+        **kwargs,
     )
 
-def get_prior(formula: Union[str, FormulaResult], data=None, family="gaussian", **kwargs) -> pd.DataFrame:
+
+def get_prior(
+    formula: Union[str, FormulaResult], data=None, family="gaussian", **kwargs
+) -> pd.DataFrame:
     """
     Get default priors for all model parameters.
-    
+
     Returns a DataFrame with default priors for each parameter class in the specified
     brms model. Useful for reviewing and customizing priors before fitting.
-    
+
     Parameters
     ----------
     formula : str or FormulaResult
@@ -145,27 +145,27 @@ def get_prior(formula: Union[str, FormulaResult], data=None, family="gaussian", 
     **kwargs
         Additional arguments passed to brms::get_prior()
         (e.g., autocor, data2, knots, drop_unused_levels)
-    
+
     Returns
     -------
     pd.DataFrame
         DataFrame with columns: prior, class, coef, group, resp, dpar, nlpar, lb, ub, source.
         Each row represents a parameter or parameter class that can have a custom prior.
-    
+
     See Also
     --------
     default_prior : Generic function for getting default priors
     prior : Create custom prior specifications
     brms::get_prior : R documentation
         https://paulbuerkner.com/brms/reference/get_prior.html
-    
+
     Examples
     --------
     Review default priors for a model:
-    
+
     ```python
     from brmspy import brms
-    
+
     priors = brms.get_prior(
         formula="count ~ zAge + zBase * Trt + (1|patient)",
         data=epilepsy,
@@ -176,46 +176,50 @@ def get_prior(formula: Union[str, FormulaResult], data=None, family="gaussian", 
     #   student_t() Intercept  ...    ...     ...
     #   (flat)      b          zAge    ...    ...
     ```
-    
+
     Customize and use priors:
-    
+
     ```python
     from brmspy import brms, prior
-    
+
     # Get defaults
     priors_df = brms.get_prior("y ~ x", data=df)
-    
+
     # Create custom priors based on review
     custom_priors = [
         prior("normal(0, 0.5)", class_="b"),
         prior("exponential(2)", class_="sigma")
     ]
-    
+
     model = brms.fit("y ~ x", data=df, priors=custom_priors)
     ```
     """
     import rpy2.robjects as ro
-    r_get_prior = cast(Callable, ro.r('brms::get_prior'))
-    collected_args = kwargs_r({
-        "formula": formula,
-        "data": data,
-        "family": family,
-        **kwargs
-    })
+
+    r_get_prior = cast(Callable, ro.r("brms::get_prior"))
+    collected_args = kwargs_r(
+        {"formula": formula, "data": data, "family": family, **kwargs}
+    )
 
     df_r = r_get_prior(**collected_args)
     df = pd.DataFrame(r_to_py(df_r))
 
     return df
 
-def default_prior(object: Union[RListVectorExtension, ListSexpVector, FormulaResult, str], data=None, family="gaussian", **kwargs) -> pd.DataFrame:
+
+def default_prior(
+    object: Union[RListVectorExtension, ListSexpVector, FormulaResult, str],
+    data=None,
+    family="gaussian",
+    **kwargs,
+) -> pd.DataFrame:
     """
     Get default priors for brms model parameters (generic function).
-    
+
     Generic function to retrieve default prior specifications for all parameters
     in a brms model. Accepts formula objects, brmsformula objects, or other model
     specification objects. This is the generic version of get_prior().
-    
+
     Parameters
     ----------
     object : str, FormulaResult, or ListSexpVector
@@ -229,28 +233,28 @@ def default_prior(object: Union[RListVectorExtension, ListSexpVector, FormulaRes
     **kwargs
         Additional arguments passed to brms::get_prior()
         (e.g., autocor, data2, knots, drop_unused_levels, sparse)
-    
+
     Returns
     -------
     pd.DataFrame
         DataFrame with columns: prior, class, coef, group, resp, dpar, nlpar, lb, ub, source.
         Each row specifies a parameter class with its default prior. The 'prior' column
         is empty except for internal defaults.
-    
+
     See Also
     --------
     get_prior : Convenience function with formula parameter
     prior : Create custom prior specifications
     brms::default_prior : R documentation
         https://paulbuerkner.com/brms/reference/get_prior.html
-    
+
     Examples
     --------
     Get default priors for a Poisson model:
-    
+
     ```python
     from brmspy import brms
-    
+
     priors = brms.default_prior(
         object="count ~ zAge + zBase * Trt + (1|patient)",
         data=epilepsy,
@@ -258,23 +262,20 @@ def default_prior(object: Union[RListVectorExtension, ListSexpVector, FormulaRes
     )
     print(priors)
     ```
-    
+
     Use with formula object:
-    
+
     ```python
     from brmspy import brms
-    
+
     f = brms.formula("y ~ x + (1|group)")
     priors = brms.default_prior(f, data=df, family="gaussian")
     ```
     """
     import rpy2.robjects as ro
-    r_get_prior = cast(Callable, ro.r('brms::get_prior'))
-    collected_args = kwargs_r({
-        "data": data,
-        "family": family,
-        **kwargs
-    })
+
+    r_get_prior = cast(Callable, ro.r("brms::get_prior"))
+    collected_args = kwargs_r({"data": data, "family": family, **kwargs})
 
     df_r = r_get_prior(py_to_r(object), **collected_args)
     df = pd.DataFrame(r_to_py(df_r))

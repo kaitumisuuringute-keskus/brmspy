@@ -6,13 +6,11 @@ Reference:
 family()
 """
 
-
-
 from typing import Callable, Optional, Union, cast
 from rpy2.rinterface import ListSexpVector
 
 
-from brmspy.helpers._conversion import kwargs_r
+from brmspy.helpers._rpy2._conversion import kwargs_r
 from brmspy.types import FitResult
 
 
@@ -38,7 +36,7 @@ def brmsfamily(
     link_quantile: str = "logit",
     threshold: str = "flexible",
     refcat: Optional[str] = None,
-    **kwargs
+    **kwargs,
 ) -> ListSexpVector:
     """
     Family objects provide a convenient way to specify the details of the models used by many model fitting functions. The family functions presented here are for use with brms only and will **not** work with other model fitting functions such as glm or glmer. However, the standard family functions as described in family will work with brms.
@@ -92,7 +90,8 @@ def brmsfamily(
 
     """
     import rpy2.robjects as ro
-    r_brmsfamily = cast(Callable, ro.r('brms::brmsfamily'))
+
+    r_brmsfamily = cast(Callable, ro.r("brms::brmsfamily"))
 
     collected_args = {
         "family": family,
@@ -116,43 +115,39 @@ def brmsfamily(
         "link_quantile": link_quantile,
         "threshold": threshold,
         "refcat": refcat,
-        **kwargs
+        **kwargs,
     }
     collected_args = kwargs_r(collected_args)
 
     return r_brmsfamily(**collected_args)
 
+
 def family(fit: Union[FitResult, ListSexpVector], **kwargs) -> ListSexpVector:
     """Extract family object from a fitted model.
-    
+
     Parameters
     ----------
     fit : FitResult or ListSexpVector
         Fitted brms model
     """
     import rpy2.robjects as ro
+
     if isinstance(fit, FitResult):
         r_fit = fit.r
     else:
         r_fit = fit
-    
-    r_family = cast(Callable, ro.r('family'))
+
+    r_family = cast(Callable, ro.r("family"))
     kwargs = kwargs_r(kwargs)
 
-    return r_family(
-        r_fit, **kwargs
-    )
-
+    return r_family(r_fit, **kwargs)
 
 
 def student(
-    link: str = "identity",
-    link_sigma: str = "log",
-    link_nu: str = "logm1",
-    **kwargs
+    link: str = "identity", link_sigma: str = "log", link_nu: str = "logm1", **kwargs
 ) -> ListSexpVector:
     """Student's t distribution for robust regression.
-    
+
     Parameters
     ----------
     link : str
@@ -171,12 +166,9 @@ def student(
     )
 
 
-def bernoulli(
-    link: str = "logit",
-    **kwargs
-) -> ListSexpVector:
+def bernoulli(link: str = "logit", **kwargs) -> ListSexpVector:
     """Bernoulli distribution for binary 0/1 outcomes.
-    
+
     Parameters
     ----------
     link : str
@@ -190,12 +182,10 @@ def bernoulli(
 
 
 def beta_binomial(
-    link: str = "logit",
-    link_phi: str = "log",
-    **kwargs
+    link: str = "logit", link_phi: str = "log", **kwargs
 ) -> ListSexpVector:
     """Beta-binomial distribution for overdispersed binomial data.
-    
+
     Parameters
     ----------
     link : str
@@ -211,13 +201,9 @@ def beta_binomial(
     )
 
 
-def negbinomial(
-    link: str = "log",
-    link_shape: str = "log",
-    **kwargs
-) -> ListSexpVector:
+def negbinomial(link: str = "log", link_shape: str = "log", **kwargs) -> ListSexpVector:
     """Negative binomial distribution for overdispersed count data.
-    
+
     Parameters
     ----------
     link : str
@@ -235,9 +221,7 @@ def negbinomial(
 
 # not yet officially supported in brms
 def negbinomial2(
-    link: str = "log",
-    link_sigma: str = "log",
-    **kwargs
+    link: str = "log", link_sigma: str = "log", **kwargs
 ) -> ListSexpVector:
     return brmsfamily(
         family="negbinomial2",
@@ -247,12 +231,9 @@ def negbinomial2(
     )
 
 
-def geometric(
-    link: str = "log",
-    **kwargs
-) -> ListSexpVector:
+def geometric(link: str = "log", **kwargs) -> ListSexpVector:
     """Geometric distribution for count data (negative binomial with shape=1).
-    
+
     Parameters
     ----------
     link : str
@@ -267,9 +248,7 @@ def geometric(
 
 # do not export yet in brms
 def discrete_weibull(
-    link: str = "logit",
-    link_shape: str = "log",
-    **kwargs
+    link: str = "logit", link_shape: str = "log", **kwargs
 ) -> ListSexpVector:
     return brmsfamily(
         family="discrete_weibull",
@@ -280,11 +259,7 @@ def discrete_weibull(
 
 
 # do not export yet in brms
-def com_poisson(
-    link: str = "log",
-    link_shape: str = "log",
-    **kwargs
-) -> ListSexpVector:
+def com_poisson(link: str = "log", link_shape: str = "log", **kwargs) -> ListSexpVector:
     return brmsfamily(
         family="com_poisson",
         link=link,
@@ -294,12 +269,10 @@ def com_poisson(
 
 
 def lognormal(
-    link: str = "identity",
-    link_sigma: str = "log",
-    **kwargs
+    link: str = "identity", link_sigma: str = "log", **kwargs
 ) -> ListSexpVector:
     """Lognormal distribution for positive continuous data.
-    
+
     Parameters
     ----------
     link : str
@@ -316,13 +289,10 @@ def lognormal(
 
 
 def shifted_lognormal(
-    link: str = "identity",
-    link_sigma: str = "log",
-    link_ndt: str = "log",
-    **kwargs
+    link: str = "identity", link_sigma: str = "log", link_ndt: str = "log", **kwargs
 ) -> ListSexpVector:
     """Shifted lognormal distribution with non-decision time parameter.
-    
+
     Parameters
     ----------
     link : str
@@ -345,10 +315,10 @@ def skew_normal(
     link: str = "identity",
     link_sigma: str = "log",
     link_alpha: str = "identity",
-    **kwargs
+    **kwargs,
 ) -> ListSexpVector:
     """Skew normal distribution for asymmetric continuous data.
-    
+
     Parameters
     ----------
     link : str
@@ -367,12 +337,9 @@ def skew_normal(
     )
 
 
-def exponential(
-    link: str = "log",
-    **kwargs
-) -> ListSexpVector:
+def exponential(link: str = "log", **kwargs) -> ListSexpVector:
     """Exponential distribution for time-to-event data.
-    
+
     Parameters
     ----------
     link : str
@@ -385,13 +352,9 @@ def exponential(
     )
 
 
-def weibull(
-    link: str = "log",
-    link_shape: str = "log",
-    **kwargs
-) -> ListSexpVector:
+def weibull(link: str = "log", link_shape: str = "log", **kwargs) -> ListSexpVector:
     """Weibull distribution for survival and reliability analysis.
-    
+
     Parameters
     ----------
     link : str
@@ -407,13 +370,9 @@ def weibull(
     )
 
 
-def frechet(
-    link: str = "log",
-    link_nu: str = "logm1",
-    **kwargs
-) -> ListSexpVector:
+def frechet(link: str = "log", link_nu: str = "logm1", **kwargs) -> ListSexpVector:
     """Frechet distribution for extreme value analysis.
-    
+
     Parameters
     ----------
     link : str
@@ -430,13 +389,10 @@ def frechet(
 
 
 def gen_extreme_value(
-    link: str = "identity",
-    link_sigma: str = "log",
-    link_xi: str = "log1p",
-    **kwargs
+    link: str = "identity", link_sigma: str = "log", link_xi: str = "log1p", **kwargs
 ) -> ListSexpVector:
     """Generalized extreme value distribution for extreme events.
-    
+
     Parameters
     ----------
     link : str
@@ -456,13 +412,10 @@ def gen_extreme_value(
 
 
 def exgaussian(
-    link: str = "identity",
-    link_sigma: str = "log",
-    link_beta: str = "log",
-    **kwargs
+    link: str = "identity", link_sigma: str = "log", link_beta: str = "log", **kwargs
 ) -> ListSexpVector:
     """Ex-Gaussian distribution for reaction time data.
-    
+
     Parameters
     ----------
     link : str
@@ -486,10 +439,10 @@ def wiener(
     link_bs: str = "log",
     link_ndt: str = "log",
     link_bias: str = "logit",
-    **kwargs
+    **kwargs,
 ) -> ListSexpVector:
     """Wiener diffusion model for two-choice reaction time data.
-    
+
     Parameters
     ----------
     link : str
@@ -511,13 +464,9 @@ def wiener(
     )
 
 
-def Beta(
-    link: str = "logit",
-    link_phi: str = "log",
-    **kwargs
-) -> ListSexpVector:
+def Beta(link: str = "logit", link_phi: str = "log", **kwargs) -> ListSexpVector:
     """Beta distribution for data between 0 and 1.
-    
+
     Parameters
     ----------
     link : str
@@ -534,13 +483,10 @@ def Beta(
 
 
 def xbeta(
-    link: str = "logit",
-    link_phi: str = "log",
-    link_kappa: str = "log",
-    **kwargs
+    link: str = "logit", link_phi: str = "log", link_kappa: str = "log", **kwargs
 ) -> ListSexpVector:
     """Extended beta distribution with additional shape parameter.
-    
+
     Parameters
     ----------
     link : str
@@ -560,13 +506,10 @@ def xbeta(
 
 
 def dirichlet(
-    link: str = "logit",
-    link_phi: str = "log",
-    refcat: Optional[str] = None,
-    **kwargs
+    link: str = "logit", link_phi: str = "log", refcat: Optional[str] = None, **kwargs
 ) -> ListSexpVector:
     """Dirichlet distribution for compositional data.
-    
+
     Parameters
     ----------
     link : str
@@ -590,7 +533,7 @@ def dirichlet2(
     link: str = "log",
     # NOTE: R version uses refcat = NA; here default None
     refcat: Optional[str] = None,
-    **kwargs
+    **kwargs,
 ) -> ListSexpVector:
     return brmsfamily(
         family="dirichlet2",
@@ -604,10 +547,10 @@ def logistic_normal(
     link: str = "identity",
     link_sigma: str = "log",
     refcat: Optional[str] = None,
-    **kwargs
+    **kwargs,
 ) -> ListSexpVector:
     """Logistic-normal distribution for compositional data.
-    
+
     Parameters
     ----------
     link : str
@@ -627,12 +570,10 @@ def logistic_normal(
 
 
 def von_mises(
-    link: str = "tan_half",
-    link_kappa: str = "log",
-    **kwargs
+    link: str = "tan_half", link_kappa: str = "log", **kwargs
 ) -> ListSexpVector:
     """Von Mises distribution for circular/directional data.
-    
+
     Parameters
     ----------
     link : str
@@ -652,10 +593,10 @@ def asym_laplace(
     link: str = "identity",
     link_sigma: str = "log",
     link_quantile: str = "logit",
-    **kwargs
+    **kwargs,
 ) -> ListSexpVector:
     """Asymmetric Laplace distribution for quantile regression.
-    
+
     Parameters
     ----------
     link : str
@@ -680,7 +621,7 @@ def zero_inflated_asym_laplace(
     link_sigma: str = "log",
     link_quantile: str = "logit",
     link_zi: str = "logit",
-    **kwargs
+    **kwargs,
 ) -> ListSexpVector:
     return brmsfamily(
         family="zero_inflated_asym_laplace",
@@ -692,12 +633,9 @@ def zero_inflated_asym_laplace(
     )
 
 
-def cox(
-    link: str = "log",
-    **kwargs
-) -> ListSexpVector:
+def cox(link: str = "log", **kwargs) -> ListSexpVector:
     """Cox proportional hazards model for survival data.
-    
+
     Parameters
     ----------
     link : str
@@ -712,12 +650,10 @@ def cox(
 
 
 def hurdle_poisson(
-    link: str = "log",
-    link_hu: str = "logit",
-    **kwargs
+    link: str = "log", link_hu: str = "logit", **kwargs
 ) -> ListSexpVector:
     """Hurdle Poisson distribution for zero-inflated count data.
-    
+
     Parameters
     ----------
     link : str
@@ -734,13 +670,10 @@ def hurdle_poisson(
 
 
 def hurdle_negbinomial(
-    link: str = "log",
-    link_shape: str = "log",
-    link_hu: str = "logit",
-    **kwargs
+    link: str = "log", link_shape: str = "log", link_hu: str = "logit", **kwargs
 ) -> ListSexpVector:
     """Hurdle negative binomial for overdispersed zero-inflated count data.
-    
+
     Parameters
     ----------
     link : str
@@ -760,13 +693,10 @@ def hurdle_negbinomial(
 
 
 def hurdle_gamma(
-    link: str = "log",
-    link_shape: str = "log",
-    link_hu: str = "logit",
-    **kwargs
+    link: str = "log", link_shape: str = "log", link_hu: str = "logit", **kwargs
 ) -> ListSexpVector:
     """Hurdle Gamma distribution for zero-inflated positive continuous data.
-    
+
     Parameters
     ----------
     link : str
@@ -786,13 +716,10 @@ def hurdle_gamma(
 
 
 def hurdle_lognormal(
-    link: str = "identity",
-    link_sigma: str = "log",
-    link_hu: str = "logit",
-    **kwargs
+    link: str = "identity", link_sigma: str = "log", link_hu: str = "logit", **kwargs
 ) -> ListSexpVector:
     """Hurdle lognormal for zero-inflated positive continuous data.
-    
+
     Parameters
     ----------
     link : str
@@ -816,10 +743,10 @@ def hurdle_cumulative(
     link_hu: str = "logit",
     link_disc: str = "log",
     threshold: str = "flexible",
-    **kwargs
+    **kwargs,
 ) -> ListSexpVector:
     """Hurdle cumulative for zero-inflated ordinal data.
-    
+
     Parameters
     ----------
     link : str
@@ -842,13 +769,10 @@ def hurdle_cumulative(
 
 
 def zero_inflated_beta(
-    link: str = "logit",
-    link_phi: str = "log",
-    link_zi: str = "logit",
-    **kwargs
+    link: str = "logit", link_phi: str = "log", link_zi: str = "logit", **kwargs
 ) -> ListSexpVector:
     """Zero-inflated beta for data between 0 and 1 with excess zeros.
-    
+
     Parameters
     ----------
     link : str
@@ -872,10 +796,10 @@ def zero_one_inflated_beta(
     link_phi: str = "log",
     link_zoi: str = "logit",
     link_coi: str = "logit",
-    **kwargs
+    **kwargs,
 ) -> ListSexpVector:
     """Zero-one-inflated beta for data between 0 and 1 with excess zeros and ones.
-    
+
     Parameters
     ----------
     link : str
@@ -898,12 +822,10 @@ def zero_one_inflated_beta(
 
 
 def zero_inflated_poisson(
-    link: str = "log",
-    link_zi: str = "logit",
-    **kwargs
+    link: str = "log", link_zi: str = "logit", **kwargs
 ) -> ListSexpVector:
     """Zero-inflated Poisson for count data with excess zeros.
-    
+
     Parameters
     ----------
     link : str
@@ -920,13 +842,10 @@ def zero_inflated_poisson(
 
 
 def zero_inflated_negbinomial(
-    link: str = "log",
-    link_shape: str = "log",
-    link_zi: str = "logit",
-    **kwargs
+    link: str = "log", link_shape: str = "log", link_zi: str = "logit", **kwargs
 ) -> ListSexpVector:
     """Zero-inflated negative binomial for overdispersed count data with excess zeros.
-    
+
     Parameters
     ----------
     link : str
@@ -946,12 +865,10 @@ def zero_inflated_negbinomial(
 
 
 def zero_inflated_binomial(
-    link: str = "logit",
-    link_zi: str = "logit",
-    **kwargs
+    link: str = "logit", link_zi: str = "logit", **kwargs
 ) -> ListSexpVector:
     """Zero-inflated binomial for binary count data with excess zeros.
-    
+
     Parameters
     ----------
     link : str
@@ -968,13 +885,10 @@ def zero_inflated_binomial(
 
 
 def zero_inflated_beta_binomial(
-    link: str = "logit",
-    link_phi: str = "log",
-    link_zi: str = "logit",
-    **kwargs
+    link: str = "logit", link_phi: str = "log", link_zi: str = "logit", **kwargs
 ) -> ListSexpVector:
     """Zero-inflated beta-binomial for overdispersed binomial data with excess zeros.
-    
+
     Parameters
     ----------
     link : str
@@ -994,12 +908,10 @@ def zero_inflated_beta_binomial(
 
 
 def categorical(
-    link: str = "logit",
-    refcat: Optional[str] = None,
-    **kwargs
+    link: str = "logit", refcat: Optional[str] = None, **kwargs
 ) -> ListSexpVector:
     """Categorical distribution for unordered multi-category outcomes.
-    
+
     Parameters
     ----------
     link : str
@@ -1016,12 +928,10 @@ def categorical(
 
 
 def multinomial(
-    link: str = "logit",
-    refcat: Optional[str] = None,
-    **kwargs
+    link: str = "logit", refcat: Optional[str] = None, **kwargs
 ) -> ListSexpVector:
     """Multinomial distribution for count data across multiple categories.
-    
+
     Parameters
     ----------
     link : str
@@ -1038,13 +948,10 @@ def multinomial(
 
 
 def dirichlet_multinomial(
-    link: str = "logit",
-    link_phi: str = "log",
-    refcat: Optional[str] = None,
-    **kwargs
+    link: str = "logit", link_phi: str = "log", refcat: Optional[str] = None, **kwargs
 ) -> ListSexpVector:
     """Dirichlet-multinomial for overdispersed categorical count data.
-    
+
     Parameters
     ----------
     link : str
@@ -1064,13 +971,10 @@ def dirichlet_multinomial(
 
 
 def cumulative(
-    link: str = "logit",
-    link_disc: str = "log",
-    threshold: str = "flexible",
-    **kwargs
+    link: str = "logit", link_disc: str = "log", threshold: str = "flexible", **kwargs
 ) -> ListSexpVector:
     """Cumulative (proportional odds) model for ordinal outcomes.
-    
+
     Parameters
     ----------
     link : str
@@ -1090,13 +994,10 @@ def cumulative(
 
 
 def sratio(
-    link: str = "logit",
-    link_disc: str = "log",
-    threshold: str = "flexible",
-    **kwargs
+    link: str = "logit", link_disc: str = "log", threshold: str = "flexible", **kwargs
 ) -> ListSexpVector:
     """Sequential (stopping) ratio model for ordinal outcomes.
-    
+
     Parameters
     ----------
     link : str
@@ -1116,13 +1017,10 @@ def sratio(
 
 
 def cratio(
-    link: str = "logit",
-    link_disc: str = "log",
-    threshold: str = "flexible",
-    **kwargs
+    link: str = "logit", link_disc: str = "log", threshold: str = "flexible", **kwargs
 ) -> ListSexpVector:
     """Continuation ratio model for ordinal outcomes.
-    
+
     Parameters
     ----------
     link : str
@@ -1142,13 +1040,10 @@ def cratio(
 
 
 def acat(
-    link: str = "logit",
-    link_disc: str = "log",
-    threshold: str = "flexible",
-    **kwargs
+    link: str = "logit", link_disc: str = "log", threshold: str = "flexible", **kwargs
 ) -> ListSexpVector:
     """Adjacent category model for ordinal outcomes.
-    
+
     Parameters
     ----------
     link : str
@@ -1166,13 +1061,14 @@ def acat(
         **kwargs,
     )
 
+
 def gaussian(
     link: str = "identity",
     link_sigma: str = "log",
     **kwargs,
 ) -> ListSexpVector:
     """Gaussian (normal) distribution for continuous data.
-    
+
     Parameters
     ----------
     link : str
@@ -1193,7 +1089,7 @@ def poisson(
     **kwargs,
 ) -> ListSexpVector:
     """Poisson distribution for count data.
-    
+
     Parameters
     ----------
     link : str
@@ -1211,7 +1107,7 @@ def binomial(
     **kwargs,
 ) -> ListSexpVector:
     """Binomial distribution for binary count data.
-    
+
     Parameters
     ----------
     link : str
@@ -1230,7 +1126,7 @@ def Gamma(
     **kwargs,
 ) -> ListSexpVector:
     """Gamma distribution for positive continuous data.
-    
+
     Parameters
     ----------
     link : str
@@ -1252,7 +1148,7 @@ def inverse_gaussian(
     **kwargs,
 ) -> ListSexpVector:
     """Inverse Gaussian distribution for positive continuous data.
-    
+
     Parameters
     ----------
     link : str

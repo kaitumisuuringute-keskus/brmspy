@@ -2,14 +2,9 @@ import typing
 import pandas as pd
 from rpy2.rinterface import ListSexpVector
 
-from ..helpers._conversion import (
-    brmsfit_to_idata,
-    kwargs_r,
-    r_to_py
-)
-from ..types import (
-    FitResult, ProxyListSexpVector, RListVectorExtension
-)
+from ..helpers._rpy2._conversion import brmsfit_to_idata, kwargs_r, r_to_py
+from ..types import FitResult, ProxyListSexpVector, RListVectorExtension
+
 
 def get_data(dataset_name: str, **kwargs) -> pd.DataFrame:
     """
@@ -47,6 +42,7 @@ def get_data(dataset_name: str, **kwargs) -> pd.DataFrame:
         Convenience wrapper for datasets from the ``brms`` package.
     """
     import rpy2.robjects as ro
+
     r_kwargs = kwargs_r(kwargs)
 
     r_data = typing.cast(typing.Callable, ro.r["data"])
@@ -104,16 +100,16 @@ def get_brms_data(dataset_name: str, **kwargs) -> pd.DataFrame:
     return get_data(dataset_name, package="brms", **kwargs)
 
 
-
-
-def save_rds(object: typing.Union[RListVectorExtension, ProxyListSexpVector], file: str, **kwargs) -> None:
+def save_rds(
+    object: typing.Union[RListVectorExtension, ProxyListSexpVector], file: str, **kwargs
+) -> None:
     """
     Save brmsfit object or R object to RDS file.
-    
+
     Saves fitted brms models or other R objects to disk using R's saveRDS() function.
     This allows persisting models for later use, sharing fitted models, or creating
     model checkpoints during long computations.
-    
+
     Parameters
     ----------
     object : FitResult or ListSexpVector
@@ -125,30 +121,30 @@ def save_rds(object: typing.Union[RListVectorExtension, ProxyListSexpVector], fi
         but not required
     **kwargs : dict
         Additional arguments passed to R's saveRDS():
-        
+
         - compress : bool or str - Compression method:
             True (default), False, "gzip", "bzip2", "xz"
         - version : int - RDS format version (2 or 3)
         - ascii : bool - Use ASCII representation (default False)
         - refhook : function - Reference hook for serialization (NOT tested)
-    
+
     Returns
     -------
     None
-    
+
     See Also
     --------
     read_rds_fit : Load saved brmsfit as FitResult
     read_rds_raw : Load saved object as raw R ListSexpVector
     fit : Fit models that can be saved
-    
+
     Examples
     --------
     Save a fitted model:
-    
+
     ```python
     from brmspy import brms
-    
+
     # Fit model
     model = brms.fit(
         formula="y ~ x + (1|group)",
@@ -156,96 +152,97 @@ def save_rds(object: typing.Union[RListVectorExtension, ProxyListSexpVector], fi
         family="gaussian",
         chains=4
     )
-    
+
     # Save to file
     brms.save_rds(model, "my_model.rds")
     ```
-    
+
     Save with compression options:
-    
+
     ```python
     # High compression for storage
     brms.save_rds(model, "model.rds", compress="xz")
-    
+
     # No compression for faster saving
     brms.save_rds(model, "model.rds", compress=False)
     ```
-    
+
     Save and later reload:
-    
+
     ```python
     # Save model
     brms.save_rds(model, "model.rds")
-    
+
     # Later session: reload model
     loaded_model = brms.read_rds_fit("model.rds")
-    
+
     # Use loaded model for predictions
     predictions = brms.posterior_predict(loaded_model, newdata=new_data)
     ```
     """
     import rpy2.robjects as ro
+
     if isinstance(object, RListVectorExtension):
         brmsfit = object.r
     else:
         brmsfit = object
 
     kwargs = kwargs_r(kwargs)
-    
-    r_save_rds = typing.cast(typing.Callable, ro.r('saveRDS'))
+
+    r_save_rds = typing.cast(typing.Callable, ro.r("saveRDS"))
     r_save_rds(brmsfit, file, **kwargs)
 
 
 def read_rds_raw(file: str, **kwargs) -> ListSexpVector:
     """
     Load R object from RDS file as raw ListSexpVector.
-    
+
     Reads an RDS file and returns the raw R object without any Python conversion
     or processing. Useful when you need direct access to the R object structure
     or want to inspect saved objects before full conversion.
-    
+
     Parameters
     ----------
     file : str
         Path to RDS file to load
     **kwargs : dict
         Additional arguments passed to R's readRDS():
-        
+
         - refhook : function - Reference hook for deserialization
-    
+
     Returns
     -------
     ListSexpVector
         Raw R ListSexpVector object from the RDS file
-    
+
     See Also
     --------
     read_rds_fit : Load as FitResult with arviz InferenceData
     save_rds : Save R objects to RDS files
-    
+
     Examples
     --------
     Load raw R object:
-    
+
     ```python
     from brmspy import brms
-    
+
     # Load raw brmsfit object
     raw_model = brms.read_rds_raw("model.rds")
-    
+
     # Access R object directly (for advanced users)
     print(type(raw_model))  # rpy2.robjects.vectors.ListSexpVector
     ```
-    
+
     Inspect object structure before conversion:
-    
+
     ```python
     # Load raw to check what's in the file
     raw_obj = brms.read_rds_raw("unknown_object.rds")
-    
+
     # Inspect R object attributes
     print(raw_obj.names)
-    
+
     # Then decide how to process it
     if "fit" in raw_obj.names:
         # It's a brmsfit, convert properly
@@ -253,7 +250,8 @@ def read_rds_raw(file: str, **kwargs) -> ListSexpVector:
     ```
     """
     import rpy2.robjects as ro
-    r_read_rds = typing.cast(typing.Callable, ro.r('readRDS'))
+
+    r_read_rds = typing.cast(typing.Callable, ro.r("readRDS"))
 
     kwargs = kwargs_r(kwargs)
     brmsobject = r_read_rds(file, **kwargs)
@@ -263,84 +261,84 @@ def read_rds_raw(file: str, **kwargs) -> ListSexpVector:
 def read_rds_fit(file: str, **kwargs) -> FitResult:
     """
     Load saved brmsfit object as FitResult with arviz InferenceData.
-    
+
     Reads a brmsfit object from an RDS file and converts it to a FitResult
     with both arviz InferenceData (.idata) and the raw R object (.r).
     This is the recommended way to load saved brms models for analysis
     and predictions in Python.
-    
+
     Parameters
     ----------
     file : str
         Path to RDS file containing saved brmsfit object
     **kwargs : dict
         Additional arguments passed to R's readRDS():
-        
+
         - refhook : function - Reference hook for deserialization
-    
+
     Returns
     -------
     FitResult
         Object with two attributes:
         - .idata : arviz.InferenceData with posterior samples and diagnostics
         - .r : R brmsfit object for use with brms functions
-    
+
     Raises
     ------
     Exception
         If file doesn't exist or doesn't contain a valid brmsfit object
-    
+
     See Also
     --------
     save_rds : Save brmsfit objects to RDS files
     read_rds_raw : Load as raw R object without conversion
     fit : Create brmsfit objects to save
-    
+
     Examples
     --------
     Basic loading and analysis:
-    
+
     ```python
     from brmspy import brms
     import arviz as az
-    
+
     # Load previously saved model
     model = brms.read_rds_fit("my_model.rds")
-    
+
     # Analyze with arviz
     az.summary(model.idata)
     az.plot_trace(model.idata)
-    
+
     # Check diagnostics
     print(az.rhat(model.idata))
     ```
-    
+
     Load and make predictions:
-    
+
     ```python
     import pandas as pd
-    
+
     # Load saved model
     model = brms.read_rds_fit("trained_model.rds")
-    
+
     # Create new data for predictions
     newdata = pd.DataFrame({
         'x': [1.0, 2.0, 3.0],
         'group': ['A', 'B', 'A']
     })
-    
+
     # Generate predictions
     predictions = brms.posterior_predict(model, newdata=newdata)
     print(predictions.idata.posterior_predictive)
     ```
-    
+
     Load model for comparison:
-    
+
     ```python
     # Load multiple saved models
     model1 = brms.read_rds_fit("model1.rds")
     model2 = brms.read_rds_fit("model2.rds")
-    
+
     # Compare with arviz
     comparison = az.compare({
         'model1': model1.idata,
@@ -348,9 +346,9 @@ def read_rds_fit(file: str, **kwargs) -> FitResult:
     })
     print(comparison)
     ```
-    
+
     Resume analysis from checkpoint:
-    
+
     ```python
     # Load model from checkpoint during long computation
     try:
@@ -360,7 +358,7 @@ def read_rds_fit(file: str, **kwargs) -> FitResult:
         # Checkpoint doesn't exist, fit from scratch
         model = brms.fit(formula="y ~ x", data=data, chains=4)
         brms.save_rds(model, "checkpoint.rds")
-    
+
     # Continue analysis
     summary = brms.summary(model)
     ```

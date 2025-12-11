@@ -2,21 +2,14 @@ from typing import Callable, Union, cast
 from rpy2.rinterface import ListSexpVector
 
 from .._runtime._state import get_brms
-from ..helpers._conversion import (
-    kwargs_r, py_to_r, r_to_py
-)
-from ..types import (
-    FormulaResult
-)
+from ..helpers._rpy2._conversion import kwargs_r, py_to_r, r_to_py
+from ..types import FormulaResult
 
 
-def bf(
-    formula: str,
-    **formula_args
-) -> FormulaResult:
+def bf(formula: str, **formula_args) -> FormulaResult:
     """
     Set up a model formula for brms package.
-    
+
     Allows defining (potentially non-linear) additive multilevel models
     for all parameters of the assumed response distribution.
 
@@ -26,7 +19,7 @@ def bf(
         brms formula specification, e.g., "y ~ x + (1|group)"
     **formula_args : dict
         Additional brms::brmsformula() arguments:
-        
+
         - decomp : str
             Decomposition method (e.g., "QR" for QR decomposition)
         - center : bool
@@ -37,29 +30,29 @@ def bf(
             Whether formula is non-linear
         - loop : bool
             Use loop-based Stan code
-    
+
     Returns
     -------
     FormulaResult
         Object with .r (R brmsformula object) and .dict (Python dict) attributes
-    
+
     See Also
     --------
     brms::brmsformula : R documentation
         https://paulbuerkner.com/brms/reference/brmsformula.html
     fit : Fit model using formula
-    
+
     Examples
     --------
     Basic formula:
-    
+
     ```python
         from brmspy import brms
         f = brms.bf("y ~ x1 + x2 + (1|group)")
     ```
 
     With QR decomposition for numerical stability:
-    
+
     ```python
     f = brms.bf(
         "reaction ~ days + (days|subject)",
@@ -79,6 +72,7 @@ def bf(
     formula_args = kwargs_r(formula_args)
     formula_obj = brms.bf(formula, **formula_args)
     return FormulaResult._formula_parse(formula_obj)
+
 
 def lf(
     *formulas: Union[str, FormulaResult, object],
@@ -123,15 +117,17 @@ def lf(
     if flist is not None:
         r_flist = [py_to_r(f) for f in flist]
 
-    formula_args = kwargs_r({
-        "flist": r_flist,
-        "dpar": dpar,
-        "resp": resp,
-        "center": center,
-        "cmc": cmc,
-        "sparse": sparse,
-        "decomp": decomp,
-    })
+    formula_args = kwargs_r(
+        {
+            "flist": r_flist,
+            "dpar": dpar,
+            "resp": resp,
+            "center": center,
+            "cmc": cmc,
+            "sparse": sparse,
+            "decomp": decomp,
+        }
+    )
 
     formula_obj = brms.lf(*r_formulas, **formula_args)
     return FormulaResult._formula_parse(formula_obj)
@@ -182,12 +178,14 @@ def nlf(
     if flist is not None:
         r_flist = [py_to_r(f) for f in flist]
 
-    formula_args = kwargs_r({
-        "flist": r_flist,
-        "dpar": dpar,
-        "resp": resp,
-        "loop": loop,
-    })
+    formula_args = kwargs_r(
+        {
+            "flist": r_flist,
+            "dpar": dpar,
+            "resp": resp,
+            "loop": loop,
+        }
+    )
 
     formula_obj = brms.nlf(r_formula, *r_extra, **formula_args)
     return FormulaResult._formula_parse(formula_obj)
@@ -220,9 +218,11 @@ def acformula(
     brms = get_brms()
     r_autocor = py_to_r(autocor)
 
-    formula_args = kwargs_r({
-        "resp": resp,
-    })
+    formula_args = kwargs_r(
+        {
+            "resp": resp,
+        }
+    )
 
     formula_obj = brms.acformula(r_autocor, **formula_args)
     return FormulaResult._formula_parse(formula_obj)
@@ -247,9 +247,11 @@ def set_rescor(rescor: bool = True) -> FormulaResult:
     >>> f = bf("y1 ~ x") + bf("y2 ~ z") + set_rescor(True)
     """
     brms = get_brms()
-    formula_args = kwargs_r({
-        "rescor": rescor,
-    })
+    formula_args = kwargs_r(
+        {
+            "rescor": rescor,
+        }
+    )
     formula_obj = brms.set_rescor(**formula_args)
     return FormulaResult._formula_parse(formula_obj)
 
@@ -273,9 +275,11 @@ def set_mecor(mecor: bool = True) -> FormulaResult:
     >>> f = bf("y ~ me(x, sdx)") + set_mecor(True)
     """
     brms = get_brms()
-    formula_args = kwargs_r({
-        "mecor": mecor,
-    })
+    formula_args = kwargs_r(
+        {
+            "mecor": mecor,
+        }
+    )
     formula_obj = brms.set_mecor(**formula_args)
     return FormulaResult._formula_parse(formula_obj)
 
@@ -304,23 +308,21 @@ def set_nl(
     >>> f = bf("y ~ a * inv_logit(x * b)") + lf("a + b ~ z") + set_nl()
     """
     brms = get_brms()
-    formula_args = kwargs_r({
-        "dpar": dpar,
-        "resp": resp,
-    })
+    formula_args = kwargs_r(
+        {
+            "dpar": dpar,
+            "resp": resp,
+        }
+    )
     formula_obj = brms.set_nl(**formula_args)
     return FormulaResult._formula_parse(formula_obj)
 
-def _formula_add(
-    a: FormulaResult,
-    b: FormulaResult
-) -> FormulaResult:
+
+def _formula_add(a: FormulaResult, b: FormulaResult) -> FormulaResult:
     import rpy2.robjects as ro
+
     r_fun = cast(Callable, ro.r("function (a, b) a + b"))
 
     r = r_fun(a.r, b.r)
 
-    return FormulaResult(
-        parts=[a, b],
-        r=r
-    )
+    return FormulaResult(parts=[a, b], r=r)

@@ -4,19 +4,20 @@ from rpy2.rinterface_lib.sexp import Sexp
 from rpy2.rinterface import ListSexpVector, LangSexpVector
 from zmq import NULL
 
-from brmspy.helpers._converters._arrays import (
+
+from brmspy.helpers._rpy2._converters._arrays import (
     _py2r_dataframe,
     _py2r_numpy,
     _r2py_dataframe,
     _r2py_matrix,
 )
-from brmspy.helpers._converters._generic import (
+from brmspy.helpers._rpy2._converters._generic import (
     _py2r_mapping,
     _r2py_fallback,
     _r2py_language,
     _py2r_fallback,
 )
-from brmspy.helpers._converters._vectors import (
+from brmspy.helpers._rpy2._converters._vectors import (
     _py2r_list,
     _r2py_listvector,
     _r2py_vector,

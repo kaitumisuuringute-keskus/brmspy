@@ -5,7 +5,7 @@ import re
 import xarray as xr
 import arviz as az
 
-from brmspy.helpers._converters._registry import py_to_r, r_to_py
+from brmspy.helpers._rpy2._converters._registry import py_to_r, r_to_py
 from brmspy.helpers.log import log_warning
 from brmspy.types import IDFit
 

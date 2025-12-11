@@ -4,9 +4,9 @@ import pandas as pd
 
 from .formula import bf
 from brmspy.helpers.log import log, log_warning
-from ..helpers._priors import _build_priors
+from ..helpers._rpy2._priors import _build_priors
 from .._runtime._state import get_brms, get_cmdstanr, get_rstan
-from ..helpers._conversion import brmsfit_to_idata, kwargs_r, py_to_r
+from ..helpers._rpy2._conversion import brmsfit_to_idata, kwargs_r, py_to_r
 from ..types import FitResult, FormulaResult, IDFit, PriorSpec
 from rpy2.rinterface import ListSexpVector
 from rpy2.rinterface_lib import openrlib
