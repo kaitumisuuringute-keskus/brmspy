@@ -1,11 +1,13 @@
 from typing import Any, List
-from brmspy.session.transport import ShmBlock
 import numpy as np
 import pandas as pd
 
+from brmspy.session.codec.base import ShmBlockSpec
+from brmspy.session.transport import ShmBlock
+
 
 class ShmArray(np.ndarray):
-    block: ShmBlock  # for type checkers
+    block: ShmBlockSpec  # for type checkers
 
     @classmethod
     def from_block(
@@ -18,12 +20,12 @@ class ShmArray(np.ndarray):
             order="F",
         )
         obj = base.view(ShmArray)
-        obj.block = block
+        obj.block = ShmBlockSpec(name=block.name, size=block.size)
         return obj
 
 
 class ShmDataFrameSimple(pd.DataFrame):
-    block: ShmBlock
+    block: ShmBlockSpec
 
     @classmethod
     def from_block(
@@ -39,12 +41,12 @@ class ShmDataFrameSimple(pd.DataFrame):
         arr = ShmArray.from_block(shape=(ncols, nrows), dtype=_dtype, block=block)
 
         df = ShmDataFrameSimple(data=arr.T, index=index, columns=columns)
-        df.block = block
+        df.block = ShmBlockSpec(name=block.name, size=block.size)
         return df
 
 
 class ShmDataFrameColumns(pd.DataFrame):
-    blocks_columns: dict[str, ShmBlock]
+    blocks_columns: dict[str, ShmBlockSpec]
 
     @classmethod
     def from_blocks(
@@ -53,6 +55,7 @@ class ShmDataFrameColumns(pd.DataFrame):
         _data: dict[str, ShmArray] = {}
 
         length = len(index)
+
         for column, block in arrays.items():
             dtype = np.dtype(dtypes[column])
             arr = ShmArray(
@@ -60,9 +63,9 @@ class ShmDataFrameColumns(pd.DataFrame):
                 dtype=dtype,
                 buffer=block.shm.buf,
             )
-            arr.block = block
+            arr.block = ShmBlockSpec(block.name, block.size)
             _data[column] = arr
 
         df = ShmDataFrameColumns(data=_data, index=index)
-        df.blocks_columns = arrays
+        df.blocks_columns = {k: ShmBlockSpec(v.name, v.size) for k, v in arrays.items()}
         return df

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from dataclasses import dataclass, is_dataclass, fields as dc_fields
+from typing import Any, Dict, List, Literal
 import pickle
 
 import numpy as np
@@ -14,13 +15,13 @@ from brmspy.session.transport import ShmBlock
 from brmspy.types import FitResult
 from .proxy_types import ShmArray, ShmDataFrameColumns, ShmDataFrameSimple
 
-from .base import DataclassCodec, Encoder, EncodeResult, ShmBlockSpec
+from .base import CodecRegistry, DataclassCodec, Encoder, EncodeResult, ShmBlockSpec
 
 
 ONE_MB = 1024 * 1024
 
 
-def array_order(a: np.ndarray) -> str:
+def array_order(a: np.ndarray) -> Literal["C", "F", "non-contiguous"]:
     if a.flags["C_CONTIGUOUS"]:
         return "C"
     if a.flags["F_CONTIGUOUS"]:
@@ -38,7 +39,7 @@ class NumpyArrayCodec:
             nbytes = obj.block.size
             block = obj.block
         else:
-            raise Exception("DEFAULT!")
+            log_warning("np.ndarray not in SHM, storing!")
             arr = np.asarray(obj)
             data = arr.tobytes(order="C")
             nbytes = len(data)
@@ -81,7 +82,15 @@ class NumpyArrayCodec:
 
 class PandasDFCodec:
     def can_encode(self, obj: Any) -> bool:
-        return isinstance(obj, pd.DataFrame)
+        if not isinstance(obj, pd.DataFrame):
+            return False
+
+        if any(obj[c].dtype == "O" for c in obj.columns):
+            log_warning(
+                "pd.DataFrame contains Object type columns, falling back to pickle!"
+            )
+            return False
+        return True
 
     def encode(self, obj: Any, shm_pool: Any) -> EncodeResult:
         assert isinstance(obj, pd.DataFrame)  # assert type
@@ -109,18 +118,36 @@ class PandasDFCodec:
                 spec = ShmBlockSpec(name=block.name, size=block.size)
                 buffers.append(spec)
         else:
-            raise Exception("DEFAULT")
-            meta["variant"] = "single"
-            meta["dtype"] = "O"
-            meta["order"] = array_order(obj.values)
-            data = obj.values.tobytes(order="C")
-            nbytes = len(data)
+            # Fallback: put each column in its own SHM block
+            log_warning("DF not in SHM, storing column-wise!")
+            meta["variant"] = "columnar"
+            meta["order"] = "C"
+            dtypes: list[str] = []
 
-            # Ask for exactly nbytes; OS may round up internally, that's fine.
-            block = shm_pool.alloc(nbytes)
-            block.shm.buf[:nbytes] = data
-            spec = ShmBlockSpec(name=block.name, size=nbytes)
-            buffers.append(spec)
+            for col_name in obj.columns:
+                col = obj[col_name]
+
+                # For now, don't silently encode object-dtype columns
+                if col.dtype == "O":
+                    raise TypeError(
+                        f"Cannot SHM-encode object-dtype column {col_name!r}; some values: {col.unique()[:10]} "
+                        "convert to numeric/categorical or add a dedicated object codec."
+                    )
+
+                values = np.asarray(col.to_numpy(copy=False), order="C")
+                dtypes.append(str(values.dtype))
+
+                data = values.tobytes(order="C")
+                nbytes = len(data)
+
+                block = shm_pool.alloc(nbytes)
+                block.shm.buf[:nbytes] = data
+
+                spec = ShmBlockSpec(name=block.name, size=nbytes)
+                buffers.append(spec)
+
+            meta["dtypes"] = dtypes
+            log_warning("Stored column-wise successfully!")
 
         return EncodeResult(codec=type(self).__name__, meta=meta, buffers=buffers)
 
@@ -132,7 +159,7 @@ class PandasDFCodec:
         shm_pool: Any,
     ) -> Any:
         if meta.get("variant") == "single":
-            buf = buffers[0]
+            buf = buffers[0].cast("B")
             spec = buffer_specs[0]
             dtype = np.dtype(meta["dtype"])
             nbytes = spec["size"]
@@ -146,14 +173,38 @@ class PandasDFCodec:
             view = buf[:nbytes]
             arr = np.ndarray(shape=shape, dtype=dtype, buffer=view, order=order)
 
-            df = ShmDataFrameSimple(
-                data=arr, index=meta["index"], columns=meta["columns"]
-            )
-            df.block = ShmBlock(name=spec["name"], size=spec["size"], shm=shm_pool)
+            df = ShmDataFrameSimple(data=arr, index=index, columns=columns)
+            df.block = ShmBlockSpec(name=spec["name"], size=spec["size"])
 
             return df
         elif meta.get("variant") == "columnar":
-            raise NotImplemented
+            columns = meta["columns"]
+            index = meta["index"]
+            dtypes = meta["dtypes"]
+            nrows = len(index)
+
+            if len(columns) != len(buffers) or len(columns) != len(dtypes):
+                raise ValueError(
+                    f"Columnar decode mismatch: "
+                    f"{len(columns)} columns, {len(buffers)} buffers, {len(dtypes)} dtypes"
+                )
+
+            data: dict[str, np.ndarray] = {}
+
+            for i, col_name in enumerate(columns):
+                dtype = np.dtype(dtypes[i])
+                spec = buffer_specs[i]
+                buf = buffers[i].cast("B")
+                nbytes = spec["size"]
+
+                # 1D column
+                view = buf[:nbytes]
+                arr = np.ndarray(shape=(nrows,), dtype=dtype, buffer=view, order="C")
+                data[col_name] = arr
+
+            # You can swap this to ShmDataFrameColumns if you want that type
+            df = pd.DataFrame(data=data, index=index)
+            return df
         else:
             raise Exception(f"Unknown DataFrame variant {meta.get('variant')}")
 
@@ -330,3 +381,104 @@ class InferenceDataCodec(Encoder):
         # Construct InferenceData from datasets
         idata = az.InferenceData(**groups, warn_on_custom_groups=False)
         return idata
+
+
+class GenericDataClassCodec(Encoder):
+    """
+    Generic codec that encodes/decodes dataclasses by delegating
+    each field to a registered codec in CodecRegistry.
+
+    - Walks dataclass fields automatically (no field_codecs mapping)
+    - Respects `init=False` fields (skips them)
+    - Optional skip_fields if you want to drop some fields entirely
+      (e.g. raw rpy2 objects you don't want to ship across processes).
+    """
+
+    def __init__(
+        self,
+        cls: type[Any],
+        registry: "CodecRegistry",
+        *,
+        skip_fields: set[str] | None = None,
+    ) -> None:
+        if not is_dataclass(cls):
+            raise TypeError(f"{cls!r} is not a dataclass")
+
+        self._cls = cls
+        self._registry = registry
+        self.codec = f"dataclass::{cls.__module__}.{cls.__qualname__}"
+
+        self._skip_fields = skip_fields or set()
+        self._field_names: List[str] = []
+
+        # Precompute which fields we actually encode
+        for f in dc_fields(cls):
+            if not f.init:
+                continue
+            if f.name in self._skip_fields:
+                continue
+            self._field_names.append(f.name)
+
+    def can_encode(self, obj: Any) -> bool:
+        return isinstance(obj, self._cls)
+
+    def encode(self, obj: Any, shm_pool: Any) -> EncodeResult:
+        buffers: List[ShmBlockSpec] = []
+        fields_meta: Dict[str, Any] = {}
+
+        for field_name in self._field_names:
+            value = getattr(obj, field_name)
+
+            # Delegate to registry; chooses right encoder for the actual *runtime* type
+            res = self._registry.encode(value, shm_pool)
+
+            start = len(buffers)
+            count = len(res.buffers)
+
+            fields_meta[field_name] = {
+                "codec": res.codec,
+                "meta": res.meta,
+                "start": start,
+                "count": count,
+            }
+
+            buffers.extend(res.buffers)
+
+        meta: Dict[str, Any] = {
+            "module": self._cls.__module__,
+            "qualname": self._cls.__qualname__,
+            "fields": fields_meta,
+        }
+
+        return EncodeResult(
+            codec=self.codec,
+            meta=meta,
+            buffers=buffers,
+        )
+
+    def decode(
+        self,
+        meta: Dict[str, Any],
+        buffers: List[memoryview],
+        buffer_specs: List[dict],
+        shm_pool: Any,
+    ) -> Any:
+        fields_meta: Dict[str, Any] = meta["fields"]
+        kwargs: Dict[str, Any] = {}
+
+        for field_name, fmeta in fields_meta.items():
+            codec_name = fmeta["codec"]
+            start = fmeta["start"]
+            count = fmeta["count"]
+
+            # IMPORTANT: slice buffer_specs in the same way as buffers
+            value = self._registry.decode(
+                codec_name,
+                fmeta["meta"],
+                buffers[start : start + count],
+                buffer_specs[start : start + count],
+                shm_pool,
+            )
+            kwargs[field_name] = value
+
+        return self._cls(**kwargs)

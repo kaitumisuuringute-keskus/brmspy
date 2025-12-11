@@ -113,10 +113,6 @@ def worker_main(
                     target = _resolve_module_target(req["target"], module_cache)
                     out = target(*args, **kwargs)
 
-                    print("sending", type(out))
-
-                    print("raw out", out)
-
                     if isinstance(out, Sexp):
                         out = cache_sexp(out)
                     elif hasattr(out, "r") and isinstance(out.r, Sexp):
@@ -131,7 +127,6 @@ def worker_main(
                             {"name": b.name, "size": b.size} for b in enc.buffers
                         ],
                     }
-                    print(json.dumps(result_payload))
 
                     conn.send(
                         {
@@ -146,7 +141,7 @@ def worker_main(
                 else:
                     raise ValueError(f"Unknown command: {cmd!r}")
 
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 import traceback
 
                 tb = "".join(traceback.format_exception(type(e), e, e.__traceback__))
