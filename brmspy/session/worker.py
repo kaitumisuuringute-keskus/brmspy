@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import logging
+from logging.handlers import QueueHandler
 from multiprocessing.connection import Connection
 from typing import Any, Dict, Optional
 from multiprocessing.managers import SharedMemoryManager
@@ -15,6 +17,9 @@ from .worker_sexp_cache import cache_sexp, reattach_sexp
 from .codec import get_default_registry
 from .transport import ShmPool, attach_buffers
 from .environment import _initialise_r_safe, configure_r_env, run_startup_scripts
+import multiprocessing as mp
+
+from .worker_logging import setup_worker_logging
 
 
 def worker_main(
@@ -22,6 +27,7 @@ def worker_main(
     mgr_address: Optional[str],
     mgr_authkey: Optional[bytes],
     runtime_conf: EnvironmentConfig,
+    log_queue: mp.Queue,
 ) -> None:
     """
     Worker entrypoint.
@@ -36,6 +42,8 @@ def worker_main(
     import os
 
     os.environ["BRMSPY_WORKER"] = "1"
+
+    setup_worker_logging(log_queue)
 
     _initialise_r_safe()
 

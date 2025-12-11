@@ -3,6 +3,8 @@ from __future__ import annotations
 import atexit
 from contextlib import contextmanager
 import inspect
+import logging
+from logging.handlers import QueueListener
 import multiprocessing as mp
 from pathlib import Path
 import subprocess
@@ -129,12 +131,16 @@ def with_env(overrides: Dict[str, str]) -> Iterator[None]:
                 os.environ[k] = v_old
 
 
-def spawn_worker(target, args, env_overrides: Dict[str, str]):
+def spawn_worker(
+    target, args, env_overrides: Dict[str, str], log_queue: mp.Queue | None = None
+):
     ctx = mp.get_context("spawn")
     with with_env(env_overrides):
         daemon = os.environ.get("BRMSPY_COVERAGE") != "1" and not os.environ.get(
             "COVERAGE_PROCESS_START"
         )
+        if log_queue is not None:
+            args = (*args, log_queue)
         proc = ctx.Process(target=target, args=args, daemon=daemon)
         proc.start()
     return proc
@@ -214,11 +220,23 @@ class RModuleSession(ModuleType):
             "BRMSPY_WORKER": "1",
             **self._environment_conf.env,
         }
+        # --- logging bridge: child -> parent ---
+        self._log_queue: mp.Queue = mp.Queue()
+
+        # Use whatever handlers are currently on the root logger.
+        root = logging.getLogger()
+        self._log_listener = QueueListener(
+            self._log_queue,
+            *root.handlers,
+            respect_handler_level=True,
+        )
+        self._log_listener.start()
 
         proc = spawn_worker(
             target=worker_main,
             args=(child_conn, mgr_address, mgr_authkey, self._environment_conf),
             env_overrides=env_overrides,
+            log_queue=self._log_queue,
         )
 
         self._mgr = mgr
@@ -244,6 +262,14 @@ class RModuleSession(ModuleType):
                 }
             )
             _ = self._conn.recv()
+        except Exception:
+            pass
+
+        # stop logging listener if present
+        try:
+            listener = getattr(self, "_log_listener", None)
+            if listener is not None:
+                listener.stop()
         except Exception:
             pass
 

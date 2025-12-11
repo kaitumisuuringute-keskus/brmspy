@@ -121,7 +121,6 @@ class PandasDFCodec:
                 buffers.append(spec)
         else:
             # Fallback: put each column in its own SHM block
-            log_warning("DF not in SHM, storing column-wise!")
             meta["variant"] = "columnar"
             meta["order"] = "C"
             dtypes: list[str] = []
@@ -149,7 +148,6 @@ class PandasDFCodec:
                 buffers.append(spec)
 
             meta["dtypes"] = dtypes
-            log_warning("Stored column-wise successfully!")
 
         return EncodeResult(codec=type(self).__name__, meta=meta, buffers=buffers)
 

@@ -1,4 +1,4 @@
-from typing import Union, Sequence, Optional
+from typing import Any, Union, Sequence, Optional
 import pandas as pd
 
 
@@ -150,6 +150,8 @@ def brm(
         )
     ```
     """
+    import rpy2.robjects as ro
+
     brms = get_brms()
 
     if backend == "cmdstanr":
@@ -181,7 +183,7 @@ def brm(
     brms_prior = _build_priors(priors)
 
     # Prepare brm() arguments
-    brm_kwargs = {
+    brm_kwargs: dict[str, Any] = {
         "formula": formula_obj,
         "data": data_r,
         "family": family,
