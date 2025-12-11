@@ -6,7 +6,7 @@ if TYPE_CHECKING:
 
 from rpy2.rinterface_lib.sexp import Sexp
 from rpy2.rinterface import LangSexpVector
-from brmspy.helpers._converters._converter_types import PyObject
+from brmspy.helpers._rpy2._converters._converter_types import PyObject
 from brmspy.session.transport import ShmPool
 
 

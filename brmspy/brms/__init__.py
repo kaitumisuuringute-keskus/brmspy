@@ -16,9 +16,9 @@ from types import ModuleType
 # -------------------------------------------------------------------
 if TYPE_CHECKING:
     # For type checkers / IDE only – can point to the real brms module
-    import brmspy._brms_module as _brms_module
-    from brmspy._brms_module import *
-    from brmspy._brms_module import _runtime, _formula_add
+    import brmspy.brms._brms_module as _brms_module
+    from brmspy.brms._brms_module import *
+    from brmspy.brms._brms_module import _runtime, _formula_add
 
     BrmsModule = _brms_module
 else:
@@ -37,7 +37,7 @@ if os.environ.get("BRMSPY_WORKER") != "1":
     # install_rpy2_stub()
 
     # 2) Import the heavy brms module; it will see stubbed rpy2 in main.
-    import brmspy._brms_module as _brms_module
+    import brmspy.brms._brms_module as _brms_module
 
     # 3) Wrap it in RModuleSession so all calls go to the worker.
     _module_path = "brmspy.brms"
@@ -52,7 +52,7 @@ else:
     #
     # Here we *do not* install the stub – worker must see real rpy2.
     # BRMSPY_WORKER=1 should be set in the worker's env before import.
-    import brmspy._brms_module as brms
+    import brmspy.brms._brms_module as brms
 
     _is_main_process = False
 

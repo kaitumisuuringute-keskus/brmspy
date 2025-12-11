@@ -202,7 +202,7 @@ def get_prior(
     )
 
     df_r = r_get_prior(**collected_args)
-    df = pd.DataFrame(r_to_py(df_r))
+    df = pd.DataFrame(cast(Any, r_to_py(df_r)))
 
     return df
 
@@ -278,6 +278,6 @@ def default_prior(
     collected_args = kwargs_r({"data": data, "family": family, **kwargs})
 
     df_r = r_get_prior(py_to_r(object), **collected_args)
-    df = pd.DataFrame(r_to_py(df_r))
+    df = pd.DataFrame(cast(Any, r_to_py(df_r)))
 
     return df
