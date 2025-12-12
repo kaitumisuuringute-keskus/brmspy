@@ -105,6 +105,7 @@ def r_to_py(obj: Sexp, shm: ShmPool | None = None) -> PyObject:
                 converter = _con
                 break
 
+    assert len(_R2PY_CONVERTERS) > 0, "NO R2PY CONVERTERS"
     assert (
         converter
     ), "object fallback must be in place in __init__.py! This is an issue with the library, not the user!"
@@ -211,6 +212,7 @@ def py_to_r(obj: PyObject) -> Sexp:
             if isinstance(obj, _type):
                 converter = _con
 
+    assert len(_PY2R_CONVERTERS) > 0, "NO PY2R CONVERTERS"
     assert (
         converter
     ), "object fallback must be in place in __init__.py! This is an issue with the library, not the user!"

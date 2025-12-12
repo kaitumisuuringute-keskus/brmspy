@@ -99,7 +99,7 @@ def _build_priors(
         return []
     import rpy2.robjects as ro
 
-    from brmspy.helpers._rpy2._converters._registry import r_to_py
+    from brmspy.helpers._rpy2._converters import r_to_py
 
     fun_prior_string = cast(Callable, ro.r("brms::prior_string"))
 
