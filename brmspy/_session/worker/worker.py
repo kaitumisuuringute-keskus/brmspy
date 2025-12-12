@@ -5,8 +5,6 @@ from __future__ import annotations
 import importlib
 import multiprocessing as mp
 
-mp.set_start_method("spawn", force=True)
-
 from multiprocessing.connection import Connection
 from multiprocessing.managers import SharedMemoryManager
 from typing import Any, cast
@@ -50,7 +48,8 @@ def worker_main(
     _initialise_r_safe()
 
     # 1. Connect to SHM manager
-    smm = SharedMemoryManager(address=mgr_address, authkey=mgr_authkey)
+    ctx = mp.get_context("spawn")
+    smm = SharedMemoryManager(address=mgr_address, authkey=mgr_authkey, ctx=ctx)
     smm.connect()
 
     # 2. Optional environment init (R_HOME, R_LIBS_USER, etc.)

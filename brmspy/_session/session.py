@@ -5,8 +5,6 @@ import inspect
 import logging
 import multiprocessing as mp
 
-mp.set_start_method("spawn", force=True)
-
 import os
 import platform
 import subprocess
@@ -210,8 +208,9 @@ class RModuleSession(ModuleType):
 
     def _setup_worker(self, autoload=True) -> None:
         """Start SharedMemoryManager and worker process, wire IPC."""
+        ctx = mp.get_context("spawn")
 
-        mgr = SharedMemoryManager()
+        mgr = SharedMemoryManager(ctx=ctx)
         mgr.start()
 
         mgr_address = mgr.address
@@ -225,7 +224,7 @@ class RModuleSession(ModuleType):
             **self._environment_conf.env,
         }
         # --- logging bridge: child -> parent ---
-        self._log_queue: mp.Queue = mp.Queue()
+        self._log_queue: mp.Queue = mp.Queue(ctx=ctx)
 
         # Use whatever handlers are currently on the root logger.
         root = logging.getLogger()
