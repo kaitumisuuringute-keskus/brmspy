@@ -224,7 +224,7 @@ class RModuleSession(ModuleType):
             **self._environment_conf.env,
         }
         # --- logging bridge: child -> parent ---
-        self._log_queue: mp.Queue = mp.Queue(ctx=ctx)
+        self._log_queue: mp.Queue = mp.Queue()
 
         # Use whatever handlers are currently on the root logger.
         root = logging.getLogger()
