@@ -14,7 +14,7 @@ else
   echo "[run_main_tests] 'uv' not found, using 'python -m'"
   PYTEST_CMD=(python -m pytest)
   COVERAGE_CMD=(python -m coverage)
-  IMPORTLINTER_CMD=(python -m lint-imports)
+  IMPORTLINTER_CMD=(lint-imports)
 fi
 
 # 1) Run tests, collect coverage but DO NOT print report from pytest
