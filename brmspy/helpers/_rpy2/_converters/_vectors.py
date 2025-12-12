@@ -67,6 +67,9 @@ def _py2r_list(obj: list | tuple) -> Sexp:
     if not obj:
         return ro.ListVector({})
 
+    if isinstance(obj, tuple):
+        obj = list(obj)
+
     from ._dispatch import py_to_r
 
     if all(isinstance(el, Mapping) for el in obj):

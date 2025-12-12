@@ -4,7 +4,7 @@ from brmspy.types.brms_results import RListVectorExtension
 from brmspy.types.shm import ShmPool
 
 from ....types.rpy2_converters import PyObject
-from ._registry import _R2PY_CONVERTERS, _PY2R_CONVERTERS
+from . import _registry
 
 
 def r_to_py(obj: Sexp, shm: ShmPool | None = None) -> PyObject:
@@ -96,16 +96,16 @@ def r_to_py(obj: Sexp, shm: ShmPool | None = None) -> PyObject:
     if shm is None:
         shm = _get_shm()
 
-    if _type in _R2PY_CONVERTERS:
+    if _type in _registry._R2PY_CONVERTERS:
         # O(1) lookup first
-        converter = _R2PY_CONVERTERS[_type]
+        converter = _registry._R2PY_CONVERTERS[_type]
     else:
-        for _type, _con in _R2PY_CONVERTERS.items():
+        for _type, _con in _registry._R2PY_CONVERTERS.items():
             if isinstance(obj, _type):
                 converter = _con
                 break
 
-    assert len(_R2PY_CONVERTERS) > 0, "NO R2PY CONVERTERS"
+    assert len(_registry._R2PY_CONVERTERS) > 0, "NO R2PY CONVERTERS"
     assert (
         converter
     ), "object fallback must be in place in __init__.py! This is an issue with the library, not the user!"
@@ -204,15 +204,16 @@ def py_to_r(obj: PyObject) -> Sexp:
     _type = type(obj)
     converter = None
 
-    if _type in _PY2R_CONVERTERS:
+    if _type in _registry._PY2R_CONVERTERS:
         # O(1) lookup first
-        converter = _PY2R_CONVERTERS[_type]
+        converter = _registry._PY2R_CONVERTERS[_type]
     else:
-        for _type, _con in _PY2R_CONVERTERS.items():
+        for _type, _con in _registry._PY2R_CONVERTERS.items():
             if isinstance(obj, _type):
                 converter = _con
+                break
 
-    assert len(_PY2R_CONVERTERS) > 0, "NO PY2R CONVERTERS"
+    assert len(_registry._PY2R_CONVERTERS) > 0, "NO PY2R CONVERTERS"
     assert (
         converter
     ), "object fallback must be in place in __init__.py! This is an issue with the library, not the user!"

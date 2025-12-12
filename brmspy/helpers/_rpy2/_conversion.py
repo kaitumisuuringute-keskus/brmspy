@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from brmspy.helpers._rpy2._converters._dispatch import (
+from brmspy.helpers._rpy2._converters import (
     py_to_r,
     r_to_py,
 )
