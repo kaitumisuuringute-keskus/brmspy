@@ -105,7 +105,8 @@ jobs:
           COVERAGE_FILE: .coverage.${{ matrix.os }}
           BRMSPY_RTOOLS_INSTALLER_EXE: ${{ env.RTOOLS_INSTALLER_EXE }}
           RPY2_CFFI_MODE: "ABI"
-        run: ./run_tests_rdeps.sh
+        shell: bash
+        run: set -xeuo pipefail && ./run_tests_rdeps.sh
 
       # Upload per-OS coverage artifacts
       - name: Upload coverage artifacts
