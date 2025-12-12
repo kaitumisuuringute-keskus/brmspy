@@ -16,7 +16,7 @@ from brmspy.types.shm import ShmPool
 def _r2py_listvector(
     obj: "ListVector", shm: ShmPool | None = None
 ) -> dict[str, PyObject] | list[PyObject]:
-    from ._registry import r_to_py
+    from ._dispatch import r_to_py
 
     names = list(obj.names) if obj.names is not NULL else None
 
@@ -67,7 +67,7 @@ def _py2r_list(obj: list | tuple) -> Sexp:
     if not obj:
         return ro.ListVector({})
 
-    from ._registry import py_to_r
+    from ._dispatch import py_to_r
 
     if all(isinstance(el, Mapping) for el in obj):
         # R lists are usually named or indexed; use 1-based index names

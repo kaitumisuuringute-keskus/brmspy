@@ -10,6 +10,8 @@ from rpy2.rinterface_lib.sexp import Sexp
 from brmspy.types.rpy2_converters import PyObject
 from brmspy.types.shm import ShmPool
 
+from ._dispatch import py_to_r
+
 
 def _r2py_fallback(obj: Sexp, shm: ShmPool | None = None) -> PyObject:
     from rpy2.robjects import default_converter
@@ -43,8 +45,6 @@ def _py2r_mapping(
     obj: Mapping,
 ) -> Sexp:
     import rpy2.robjects as ro
-
-    from ._registry import py_to_r
 
     converted = {str(k): py_to_r(v) for k, v in obj.items()}
     return ro.ListVector(converted)
