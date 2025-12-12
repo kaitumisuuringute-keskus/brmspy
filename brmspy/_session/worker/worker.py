@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import importlib
 import multiprocessing as mp
+
+mp.set_start_method("spawn", force=True)
+
 from multiprocessing.connection import Connection
 from multiprocessing.managers import SharedMemoryManager
 from typing import Any, cast

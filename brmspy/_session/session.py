@@ -4,6 +4,9 @@ import atexit
 import inspect
 import logging
 import multiprocessing as mp
+
+mp.set_start_method("spawn", force=True)
+
 import os
 import platform
 import subprocess
@@ -207,6 +210,7 @@ class RModuleSession(ModuleType):
 
     def _setup_worker(self, autoload=True) -> None:
         """Start SharedMemoryManager and worker process, wire IPC."""
+
         mgr = SharedMemoryManager()
         mgr.start()
 
