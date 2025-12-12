@@ -18,44 +18,44 @@ class TestBrmsfamilyCore:
     def test_brmsfamily_basic(self):
         """Test basic brmsfamily() usage"""
 
-        from rpy2.robjects import ListVector
+        from brmspy.types.session_types import SexpWrapper
         from brmspy.brms import brmsfamily
 
         # Create basic Gaussian family
         family = brmsfamily("gaussian", link="identity")
 
         # Verify return type
-        assert isinstance(family, ListVector)
+        assert isinstance(family, SexpWrapper)
         assert family is not None
 
     def test_brmsfamily_with_links(self):
         """Test brmsfamily() with various link functions"""
         from brmspy.brms import brmsfamily
-        from rpy2.robjects import ListVector
+        from brmspy.types.session_types import SexpWrapper
 
         # Test with different links
         family_log = brmsfamily("poisson", link="log")
         family_logit = brmsfamily("binomial", link="logit")
         family_probit = brmsfamily("binomial", link="probit")
 
-        assert isinstance(family_log, ListVector)
-        assert isinstance(family_logit, ListVector)
-        assert isinstance(family_probit, ListVector)
+        assert isinstance(family_log, SexpWrapper)
+        assert isinstance(family_logit, SexpWrapper)
+        assert isinstance(family_probit, SexpWrapper)
 
     def test_brmsfamily_with_auxiliary_links(self):
         """Test brmsfamily() with auxiliary parameter links"""
         from brmspy.brms import brmsfamily
-        from rpy2.robjects import ListVector
+        from brmspy.types.session_types import SexpWrapper
 
         # Gaussian with sigma link
         family = brmsfamily("gaussian", link="identity", link_sigma="log")
 
-        assert isinstance(family, ListVector)
+        assert isinstance(family, SexpWrapper)
 
         # Negative binomial with shape link
         family_nb = brmsfamily("negbinomial", link="log", link_shape="log")
 
-        assert isinstance(family_nb, ListVector)
+        assert isinstance(family_nb, SexpWrapper)
 
 
 @pytest.mark.requires_brms
@@ -65,7 +65,7 @@ class TestFamilyWrappers:
     def test_all_families_construct(self):
         """Test that all family wrapper functions can be instantiated"""
         from brmspy.brms import families
-        from rpy2.robjects import ListVector
+        from brmspy.types.session_types import SexpWrapper
 
         # List of all family functions to test
         family_functions = [
@@ -121,26 +121,26 @@ class TestFamilyWrappers:
             family_obj = family_fn(**kwargs)
 
             assert isinstance(
-                family_obj, ListVector
-            ), f"{family_name}() should return ListVector"
+                family_obj, SexpWrapper
+            ), f"{family_name}() should return SexpWrapper"
             assert family_obj is not None, f"{family_name}() should not return None"
 
     def test_common_families_with_custom_links(self):
         """Test common families with custom link functions"""
         from brmspy.brms import gaussian, poisson, binomial
-        from rpy2.robjects import ListVector
+        from brmspy.types.session_types import SexpWrapper
 
         # Gaussian with log link (non-standard)
         gauss_log = gaussian(link="log")
-        assert isinstance(gauss_log, ListVector)
+        assert isinstance(gauss_log, SexpWrapper)
 
         # Poisson with identity link (non-standard)
         pois_identity = poisson(link="identity")
-        assert isinstance(pois_identity, ListVector)
+        assert isinstance(pois_identity, SexpWrapper)
 
         # Binomial with probit link
         binom_probit = binomial(link="probit")
-        assert isinstance(binom_probit, ListVector)
+        assert isinstance(binom_probit, SexpWrapper)
 
 
 @pytest.mark.requires_brms
@@ -204,11 +204,11 @@ class TestFamilyIntegration:
         from brmspy import brms
         from brmspy.brms import student
         import arviz as az
-        from rpy2.robjects import ListVector
+        from brmspy.types.session_types import SexpWrapper
 
         # Create student family object
         family_obj = student()
-        assert isinstance(family_obj, ListVector)
+        assert isinstance(family_obj, SexpWrapper)
 
         # Fit robust regression
         model = brms.fit(
@@ -273,7 +273,7 @@ class TestSpecialFamilies:
             zero_inflated_binomial,
             zero_inflated_beta,
         )
-        from rpy2.robjects import ListVector
+        from brmspy.types.session_types import SexpWrapper
 
         # Test each zero-inflated family
         zi_pois = zero_inflated_poisson()
@@ -281,10 +281,10 @@ class TestSpecialFamilies:
         zi_binom = zero_inflated_binomial()
         zi_beta = zero_inflated_beta()
 
-        assert isinstance(zi_pois, ListVector)
-        assert isinstance(zi_nb, ListVector)
-        assert isinstance(zi_binom, ListVector)
-        assert isinstance(zi_beta, ListVector)
+        assert isinstance(zi_pois, SexpWrapper)
+        assert isinstance(zi_nb, SexpWrapper)
+        assert isinstance(zi_binom, SexpWrapper)
+        assert isinstance(zi_beta, SexpWrapper)
 
     def test_hurdle_families(self):
         """Test hurdle family constructors"""
@@ -294,7 +294,7 @@ class TestSpecialFamilies:
             hurdle_gamma,
             hurdle_lognormal,
         )
-        from rpy2.robjects import ListVector
+        from brmspy.types.session_types import SexpWrapper
 
         # Test each hurdle family
         h_pois = hurdle_poisson()
@@ -302,15 +302,15 @@ class TestSpecialFamilies:
         h_gamma = hurdle_gamma()
         h_lognorm = hurdle_lognormal()
 
-        assert isinstance(h_pois, ListVector)
-        assert isinstance(h_nb, ListVector)
-        assert isinstance(h_gamma, ListVector)
-        assert isinstance(h_lognorm, ListVector)
+        assert isinstance(h_pois, SexpWrapper)
+        assert isinstance(h_nb, SexpWrapper)
+        assert isinstance(h_gamma, SexpWrapper)
+        assert isinstance(h_lognorm, SexpWrapper)
 
     def test_ordinal_families(self):
         """Test ordinal model family constructors"""
         from brmspy.brms import cumulative, sratio, cratio, acat
-        from rpy2.robjects import ListVector
+        from brmspy.types.session_types import SexpWrapper
 
         # Test each ordinal family
         ord_cum = cumulative()
@@ -318,10 +318,10 @@ class TestSpecialFamilies:
         ord_cr = cratio()
         ord_ac = acat()
 
-        assert isinstance(ord_cum, ListVector)
-        assert isinstance(ord_sr, ListVector)
-        assert isinstance(ord_cr, ListVector)
-        assert isinstance(ord_ac, ListVector)
+        assert isinstance(ord_cum, SexpWrapper)
+        assert isinstance(ord_sr, SexpWrapper)
+        assert isinstance(ord_cr, SexpWrapper)
+        assert isinstance(ord_ac, SexpWrapper)
 
     def test_categorical_families(self):
         """Test categorical/multinomial family constructors"""
@@ -330,16 +330,16 @@ class TestSpecialFamilies:
             multinomial,
             dirichlet_multinomial,
         )
-        from rpy2.robjects import ListVector
+        from brmspy.types.session_types import SexpWrapper
 
         # Test categorical families
         cat = categorical()
         multi = multinomial()
         dir_multi = dirichlet_multinomial()
 
-        assert isinstance(cat, ListVector)
-        assert isinstance(multi, ListVector)
-        assert isinstance(dir_multi, ListVector)
+        assert isinstance(cat, SexpWrapper)
+        assert isinstance(multi, SexpWrapper)
+        assert isinstance(dir_multi, SexpWrapper)
 
 
 @pytest.mark.requires_brms
@@ -349,69 +349,69 @@ class TestFamilyParameters:
     def test_beta_family_parameters(self):
         """Test Beta family with precision parameter"""
         from brmspy.brms import Beta
-        from rpy2.robjects import ListVector
+        from brmspy.types.session_types import SexpWrapper
 
         # Beta with default parameters
         beta_default = Beta()
-        assert isinstance(beta_default, ListVector)
+        assert isinstance(beta_default, SexpWrapper)
 
         # Beta with custom precision link
         beta_custom = Beta(link="logit", link_phi="identity")
-        assert isinstance(beta_custom, ListVector)
+        assert isinstance(beta_custom, SexpWrapper)
 
     def test_gamma_family_parameters(self):
         """Test Gamma family with shape parameter"""
         from brmspy.brms import Gamma
-        from rpy2.robjects import ListVector
+        from brmspy.types.session_types import SexpWrapper
 
         # Gamma with default parameters
         gamma_default = Gamma()
-        assert isinstance(gamma_default, ListVector)
+        assert isinstance(gamma_default, SexpWrapper)
 
         # Gamma with custom shape link
         gamma_custom = Gamma(link="log", link_shape="identity")
-        assert isinstance(gamma_custom, ListVector)
+        assert isinstance(gamma_custom, SexpWrapper)
 
     def test_weibull_family_parameters(self):
         """Test Weibull family for survival analysis"""
         from brmspy.brms import weibull
-        from rpy2.robjects import ListVector
+        from brmspy.types.session_types import SexpWrapper
 
         # Weibull with default parameters
         weib = weibull()
-        assert isinstance(weib, ListVector)
+        assert isinstance(weib, SexpWrapper)
 
         # Weibull with custom shape link
         weib_custom = weibull(link="log", link_shape="identity")
-        assert isinstance(weib_custom, ListVector)
+        assert isinstance(weib_custom, SexpWrapper)
 
     def test_threshold_parameter_ordinal(self):
         """Test threshold parameter for ordinal families"""
         from brmspy.brms import cumulative
-        from rpy2.robjects import ListVector
+        from brmspy.types.session_types import SexpWrapper
 
         # Test different threshold types
         cum_flex = cumulative(threshold="flexible")
         cum_equi = cumulative(threshold="equidistant")
 
-        assert isinstance(cum_flex, ListVector)
-        assert isinstance(cum_equi, ListVector)
+        assert isinstance(cum_flex, SexpWrapper)
+        assert isinstance(cum_equi, SexpWrapper)
 
     def test_refcat_parameter(self):
         """Test reference category parameter"""
         from brmspy.brms import categorical, multinomial
-        from rpy2.robjects import ListVector
+        from brmspy.types.session_types import SexpWrapper
 
         # Test with default refcat (None)
         cat_default = categorical()
-        assert isinstance(cat_default, ListVector)
+        assert isinstance(cat_default, SexpWrapper)
 
         # Test with explicit refcat
         cat_ref = categorical(refcat="category1")
-        assert isinstance(cat_ref, ListVector)
+        assert isinstance(cat_ref, SexpWrapper)
 
         multi_ref = multinomial(refcat="ref_level")
-        assert isinstance(multi_ref, ListVector)
+        assert isinstance(multi_ref, SexpWrapper)
 
 
 @pytest.mark.requires_brms
@@ -421,56 +421,56 @@ class TestExoticFamilies:
     def test_wiener_diffusion_model(self):
         """Test Wiener diffusion model for reaction time"""
         from brmspy.brms import wiener
-        from rpy2.robjects import ListVector
+        from brmspy.types.session_types import SexpWrapper
 
         # Wiener with all parameters
         wien = wiener(link="identity", link_bs="log", link_ndt="log", link_bias="logit")
 
-        assert isinstance(wien, ListVector)
+        assert isinstance(wien, SexpWrapper)
 
     def test_von_mises_circular(self):
         """Test von Mises for circular/directional data"""
         from brmspy.brms import von_mises
-        from rpy2.robjects import ListVector
+        from brmspy.types.session_types import SexpWrapper
 
         # Von Mises with default parameters
         vm = von_mises()
-        assert isinstance(vm, ListVector)
+        assert isinstance(vm, SexpWrapper)
 
         # Von Mises with custom concentration link
         vm_custom = von_mises(link="tan_half", link_kappa="identity")
-        assert isinstance(vm_custom, ListVector)
+        assert isinstance(vm_custom, SexpWrapper)
 
     def test_cox_survival_model(self):
         """Test Cox proportional hazards model"""
         from brmspy.brms import cox
-        from rpy2.robjects import ListVector
+        from brmspy.types.session_types import SexpWrapper
 
         # Cox model
         cox_model = cox()
-        assert isinstance(cox_model, ListVector)
+        assert isinstance(cox_model, SexpWrapper)
 
     def test_exgaussian_reaction_time(self):
         """Test ex-Gaussian for reaction time data"""
         from brmspy.brms import exgaussian
-        from rpy2.robjects import ListVector
+        from brmspy.types.session_types import SexpWrapper
 
         # Ex-Gaussian with all parameters
         exg = exgaussian(link="identity", link_sigma="log", link_beta="log")
 
-        assert isinstance(exg, ListVector)
+        assert isinstance(exg, SexpWrapper)
 
     def test_asymmetric_laplace_quantile(self):
         """Test asymmetric Laplace for quantile regression"""
         from brmspy.brms import asym_laplace
-        from rpy2.robjects import ListVector
+        from brmspy.types.session_types import SexpWrapper
 
         # Asymmetric Laplace with quantile parameter
         asym_lap = asym_laplace(
             link="identity", link_sigma="log", link_quantile="logit"
         )
 
-        assert isinstance(asym_lap, ListVector)
+        assert isinstance(asym_lap, SexpWrapper)
 
 
 if __name__ == "__main__":
