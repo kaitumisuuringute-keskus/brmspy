@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from types import ModuleType
 from typing import TYPE_CHECKING, cast
 
-from brmspy._session.manage import manage
+from brmspy._session.manage import manage, environment_activate, environment_exists
 from brmspy._session.session import _INTERNAL_ATTRS, RModuleSession
 
 # -------------------------------------------------------------------
@@ -51,16 +51,6 @@ else:
     import brmspy.brms._brms_module as brms
 
     _is_main_process = False
-
-
-@contextmanager
-def environment():
-    if not isinstance(brms, RModuleSession):
-        raise Exception("Can't manage environment from WITHIN the environment!")
-    # 1. shut down current session
-    # 2. yield, let the user install/uninstall packages. give them Ctx object with safe 3-4 functions
-    yield
-    # 3. do we need cleanup? since we are on a fresh R session, we could just 'continue'
 
 
 __all__ = [
@@ -182,6 +172,8 @@ __all__ = [
     "_runtime",
     "status",
     "manage",
+    "environment_exists",
+    "environment_activate",
 ]
 
 
@@ -190,7 +182,12 @@ __all__ = [
 _this_mod = sys.modules[__name__]
 
 for name in __all__:
-    if name in ["manage", "_is_main_process"]:
+    if name in [
+        "manage",
+        "_is_main_process",
+        "environment_exists",
+        "environment_activate",
+    ]:
         continue
     setattr(_this_mod, name, getattr(brms, name))
 

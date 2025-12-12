@@ -25,6 +25,14 @@ def get_environment_userlibs_dir(name: str) -> Path:
     return get_environment_dir(name=name) / "Rlib"
 
 
+def get_environment_exists(name: str) -> bool:
+    base_dir = get_environment_base_dir()
+    env_dir = base_dir / name
+    config_dir = env_dir / "config.json"
+
+    return config_dir.exists()
+
+
 def get_environment_config(name: str) -> EnvironmentConfig:
     base_dir = get_environment_base_dir()
     env_dir = base_dir / name

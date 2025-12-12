@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
 from .environment_parent import save, save_as_state
-from .environment import get_environment_config
+from .environment import get_environment_config, get_environment_exists
 
 from ..types.session_types import EnvironmentConfig
 
@@ -198,3 +198,12 @@ def manage(
 
     save(new_conf)
     save_as_state(new_conf)
+
+
+def environment_exists(name: str):
+    return get_environment_exists(name)
+
+
+def environment_activate(name: str):
+    with manage(environment_name=name) as ctx:
+        pass
