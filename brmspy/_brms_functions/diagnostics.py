@@ -302,7 +302,7 @@ def fixef(
     kwargs = kwargs_r(
         {"summary": summary, "robust": robust, "probs": probs, "pars": pars, **kwargs}
     )
-    r_fixef = cast(Callable, ro.r("fixef"))
+    r_fixef = cast(Callable, ro.r("brms::fixef"))
     r_df = r_fixef(obj_r, **kwargs)
     return cast(pd.DataFrame, r_to_py(r_df))
 
@@ -388,7 +388,7 @@ def ranef(
         {"summary": summary, "robust": robust, "probs": probs, "pars": pars, **kwargs}
     )
 
-    r_ranef = cast(Callable, ro.r("ranef"))
+    r_ranef = cast(Callable, ro.r("brms::ranef"))
     r_list = r_ranef(obj_r, **kwargs)
 
     out: dict[str, xr.DataArray] = {}
