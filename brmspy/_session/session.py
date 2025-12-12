@@ -26,6 +26,8 @@ from .codec import get_default_registry
 from .transport import ShmPool, attach_buffers
 from brmspy._session.worker import worker_main
 
+ctx = mp.get_context("spawn")
+
 _INTERNAL_ATTRS = {
     "_module",
     "_module_path",
@@ -136,7 +138,6 @@ def with_env(overrides: dict[str, str]) -> Iterator[None]:
 def spawn_worker(
     target, args, env_overrides: dict[str, str], log_queue: mp.Queue | None = None
 ):
-    ctx = mp.get_context("spawn")
     with with_env(env_overrides):
         daemon = os.environ.get("BRMSPY_COVERAGE") != "1" and not os.environ.get(
             "COVERAGE_PROCESS_START"
@@ -208,7 +209,6 @@ class RModuleSession(ModuleType):
 
     def _setup_worker(self, autoload=True) -> None:
         """Start SharedMemoryManager and worker process, wire IPC."""
-        ctx = mp.get_context("spawn")
 
         mgr = SharedMemoryManager(ctx=ctx)
         mgr.start()
@@ -224,7 +224,7 @@ class RModuleSession(ModuleType):
             **self._environment_conf.env,
         }
         # --- logging bridge: child -> parent ---
-        self._log_queue: mp.Queue = mp.Queue()
+        self._log_queue: mp.Queue = ctx.Queue()
 
         # Use whatever handlers are currently on the root logger.
         root = logging.getLogger()

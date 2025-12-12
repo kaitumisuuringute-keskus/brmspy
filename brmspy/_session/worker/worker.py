@@ -21,6 +21,8 @@ from ..transport import ShmPool, attach_buffers
 from .logging import setup_worker_logging
 from .sexp_cache import cache_sexp, reattach_sexp
 
+ctx = mp.get_context("spawn")
+
 
 def worker_main(
     conn: Connection,
@@ -48,7 +50,6 @@ def worker_main(
     _initialise_r_safe()
 
     # 1. Connect to SHM manager
-    ctx = mp.get_context("spawn")
     smm = SharedMemoryManager(address=mgr_address, authkey=mgr_authkey, ctx=ctx)
     smm.connect()
 
