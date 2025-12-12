@@ -1,7 +1,7 @@
 import os
 
 import os
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from typing import Any
 
 import numpy as np
@@ -53,7 +53,8 @@ if os.environ.get("BRMSPY_WORKER") == "1":
             pd.DataFrame: _py2r_dataframe,
             np.ndarray: _py2r_numpy,
             Mapping: _py2r_mapping,
-            (list, tuple, Sequence): _py2r_list,
+            # dont add Sequence, str is a sequence too!
+            (list, tuple): _py2r_list,
             object: _py2r_fallback,
         }
     )
