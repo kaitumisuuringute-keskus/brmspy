@@ -105,14 +105,7 @@ jobs:
           COVERAGE_FILE: .coverage.${{ matrix.os }}
           BRMSPY_RTOOLS_INSTALLER_EXE: ${{ env.RTOOLS_INSTALLER_EXE }}
           RPY2_CFFI_MODE: "ABI"
-        # These tests modify the filesystem, dont run in parallel! xdist just gives us separation
-        run: >
-      
-          python -m run_rdeps_tests tests/ -v -n 1 --dist=loadfile -m rdeps 
-          --cov-report=term 
-          --cov-report=xml 
-          --cov-report=json 
-          --cov-config=.coveragerc-r-dependencies
+        run: ./run_tests_rdeps.sh
 
       # Upload per-OS coverage artifacts
       - name: Upload coverage artifacts

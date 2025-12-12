@@ -9,11 +9,15 @@ if command -v uv >/dev/null 2>&1; then
   echo "[run_main_tests] Using 'uv run'"
   PYTEST_CMD=(uv run pytest)
   COVERAGE_CMD=(uv run coverage)
+  IMPORTLINTER_CMD=(uv run lint-imports)
 else
   echo "[run_main_tests] 'uv' not found, using 'python -m'"
   PYTEST_CMD=(python -m pytest)
   COVERAGE_CMD=(python -m coverage)
+  IMPORTLINTER_CMD=(python -m lint-imports)
 fi
+
+"${IMPORTLINTER_CMD[@]}"
 
 # 1) Run tests, collect coverage but DO NOT print report from pytest
 "${PYTEST_CMD[@]}" tests/ -v \

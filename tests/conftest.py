@@ -173,8 +173,9 @@ def pytest_collection_modifyitems(config, items):
     try:
         from brmspy import brms
 
-        with brms.manage(environment_name="_test") as ctx:
-            ctx.install_brms(use_prebuilt=True)
+        if not rdeps_allowed:
+            with brms.manage(environment_name="_test") as ctx:
+                ctx.install_brms(use_prebuilt=True)
 
         if brms.get_brms_version() is not None:
             brms_is_available = True

@@ -2,6 +2,7 @@
 GitHub API operations for runtime downloads.
 """
 
+import functools
 import json
 import os
 import urllib.request
@@ -26,7 +27,9 @@ def parse_release_url(url: str) -> tuple[str, str, str, str]:
         raise ValueError(f"Malformed GitHub release URL: Invalid scheme: {url}")
 
     if parsed.hostname != "github.com":
-        raise ValueError(f"Malformed GitHub release URL: Unexpected host: {parsed.hostname!r}")
+        raise ValueError(
+            f"Malformed GitHub release URL: Unexpected host: {parsed.hostname!r}"
+        )
 
     # Split path, ignoring leading slash
     parts = parsed.path.lstrip("/").split("/")
@@ -42,13 +45,15 @@ def parse_release_url(url: str) -> tuple[str, str, str, str]:
         raise ValueError(f"Malformed GitHub release URL path: {parsed.path!r}")
 
     if parts[2] != "releases" or parts[3] != "download":
-        raise ValueError(f"Malformed GitHub release URL: Path does not match releases/download structure: {parsed.path!r}")
+        raise ValueError(
+            f"Malformed GitHub release URL: Path does not match releases/download structure: {parsed.path!r}"
+        )
 
     owner, repo, _, _, tag, asset_name = parts[:6]
     return owner, repo, tag, asset_name
 
 
-def fetch_release_metadata(owner: str, repo: str, tag: str, use_token = True) -> dict:
+def fetch_release_metadata(owner: str, repo: str, tag: str, use_token=True) -> dict:
     """Fetch release metadata from GitHub API (handles auth + retries)."""
     api_url = f"https://api.github.com/repos/{owner}/{repo}/releases/tags/{tag}"
 
@@ -68,13 +73,17 @@ def fetch_release_metadata(owner: str, repo: str, tag: str, use_token = True) ->
         raise ConnectionError(f"Failed to fetch release metadata: {e}") from e
 
 
+@functools.cache  # to avoid rate limits.
 def get_asset_sha256(url: str) -> str | None:
     """Get SHA256 hash from release asset metadata."""
     try:
         owner, repo, tag, asset_name = parse_release_url(url)
         try:
             metadata = fetch_release_metadata(owner, repo, tag, use_token=False)
-        except:
+        except Exception as e:
+            log_warning(
+                f"Anonymous asset sha256 fetching failed, trying with token... Reason: {e}"
+            )
             metadata = fetch_release_metadata(owner, repo, tag, use_token=True)
 
         # Find the asset in the release
@@ -106,7 +115,9 @@ def get_latest_runtime_version() -> str:
     return "0.2.0"
 
 
-def get_github_asset_sha256_from_url(url: str, require_digest: bool = False) -> str | None:
+def get_github_asset_sha256_from_url(
+    url: str, require_digest: bool = False
+) -> str | None:
     """Get SHA256 from GitHub release asset. Used by old code."""
     sha = get_asset_sha256(url)
     if require_digest and sha is None:
