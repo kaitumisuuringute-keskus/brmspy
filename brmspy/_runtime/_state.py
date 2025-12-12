@@ -23,8 +23,10 @@ def get_brms() -> Any:
     if _brms is None:
         try:
             from rpy2.robjects.packages import importr
+            import rpy2.robjects as ro
 
             _brms = importr("brms")
+            ro.r("library(brms)")
         except Exception as e:
             raise ImportError(
                 "brms R package not found. Install it using:\n\n"

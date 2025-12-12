@@ -12,8 +12,8 @@ def _print(*values: object, **kwargs):
     logging.info(msg.rstrip("\n"))
 
 
-if os.environ.get("BRMSPY_WORKER") == "1":
-    builtins.print = _print
+# if os.environ.get("BRMSPY_WORKER") == "1":
+builtins.print = _print
 
 
 def setup_worker_logging(log_queue: Queue, level: int | None = None) -> None:

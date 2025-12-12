@@ -288,14 +288,18 @@ from typing import Callable, cast
 from brmspy.types.brms_results import ProxyListSexpVector
 from brmspy.types.formula_dsl import FormulaConstruct, FormulaPart
 from rpy2.rinterface_lib.sexp import NULL, Sexp
-import rpy2.robjects as ro
 
 
 def _execute_formula(formula: FormulaConstruct | Sexp | str) -> Sexp:
+    import rpy2.robjects as ro
+
     if isinstance(formula, Sexp):
         return formula
     if isinstance(formula, str):
         formula = FormulaConstruct._formula_parse(formula)
+
+    # Must run for formula functions, e.g me() to register
+    ro.r("library(brms)")
 
     fun_add = cast(Callable[[Sexp, Sexp], Sexp], ro.r("function (a, b) a + b"))
 

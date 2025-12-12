@@ -38,11 +38,11 @@ def worker_main(
       Those modules are free to use rpy2 / brms / cmdstanr however they like.
     """
 
+    setup_worker_logging(log_queue)
+
     import os
 
     os.environ["BRMSPY_WORKER"] = "1"
-
-    setup_worker_logging(log_queue)
 
     _initialise_r_safe()
 
@@ -151,6 +151,8 @@ def worker_main(
                 tb = "".join(traceback.format_exception(type(e), e, e.__traceback__))
                 full_msg = str(e)
 
+                ignore_msgs = ["Can't show last error because no error was recorded"]
+
                 try:
 
                     # traceback() prints and returns a pairlist -> coerce to something nice
@@ -167,14 +169,24 @@ def worker_main(
                 # Full base R error message
                 try:
                     # full rlang error message (can be multi-line, with bullets etc.)
-                    full_msg = cast(
-                        ro.ListVector,
-                        ro.r("rlang::format_error_bullets(rlang::last_error())"),
-                    )[0]
+                    _msg = str(
+                        cast(
+                            ro.ListVector,
+                            ro.r("rlang::format_error_bullets(rlang::last_error())"),
+                        )[0]
+                    )
+                    if _msg and not any(part in _msg for part in ignore_msgs):
+                        full_msg = _msg
+                    else:
+                        raise
                 except Exception:
                     # fallback to base R
                     try:
-                        full_msg = cast(ro.ListVector, ro.r("geterrmessage()"))[0]
+                        _msg = str(cast(ro.ListVector, ro.r("geterrmessage()"))[0])
+                        if _msg and not any(part in _msg for part in ignore_msgs):
+                            full_msg = _msg
+                        else:
+                            raise
                     except Exception:
                         pass
 
