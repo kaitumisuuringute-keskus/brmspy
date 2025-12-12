@@ -35,8 +35,3 @@ class TestInstallPrebuilt:
         from install_helpers import _fit_minimal_model
 
         _fit_minimal_model(brms)
-
-        # Use runtime API for deactivation
-        from brmspy import _runtime
-
-        _runtime.deactivate_runtime()

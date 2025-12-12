@@ -7,16 +7,15 @@ import platform
 from collections.abc import Callable
 from typing import cast
 
-#import rpy2.robjects as ro
-#from rpy2.robjects.packages import importr
-#from rpy2.robjects.vectors import StrVector
 from brmspy.helpers.log import log, log_error, log_warning
 
 # === Queries ===
 
+
 def get_package_version(name: str) -> str | None:
     """Get installed package version or None."""
     import rpy2.robjects as ro
+
     if not is_package_installed(name):
         return None
     try:
@@ -31,9 +30,10 @@ def get_package_version(name: str) -> str | None:
         return None
 
 
-def is_package_installed(name: str, lib_loc = None) -> bool:
+def is_package_installed(name: str, lib_loc=None) -> bool:
     """Check if package is installed."""
     from rpy2.robjects.packages import isinstalled
+
     try:
         return isinstalled(name, lib_loc=lib_loc)
     except Exception:
@@ -42,12 +42,14 @@ def is_package_installed(name: str, lib_loc = None) -> bool:
 
 # === Installation (traditional mode) ===
 
+
 def set_cran_mirror(mirror: str | None = None) -> None:
     """
-    Set CRAN mirror. 
+    Set CRAN mirror.
     Uses Posit Package Manager on Linux for binary packages.
     """
     import rpy2.robjects as ro
+
     if mirror is None:
         mirror = "https://cloud.r-project.org"
     ro.r(f'options(repos = c(CRAN = "{mirror}"))')
@@ -73,7 +75,7 @@ def _get_linux_repo() -> str:
 def install_package(
     name: str,
     version: str | None = None,
-    repos_extra: str | list[str | None] | list[str] | None = None
+    repos_extra: str | list[str | None] | list[str] | None = None,
 ) -> None:
     import rpy2.robjects as ro
     from rpy2.robjects.packages import importr
@@ -87,6 +89,8 @@ def install_package(
             version = None
         else:
             version = v
+
+    set_cran_mirror()
 
     utils = importr("utils")
     system = platform.system()
@@ -143,10 +147,10 @@ def install_package(
             if already_installed and system == "Windows":
                 unload_package(name)
             ro.r(
-                f'remotes::install_version('
+                f"remotes::install_version("
                 f'package = "{name}", '
                 f'version = "{v_escaped}", '
-                f'repos = .brmspy_repos)'
+                f"repos = .brmspy_repos)"
             )
         finally:
             # Clean up
@@ -224,10 +228,12 @@ def install_package(
 def install_package_deps(
     name: str,
     include_suggests: bool = False,
-    repos_extra: str | list[str | None] | list[str] | None = None
+    repos_extra: str | list[str | None] | list[str] | None = None,
 ) -> None:
     """Install dependencies of an R package."""
     import rpy2.robjects as ro
+
+    set_cran_mirror()
 
     which_deps = ro.StrVector(["Depends", "Imports", "LinkingTo"])
     if include_suggests:
@@ -235,7 +241,6 @@ def install_package_deps(
 
     ncpus = multiprocessing.cpu_count() - 1
     ncpus = max(1, ncpus)
-
 
     repos: list[str] = ["https://cloud.r-project.org"]  # good default mirror
 
@@ -248,7 +253,10 @@ def install_package_deps(
             repos.append(repos_extra)
 
     try:
-        cast(Callable, ro.r("""
+        cast(
+            Callable,
+            ro.r(
+                """
         function (which_deps, name, ncpus, repos) {
             pkgs <- unique(unlist(
                 tools::package_dependencies(
@@ -264,7 +272,9 @@ def install_package_deps(
                 install.packages(to_install, Ncpus = ncpus, repos = repos, lib = .libPaths()[1L])
             }
         }
-        """))(which_deps, ro.StrVector([name]), ncpus, ro.StrVector(repos))
+        """
+            ),
+        )(which_deps, ro.StrVector([name]), ncpus, ro.StrVector(repos))
     except Exception as e:
         log_warning(str(e))
         return
@@ -293,10 +303,11 @@ def build_cmdstan(cores: int | None = None) -> None:
 
     ro.r(f"cmdstanr::install_cmdstan(cores = {cores}, overwrite = FALSE)")
 
+
 def remove_package(name: str) -> bool:
     import rpy2.robjects as ro
 
-    r_code = f'''
+    r_code = f"""
     (function(pkg) {{
         removed <- FALSE
         libs <- .libPaths()
@@ -324,7 +335,7 @@ def remove_package(name: str) -> bool:
         # Check if actually removed
         return(!dir.exists(file.path(.libPaths()[1], pkg)))
     }})('{name}')
-    '''
+    """
 
     try:
         result = cast(list, ro.r(r_code))
