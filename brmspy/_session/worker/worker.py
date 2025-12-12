@@ -90,7 +90,6 @@ def worker_main(
                     break
 
                 elif cmd == "CALL":
-                    print("REMOTE CALL")
                     # decode Python args
                     args = [
                         reg.decode(
@@ -114,7 +113,6 @@ def worker_main(
                     }
                     args: list[Any] = reattach_sexp(args)
                     kwargs: dict[str, Any] = reattach_sexp(kwargs)
-                    print("kwargs", kwargs)
 
                     # resolve "mod:pkg.module.func"
                     target = _resolve_module_target(req["target"], module_cache)

@@ -2,6 +2,23 @@ import inspect
 import logging
 
 
+# --- filters ---------------------------------------------------------
+
+
+class PrintOnlyFilter(logging.Filter):
+    """Allow only records that came from our print() override."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return getattr(record, "from_print", False)
+
+
+class NonPrintFilter(logging.Filter):
+    """Block records that came from print()."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return not getattr(record, "from_print", False)
+
+
 # ANSI color codes
 class Colors:
     RESET = "\033[0m"
@@ -20,8 +37,10 @@ class BrmspyFormatter(logging.Formatter):
     def format(self, record):
         # Get method name from record or use the function name
         method_name = getattr(record, "method_name", record.funcName)
+        no_prefix = getattr(record, "no_prefix", True)
+        if method_name == "_print":
+            no_prefix = True
 
-        # Determine prefix based on log level
         if record.levelno >= logging.ERROR:
             # Red color for errors and critical
             level_label = "ERROR" if record.levelno == logging.ERROR else "CRITICAL"
@@ -43,6 +62,9 @@ class BrmspyFormatter(logging.Formatter):
 
         # Restore original format
         self._style._fmt = original_format
+
+        if no_prefix:
+            return record.msg
 
         return result
 
@@ -75,13 +97,20 @@ def get_logger() -> logging.Logger:
         _logger = logging.getLogger("brmspy")
         _logger.setLevel(logging.INFO)
 
-        # Only add handler if none exists (avoid duplicate handlers)
         if not _logger.handlers:
-            handler = logging.StreamHandler()
-            handler.setFormatter(BrmspyFormatter())
-            _logger.addHandler(handler)
+            # Handler for "normal" logs
+            normal_handler = logging.StreamHandler()
+            normal_handler.setFormatter(BrmspyFormatter())
+            normal_handler.addFilter(NonPrintFilter())
+            _logger.addHandler(normal_handler)
 
-        # Prevent propagation to root logger to avoid duplicate messages
+            # print logs: preserve control chars and explicit \n/\r
+            print_handler = logging.StreamHandler()
+            print_handler.setFormatter(logging.Formatter("%(message)s"))
+            print_handler.addFilter(PrintOnlyFilter())
+            print_handler.terminator = ""
+            _logger.addHandler(print_handler)
+
         _logger.propagate = False
 
     return _logger
@@ -131,7 +160,7 @@ def log(*msg: str, method_name: str | None = None, level: int = logging.INFO):
     msg_str = " ".join(str(v) for v in msg)
 
     logger = get_logger()
-    logger.log(level, msg_str, extra={"method_name": method_name})
+    logger.log(level, msg_str, extra={"method_name": method_name, "no_prefix": False})
 
 
 def log_info(msg: str, method_name: str | None = None):
@@ -233,9 +262,3 @@ class LogTime:
     def __exit__(self, exc_type, exc_val, exc_tb):
         elapsed = time.perf_counter() - self.start
         log(f"[{self.name}] took {elapsed:.2f} seconds")
-
-
-def greet():
-    log_warning("brmspy <0.2 is still evolving; APIs may change.")
-    log_warning("Feedback or a star on GitHub helps guide development:")
-    log_warning("https://github.com/kaitumisuuringute-keskus/brmspy")
