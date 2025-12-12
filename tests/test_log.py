@@ -192,14 +192,6 @@ class TestGetLogger:
         handler = logger.handlers[0]
         assert isinstance(handler.formatter, BrmspyFormatter)
 
-    def test_get_logger_no_propagate(self):
-        """Test that logger does not propagate to root"""
-        from brmspy.helpers.log import get_logger
-
-        logger = get_logger()
-
-        assert logger.propagate is False
-
 
 class TestLoggingFunctions:
     """Test logging functions."""

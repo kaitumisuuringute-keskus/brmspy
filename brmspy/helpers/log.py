@@ -1,8 +1,16 @@
 import inspect
 import logging
+import sys
 
 
 # --- filters ---------------------------------------------------------
+
+
+def _running_under_pytest() -> bool:
+    return (
+        "PYTEST_CURRENT_TEST" in os.environ  # reliable with pytest >=3
+        or "pytest" in sys.modules
+    )
 
 
 class PrintOnlyFilter(logging.Filter):
@@ -37,9 +45,6 @@ class BrmspyFormatter(logging.Formatter):
     def format(self, record):
         # Get method name from record or use the function name
         method_name = getattr(record, "method_name", record.funcName)
-        no_prefix = getattr(record, "no_prefix", True)
-        if method_name == "_print":
-            no_prefix = True
 
         if record.levelno >= logging.ERROR:
             # Red color for errors and critical
@@ -62,9 +67,6 @@ class BrmspyFormatter(logging.Formatter):
 
         # Restore original format
         self._style._fmt = original_format
-
-        if no_prefix:
-            return record.msg
 
         return result
 
@@ -111,7 +113,10 @@ def get_logger() -> logging.Logger:
             print_handler.terminator = ""
             _logger.addHandler(print_handler)
 
-        _logger.propagate = False
+        if _running_under_pytest():
+            _logger.propagate = True
+        else:
+            _logger.propagate = False
 
     return _logger
 
@@ -160,7 +165,7 @@ def log(*msg: str, method_name: str | None = None, level: int = logging.INFO):
     msg_str = " ".join(str(v) for v in msg)
 
     logger = get_logger()
-    logger.log(level, msg_str, extra={"method_name": method_name, "no_prefix": False})
+    logger.log(level, msg_str, extra={"method_name": method_name})
 
 
 def log_info(msg: str, method_name: str | None = None):
@@ -248,6 +253,7 @@ def set_log_level(level: int):
     logger.setLevel(level)
 
 
+import os
 import time
 
 

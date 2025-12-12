@@ -65,7 +65,6 @@ def _rmatrix_to_py(
         return np.array(obj)
 
     dtypestr, itemsize = _get_vector_types(obj)
-    print("dtypestr", dtypestr, itemsize)
 
     if not dtypestr or not itemsize:
         return _rmatrix_to_py_default(obj)
