@@ -213,7 +213,7 @@ class FormulaConstruct:
         if isinstance(node, FormulaPart):
             return str(node)
 
-        if isinstance(node, ProxyListSexpVector):
+        if isinstance(node, (ProxyListSexpVector, Sexp)):
             return _sexp_to_str(node)
 
         if isinstance(node, list):

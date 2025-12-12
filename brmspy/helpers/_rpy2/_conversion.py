@@ -1,4 +1,3 @@
-# ruff: noqa: F401
 import re
 from collections.abc import Callable
 from typing import cast
@@ -8,12 +7,14 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from brmspy.helpers._rpy2._converters._registry import (
+from brmspy.helpers._rpy2._converters._dispatch import (
     py_to_r,
     r_to_py,
 )
 from brmspy.helpers.log import log_warning
 from brmspy.types.brms_results import IDFit
+
+__all__ = ["py_to_r", "r_to_py"]
 
 
 def _coerce_stan_types(stan_code: str, stan_data: dict) -> dict:

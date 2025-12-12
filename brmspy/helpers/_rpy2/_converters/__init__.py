@@ -31,7 +31,7 @@ from brmspy.types.formula_dsl import FormulaPart
 
 from ....types.rpy2_converters import Py2rConverter, R2pyConverter
 
-import _registry
+from . import _registry
 
 if os.environ.get("BRMSPY_WORKER") == "1":
     import rpy2.robjects as ro
