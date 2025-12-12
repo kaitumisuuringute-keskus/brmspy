@@ -2,20 +2,22 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from .environment_parent import save, save_as_state
 from .environment import get_environment_config
 
 from ..types.session_types import EnvironmentConfig
-from .session import RModuleSession
+
+if TYPE_CHECKING:
+    from .session import RModuleSession
 
 
 @dataclass
 class EnvContext:
     """Narrow surface area for R-env mutations."""
 
-    session: RModuleSession
+    session: "RModuleSession"
     _has_imported: bool = False
 
     # Runtime
@@ -140,14 +142,16 @@ class EnvContext:
         return result
 
 
-def _get_session() -> RModuleSession:
+def _get_session() -> "RModuleSession":
     # In main process, brms is the proxy; in worker it’s the real module.
     # This should only be used in main.
-    from brmspy import brms as _brms  # or just capture outer name
+    from brmspy._singleton._brms import active
+
+    _brms = active()
 
     if not _brms._is_main_process:
         raise RuntimeError("environment() is only valid in the main process.")
-    return cast(RModuleSession, _brms)
+    return cast("RModuleSession", _brms)
 
 
 @contextmanager

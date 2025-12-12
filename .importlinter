@@ -1,5 +1,6 @@
 [importlinter]
 root_package = brmspy
+log_level = DEBUG
 
 
 [importlinter:contract:protect-rpy2]
@@ -44,6 +45,9 @@ allowed_importers =
 name = acyclic siblings contract
 type = acyclic_siblings
 ancestors = brmspy
+ignore_imports =
+    brmspy._singleton._brms -> brmspy.brms
+
 
 [importlinter:contract: layering]
 name = brmspy general layering
@@ -59,7 +63,6 @@ layers =
     brmspy.types
     
 ignore_imports =
-    brmspy._session.manage -> brmspy.brms
     brmspy._singleton._brms -> brmspy.brms
 
 [importlinter:contract: runtime-layering]
@@ -93,3 +96,5 @@ layers =
     brmspy._session.worker.logging
     brmspy._brms_functions
     brmspy.helpers._rpy2
+
+

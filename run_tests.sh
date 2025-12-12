@@ -17,8 +17,6 @@ else
   IMPORTLINTER_CMD=(python -m lint-imports)
 fi
 
-"${IMPORTLINTER_CMD[@]}"
-
 # 1) Run tests, collect coverage but DO NOT print report from pytest
 "${PYTEST_CMD[@]}" tests/ -v \
   --cov=brmspy \
@@ -34,3 +32,6 @@ COVERAGE_FILE=.coverage "${COVERAGE_CMD[@]}" combine --append --keep
 COVERAGE_FILE=.coverage "${COVERAGE_CMD[@]}" report -m   # term
 COVERAGE_FILE=.coverage "${COVERAGE_CMD[@]}" xml         # coverage.xml
 COVERAGE_FILE=.coverage "${COVERAGE_CMD[@]}" json        # coverage.json
+
+
+"${IMPORTLINTER_CMD[@]}"

@@ -181,6 +181,7 @@ __all__ = [
     # misc private
     "_runtime",
     "status",
+    "manage",
 ]
 
 

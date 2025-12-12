@@ -3,7 +3,6 @@
 Main brms module with Pythonic API.
 """
 
-from typing import List
 from brmspy import _runtime
 from brmspy.helpers.log import log_warning
 from brmspy._runtime._state import get_brms as _get_brms

@@ -353,11 +353,6 @@ class RModuleSession(ModuleType):
         if name in _INTERNAL_ATTRS or name.startswith("__") and name.endswith("__"):
             return ModuleType.__getattribute__(self, name)
 
-        if name == "manage":
-            from brmspy._session.manage import manage
-
-            return manage
-
         # 2. If we already have a cached wrapper for this name, return it
         func_cache = ModuleType.__getattribute__(self, "_func_cache")
         if name in func_cache:
