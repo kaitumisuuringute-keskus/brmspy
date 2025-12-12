@@ -4,10 +4,10 @@ import logging
 
 # ANSI color codes
 class Colors:
-    RESET = '\033[0m'
-    RED = '\033[91m'
-    YELLOW = '\033[93m'
-    BOLD = '\033[1m'
+    RESET = "\033[0m"
+    RED = "\033[91m"
+    YELLOW = "\033[93m"
+    BOLD = "\033[1m"
 
 
 # Custom formatter that adds the [brmspy][method_name] prefix with colors
@@ -19,25 +19,25 @@ class BrmspyFormatter(logging.Formatter):
 
     def format(self, record):
         # Get method name from record or use the function name
-        method_name = getattr(record, 'method_name', record.funcName)
+        method_name = getattr(record, "method_name", record.funcName)
 
         # Determine prefix based on log level
         if record.levelno >= logging.ERROR:
             # Red color for errors and critical
-            level_label = 'ERROR' if record.levelno == logging.ERROR else 'CRITICAL'
-            prefix = f'{Colors.RED}{Colors.BOLD}[brmspy][{method_name}][{level_label}]{Colors.RESET}'
+            level_label = "ERROR" if record.levelno == logging.ERROR else "CRITICAL"
+            prefix = f"{Colors.RED}{Colors.BOLD}[brmspy][{method_name}][{level_label}]{Colors.RESET}"
         elif record.levelno == logging.WARNING:
             # Yellow color for warnings
-            prefix = f'{Colors.YELLOW}[brmspy][{method_name}][WARNING]{Colors.RESET}'
+            prefix = f"{Colors.YELLOW}[brmspy][{method_name}][WARNING]{Colors.RESET}"
         else:
             # No color for info and debug
-            prefix = f'[brmspy][{method_name}]'
+            prefix = f"[brmspy][{method_name}]"
 
         prefix = prefix.replace("[<module>]", "")
 
         # Format the message with the custom prefix
         original_format = self._style._fmt
-        self._style._fmt = f'{prefix} %(message)s'
+        self._style._fmt = f"{prefix} %(message)s"
 
         result = super().format(record)
 
@@ -54,15 +54,15 @@ _logger = None
 def get_logger() -> logging.Logger:
     """
     Get or create the brmspy logger instance.
-    
+
     Returns a configured logger with a custom formatter that outputs
     messages in the format: [brmspy][method_name] msg here
-    
+
     Returns
     -------
     logging.Logger
         Configured brmspy logger instance
-    
+
     Examples
     --------
     >>> from brmspy.helpers.log import get_logger
@@ -72,7 +72,7 @@ def get_logger() -> logging.Logger:
     global _logger
 
     if _logger is None:
-        _logger = logging.getLogger('brmspy')
+        _logger = logging.getLogger("brmspy")
         _logger.setLevel(logging.INFO)
 
         # Only add handler if none exists (avoid duplicate handlers)
@@ -90,7 +90,7 @@ def get_logger() -> logging.Logger:
 def _get_caller_name() -> str:
     """
     Get the name of the calling function/method.
-    
+
     Returns
     -------
     str
@@ -112,10 +112,10 @@ def _get_caller_name() -> str:
     return "unknown"
 
 
-def log(msg: str, method_name: str | None = None, level: int = logging.INFO):
+def log(*msg: str, method_name: str | None = None, level: int = logging.INFO):
     """
     Log a message with automatic method name detection.
-    
+
     Parameters
     ----------
     msg : str
@@ -128,14 +128,16 @@ def log(msg: str, method_name: str | None = None, level: int = logging.INFO):
     if method_name is None:
         method_name = _get_caller_name()
 
+    msg_str = " ".join(str(v) for v in msg)
+
     logger = get_logger()
-    logger.log(level, msg, extra={'method_name': method_name})
+    logger.log(level, msg_str, extra={"method_name": method_name})
 
 
 def log_info(msg: str, method_name: str | None = None):
     """
     Log an info message.
-    
+
     Parameters
     ----------
     msg : str
@@ -149,7 +151,7 @@ def log_info(msg: str, method_name: str | None = None):
 def log_debug(msg: str, method_name: str | None = None):
     """
     Log a debug message.
-    
+
     Parameters
     ----------
     msg : str
@@ -164,7 +166,7 @@ def log_debug(msg: str, method_name: str | None = None):
 def log_warning(msg: str, method_name: str | None = None):
     """
     Log a warning message.
-    
+
     Parameters
     ----------
     msg : str
@@ -179,7 +181,7 @@ def log_warning(msg: str, method_name: str | None = None):
 def log_error(msg: str, method_name: str | None = None):
     """
     Log an error message.
-    
+
     Parameters
     ----------
     msg : str
@@ -193,7 +195,7 @@ def log_error(msg: str, method_name: str | None = None):
 def log_critical(msg: str, method_name: str | None = None):
     """
     Log a critical message.
-    
+
     Parameters
     ----------
     msg : str
@@ -207,7 +209,7 @@ def log_critical(msg: str, method_name: str | None = None):
 def set_log_level(level: int):
     """
     Set the logging level for brmspy logger.
-    
+
     Parameters
     ----------
     level : int

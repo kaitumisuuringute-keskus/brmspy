@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from typing import cast, get_args
 from rpy2.rinterface_lib.sexp import Sexp
+from brmspy.helpers.log import log
 
 from brmspy.types.session_types import SexpWrapper
 from ..helpers._rpy2._conversion import kwargs_r, py_to_r
@@ -13,7 +14,7 @@ from ..types.formula_dsl import (
 from ..types.brms_results import ProxyListSexpVector
 
 
-def bf(*formula: str, **formula_args) -> FormulaConstruct:
+def bf(*formulas: str, **formula_args) -> FormulaConstruct:
     """
     Set up a model formula for brms package.
 
@@ -75,7 +76,7 @@ def bf(*formula: str, **formula_args) -> FormulaConstruct:
         )
     ```
     """
-    part = FormulaPart(_fun="bf", _args=list(formula), _kwargs=formula_args)
+    part = FormulaPart(_fun="bf", _args=list(formulas), _kwargs=formula_args)
     return FormulaConstruct._formula_parse(part)
 
 
@@ -123,7 +124,10 @@ def lf(
         "sparse": sparse,
         "decomp": decomp,
     }
-    return FormulaConstruct._formula_parse(FormulaPart("lf", formulas, formula_args))
+    result = FormulaConstruct._formula_parse(
+        FormulaPart("lf", list(formulas), formula_args)
+    )
+    return result
 
 
 def nlf(
@@ -297,7 +301,6 @@ def _execute_formula(formula: FormulaConstruct | Sexp | str) -> Sexp:
 
     result: Sexp | None = None
     for summand in formula:
-
         subresult: Sexp = py_to_r(summand[0])
         for part in summand[1:]:
             subresult = fun_add(subresult, py_to_r(part))

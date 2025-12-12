@@ -64,7 +64,7 @@ class TestFamilyWrappers:
 
     def test_all_families_construct(self):
         """Test that all family wrapper functions can be instantiated"""
-        from brmspy.brms import families
+        from brmspy import brms
         from brmspy.types.session_types import SexpWrapper
 
         # List of all family functions to test
@@ -117,7 +117,7 @@ class TestFamilyWrappers:
 
         # Test each family function
         for family_name, kwargs in family_functions:
-            family_fn = getattr(families, family_name)
+            family_fn = getattr(brms, family_name)
             family_obj = family_fn(**kwargs)
 
             assert isinstance(

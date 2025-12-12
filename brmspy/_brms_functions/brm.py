@@ -216,8 +216,7 @@ def brm(
         log(f"Fitting model with brms (backend: {backend})...")
 
     # Call brms::brm() with all arguments
-    with openrlib.rlock:
-        fit = fun_brm(**brm_kwargs)
+    fit = fun_brm(**brm_kwargs)
 
     log("Fit done!")
 

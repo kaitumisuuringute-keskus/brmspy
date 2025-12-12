@@ -312,6 +312,7 @@ class RModuleSession(ModuleType):
 
     def _decode_result(self, resp: dict[str, Any]) -> Any:
         if not resp["ok"]:
+            print("message", resp.get("error"))
             raise RSessionError(
                 resp.get("error") or "Worker error",
                 remote_traceback=resp.get("traceback"),

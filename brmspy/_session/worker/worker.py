@@ -6,7 +6,8 @@ import importlib
 import multiprocessing as mp
 from multiprocessing.connection import Connection
 from multiprocessing.managers import SharedMemoryManager
-from typing import Any
+from typing import Any, cast
+from rpy2.rinterface_lib.embedded import RRuntimeError
 
 from ...types.session_types import EnvironmentConfig
 from ..codec import get_default_registry
@@ -142,6 +143,50 @@ def worker_main(
 
                 else:
                     raise ValueError(f"Unknown command: {cmd!r}")
+
+            except RRuntimeError as e:
+                import traceback
+                import rpy2.robjects as ro
+
+                tb = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+                full_msg = str(e)
+
+                try:
+
+                    # traceback() prints and returns a pairlist -> coerce to something nice
+                    r_tb = "\n".join(
+                        list(
+                            str(v)
+                            for v in cast(ro.ListVector, ro.r("unlist(traceback())"))
+                        )
+                    )
+                    tb = r_tb
+                except Exception as tb_exc:
+                    pass
+
+                # Full base R error message
+                try:
+                    # full rlang error message (can be multi-line, with bullets etc.)
+                    full_msg = cast(
+                        ro.ListVector,
+                        ro.r("rlang::format_error_bullets(rlang::last_error())"),
+                    )[0]
+                except Exception:
+                    # fallback to base R
+                    try:
+                        full_msg = cast(ro.ListVector, ro.r("geterrmessage()"))[0]
+                    except Exception:
+                        pass
+
+                conn.send(
+                    {
+                        "id": req_id,
+                        "ok": False,
+                        "result": None,
+                        "error": str(full_msg),
+                        "traceback": tb,
+                    }
+                )
 
             except Exception as e:
                 import traceback

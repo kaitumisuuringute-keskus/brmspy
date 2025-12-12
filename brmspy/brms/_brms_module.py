@@ -61,7 +61,6 @@ from brmspy._brms_functions.prediction import (
     log_lik,
 )
 from brmspy._brms_functions.stan import make_stancode
-from brmspy._brms_functions import families
 from brmspy._brms_functions.families import (
     brmsfamily,
     family,

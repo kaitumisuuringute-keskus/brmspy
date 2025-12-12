@@ -111,7 +111,6 @@ class FormulaConstruct:
         if isinstance(obj, FormulaPart):
             return FormulaConstruct(_parts=[obj])
         if isinstance(obj, str):
-            # You’ll hook this into your real DSL later
             part = FormulaPart(_fun="bf", _args=[obj], _kwargs={})
             return FormulaConstruct(_parts=[part])
         raise TypeError(

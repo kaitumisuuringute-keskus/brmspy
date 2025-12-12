@@ -3,20 +3,19 @@ from typing import TYPE_CHECKING, Any, Callable, Optional
 from ...types.session_types import SexpWrapper
 
 from rpy2.rinterface_lib.sexp import Sexp
+from rpy2.rinterface_lib.sexp import NULL
 
 
-_SEXP_CACHE: dict[int, "Sexp"] = {}
+_SEXP_CACHE: dict[int, Sexp] = {}
 
 
-def get_sexp(ref: SexpWrapper) -> Optional["Sexp"]:
-    from rpy2.rinterface_lib.sexp import NULL
-
-    if ref._rid in _SEXP_CACHE:
-        return _SEXP_CACHE[ref._rid]
+def get_sexp(rid: int) -> Sexp:
+    if rid in _SEXP_CACHE:
+        return _SEXP_CACHE[rid]
     return NULL
 
 
-def _cache_single(obj: "Sexp") -> SexpWrapper:
+def _cache_single(obj: Sexp) -> SexpWrapper:
     _SEXP_CACHE[obj.rid] = obj
     return SexpWrapper(_rid=obj.rid, _repr=str(obj))
 
@@ -71,7 +70,7 @@ def reattach_sexp(obj: Any) -> Any:
 import copyreg
 
 
-def _reduce_sexp(obj: "Sexp") -> tuple[Callable[..., Any], tuple[Any, ...]]:
+def _reduce_sexp(obj: Sexp) -> tuple[Callable[..., Any], tuple[Any, ...]]:
     """
     Called by pickle whenever it encounters a Sexp instance.
     Must return (callable, args) or (callable, args, state, ...).
@@ -86,9 +85,8 @@ def _reduce_sexpwrapper(obj: SexpWrapper) -> tuple[Callable[..., Any], tuple[Any
     Called by pickle whenever it encounters a Sexp instance.
     Must return (callable, args) or (callable, args, state, ...).
     """
-    sexp = get_sexp(obj)
     # On unpickle: callable(*args) → object returned to the unpickler
-    return (Sexp, (sexp,))
+    return (get_sexp, (obj._rid,))
 
 
 def register_global_pickle_overrides() -> None:
