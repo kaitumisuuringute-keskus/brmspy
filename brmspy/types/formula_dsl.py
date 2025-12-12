@@ -42,15 +42,15 @@ class FormulaPart:
             )
 
         # Enforce _args is a list
-        if not isinstance(self._args, list):
+        if not isinstance(self._args, Sequence):
             raise TypeError(
-                f"FormulaPart._args must be a list, got {type(self._args).__name__}"
+                f"FormulaPart._args must be a Sequence, got {type(self._args).__name__}"
             )
 
         # Enforce _kwargs is a dict
-        if not isinstance(self._kwargs, dict):
+        if not isinstance(self._kwargs, Mapping):
             raise TypeError(
-                f"FormulaPart._kwargs must be a dict, got {type(self._kwargs).__name__}"
+                f"FormulaPart._kwargs must be a Mapping, got {type(self._kwargs).__name__}"
             )
 
     def __str__(self) -> str:
