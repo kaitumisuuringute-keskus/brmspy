@@ -92,6 +92,18 @@ def worker_main(
                     )
                     break
 
+                elif cmd == "PING":
+                    conn.send(
+                        {
+                            "id": req_id,
+                            "ok": True,
+                            "result": None,
+                            "error": None,
+                            "traceback": None,
+                        }
+                    )
+                    continue
+
                 elif cmd == "CALL":
                     # decode Python args
                     args = [

@@ -356,27 +356,54 @@ class RModuleSession(ModuleType):
         self._reg = get_default_registry()
         self._closed = False
 
+        # --- handshake: wait until worker is ready ---
+        # This is MANDATORY. Unless we want zombies or race conditions.
+        req_id = str(uuid.uuid4())
+        self._conn.send(
+            {
+                "id": req_id,
+                "cmd": "PING",
+                "target": "",
+                "args": [],
+                "kwargs": {},
+            }
+        )
+        if not self._conn.poll(10.0):
+            # worker never replied -> treat as startup failure,
+            # clean up and raise
+            self._teardown_worker()
+            raise RuntimeError("Worker failed to start within timeout")
+
+        resp = self._conn.recv()
+        if not resp.get("ok", False):
+            self._teardown_worker()
+            raise RuntimeError(f"Worker failed to initialize: {resp.get('error')}")
+
     def _teardown_worker(self) -> None:
         """Internal helper to stop worker/manager; used by shutdown/restart."""
         if self._closed:
             return
 
+        # best-effort graceful shutdown
         try:
-            req_id = str(uuid.uuid4())
-            self._conn.send(
-                {
-                    "id": req_id,
-                    "cmd": "SHUTDOWN",
-                    "target": "",
-                    "args": [],
-                    "kwargs": {},
-                }
-            )
-            _ = self._conn.recv()
+            if hasattr(self, "_conn"):
+                req_id = str(uuid.uuid4())
+                self._conn.send(
+                    {
+                        "id": req_id,
+                        "cmd": "SHUTDOWN",
+                        "target": "",
+                        "args": [],
+                        "kwargs": {},
+                    }
+                )
+                # wait for ack, but don't block forever
+                if self._conn.poll(5.0):
+                    _ = self._conn.recv()
         except Exception:
             pass
 
-        # stop logging listener if present
+        # stop logging listener
         try:
             listener = getattr(self, "_log_listener", None)
             if listener is not None:
@@ -384,13 +411,20 @@ class RModuleSession(ModuleType):
         except Exception:
             pass
 
+        # shut down SHM manager
         try:
             self._mgr.shutdown()
         except Exception:
             pass
 
+        # give worker a chance to exit, then kill it if needed
+        # This is MANDATORY. Unless we want zombies or race conditions running amock
         try:
-            self._proc.join(timeout=1.0)
+            if hasattr(self, "_proc") and self._proc is not None:
+                self._proc.join(timeout=5.0)
+                if self._proc.is_alive():
+                    self._proc.terminate()
+                    self._proc.join(timeout=5.0)
         except Exception:
             pass
 
