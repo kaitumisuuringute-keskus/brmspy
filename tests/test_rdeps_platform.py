@@ -3,6 +3,8 @@ Tests for brmspy.runtime._platform module (platform detection and compatibility)
 
 Focus: Platform detection, toolchain checks, system fingerprinting.
 
+IMPORTANT! _platform module does not use rpy2. We call it directly! If it did, we shouldn't.
+
 These tests exercise platform-specific code paths and error handling.
 """
 
@@ -275,7 +277,7 @@ class TestSystemFingerprint:
         from brmspy._runtime._platform import system_fingerprint
 
         # Mock get_r_version to return None
-        with patch("brmspy.runtime._platform.get_r_version", return_value=None):
+        with patch("brmspy._runtime._platform.get_r_version", return_value=None):
             with pytest.raises(RuntimeError, match="R version could not be determined"):
                 system_fingerprint()
 
@@ -338,7 +340,7 @@ class TestCanUsePrebuilt:
         from brmspy._runtime._platform import can_use_prebuilt
 
         # Mock R unavailable
-        with patch("brmspy.runtime._platform.is_r_supported", return_value=False):
+        with patch("brmspy._runtime._platform.is_r_supported", return_value=False):
             result = can_use_prebuilt()
             assert result is False
 
@@ -347,10 +349,12 @@ class TestCanUsePrebuilt:
         from brmspy._runtime._platform import can_use_prebuilt
 
         # Mock incompatible toolchain
-        with patch("brmspy.runtime._platform.is_platform_supported", return_value=True):
-            with patch("brmspy.runtime._platform.is_r_supported", return_value=True):
+        with patch(
+            "brmspy._runtime._platform.is_platform_supported", return_value=True
+        ):
+            with patch("brmspy._runtime._platform.is_r_supported", return_value=True):
                 with patch(
-                    "brmspy.runtime._platform.is_toolchain_compatible",
+                    "brmspy._runtime._platform.is_toolchain_compatible",
                     return_value=False,
                 ):
                     result = can_use_prebuilt()

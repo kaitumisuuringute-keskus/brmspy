@@ -198,12 +198,3 @@ def manage(
 
     save(new_conf)
     save_as_state(new_conf)
-
-
-def environment_exists(name: str):
-    return get_environment_exists(name)
-
-
-def environment_activate(name: str):
-    with manage(environment_name=name) as ctx:
-        pass

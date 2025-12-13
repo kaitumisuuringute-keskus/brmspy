@@ -3,6 +3,7 @@
 Main brms module with Pythonic API.
 """
 
+from brmspy.helpers.log import log
 from brmspy import _runtime
 from brmspy.helpers.log import log_warning
 from brmspy._runtime._state import get_brms as _get_brms
@@ -128,6 +129,7 @@ import brmspy._runtime as _runtime
 import os
 
 if os.environ.get("BRMSPY_WORKER") == "1" and os.environ.get("BRMSPY_AUTOLOAD") == "1":
+    log("Running autoload!")
     _runtime._autoload()
 
 

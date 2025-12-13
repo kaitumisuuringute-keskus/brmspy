@@ -16,17 +16,20 @@ else
 fi
 
 # 1) Run tests, collect coverage but DO NOT print report from pytest
-BRMSPY_DESTRUCTIVE_RDEPS_TESTS="1" "${PYTEST_CMD[@]}" tests/ -v -m rdeps \
+TESTS="tests/test_rdeps_platform.py"
+RCFILE=".coveragerc-r-dependencies"
+
+BRMSPY_DESTRUCTIVE_RDEPS_TESTS="1" "${PYTEST_CMD[@]}" $TESTS -v -m rdeps \
           --cov=brmspy \
           --cov-report= \
-          --cov-config=.coveragerc-r-dependencies
+          --cov-config="$RCFILE"
 
 # 2) Combine main-process .coverage + all .coverage.* shards
 #    --append: include existing .coverage in the union
 #    --keep:   keep .coverage.* for debugging/inspection
-COVERAGE_FILE=.coverage "${COVERAGE_CMD[@]}" combine --append --keep
+COVERAGE_FILE=.coverage "${COVERAGE_CMD[@]}" combine --append --keep --rcfile="$RCFILE"
 
 # 3) Final reports (only these are shown)
-COVERAGE_FILE=.coverage "${COVERAGE_CMD[@]}" report -m   # term
-COVERAGE_FILE=.coverage "${COVERAGE_CMD[@]}" xml         # coverage.xml
-COVERAGE_FILE=.coverage "${COVERAGE_CMD[@]}" json        # coverage.json
+COVERAGE_FILE=.coverage "${COVERAGE_CMD[@]}" report -m --rcfile="$RCFILE"   # term
+COVERAGE_FILE=.coverage "${COVERAGE_CMD[@]}" xml --rcfile="$RCFILE"         # coverage.xml
+COVERAGE_FILE=.coverage "${COVERAGE_CMD[@]}" json --rcfile="$RCFILE"        # coverage.json

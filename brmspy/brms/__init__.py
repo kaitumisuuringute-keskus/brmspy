@@ -1,10 +1,8 @@
 import os
 import sys
-from contextlib import contextmanager
 from types import ModuleType
 from typing import TYPE_CHECKING, cast
 
-from brmspy._session.manage import manage, environment_activate, environment_exists
 from brmspy._session.session import _INTERNAL_ATTRS, RModuleSession
 
 # -------------------------------------------------------------------
@@ -15,6 +13,28 @@ if TYPE_CHECKING:
     import brmspy.brms._brms_module as _brms_module
     from brmspy.brms._brms_module import *
     from brmspy.brms._brms_module import _runtime
+
+    from contextlib import AbstractContextManager
+
+    from brmspy.brms._build_module import BuildModule
+    from brmspy.brms._manage_module import ManageModule
+    from brmspy.types.session_types import EnvironmentConfig
+
+    # Stubs for IDEs: these are attached dynamically in the main process.
+    def manage(
+        *,
+        environment_config: EnvironmentConfig | dict[str, str] | None = None,
+        environment_name: str | None = None,
+    ) -> AbstractContextManager[ManageModule]: ...
+
+    def _build(
+        *,
+        environment_config: EnvironmentConfig | dict[str, str] | None = None,
+        environment_name: str | None = None,
+    ) -> AbstractContextManager[BuildModule]: ...
+
+    def environment_activate(name: str): ...
+    def environment_exists(name: str) -> bool: ...
 
     BrmsModule = _brms_module
 else:
@@ -35,19 +55,36 @@ if os.environ.get("BRMSPY_WORKER") != "1":
     # 2) Import the heavy brms module; it will see stubbed rpy2 in main.
     import brmspy.brms._brms_module as _brms_module
 
-    # 3) Wrap it in RModuleSession so all calls go to the worker.
-    _module_path = "brmspy.brms"
+    # 3) Import surface classes (must be safe to import in main).
+    from brmspy.brms._build_module import BuildModule
+    from brmspy.brms._manage_module import ManageModule
 
-    brms = cast(
-        BrmsModule,
-        RModuleSession(module=_brms_module, module_path=_module_path),
+    # 4) Wrap brms module in RModuleSession so all calls go to the worker.
+    _module_path = "brmspy.brms"
+    _sess = RModuleSession(module=_brms_module, module_path=_module_path)
+
+    # 5) Attach context-managed surfaces (dynamic attributes)
+    setattr(
+        _sess,
+        "manage",
+        _sess.add_contextmanager(
+            surface_class=ManageModule,
+            surface_class_path="brmspy.brms._manage_module.ManageModule",
+        ),
     )
+    setattr(
+        _sess,
+        "_build",
+        _sess.add_contextmanager(
+            surface_class=BuildModule,
+            surface_class_path="brmspy.brms._build_module.BuildModule",
+        ),
+    )
+
+    brms = cast(BrmsModule, _sess)
     _is_main_process = True
 else:
     # WORKER PROCESS
-    #
-    # Here we *do not* install the stub – worker must see real rpy2.
-    # BRMSPY_WORKER=1 should be set in the worker's env before import.
     import brmspy.brms._brms_module as brms
 
     _is_main_process = False
@@ -172,6 +209,7 @@ __all__ = [
     "_runtime",
     "status",
     "manage",
+    "_build",
     "environment_exists",
     "environment_activate",
 ]
@@ -182,14 +220,8 @@ __all__ = [
 _this_mod = sys.modules[__name__]
 
 for name in __all__:
-    if name in [
-        "manage",
-        "_is_main_process",
-        "environment_exists",
-        "environment_activate",
-    ]:
-        continue
-    setattr(_this_mod, name, getattr(brms, name))
+    if hasattr(brms, name):
+        setattr(_this_mod, name, getattr(brms, name))
 
 if _is_main_process:
     for name in _INTERNAL_ATTRS:

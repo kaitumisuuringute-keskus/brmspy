@@ -3,13 +3,15 @@ System and environment detection. All functions are pure.
 No side effects, no R environment mutation.
 """
 
+import locale
 import os
 import platform
+import shutil
 import subprocess
 from pathlib import Path
 from typing import cast
 
-from brmspy.helpers.log import log_warning
+from brmspy.helpers.log import log_error, log_warning
 from brmspy.types.runtime import SystemInfo
 
 # === Detection (pure) ===
@@ -37,20 +39,54 @@ def get_arch() -> str:
         return raw_arch
 
 
+ENCODING_LOCALE = locale.getpreferredencoding()
+
+
+def _resolve_r_binary() -> str | None:
+    """Return path to R binary, preferring R_HOME if set."""
+    r_home = os.environ.get("R_HOME")
+
+    if r_home:
+        # Construct OS-agnostic path:
+        candidate = os.path.join(r_home, "bin", "R")
+        if os.name == "nt":
+            candidate += ".exe"
+
+        if os.path.isfile(candidate):
+            return candidate
+        # If R_HOME is set but binary missing, fall back to PATH resolution
+
+    # Fall back: search in PATH
+    return shutil.which("R")
+
+
+def r_version_from_subprocess() -> str:
+    r_bin = _resolve_r_binary()
+    if not r_bin:
+        raise RuntimeError("R not found via R_HOME or PATH")
+
+    tmp = subprocess.check_output([r_bin, "--version"], stderr=subprocess.STDOUT)
+    r_version = tmp.decode(ENCODING_LOCALE, "ignore").split(os.linesep)
+
+    if r_version[0].startswith("WARNING"):
+        value = r_version[1].strip()
+    value = r_version[0].strip()
+
+    value = value.replace("R version ", "").strip()
+    return value
+
+
 def get_r_version() -> tuple[int, int, int] | None:
     """Returns R version tuple or None if R not available."""
     try:
-        import rpy2.robjects as ro
-
-        r_major = cast(ro.ListVector, ro.r("R.Version()$major"))
-        r_minor = cast(ro.ListVector, ro.r("R.Version()$minor"))
-        major = int(r_major[0])
-        minor_str = str(r_minor[0])
-        parts = minor_str.split(".")
-        minor = int(parts[0]) if parts and parts[0].isdigit() else 0
-        patch = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 0
+        r_version = r_version_from_subprocess()
+        parts = r_version.split(".")
+        major = int(parts[0])
+        minor = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 0
+        patch = int(parts[2]) if len(parts) > 2 and parts[2].isdigit() else 0
         return major, minor, patch
-    except Exception:
+    except Exception as e:
+        log_warning(f"{e}")
         return None
 
 

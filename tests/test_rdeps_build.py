@@ -10,8 +10,6 @@ R installations and package metadata.
 
 import pytest
 import json
-import platform
-from pathlib import Path
 
 
 @pytest.mark.rdeps
@@ -58,48 +56,6 @@ class TestBuildManifestHash:
 
 
 @pytest.mark.rdeps
-class TestBuildRunRJson:
-    """Test R JSON execution helper."""
-
-    def test_run_r_json_simple(self):
-        """Execute simple R code returning JSON (lines 104-107)"""
-        from brmspy._build._metadata import _run_r_json
-        import rpy2.robjects as ro
-
-        # Ensure jsonlite available
-        ro.r(
-            'if (!requireNamespace("jsonlite", quietly=TRUE)) '
-            'install.packages("jsonlite", repos="https://cloud.r-project.org")'
-        )
-
-        # jsonlite converts scalars to arrays by default, so use auto_unbox=TRUE
-        result = _run_r_json(
-            'jsonlite::toJSON(list(test="value", num=42), auto_unbox=TRUE)'
-        )
-
-        assert isinstance(result, dict)
-        assert result["test"] == "value"
-        assert result["num"] == 42
-
-    def test_run_r_json_with_nested_data(self):
-        """Test R JSON with nested structures"""
-        from brmspy._build._metadata import _run_r_json
-
-        result = _run_r_json(
-            """
-            jsonlite::toJSON(list(
-                r_version = as.character(getRversion()),
-                nested = list(a = 1, b = 2)
-            ))
-        """
-        )
-
-        assert "r_version" in result
-        assert "nested" in result
-        assert isinstance(result["nested"], dict)
-
-
-@pytest.mark.rdeps
 @pytest.mark.slow
 class TestBuildMetadataCollection:
     """Test R environment metadata collection."""
@@ -114,48 +70,56 @@ class TestBuildMetadataCollection:
 
     def test_collect_runtime_metadata_structure(self):
         """Collect metadata and verify structure (lines 160-166)"""
-        from brmspy._build._metadata import collect_runtime_metadata
-        from brmspy._runtime._r_packages import is_package_installed
+        from brmspy import brms
 
-        # Skip if brms or cmdstanr not installed
-        if not (is_package_installed("brms") and is_package_installed("cmdstanr")):
-            pytest.skip("Requires brms and cmdstanr installed")
+        with brms._build(environment_name="_test_build") as ctx:
 
-        metadata = collect_runtime_metadata()
+            # Skip if brms or cmdstanr not installed
+            if not (
+                ctx.is_package_installed("brms")
+                and ctx.is_package_installed("cmdstanr")
+            ):
+                pytest.skip("Requires brms and cmdstanr installed")
 
-        # Verify required keys present
-        assert "r_version" in metadata
-        assert "cmdstan_path" in metadata
-        assert "cmdstan_version" in metadata
-        assert "packages" in metadata
+            metadata = ctx.collect_runtime_metadata()
 
-        # Verify types
-        assert isinstance(metadata["r_version"], str)
-        assert isinstance(metadata["cmdstan_path"], str)
-        assert isinstance(metadata["cmdstan_version"], str)
-        assert isinstance(metadata["packages"], list)
+            # Verify required keys present
+            assert "r_version" in metadata
+            assert "cmdstan_path" in metadata
+            assert "cmdstan_version" in metadata
+            assert "packages" in metadata
+
+            # Verify types
+            assert isinstance(metadata["r_version"], str)
+            assert isinstance(metadata["cmdstan_path"], str)
+            assert isinstance(metadata["cmdstan_version"], str)
+            assert isinstance(metadata["packages"], list)
 
     def test_collect_runtime_metadata_has_required_packages(self):
         """Verify brms and cmdstanr are included in metadata"""
-        from brmspy._build._metadata import collect_runtime_metadata
-        from brmspy._runtime._r_packages import is_package_installed
 
-        # Skip if brms or cmdstanr not installed
-        if not (is_package_installed("brms") and is_package_installed("cmdstanr")):
-            pytest.skip("Requires brms and cmdstanr installed")
+        from brmspy import brms
 
-        metadata = collect_runtime_metadata()
-        pkg_names = [p["Package"] for p in metadata["packages"]]
+        with brms._build(environment_name="_test_build") as ctx:
+            # Skip if brms or cmdstanr not installed
+            if not (
+                ctx.is_package_installed("brms")
+                and ctx.is_package_installed("cmdstanr")
+            ):
+                pytest.skip("Requires brms and cmdstanr installed")
 
-        # Core packages must be present
-        assert "brms" in pkg_names, "brms package not found in metadata"
-        assert "cmdstanr" in pkg_names, "cmdstanr package not found in metadata"
+            metadata = ctx.collect_runtime_metadata()
+            pkg_names = [p["Package"] for p in metadata["packages"]]
 
-        # Verify package structure
-        for pkg in metadata["packages"]:
-            assert "Package" in pkg
-            assert "Version" in pkg
-            assert "LibPath" in pkg
+            # Core packages must be present
+            assert "brms" in pkg_names, "brms package not found in metadata"
+            assert "cmdstanr" in pkg_names, "cmdstanr package not found in metadata"
+
+            # Verify package structure
+            for pkg in metadata["packages"]:
+                assert "Package" in pkg
+                assert "Version" in pkg
+                assert "LibPath" in pkg
 
 
 @pytest.mark.rdeps
@@ -165,61 +129,67 @@ class TestBuildStaging:
 
     def test_stage_runtime_tree_creates_structure(self, tmp_path):
         """Verify directory structure creation"""
-        from brmspy._build._metadata import collect_runtime_metadata
-        from brmspy._build._stage import stage_runtime_tree
 
         ver = "0.1.0-test1"
 
-        metadata = collect_runtime_metadata()
-        runtime_root = stage_runtime_tree(tmp_path, metadata, runtime_version=ver)
+        from brmspy import brms
 
-        # Verify basic structure
-        assert runtime_root.exists()
-        assert (runtime_root / "manifest.json").exists()
-        assert (runtime_root / "Rlib").is_dir()
-        assert (runtime_root / "cmdstan").is_dir()
+        with brms._build(environment_name=ver) as ctx:
+            metadata = ctx.collect_runtime_metadata()
+            runtime_root = ctx.stage_runtime_tree(
+                tmp_path, metadata, runtime_version=ver
+            )
 
-        # Verify some packages copied to Rlib
-        rlib_contents = list((runtime_root / "Rlib").iterdir())
-        assert len(rlib_contents) > 0, "No packages in Rlib directory"
+            # Verify basic structure
+            assert runtime_root.exists()
+            assert (runtime_root / "manifest.json").exists()
+            assert (runtime_root / "Rlib").is_dir()
+            assert (runtime_root / "cmdstan").is_dir()
 
-        # Verify brms and cmdstanr present
-        pkg_names = [p.name for p in rlib_contents]
-        assert "brms" in pkg_names
-        assert "cmdstanr" in pkg_names
+            # Verify some packages copied to Rlib
+            rlib_contents = list((runtime_root / "Rlib").iterdir())
+            assert len(rlib_contents) > 0, "No packages in Rlib directory"
+
+            # Verify brms and cmdstanr present
+            pkg_names = [p.name for p in rlib_contents]
+            assert "brms" in pkg_names
+            assert "cmdstanr" in pkg_names
 
     def test_stage_runtime_tree_manifest_content(self, tmp_path):
         """Verify manifest.json contains correct metadata"""
-        from brmspy._build._metadata import collect_runtime_metadata
-        from brmspy._build._stage import stage_runtime_tree
 
         ver = "0.1.0-test2"
 
-        metadata = collect_runtime_metadata()
-        runtime_root = stage_runtime_tree(tmp_path, metadata, runtime_version=ver)
+        from brmspy import brms
 
-        # Load and verify manifest
-        with (runtime_root / "manifest.json").open() as f:
-            manifest = json.load(f)
+        with brms._build(environment_name=ver) as ctx:
+            metadata = ctx.collect_runtime_metadata()
+            runtime_root = ctx.stage_runtime_tree(
+                tmp_path, metadata, runtime_version=ver
+            )
 
-        # Verify core fields
-        assert manifest["runtime_version"] == ver
-        assert "fingerprint" in manifest
-        assert "r_version" in manifest
-        assert "cmdstan_version" in manifest
-        assert "r_packages" in manifest
-        assert "manifest_hash" in manifest
-        assert "built_at" in manifest
+            # Load and verify manifest
+            with (runtime_root / "manifest.json").open() as f:
+                manifest = json.load(f)
 
-        # Verify r_packages structure
-        assert isinstance(manifest["r_packages"], dict)
-        assert "brms" in manifest["r_packages"]
-        assert "cmdstanr" in manifest["r_packages"]
+            # Verify core fields
+            assert manifest["runtime_version"] == ver
+            assert "fingerprint" in manifest
+            assert "r_version" in manifest
+            assert "cmdstan_version" in manifest
+            assert "r_packages" in manifest
+            assert "manifest_hash" in manifest
+            assert "built_at" in manifest
 
-        # Verify hash format
-        hash_val = manifest["manifest_hash"]
-        assert len(hash_val) == 64
-        assert all(c in "0123456789abcdef" for c in hash_val)
+            # Verify r_packages structure
+            assert isinstance(manifest["r_packages"], dict)
+            assert "brms" in manifest["r_packages"]
+            assert "cmdstanr" in manifest["r_packages"]
+
+            # Verify hash format
+            hash_val = manifest["manifest_hash"]
+            assert len(hash_val) == 64
+            assert all(c in "0123456789abcdef" for c in hash_val)
 
 
 @pytest.mark.rdeps
@@ -229,9 +199,6 @@ class TestBuildPacking:
 
     def test_pack_runtime_creates_archive(self, tmp_path):
         """Verify archive is created correctly"""
-        from brmspy._build._metadata import collect_runtime_metadata
-        from brmspy._build._stage import stage_runtime_tree
-        from brmspy._build._pack import pack_runtime
         import tarfile
 
         # Stage runtime first
@@ -239,52 +206,60 @@ class TestBuildPacking:
         stage_dir.mkdir()
         ver = "0.1-testb1"
 
-        metadata = collect_runtime_metadata()
-        runtime_root = stage_runtime_tree(stage_dir, metadata, runtime_version=ver)
+        from brmspy import brms
 
-        # Pack it
-        out_dir = tmp_path / "out"
-        archive_path = pack_runtime(runtime_root, out_dir, runtime_version=ver)
+        with brms._build(environment_name=ver) as ctx:
+            metadata = ctx.collect_runtime_metadata()
+            runtime_root = ctx.stage_runtime_tree(
+                stage_dir, metadata, runtime_version=ver
+            )
 
-        # Verify archive exists and has correct name
-        assert archive_path.exists()
-        assert archive_path.suffix == ".gz"
-        assert "brmspy-runtime" in archive_path.name
-        assert ver in archive_path.name
+            # Pack it
+            out_dir = tmp_path / "out"
+            archive_path = ctx.pack_runtime(runtime_root, out_dir, runtime_version=ver)
 
-        # Verify it's a valid tarball
-        assert tarfile.is_tarfile(archive_path)
+            # Verify archive exists and has correct name
+            assert archive_path.exists()
+            assert archive_path.suffix == ".gz"
+            assert "brmspy-runtime" in archive_path.name
+            assert ver in archive_path.name
 
-        # Verify archive contents
-        with tarfile.open(archive_path, "r:gz") as tf:
-            names = tf.getnames()
-            # Should have runtime/ top-level directory
-            assert any(n.startswith("runtime") for n in names)
-            # Should contain manifest
-            assert any("manifest.json" in n for n in names)
-            # Should contain Rlib and cmdstan
-            assert any("Rlib" in n for n in names)
-            assert any("cmdstan" in n for n in names)
+            # Verify it's a valid tarball
+            assert tarfile.is_tarfile(archive_path)
+
+            # Verify archive contents
+            with tarfile.open(archive_path, "r:gz") as tf:
+                names = tf.getnames()
+                # Should have runtime/ top-level directory
+                assert any(n.startswith("runtime") for n in names)
+                # Should contain manifest
+                assert any("manifest.json" in n for n in names)
+                # Should contain Rlib and cmdstan
+                assert any("Rlib" in n for n in names)
+                assert any("cmdstan" in n for n in names)
 
     def test_pack_runtime_archive_size(self, tmp_path):
         """Verify packed archive is reasonable size"""
-        from brmspy._build._metadata import collect_runtime_metadata
-        from brmspy._build._stage import stage_runtime_tree
-        from brmspy._build._pack import pack_runtime
 
         stage_dir = tmp_path / "stage"
         stage_dir.mkdir()
 
         ver = "0.1.0-testb2"
 
-        metadata = collect_runtime_metadata()
-        runtime_root = stage_runtime_tree(stage_dir, metadata, runtime_version=ver)
+        from brmspy import brms
 
-        out_dir = tmp_path / "out"
-        archive_path = pack_runtime(runtime_root, out_dir, runtime_version=ver)
+        with brms._build(environment_name=ver) as ctx:
 
-        # Archive should exist and be non-empty
-        size_mb = archive_path.stat().st_size / (1024 * 1024)
-        assert size_mb > 0.1, f"Archive too small: {size_mb:.2f} MB"
-        # Reasonable upper bound (runtime bundles are typically 50-200 MB compressed)
-        assert size_mb < 500, f"Archive too large: {size_mb:.2f} MB"
+            metadata = ctx.collect_runtime_metadata()
+            runtime_root = ctx.stage_runtime_tree(
+                stage_dir, metadata, runtime_version=ver
+            )
+
+            out_dir = tmp_path / "out"
+            archive_path = ctx.pack_runtime(runtime_root, out_dir, runtime_version=ver)
+
+            # Archive should exist and be non-empty
+            size_mb = archive_path.stat().st_size / (1024 * 1024)
+            assert size_mb > 0.1, f"Archive too small: {size_mb:.2f} MB"
+            # Reasonable upper bound (runtime bundles are typically 50-200 MB compressed)
+            assert size_mb < 500, f"Archive too large: {size_mb:.2f} MB"

@@ -220,22 +220,61 @@ def worker_main(
 
 def _resolve_module_target(target: str, module_cache: dict[str, Any]):
     """
-    Target format: "mod:brmspy.brms.brm"
+    Resolve a worker-call target.
+
+    Supported target formats:
+
+    - Module function format:
+        mod:pkg.module.func
+
+    - Attribute-chain format (for class-based surfaces, etc):
+        mod:pkg.module::Attr.chain.to.callable
+
+      Example:
+        mod:brmspy.brms._build_module::BuildModule.collect_runtime_metadata
     """
     if not target.startswith("mod:"):
         raise ValueError(f"Unknown target kind: {target!r}")
 
     spec = target[len("mod:") :]  # strip "mod:"
-    if "." not in spec:
-        raise ValueError(f"Invalid module target: {target!r}")
 
-    mod_name, func_name = spec.rsplit(".", 1)
+    # Module + attribute chain separator
+    if "::" in spec:
+        mod_name, attr_chain = spec.split("::", 1)
+        mod_name = mod_name.strip()
+        attr_chain = attr_chain.strip()
 
-    mod = module_cache.get(mod_name)
-    if mod is None:
-        mod = importlib.import_module(mod_name)
-        module_cache[mod_name] = mod
+        if not mod_name or not attr_chain:
+            raise ValueError(f"Invalid module target: {target!r}")
 
-    if not hasattr(mod, func_name):
-        raise AttributeError(f"Module {mod_name!r} has no attribute {func_name!r}")
-    return getattr(mod, func_name)
+        mod = module_cache.get(mod_name)
+        if mod is None:
+            mod = importlib.import_module(mod_name)
+            module_cache[mod_name] = mod
+
+        obj: Any = mod
+        for part in attr_chain.split("."):
+            if not part:
+                raise ValueError(f"Invalid module target: {target!r}")
+            if not hasattr(obj, part):
+                raise AttributeError(
+                    f"Target {target!r} missing attribute {part!r} on {obj!r}"
+                )
+            obj = getattr(obj, part)
+
+        return obj
+    else:
+        # Module level resolution
+        if "." not in spec:
+            raise ValueError(f"Invalid module target: {target!r}")
+
+        mod_name, func_name = spec.rsplit(".", 1)
+
+        mod = module_cache.get(mod_name)
+        if mod is None:
+            mod = importlib.import_module(mod_name)
+            module_cache[mod_name] = mod
+
+        if not hasattr(mod, func_name):
+            raise AttributeError(f"Module {mod_name!r} has no attribute {func_name!r}")
+        return getattr(mod, func_name)

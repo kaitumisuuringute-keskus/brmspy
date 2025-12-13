@@ -18,7 +18,8 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
-from brmspy._session.environment import get_environment_config
+from brmspy._session.environment import get_environment_config, get_environment_exists
+from brmspy._session.environment_parent import save, save_as_state
 
 from ..types.errors import RSessionError
 from ..types.session_types import EnvironmentConfig
@@ -42,8 +43,12 @@ _INTERNAL_ATTRS = {
     "_call_remote",
     "_encode_arg",
     "_decode_result",
+    "_active_ctx",
+    "add_contextmanager",
     "restart",
     "shutdown",
+    "environment_exists",
+    "environment_activate",
 }
 
 
@@ -149,6 +154,101 @@ def spawn_worker(
     return proc
 
 
+class ClassProxy:
+    """
+    Class-like proxy that exposes only @staticmethod members of a surface class
+    and executes them in the worker.
+
+    Worker target format:
+        mod:{module_path}::{class_name}.{method_name}
+    """
+
+    _INTERNAL = {
+        "_session",
+        "_surface_class",
+        "_module_path",
+        "_class_name",
+        "_allowed",
+        "_func_cache",
+    }
+
+    def __init__(
+        self,
+        *,
+        session: "RModuleSession",
+        surface_class: type,
+        module_path: str,
+        class_name: str,
+    ) -> None:
+        self._session = session
+        self._surface_class = surface_class
+        self._module_path = module_path
+        self._class_name = class_name
+
+        # Only expose names backed by `@staticmethod` descriptors.
+        allowed: list[str] = []
+        for k, v in getattr(surface_class, "__dict__", {}).items():
+            if isinstance(v, staticmethod):
+                allowed.append(k)
+        self._allowed = tuple(sorted(set(allowed)))
+        self._func_cache: dict[str, Callable[..., Any]] = {}
+
+    def __getattribute__(self, name: str) -> Any:
+        if name in ClassProxy._INTERNAL or (
+            name.startswith("__") and name.endswith("__")
+        ):
+            return object.__getattribute__(self, name)
+
+        allowed = object.__getattribute__(self, "_allowed")
+        if name not in allowed:
+            raise AttributeError(
+                f"{self.__class__.__name__!r} has no attribute {name!r}"
+            )
+
+        func_cache = object.__getattribute__(self, "_func_cache")
+        if name in func_cache:
+            return func_cache[name]
+
+        surface_class = object.__getattribute__(self, "_surface_class")
+        raw = surface_class.__dict__.get(name)
+
+        # We only allow staticmethod entries; enforce again defensively.
+        if not isinstance(raw, staticmethod):
+            raise AttributeError(f"{surface_class!r} has no staticmethod {name!r}")
+
+        session = object.__getattribute__(self, "_session")
+        module_path = object.__getattribute__(self, "_module_path")
+        class_name = object.__getattribute__(self, "_class_name")
+
+        # Grab underlying function only for metadata (__doc__/__name__)
+        orig = raw.__func__
+
+        def wrapper(*args, **kwargs):
+            return session._call_remote(
+                f"mod:{module_path}::{class_name}.{name}", *args, **kwargs
+            )
+
+        wrapper.__name__ = getattr(orig, "__name__", name)
+        wrapper.__doc__ = getattr(orig, "__doc__", None)
+        wrapper.__wrapped__ = orig  # type: ignore[attr-defined]
+
+        func_cache[name] = wrapper
+        return wrapper
+
+    def __dir__(self):
+        allowed = object.__getattribute__(self, "_allowed")
+        return sorted(set(allowed))
+
+    def __repr__(self) -> str:
+        module_path = object.__getattribute__(self, "_module_path")
+        class_name = object.__getattribute__(self, "_class_name")
+        return f"<ClassProxy {module_path}::{class_name}>"
+
+    @property
+    def __all__(self) -> list[str]:
+        return list(object.__getattribute__(self, "_allowed"))
+
+
 class RModuleSession(ModuleType):
     """
     Module-like proxy that forwards function calls to a worker process,
@@ -185,11 +285,14 @@ class RModuleSession(ModuleType):
             environment_conf
         )
 
-        if "BRMSPY_AUTOLOAD" not in self._environment_conf.env:
-            self._environment_conf.env["BRMSPY_AUTOLOAD"] = "1"
+        if "BRMSPY_AUTOLOAD" in self._environment_conf.env:
+            del self._environment_conf.env["BRMSPY_AUTOLOAD"]
 
         # cache of Python wrappers for functions
         self._func_cache: dict[str, Callable[..., Any]] = {}
+
+        # Disallow nested tooling contexts (manage/_build/etc)
+        self._active_ctx: str | None = None
 
         # start SHM manager + worker
         self._setup_worker()
@@ -315,7 +418,6 @@ class RModuleSession(ModuleType):
 
     def _decode_result(self, resp: dict[str, Any]) -> Any:
         if not resp["ok"]:
-            print("message", resp.get("error"))
             raise RSessionError(
                 resp.get("error") or "Worker error",
                 remote_traceback=resp.get("traceback"),
@@ -408,6 +510,104 @@ class RModuleSession(ModuleType):
         except Exception:
             pass
 
+    def add_contextmanager(
+        self,
+        *,
+        surface_class: type,
+        surface_class_path: str,
+    ):
+        """
+        Attach a surface (module or class) as a context manager factory.
+
+            Yields a ClassProxy exposing only @staticmethod members of the class.
+            Callables execute in worker via:
+                mod:{module_path}::{ClassName}.{name}
+            where `module_path` and `ClassName` are derived from `surface_class_path`.
+
+        Semantics match current `brmspy._session.manage.manage()`:
+        - On enter: resolve env config and restart worker with autoload=False
+        - On exit: persist env via save()/save_as_state(); do not restore old config
+        - Nesting is not allowed (raises)
+        """
+
+        session = self
+
+        if surface_class is None or surface_class_path is None:
+            raise ValueError("surface_class and surface_class_path must both be set.")
+        if "." not in surface_class_path:
+            raise ValueError(
+                "surface_class_path must look like 'pkg.module.ClassName'."
+            )
+
+        module_path, class_name = surface_class_path.rsplit(".", 1)
+        ctx_label = f"{module_path}::{class_name}"
+
+        class _Ctx:
+            def __init__(
+                self,
+                *,
+                environment_config: EnvironmentConfig | dict[str, str] | None = None,
+                environment_name: str | None = None,
+            ) -> None:
+                self._environment_config = environment_config
+                self._environment_name = environment_name
+                self._new_conf: EnvironmentConfig | None = None
+
+            def __enter__(self):
+                if session._active_ctx is not None:
+                    raise RuntimeError(
+                        f"Nested brmspy contexts are not supported "
+                        f"(active={session._active_ctx!r}, new={ctx_label!r})."
+                    )
+                session._active_ctx = ctx_label
+
+                if self._environment_name and self._environment_config:
+                    session._active_ctx = None
+                    raise Exception(
+                        "Only provide one: environment name or environment config"
+                    )
+
+                if not self._environment_name and self._environment_config:
+                    overrides = EnvironmentConfig.from_obj(self._environment_config)
+                elif self._environment_name:
+                    overrides = get_environment_config(self._environment_name)
+                else:
+                    overrides = None
+
+                old_conf = session._environment_conf
+                new_conf = overrides if overrides else old_conf
+                self._new_conf = new_conf
+
+                # fresh worker with new_conf
+                session.restart(environment_conf=new_conf, autoload=False)
+
+                return ClassProxy(
+                    session=session,
+                    surface_class=surface_class,
+                    module_path=module_path,
+                    class_name=class_name,
+                )
+
+            def __exit__(self, exc_type, exc, tb) -> None:
+                try:
+                    if self._new_conf is not None:
+                        save(self._new_conf)
+                        save_as_state(self._new_conf)
+                finally:
+                    session._active_ctx = None
+                return None
+
+        def factory(
+            *,
+            environment_config: EnvironmentConfig | dict[str, str] | None = None,
+            environment_name: str | None = None,
+        ):
+            return _Ctx(
+                environment_config=environment_config, environment_name=environment_name
+            )
+
+        return factory
+
     def restart(
         self,
         environment_conf: dict[str, Any] | EnvironmentConfig | None = None,
@@ -431,3 +631,14 @@ class RModuleSession(ModuleType):
 
         # Start a fresh worker with current env conf
         self._setup_worker(autoload=autoload)
+
+    def environment_exists(self, name: str):
+        return get_environment_exists(name)
+
+    def environment_activate(self, name: str):
+        manage = self.manage
+        if manage:
+            with manage(environment_name=name) as ctx:
+                pass
+        else:
+            raise Exception("Invalid state. manage is not defined!")

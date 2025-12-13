@@ -17,21 +17,24 @@ else
   IMPORTLINTER_CMD=(lint-imports)
 fi
 
+TESTS="tests/test_rdeps_config.py"
+RCFILE=".coveragerc"
+
 # 1) Run tests, collect coverage but DO NOT print report from pytest
-"${PYTEST_CMD[@]}" tests/ -v \
+"${PYTEST_CMD[@]}" "$TESTS" -v \
   --cov=brmspy \
-  --cov-config=.coveragerc \
+  --cov-config="$RCFILE" \
   --cov-report= \
 
 # 2) Combine main-process .coverage + all .coverage.* shards
 #    --append: include existing .coverage in the union
 #    --keep:   keep .coverage.* for debugging/inspection
-COVERAGE_FILE=.coverage "${COVERAGE_CMD[@]}" combine --append --keep
+COVERAGE_FILE=.coverage "${COVERAGE_CMD[@]}" combine --append --keep --rcfile="$RCFILE"
 
 # 3) Final reports (only these are shown)
-COVERAGE_FILE=.coverage "${COVERAGE_CMD[@]}" report -m   # term
-COVERAGE_FILE=.coverage "${COVERAGE_CMD[@]}" xml         # coverage.xml
-COVERAGE_FILE=.coverage "${COVERAGE_CMD[@]}" json        # coverage.json
+COVERAGE_FILE=.coverage "${COVERAGE_CMD[@]}" report -m --rcfile="$RCFILE"   # term
+COVERAGE_FILE=.coverage "${COVERAGE_CMD[@]}" xml --rcfile="$RCFILE"         # coverage.xml
+COVERAGE_FILE=.coverage "${COVERAGE_CMD[@]}" json --rcfile="$RCFILE"        # coverage.json
 
 
 "${IMPORTLINTER_CMD[@]}"
