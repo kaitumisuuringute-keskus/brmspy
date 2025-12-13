@@ -10,7 +10,14 @@ from brmspy.helpers.log import log, log_warning
 
 if _platform.get_os() == "macos":
     # MacOS fails without forced tibble and pkgconfig unloading
-    MANAGED_PACKAGES = ("brms", "cmdstanr", "rstan", "StanHeaders", "tibble", "pkgconfig")
+    MANAGED_PACKAGES = (
+        "brms",
+        "cmdstanr",
+        "rstan",
+        "StanHeaders",
+        "tibble",
+        "pkgconfig",
+    )
 else:
     MANAGED_PACKAGES = ("brms", "cmdstanr", "rstan")
 
@@ -18,7 +25,7 @@ else:
 def activate(runtime_path: Path) -> None:
     """
     Activate runtime by mutating R environment.
-    
+
     Steps:
     1. Parse and validate manifest
     2. Store original R environment (if not already stored)
@@ -27,16 +34,13 @@ def activate(runtime_path: Path) -> None:
     5. Set cmdstan path to runtime's cmdstan/
     6. Verify packages are loadable
     7. Invalidate package singletons
-    
+
     Does NOT save to config. Caller handles that.
-    
+
     On failure, attempts to restore original environment.
     """
     log(f"Activating runtime {runtime_path}")
     stored = _state.get_stored_env()
-
-    if stored is not None:
-        deactivate()
 
     # Validate
     manifest = _manifest.parse_manifest(runtime_path / "manifest.json")
@@ -44,6 +48,9 @@ def activate(runtime_path: Path) -> None:
         raise RuntimeError(f"Invalid manifest in {runtime_path}")
 
     _manifest.validate_manifest(manifest, _platform.system_fingerprint())
+
+    if stored is not None:
+        deactivate()
 
     # Capture original env (unless already captured from previous activation)
     if not _state.has_stored_env():
@@ -67,10 +74,6 @@ def activate(runtime_path: Path) -> None:
         log(f"Setting cmdstan path to {cmdstan_posix}")
         _r_env.set_cmdstan_path(str(cmdstan_posix))
 
-
-
-
-
     except Exception as e:
         # Rollback
         _rollback_to_stored_env()
@@ -80,9 +83,9 @@ def activate(runtime_path: Path) -> None:
 def deactivate() -> None:
     """
     Deactivate runtime by restoring original R environment.
-    
+
     Does NOT clear config. Caller handles that.
-    
+
     Raises:
         RuntimeError: If no stored environment to restore.
     """
@@ -101,7 +104,9 @@ def deactivate() -> None:
     try:
         _r_env.set_cmdstan_path(stored.cmdstan_path)
     except Exception as e:
-        log_warning(f"Failed to set_cmdstan_path to stored default ({stored.cmdstan_path}). Skipping! {e}")
+        log_warning(
+            f"Failed to set_cmdstan_path to stored default ({stored.cmdstan_path}). Skipping! {e}"
+        )
     _state.clear_stored_env()
     _state.invalidate_packages()
 
@@ -116,7 +121,6 @@ def _unload_managed_packages() -> None:
                 log_warning(f"{e}")
 
 
-
 def _remove_managed_packages() -> None:
     """removes brms, cmdstanr, rstan if loaded."""
     for pkg in MANAGED_PACKAGES:
@@ -126,11 +130,11 @@ def _remove_managed_packages() -> None:
             except Exception as e:
                 log_warning(f"{e}")
 
+
 def _verify_runtime_loadable() -> None:
     """Verify brms and cmdstanr can be loaded."""
     _state.get_brms()
     _state.get_cmdstanr()
-
 
 
 def _rollback_to_stored_env() -> None:

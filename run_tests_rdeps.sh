@@ -16,7 +16,7 @@ else
 fi
 
 # 1) Run tests, collect coverage but DO NOT print report from pytest
-TESTS="tests/test_rdeps_platform.py"
+TESTS="tests/test_rdeps_storage.py"
 RCFILE=".coveragerc-r-dependencies"
 
 BRMSPY_DESTRUCTIVE_RDEPS_TESTS="1" "${PYTEST_CMD[@]}" $TESTS -v -m rdeps \
