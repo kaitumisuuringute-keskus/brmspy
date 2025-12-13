@@ -54,16 +54,6 @@ class TestGetRVersionTuple:
             assert isinstance(patch, int)
             assert major >= 4, f"R version too old: {version}"
 
-    def test_get_r_version_handles_r_unavailable(self):
-        """Handle R unavailable scenario"""
-        from brmspy._runtime._platform import get_r_version
-
-        # Mock rpy2 import failure
-        with patch.dict("sys.modules", {"rpy2.robjects": None}):
-            # Try to trigger import error path
-            # This is difficult without actually breaking rpy2
-            pass  # R should be available in test environment
-
 
 @pytest.mark.rdeps
 class TestRAvailableAndSupported:

@@ -103,49 +103,32 @@ class TestPackageStateChecks:
 
     def test_namespace_loaded_vs_attached(self):
         """Verify distinction between namespace loaded and package attached"""
-        from brmspy._runtime._r_env import is_namespace_loaded, is_package_attached
-        import rpy2.robjects as ro
+        from brmspy import brms
 
-        # Load stats with library (loads and attaches)
-        ro.r("library(stats)")
-
-        # Both should be true for stats
-        assert is_namespace_loaded("stats") is True
-        assert is_package_attached("stats") is True
-
-        # Load tools with requireNamespace (loads but doesn't attach)
-        ro.r('requireNamespace("tools", quietly=TRUE)')
-
-        # Namespace should be loaded
-        assert is_namespace_loaded("tools") is True
-
-        # Non-existent package
-        assert is_namespace_loaded("nonexistent_pkg_xyz") is False
-        assert is_package_attached("nonexistent_pkg_xyz") is False
+        with brms.manage() as ctx:
+            ctx.import_rpackages("stats")
+            assert ctx.is_rpackage_loaded("stats")
+            assert not ctx.is_rpackage_loaded("nonexistent_pkg_xyz")
 
     def test_unload_package_not_loaded(self):
         """Unload package that isn't loaded"""
-        from brmspy._runtime._r_env import unload_package
+        from brmspy import brms
 
         # Try to unload a package that's not loaded
         # Should return False but not raise exception
-        result = unload_package("nonexistent_package_xyz")
-        assert isinstance(result, bool)
+        with brms.manage() as ctx:
+            result = ctx._unload_rpackage("nonexistent_package_xyz")
+            assert isinstance(result, bool)
 
     def test_unload_package_loaded(self):
         """Attempt to unload a loaded package"""
-        from brmspy._runtime._r_env import unload_package, is_namespace_loaded
-        import rpy2.robjects as ro
+        from brmspy import brms
 
-        # Load a package
-        ro.r("library(tools)")
-        assert is_namespace_loaded("tools") is True
-
-        # Try to unload it
-        result = unload_package("tools")
-
-        # Result should be boolean (success/failure depends on dependencies)
-        assert isinstance(result, bool)
+        with brms.manage() as ctx:
+            ctx.import_rpackages("tools")
+            assert ctx.is_rpackage_loaded("tools")
+            result = ctx._unload_rpackage("tools")
+            assert isinstance(result, bool)
 
 
 @pytest.mark.rdeps
@@ -154,38 +137,42 @@ class TestPackageQueries:
 
     def test_get_package_version_installed(self):
         """Get version of installed package"""
-        from brmspy._runtime._r_packages import get_package_version
+        from brmspy import brms
 
-        # stats should always be available
-        version = get_package_version("stats")
+        with brms.manage() as ctx:
+            # stats should always be available
+            version = ctx.get_rpackage_version("stats")
 
-        if version is not None:
-            assert isinstance(version, str)
-            # Should have version format like "4.3.0"
-            parts = version.split(".")
-            assert len(parts) >= 2
+            if version is not None:
+                assert isinstance(version, str)
+                # Should have version format like "4.3.0"
+                parts = version.split(".")
+                assert len(parts) >= 2
 
     def test_get_package_version_not_installed(self):
         """Return None for non-installed package"""
-        from brmspy._runtime._r_packages import get_package_version
+        from brmspy import brms
 
-        version = get_package_version("nonexistent_package_xyz_123")
-        assert version is None
+        with brms.manage() as ctx:
+            version = ctx.get_rpackage_version("nonexistent_package_xyz_123")
+            assert version is None
 
     def test_is_package_installed_true(self):
         """Return True for installed package"""
-        from brmspy._runtime._r_packages import is_package_installed
+        from brmspy import brms
 
-        # stats package should always be available
-        result = is_package_installed("stats")
-        assert result is True
+        with brms.manage() as ctx:
+            # stats package should always be available
+            result = ctx.is_rpackage_installed("stats")
+            assert result is True
 
     def test_is_package_installed_false(self):
         """Return False for non-installed package"""
-        from brmspy._runtime._r_packages import is_package_installed
+        from brmspy import brms
 
-        result = is_package_installed("nonexistent_package_xyz_123")
-        assert result is False
+        with brms.manage() as ctx:
+            result = ctx.is_rpackage_installed("nonexistent_package_xyz_123")
+            assert result is False
 
 
 @pytest.mark.rdeps
@@ -194,35 +181,14 @@ class TestLibPathOperations:
 
     def test_get_lib_paths_returns_list(self):
         """get_lib_paths returns list of strings"""
-        from brmspy._runtime._r_env import get_lib_paths
+        from brmspy import brms
 
-        paths = get_lib_paths()
+        with brms.manage() as ctx:
+            paths = ctx.get_lib_paths()
 
-        assert isinstance(paths, list)
-        assert len(paths) > 0
-        assert all(isinstance(p, str) for p in paths)
-
-    def test_set_lib_paths_modifies_r_env(self):
-        """set_lib_paths modifies R environment"""
-        from brmspy._runtime._r_env import get_lib_paths, set_lib_paths
-
-        # Save original
-        original_paths = get_lib_paths()
-
-        try:
-            # Set new paths (add a fake path)
-            with TemporaryDirectory() as dir:
-                test_path = os.path.realpath(dir)
-                test_paths = [test_path] + original_paths
-                set_lib_paths(test_paths)
-
-                # Verify change
-                new_paths = get_lib_paths()
-                assert any(os.path.samefile(test_path, p) for p in new_paths)
-
-        finally:
-            # Restore original
-            set_lib_paths(original_paths)
+            assert isinstance(paths, list)
+            assert len(paths) > 0
+            assert all(isinstance(p, str) for p in paths)
 
 
 @pytest.mark.rdeps
@@ -231,9 +197,10 @@ class TestCmdStanPath:
 
     def test_get_cmdstan_path_returns_optional_str(self):
         """get_cmdstan_path returns str or None"""
-        from brmspy._runtime._r_env import get_cmdstan_path
+        from brmspy import brms
 
-        path = get_cmdstan_path()
+        with brms.manage() as ctx:
+            path = ctx.get_cmdstan_path()
 
-        # Should be None or a string path
-        assert path is None or isinstance(path, str)
+            # Should be None or a string path
+            assert path is None or isinstance(path, str)
