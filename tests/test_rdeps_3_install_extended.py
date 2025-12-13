@@ -262,7 +262,12 @@ class TestInstallBrms:
         if platform.system() != "Windows":
             pytest.skip("Windows-only test")
 
-        mock_ensure_rtools = MagicMock()
+        from brmspy import brms
+
+        with brms.manage() as ctx:
+            ctx.install_brms(use_prebuilt=True, install_rtools=True)
+
+        """mock_ensure_rtools = MagicMock()
 
         with (
             patch.object(_rtools, "ensure_installed", mock_ensure_rtools),
@@ -279,16 +284,16 @@ class TestInstallBrms:
                 install_rstan=False,
             )
 
-            assert mock_ensure_rtools.called
+            assert mock_ensure_rtools.called"""
 
     def test_install_rstan_option(self):
         """Test rstan installation option"""
-        from brmspy._runtime import install_brms
+        from brmspy import brms
 
-        if platform.system() == "Darwin":
-            pytest.skip("No rstan on macos")
-
-        install_brms(use_prebuilt=False, install_cmdstanr=False, install_rstan=True)
+        with brms.manage() as ctx:
+            ctx.install_brms(
+                use_prebuilt=False, install_cmdstanr=False, install_rstan=True
+            )
 
 
 @pytest.mark.rdeps

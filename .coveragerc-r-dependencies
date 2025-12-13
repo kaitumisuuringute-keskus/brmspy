@@ -7,6 +7,8 @@ concurrency = multiprocessing
 include =
     brmspy/_runtime/*
     brmspy/_build/*
+    brmspy/build.py
+    brmspy/_singleton/_brms.py
 
 [paths]
 brmspy =
