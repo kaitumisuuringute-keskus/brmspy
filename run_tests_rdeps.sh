@@ -6,17 +6,17 @@ set -euo pipefail
 
 # Decide runner: uv if available, else python -m
 if command -v uv >/dev/null 2>&1; then
-  echo "[run_main_tests] Using 'uv run'"
+  echo "[run_rdeps_tests] Using 'uv run'"
   PYTEST_CMD=(uv run pytest)
   COVERAGE_CMD=(uv run coverage)
 else
-  echo "[run_main_tests] 'uv' not found, using 'python -m'"
+  echo "[run_rdeps_tests] 'uv' not found, using 'python -m'"
   PYTEST_CMD=(python -m pytest)
   COVERAGE_CMD=(python -m coverage)
 fi
 
 # 1) Run tests, collect coverage but DO NOT print report from pytest
-TESTS="tests/test_rdeps_storage.py"
+TESTS="tests/"
 RCFILE=".coveragerc-r-dependencies"
 
 BRMSPY_DESTRUCTIVE_RDEPS_TESTS="1" "${PYTEST_CMD[@]}" $TESTS -v -m rdeps \

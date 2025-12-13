@@ -39,7 +39,6 @@ protected_modules =
     brmspy._session.environment_parent
 allowed_importers =
     brmspy._session.session
-    brmspy._session.manage
 
 [importlinter:contract:acyclic_siblings]
 name = acyclic siblings contract
