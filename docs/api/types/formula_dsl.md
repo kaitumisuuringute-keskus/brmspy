@@ -1,4 +1,4 @@
-::: brmspy._brms_functions.stan
+::: brmspy.types.formula_dsl
     options:
       show_root_heading: false
       show_source: false

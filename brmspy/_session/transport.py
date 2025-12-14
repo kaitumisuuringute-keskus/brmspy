@@ -1,7 +1,7 @@
 from multiprocessing.managers import SharedMemoryManager
 from multiprocessing.shared_memory import SharedMemory
 
-from brmspy.types.session_types import ShmRef
+from brmspy.types.session import ShmRef
 from brmspy.types.shm import ShmBlock
 from brmspy.types.shm import ShmPool as _ShmPool
 

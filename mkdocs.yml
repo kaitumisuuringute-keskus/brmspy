@@ -22,28 +22,27 @@ theme:
   font:
     text: system-ui
     code: JetBrains Mono
-  
+
   palette:
-    - scheme: default        # light mode: white + neutral gray + black
-      primary: black         # used for links, accents
+    - scheme: default # light mode: white + neutral gray + black
+      primary: black # used for links, accents
       accent: gray
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
-    - scheme: slate          # dark mode: near-black + muted gray
+    - scheme: slate # dark mode: near-black + muted gray
       primary: black
       accent: gray
       toggle:
         icon: material/weather-sunny
         name: Switch to light mode
-  
+
   # Use simple, thin borders + flat feel
   shadows:
     elevation:
       dp1: "0 0 0 1px rgba(15,23,42,.06)"
       dp2: "0 0 0 1px rgba(15,23,42,.08)"
       dp3: "0 0 0 1px rgba(15,23,42,.12)"
-
 
 plugins:
   - search
@@ -77,30 +76,51 @@ markdown_extensions:
       permalink: true
 
 nav:
-  - Home: index.md
+  - Home:
+      - Home: index.md
+      - Diagnostics with ArViz: api/diagnostics-arviz.md
   - API Reference:
-    - Main Module: api/brms.md
-    - Install: api/install.md
-    - Types: api/types.md
-    - Diagnostics with ArViz: api/diagnostics-arviz.md
-    - BRMS functions:
-      - brm: api/brms_functions/brm.md
-      - diagnostics: api/brms_functions/diagnostics.md
-      - families: api/brms_functions/families.md
-      - formula: api/brms_functions/formula.md
-      - io: api/brms_functions/io.md
-      - prediction: api/brms_functions/prediction.md
-      - prior: api/brms_functions/prior.md
-      - stan: api/brms_functions/stan.md
-      - generic: api/brms_functions/generic.md
-    - Helpers:
-      - Conversion: api/helpers/conversion.md
-      - Priors: api/helpers/priors.md
+      - Main Module: api/brms.md
+      - Manage/install: api/manage.md
+      - BRMS functions:
+          - brm: api/brms_functions/brm.md
+          - diagnostics: api/brms_functions/diagnostics.md
+          - families: api/brms_functions/families.md
+          - formula: api/brms_functions/formula.md
+          - io: api/brms_functions/io.md
+          - prediction: api/brms_functions/prediction.md
+          - prior: api/brms_functions/prior.md
+          - stan: api/brms_functions/stan.md
+          - generic: api/brms_functions/generic.md
+      - Types:
+          - brms results: api/types/brms_results.md
+          - formula DSL: api/types/formula_dsl.md
+          - errors: api/types/errors.md
+          - rpy2 converters: api/types/rpy2_converters.md
+          - runtime: api/types/runtime.md
+          - session: api/types/session.md
+          - shm: api/types/shm.md
   - Examples:
-    - Getting started (Colab): examples/brmspy-google-colab.ipynb
-    - Estimating multivariate models: examples/brmspy-estimating-multivariate-models.ipynb
-    - Variational Inference: examples/brmspy-vi-sampling.ipynb
- 
+      - Getting started (Colab): examples/brmspy-google-colab.ipynb
+      - Estimating multivariate models: examples/brmspy-estimating-multivariate-models.ipynb
+      - Variational Inference: examples/brmspy-vi-sampling.ipynb
+  - Internals:
+      - Modules:
+          - _brms_module: internals/brms/_brms_module.md
+          - _manage_module: internals/brms/_manage_module.md
+          - _build_module: internals/brms/_build_module.md
+      - Build:
+          - _metadata: internals/_build/_metadata.md
+          - _pack: internals/_build/_pack.md
+          - _stage: internals/_build/_stage.md
+      - Runtime:
+          - _activation: internals/_runtime/_activation.md
+          - _config: internals/_runtime/_config.md
+          - _download: internals/_runtime/_config.md
+          - _github: internals/_runtime/_github.md
+          - _install: internals/_runtime/_install.md
+          - _manifest: internals/_runtime/_manifest.md
+
   - Development: development/development.md
   - Changelog: changelog.md
 

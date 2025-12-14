@@ -111,7 +111,7 @@ class TestReadRDSRaw:
     def test_read_rds_raw_returns_list_vector(self, sample_dataframe):
         """Test that read_rds_raw() returns a raw R ListVector"""
         from brmspy import brms
-        from brmspy.types.session_types import SexpWrapper
+        from brmspy.types.session import SexpWrapper
 
         # Fit and save a model
         model = brms.fit(

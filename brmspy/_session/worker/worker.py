@@ -10,7 +10,7 @@ from multiprocessing.managers import SharedMemoryManager
 from typing import Any, cast
 from rpy2.rinterface_lib.embedded import RRuntimeError
 
-from ...types.session_types import EnvironmentConfig
+from ...types.session import EnvironmentConfig
 from ..codec import get_default_registry
 from .setup import (
     _initialise_r_safe,

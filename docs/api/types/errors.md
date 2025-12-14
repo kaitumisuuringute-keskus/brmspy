@@ -1,4 +1,4 @@
-::: brmspy.helpers.conversion
+::: brmspy.types.errors
     options:
       show_root_heading: false
       show_source: false

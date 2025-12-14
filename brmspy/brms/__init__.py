@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
     from brmspy.brms._build_module import BuildModule
     from brmspy.brms._manage_module import ManageModule
-    from brmspy.types.session_types import EnvironmentConfig
+    from brmspy.types.session import EnvironmentConfig
 
     # Stubs for IDEs: these are attached dynamically in the main process.
     def manage(

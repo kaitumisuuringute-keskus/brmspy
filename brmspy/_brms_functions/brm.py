@@ -6,7 +6,7 @@ from rpy2.rinterface import ListSexpVector
 from rpy2.rinterface_lib import openrlib
 
 from brmspy.helpers.log import log, log_warning
-from brmspy.types.session_types import SexpWrapper
+from brmspy.types.session import SexpWrapper
 
 from ..helpers._rpy2._conversion import brmsfit_to_idata, kwargs_r, py_to_r
 from ..helpers._rpy2._priors import _build_priors

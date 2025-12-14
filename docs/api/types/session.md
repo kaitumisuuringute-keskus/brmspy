@@ -1,4 +1,4 @@
-::: brmspy.helpers.priors
+::: brmspy.types.session
     options:
       show_root_heading: false
       show_source: false

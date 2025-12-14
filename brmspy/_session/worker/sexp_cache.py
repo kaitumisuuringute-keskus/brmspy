@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Any, Callable, Optional
 
-from ...types.session_types import SexpWrapper
+from ...types.session import SexpWrapper
 
 from rpy2.rinterface_lib.sexp import Sexp
 from rpy2.rinterface_lib.sexp import NULL

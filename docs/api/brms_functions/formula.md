@@ -1,4 +1,4 @@
-::: brmspy.brms_functions.formula
+::: brmspy._brms_functions.formula
     options:
       show_root_heading: false
       show_source: false

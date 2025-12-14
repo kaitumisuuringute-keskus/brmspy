@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from brmspy.types.session_types import EnvironmentConfig
+from brmspy.types.session import EnvironmentConfig
 
 
 def get_environment_base_dir() -> Path:

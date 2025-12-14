@@ -12,7 +12,7 @@ import xarray as xr
 
 from brmspy.helpers.log import log_warning
 from brmspy._session.codec.base import CodecRegistry
-from brmspy.types.session_types import EncodeResult, Encoder
+from brmspy.types.session import EncodeResult, Encoder
 
 from ...types.shm_extensions import ShmArray, ShmDataFrameColumns, ShmDataFrameSimple
 from ...types.shm import ShmBlockSpec

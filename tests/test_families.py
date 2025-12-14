@@ -18,7 +18,7 @@ class TestBrmsfamilyCore:
     def test_brmsfamily_basic(self):
         """Test basic brmsfamily() usage"""
 
-        from brmspy.types.session_types import SexpWrapper
+        from brmspy.types.session import SexpWrapper
         from brmspy.brms import brmsfamily
 
         # Create basic Gaussian family
@@ -31,7 +31,7 @@ class TestBrmsfamilyCore:
     def test_brmsfamily_with_links(self):
         """Test brmsfamily() with various link functions"""
         from brmspy.brms import brmsfamily
-        from brmspy.types.session_types import SexpWrapper
+        from brmspy.types.session import SexpWrapper
 
         # Test with different links
         family_log = brmsfamily("poisson", link="log")
@@ -45,7 +45,7 @@ class TestBrmsfamilyCore:
     def test_brmsfamily_with_auxiliary_links(self):
         """Test brmsfamily() with auxiliary parameter links"""
         from brmspy.brms import brmsfamily
-        from brmspy.types.session_types import SexpWrapper
+        from brmspy.types.session import SexpWrapper
 
         # Gaussian with sigma link
         family = brmsfamily("gaussian", link="identity", link_sigma="log")
@@ -65,7 +65,7 @@ class TestFamilyWrappers:
     def test_all_families_construct(self):
         """Test that all family wrapper functions can be instantiated"""
         from brmspy import brms
-        from brmspy.types.session_types import SexpWrapper
+        from brmspy.types.session import SexpWrapper
 
         # List of all family functions to test
         family_functions = [
@@ -128,7 +128,7 @@ class TestFamilyWrappers:
     def test_common_families_with_custom_links(self):
         """Test common families with custom link functions"""
         from brmspy.brms import gaussian, poisson, binomial
-        from brmspy.types.session_types import SexpWrapper
+        from brmspy.types.session import SexpWrapper
 
         # Gaussian with log link (non-standard)
         gauss_log = gaussian(link="log")
@@ -204,7 +204,7 @@ class TestFamilyIntegration:
         from brmspy import brms
         from brmspy.brms import student
         import arviz as az
-        from brmspy.types.session_types import SexpWrapper
+        from brmspy.types.session import SexpWrapper
 
         # Create student family object
         family_obj = student()
@@ -273,7 +273,7 @@ class TestSpecialFamilies:
             zero_inflated_binomial,
             zero_inflated_beta,
         )
-        from brmspy.types.session_types import SexpWrapper
+        from brmspy.types.session import SexpWrapper
 
         # Test each zero-inflated family
         zi_pois = zero_inflated_poisson()
@@ -294,7 +294,7 @@ class TestSpecialFamilies:
             hurdle_gamma,
             hurdle_lognormal,
         )
-        from brmspy.types.session_types import SexpWrapper
+        from brmspy.types.session import SexpWrapper
 
         # Test each hurdle family
         h_pois = hurdle_poisson()
@@ -310,7 +310,7 @@ class TestSpecialFamilies:
     def test_ordinal_families(self):
         """Test ordinal model family constructors"""
         from brmspy.brms import cumulative, sratio, cratio, acat
-        from brmspy.types.session_types import SexpWrapper
+        from brmspy.types.session import SexpWrapper
 
         # Test each ordinal family
         ord_cum = cumulative()
@@ -330,7 +330,7 @@ class TestSpecialFamilies:
             multinomial,
             dirichlet_multinomial,
         )
-        from brmspy.types.session_types import SexpWrapper
+        from brmspy.types.session import SexpWrapper
 
         # Test categorical families
         cat = categorical()
@@ -349,7 +349,7 @@ class TestFamilyParameters:
     def test_beta_family_parameters(self):
         """Test Beta family with precision parameter"""
         from brmspy.brms import Beta
-        from brmspy.types.session_types import SexpWrapper
+        from brmspy.types.session import SexpWrapper
 
         # Beta with default parameters
         beta_default = Beta()
@@ -362,7 +362,7 @@ class TestFamilyParameters:
     def test_gamma_family_parameters(self):
         """Test Gamma family with shape parameter"""
         from brmspy.brms import Gamma
-        from brmspy.types.session_types import SexpWrapper
+        from brmspy.types.session import SexpWrapper
 
         # Gamma with default parameters
         gamma_default = Gamma()
@@ -375,7 +375,7 @@ class TestFamilyParameters:
     def test_weibull_family_parameters(self):
         """Test Weibull family for survival analysis"""
         from brmspy.brms import weibull
-        from brmspy.types.session_types import SexpWrapper
+        from brmspy.types.session import SexpWrapper
 
         # Weibull with default parameters
         weib = weibull()
@@ -388,7 +388,7 @@ class TestFamilyParameters:
     def test_threshold_parameter_ordinal(self):
         """Test threshold parameter for ordinal families"""
         from brmspy.brms import cumulative
-        from brmspy.types.session_types import SexpWrapper
+        from brmspy.types.session import SexpWrapper
 
         # Test different threshold types
         cum_flex = cumulative(threshold="flexible")
@@ -400,7 +400,7 @@ class TestFamilyParameters:
     def test_refcat_parameter(self):
         """Test reference category parameter"""
         from brmspy.brms import categorical, multinomial
-        from brmspy.types.session_types import SexpWrapper
+        from brmspy.types.session import SexpWrapper
 
         # Test with default refcat (None)
         cat_default = categorical()
@@ -421,7 +421,7 @@ class TestExoticFamilies:
     def test_wiener_diffusion_model(self):
         """Test Wiener diffusion model for reaction time"""
         from brmspy.brms import wiener
-        from brmspy.types.session_types import SexpWrapper
+        from brmspy.types.session import SexpWrapper
 
         # Wiener with all parameters
         wien = wiener(link="identity", link_bs="log", link_ndt="log", link_bias="logit")
@@ -431,7 +431,7 @@ class TestExoticFamilies:
     def test_von_mises_circular(self):
         """Test von Mises for circular/directional data"""
         from brmspy.brms import von_mises
-        from brmspy.types.session_types import SexpWrapper
+        from brmspy.types.session import SexpWrapper
 
         # Von Mises with default parameters
         vm = von_mises()
@@ -444,7 +444,7 @@ class TestExoticFamilies:
     def test_cox_survival_model(self):
         """Test Cox proportional hazards model"""
         from brmspy.brms import cox
-        from brmspy.types.session_types import SexpWrapper
+        from brmspy.types.session import SexpWrapper
 
         # Cox model
         cox_model = cox()
@@ -453,7 +453,7 @@ class TestExoticFamilies:
     def test_exgaussian_reaction_time(self):
         """Test ex-Gaussian for reaction time data"""
         from brmspy.brms import exgaussian
-        from brmspy.types.session_types import SexpWrapper
+        from brmspy.types.session import SexpWrapper
 
         # Ex-Gaussian with all parameters
         exg = exgaussian(link="identity", link_sigma="log", link_beta="log")
@@ -463,7 +463,7 @@ class TestExoticFamilies:
     def test_asymmetric_laplace_quantile(self):
         """Test asymmetric Laplace for quantile regression"""
         from brmspy.brms import asym_laplace
-        from brmspy.types.session_types import SexpWrapper
+        from brmspy.types.session import SexpWrapper
 
         # Asymmetric Laplace with quantile parameter
         asym_lap = asym_laplace(

@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 from typing import cast
 
-from brmspy.types.session_types import EnvironmentConfig
+from brmspy.types.session import EnvironmentConfig
 from .environment import (
     get_environment_base_dir,
     get_environment_userlibs_dir,

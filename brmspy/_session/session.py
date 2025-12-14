@@ -22,7 +22,7 @@ from brmspy._session.environment import get_environment_config, get_environment_
 from brmspy._session.environment_parent import save, save_as_state
 
 from ..types.errors import RSessionError
-from ..types.session_types import EnvironmentConfig
+from ..types.session import EnvironmentConfig
 from .codec import get_default_registry
 from .transport import ShmPool, attach_buffers
 from brmspy._session.worker import worker_main

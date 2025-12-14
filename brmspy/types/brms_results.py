@@ -8,7 +8,7 @@ import pandas as pd
 import xarray as xr
 from rpy2.rinterface import ListSexpVector
 
-from brmspy.types.session_types import SexpWrapper
+from brmspy.types.session import SexpWrapper
 
 
 @dataclass(frozen=True)
