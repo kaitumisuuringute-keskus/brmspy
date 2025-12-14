@@ -1,5 +1,0 @@
-[run]
-source = brmspy
-omit =
-    brmspy/runtime/*
-    brmspy/build/*

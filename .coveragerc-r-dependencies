@@ -1,10 +1,14 @@
 [run]
 source = brmspy
+parallel = True
+concurrency = multiprocessing
 
 [report]
 include =
-    brmspy/runtime/*
-    brmspy/build/*
+    brmspy/_runtime/*
+    brmspy/_build/*
+    brmspy/build.py
+    brmspy/_singleton/_brms.py
 
 [paths]
 brmspy =

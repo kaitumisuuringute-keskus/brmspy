@@ -1,8 +1,24 @@
 # Development Guide
 
-This guide covers the development infrastructure, build processes, and CI/CD architecture for brmspy.
+This guide covers brmspy’s development workflows, architecture, testing strategy, and CI/CD.
+
+brmspy has been refactored around an explicit process boundary:
+
+- **Main process**: exposes a normal-looking `brmspy.brms` module surface to the user and IDEs and must **not** import `rpy2.robjects`.
+- **Worker process**: runs the “real” brms/rpy2 code (and embeds R) and is isolated from the main process.
+- **Embedded R**: lives inside the worker.
+
+This is primarily about stability (segfault isolation), predictable environment management, and enabling “resettable” R sessions.
+
+---
 
 ## Quick Start
+
+### Prerequisites
+
+- Python **3.10–3.14**
+- R installed (CI uses R 4.5; prebuilt runtimes are fingerprinted by `{os}-{arch}-r{major}.{minor}`)
+- A working toolchain if you use the “traditional” install path (prebuilt runtimes avoid most compilation)
 
 ### Setup
 
@@ -11,538 +27,485 @@ This guide covers the development infrastructure, build processes, and CI/CD arc
 git clone https://github.com/kaitumisuuringute-keskus/brmspy.git
 cd brmspy
 
-# Install with dev dependencies
-python -m venv .venv
-source .venv/bin/activate  # or .venv\Scripts\activate on Windows
-pip install -e ".[all]"
-
-# Install R dependencies (fast with prebuilt runtime)
-python -c "import brmspy; brmspy.install_brms(use_prebuilt=True)"
-
-# Or traditional installation from source (~30 minutes)
-# python -c "import brmspy; brmspy.install_brms()"
+# Create and install dev env (uses uv)
+sh script/init-venv.sh
 ```
+
+### Install R dependencies (brms + backend)
+
+The recommended way to install and mutate the R-side environment is via `brms.manage()`.
+
+Fast install with a prebuilt runtime:
+
+```bash
+python - <<'PY'
+from brmspy import brms
+
+with brms.manage() as ctx:
+    ctx.install_brms(use_prebuilt=True)
+PY
+```
+
+Traditional install (compiles packages and builds toolchain; can take ~20–30 minutes):
+
+```bash
+python - <<'PY'
+from brmspy import brms
+
+with brms.manage() as ctx:
+    ctx.install_brms()
+PY
+```
+
+---
 
 ## Project Architecture
 
 ### Directory Structure
 
 ```
-brmspy/
 ├── brmspy/                    # Main package
-│   ├── brms.py               # Core API exports
-│   ├── types.py              # Type definitions and result dataclasses
-│   ├── brms_functions/       # Modular brms function wrappers
-│   │   ├── brm.py            # Model fitting (fit, brm)
-│   │   ├── diagnostics.py    # Model diagnostics (summary, loo, etc.)
-│   │   ├── families.py       # Family specifications
-│   │   ├── formula.py        # Formula construction
-│   │   ├── generic.py        # Generic function caller
-│   │   ├── io.py             # Data I/O (save_rds, read_rds, etc.)
-│   │   ├── prediction.py     # Predictions (posterior_predict, etc.)
-│   │   ├── prior.py          # Prior specifications
-│   │   └── stan.py           # Stan code generation
-│   ├── runtime/              # Runtime management system (layered architecture)
-│   │   ├── __init__.py       # Public API: install(), activate(), deactivate(), status()
-│   │   ├── _types.py         # Foundation: RuntimeStatus, RuntimeManifest, SystemInfo
-│   │   ├── _platform.py      # Foundation: Platform detection, fingerprinting
-│   │   ├── _manifest.py      # Foundation: Manifest reading
-│   │   ├── _r_packages.py    # R Layer: Package operations
-│   │   ├── _r_env.py         # R Layer: Environment management
-│   │   ├── _config.py        # Disk Layer: Config management (~/.brmspy/config.json)
-│   │   ├── _storage.py       # Disk Layer: Runtime storage (~/.brmspy/runtime/)
-│   │   ├── _download.py      # Disk Layer: Download utilities
-│   │   ├── _github.py        # Disk Layer: GitHub API integration
-│   │   ├── _rtools.py        # Disk Layer: Windows Rtools installation
-│   │   ├── _state.py         # Orchestration: State management (env snapshots)
-│   │   ├── _activation.py    # Orchestration: Runtime activation/deactivation
-│   │   └── _install.py       # Orchestration: Installation logic
-│   └── helpers/              # Internal utilities
-│       ├── conversion.py     # Python ↔ R ↔ ArviZ
-│       ├── log.py            # Logging utilities
-│       ├── priors.py         # Prior builders
-│       ├── robject_iter.py   # R object iteration
-│       ├── rtools.py         # Rtools utilities (legacy)
-│       └── singleton.py      # R package caching
-├── .github/workflows/        # CI/CD pipelines
-├── .runtime_builder/         # Docker for Linux builds
-├── docs/                     # mkdocs documentation
-└── tests/                    # Test suite
+│   ├── __init__.py
+│   ├── _brms_functions         # Worker-only: brms:: wrappers
+│   ├── _build                  # Worker-only: runtime packaging pipeline
+│   ├── _runtime                # Worker-only: R/toolchain/runtime operations
+│   ├── _session                # Main↔worker architecture (IPC + SHM + codecs)
+│   ├── _singleton              # Internal singletons and SHM access
+│   ├── brms                    # Public entry point (proxy in main, real module in worker)
+│   ├── helpers                 # Logging and worker-only rpy2 converters
+│   └── types                   # Public types and SHM helper types
+├── .github/workflows/          # CI/CD pipelines
+├── .runtime_builder/           # Docker for Linux runtime builds
+├── docs/                       # mkdocs documentation
+└── tests/                      # Test suite
 ```
 
-### Core Components
+### Import graph
 
-**brmspy/brms.py** - Main module that exports all public functions
-**brmspy/types.py** - Type definitions and result dataclasses (FitResult, SummaryResult, LooResult, etc.)
-**brmspy/brms_functions/** - Modular organization of brms function wrappers:
-  - **brm.py** - Model fitting functions
-  - **diagnostics.py** - 8 diagnostic functions (summary, fixef, ranef, loo, loo_compare, validate_newdata, etc.)
-  - **prediction.py** - Prediction functions (posterior_predict, posterior_epred, posterior_linpred, log_lik)
-  - **prior.py** - Prior specification functions
-  - **families.py** - Family specifications and wrappers
-  - **formula.py** - Formula construction helpers
-  - **generic.py** - Generic function caller for unwrapped brms functions
-  - **io.py** - Data I/O functions
-  - **stan.py** - Stan code generation
+![import-graph-svg](../img/brmspy-import-graph.svg)
 
-**brmspy/runtime/** - Runtime management system with layered architecture (see below)
-**brmspy/helpers/** - Internal conversion and utility functions
+---
 
-### Data Flow
+## Architecture Overview (main ↔ worker ↔ embedded R)
 
-```
-Python Code
-    ↓
-brmspy.fit() [brms.py]
-    ↓
-Type Conversions [helpers/conversion.py]
-    ↓
-R brms via rpy2
-    ↓
-CmdStan MCMC Sampling
-    ↓
-ArviZ InferenceData
-    ↓
-Python Result Objects
+### High-level picture
+
+```mermaid
+flowchart LR
+  User[User code] --> Brms[brmspy.brms module surface]
+  Brms --> IPC[Pipe and shared memory]
+  IPC --> Worker[Worker process]
+  Worker --> R[Embedded R via rpy2]
+  R --> CmdStan[CmdStan toolchain]
 ```
 
-## Runtime System Architecture
+### Core concept: `brmspy.brms` is a proxy in the main process
 
-The runtime system provides prebuilt bundles to skip lengthy R package compilation. The new architecture uses a **layered design pattern** with strict separation of concerns.
+In the **main process**, importing `from brmspy import brms` returns a *module-like proxy*:
 
-### Layered Architecture
+- The proxy is implemented in `brmspy/brms/__init__.py` and uses the session layer in `brmspy/_session/session.py`.
+- It mirrors the public API surface of the worker module for IDEs and static analysis.
+- Any function call is forwarded to the worker over IPC, with arguments/results serialized via codecs and SHM.
+- Importantly: the main process must not import `rpy2.robjects`.
 
-The runtime system is organized into 4 layers, each with specific responsibilities:
+In the **worker process** (`BRMSPY_WORKER=1`), `brmspy.brms` imports the real implementation module:
 
-#### 1. Foundation Layer (No Dependencies)
-Pure functions for system information and data structures.
+- `brmspy/brms/_brms_module.py` imports the brms wrappers under `brmspy/_brms_functions/` and may import/initialize rpy2 + embedded R.
+- Optional autoloading is controlled by `BRMSPY_AUTOLOAD` (the main proxy typically spawns the worker with autoload enabled, but `brms.manage()` restarts it with autoload disabled).
 
-- **`_types.py`** - Type definitions: [`RuntimeStatus`](../brmspy/runtime/_types.py), [`RuntimeManifest`](../brmspy/runtime/_types.py), [`SystemInfo`](../brmspy/runtime/_types.py)
-- **`_platform.py`** - Platform detection, system fingerprinting, compatibility checks
-- **`_manifest.py`** - Manifest file reading and validation
+### Why this split exists
 
-#### 2. R Layer (Depends on Foundation)
-R package operations and environment management.
+Key goals:
 
-- **`_r_packages.py`** - Install/unload R packages, build CmdStan
-- **`_r_env.py`** - Manage R environment variables, GitHub token forwarding
+- **Crash containment**: if embedded R segfaults, it takes down the worker, not the user’s main process/IDE.
+- **Resettable R session**: the worker can be restarted, making it possible to “reset” R and switch runtime/environment state without restarting Python.
+- **Predictable imports**: main process stays lightweight; worker is the only place that touches rpy2/brms.
 
-#### 3. Disk Layer (Depends on Foundation)
-File system operations and external integrations.
+---
 
-- **`_config.py`** - Persistent config at [`~/.brmspy/config.json`](../brmspy/runtime/_config.py)
-- **`_storage.py`** - Runtime storage at [`~/.brmspy/runtime/`](../brmspy/runtime/_storage.py)
-- **`_download.py`** - Download and hash verification utilities
-- **`_github.py`** - GitHub API for release discovery
-- **`_rtools.py`** - Windows Rtools installation
+## IPC: What crosses the process boundary
 
-#### 4. Orchestration Layer (Depends on All Lower Layers)
-High-level workflows coordinating multiple components.
+### Request / response model
 
-- **`_state.py`** - Environment snapshot/restore for activation
-- **`_activation.py`** - Runtime activation/deactivation logic
-- **`_install.py`** - Installation orchestration (traditional + prebuilt)
+At runtime, the proxy starts a worker using `multiprocessing` *spawn* semantics and wires:
 
-#### Public API (`__init__.py`)
-Four clean functions for users:
+- a `Pipe` for control + metadata messages
+- a `SharedMemoryManager` for large payloads
+- a log queue so worker logs/prints are forwarded into the parent’s logging handlers
 
-```python
-from brmspy import runtime
+The main process sends requests to the worker with:
 
-# Install R packages traditionally (~30 min) or prebuilt (~1 min)
-runtime.install(use_prebuilt=True)
+- `cmd`: one of `CALL`, `PING`, `SHUTDOWN`, or internal test commands
+- `target`: what to execute in the worker
+- `args`/`kwargs`: encoded payloads (plus SHM buffer references)
 
-# Activate a specific runtime
-runtime.activate(runtime_path)
+The worker replies with:
 
-# Deactivate and restore original environment
-runtime.deactivate()
+- success/error fields
+- an encoded return value payload
 
-# Query current state
-status = runtime.status()
-print(status.system.fingerprint)  # e.g., 'linux-x86_64-r4.5'
+Startup is guarded by an explicit `PING` handshake to avoid race conditions and zombie workers.
+
+### Target resolution
+
+Targets are strings and support:
+
+- **Module function**: `mod:pkg.module.func`
+- **Attribute chain** (for class-based “surface” APIs like `manage()` and `_build()`): `mod:pkg.module::ClassName.method_name`
+
+This is what allows `brms.manage().install_brms(...)` to work as a “normal-looking” call from the main process even though the work executes inside the worker.
+
+### Example call flow (encode → run in worker → decode)
+
+```mermaid
+sequenceDiagram
+  participant Main as Main process
+  participant Worker as Worker process
+  participant R as Embedded R
+
+  Note over Main: Encode args via codec registry\nAllocate SHM blocks for large buffers
+  Main->>Worker: CALL target + arg meta + SHM refs
+
+  Note over Worker: Decode args from SHM\nReattach cached Sexp wrappers if present
+  Worker->>R: brms call via rpy2
+
+  Note over Worker: Convert R data into SHM buffers\nReplace Sexp with lightweight wrappers\nEncode result payload
+  R-->>Worker: Return value
+
+  Worker-->>Main: Response meta + SHM refs
+  Note over Main: Decode result from SHM\nReturn Python objects to user
 ```
 
-### System Fingerprint
+---
 
-Each runtime is identified by: `{os}-{arch}-r{major}.{minor}`
+## Data transport: SHM + codecs + “no R objects in main”
 
-Examples:
-- `linux-x86_64-r4.5`
-- `macos-arm64-r4.5` (Apple Silicon)
-- `windows-x86_64-r4.5`
+### Shared memory (SHM)
 
-Generated by [`_platform.system_fingerprint()`](../brmspy/runtime/_platform.py:52)
+Large data payloads are moved using shared memory blocks:
 
-### Bundle Structure
+- The main process allocates SHM blocks via a `SharedMemoryManager` and passes only `(name, size)` references over the pipe.
+- The worker attaches to blocks by name and reads/writes buffers in-place.
+- Payloads sent over IPC contain only **metadata + SHM block references**, not the raw data.
+
+Important detail: SHM blocks may be larger than the logical payload, so codecs carry an explicit `nbytes`/length in metadata and decoders slice buffers accordingly.
+
+### Codec registry
+
+All arguments and return values are passed through a codec registry (see `brmspy/_session/codec/`):
+
+- Prefer SHM-backed codecs for large numeric data (NumPy, ArviZ, many pandas frames).
+- Fall back to pickle only when needed, and log warnings for large pickle payloads.
+
+Default codec priority is:
+
+1. NumPy arrays (SHM-backed)
+2. ArviZ `InferenceData` (stores underlying arrays in SHM; reconstructs datasets in-place)
+3. pandas DataFrames (numeric-only; object dtype columns fall back to pickle)
+4. Dataclasses (encodes fields recursively via the registry)
+5. Pickle fallback (always available, but discouraged for large payloads)
+
+Dataclass results (public brmspy result types) are encoded field-by-field by delegating each field back into the registry. This avoids per-function bespoke serialization logic.
+
+### Handling R objects (`Sexp`)
+
+**R objects are not shipped to the main process.**
+
+- R objects live inside the worker as rpy2 `Sexp` instances.
+- When a call returns an R object (or includes one inside a dataclass), it is replaced by a lightweight wrapper containing:
+  - a stable internal id (`rid`)
+  - a printable representation (for debugging)
+
+When the main process sends such wrappers back to the worker later, the worker reattaches them from its `Sexp` cache.
+
+This prevents rpy2/R object lifetimes from leaking into the main process and makes it harder to accidentally import/use rpy2 in the main process.
+
+---
+
+## R session safety and initialization
+
+The worker configures embedded R for safer execution:
+
+- Enforces `RPY2_CFFI_MODE=ABI` when possible (ABI mode is the recommended stable mode).
+- Disables fork-based R parallelism that is unsafe in embedded R contexts (e.g. `future::multicore`, `parallel::mclapply`).
+- Keeps cmdstanr sampling parallelism intact (that’s outside R’s fork-based parallel machinery).
+
+This is the main reason you should avoid importing rpy2 directly in the main process: stability depends on initialization order and consistent environment configuration.
+
+---
+
+## Runtime + environment lifecycle
+
+brmspy separates two concepts:
+
+- **Runtime**: a prebuilt bundle containing R libraries + CmdStan binaries (or a “traditional” system install).
+- **Environment**: a named, isolated user library for additional packages (e.g. “mrp”, “legacy”).
+
+### On-disk layout
+
+Typical `~/.brmspy` structure:
 
 ```
-brmspy-runtime-{fingerprint}-{version}.tar.gz
-├── manifest.json              # Metadata (fingerprint, versions, build info)
-├── cmdstan/                   # Compiled CmdStan binaries
-└── Rlib/                      # R libraries (brms, cmdstanr, dependencies)
+.brmspy
+├── environment
+│   ├── default
+│   │   ├── config.json
+│   │   └── Rlib
+│   ├── mrp
+│   │   ├── config.json
+│   │   └── Rlib
+│   └── legacy
+│       ├── config.json
+│       └── Rlib
+├── environment_state.json
+├── runtime
+│   ├── macos-arm64-r4.5-0.2.0
+│   │   ├── cmdstan
+│   │   ├── hash
+│   │   ├── manifest.json
+│   │   └── Rlib
+│   └── macos-arm64-r4.4-0.2.0
+│       ├── cmdstan
+│       ├── hash
+│       ├── manifest.json
+│       └── Rlib
+└── runtime_state.json
 ```
 
-Installed to: `~/.brmspy/runtime/{fingerprint}-{version}/`
+Notes:
 
-### Usage Examples
+- Runtime selection is fingerprint-based: `{os}-{arch}-r{major}.{minor}` plus the runtime version.
+- `runtime_state.json` stores the last configured runtime path.
+- `environment_state.json` stores the last active environment name.
 
-```python
-import brmspy
+### `brms.manage()` semantics
 
-# Fast installation with prebuilt runtime (~1 minute)
-brmspy.install_brms(use_prebuilt=True)
+`brms.manage(...)` is intentionally “strongly isolated” (see `brmspy/_session/session.py` and `brmspy/brms/_manage_module.py`):
 
-# Traditional installation (~30 minutes)
-brmspy.install_brms()
+- On enter:
+  - the worker is restarted (fresh embedded R session)
+  - autoloading is disabled for this session (autoload prevents safe unloading/switching)
+  - the requested environment config is applied (or `default`)
+  - the worker prepends `~/.brmspy/environment/<name>/Rlib` to R `.libPaths()`
 
-# Check current runtime status
-status = brmspy.runtime.status()
-print(f"Active: {status.active_runtime}")
-print(f"System: {status.system.fingerprint}")
-print(f"Can use prebuilt: {status.can_use_prebuilt}")
+- On exit:
+  - environment config is persisted to `~/.brmspy/environment/<name>/config.json`
+  - the active environment name is recorded in `~/.brmspy/environment_state.json`
 
-# Manual activation/deactivation
-brmspy.runtime.activate("/path/to/runtime")
-brmspy.runtime.deactivate()
-```
+This is the supported way to:
 
-**Note:** Runtime building is handled internally by CI/CD. Users should use [`install(use_prebuilt=True)`](../brmspy/runtime/__init__.py:236) rather than building locally.
+- install/uninstall R packages into an environment user library
+- switch prebuilt runtimes / R_HOME without polluting the main process
+- apply startup scripts in a controlled way
+- avoid “mutated global R session” problems
 
-## CI/CD Pipelines
+Note: runtime configuration is stored separately in `~/.brmspy/runtime_state.json` (see `brmspy/_runtime/_config.py`).
 
-All workflows in `.github/workflows/`:
+---
 
-### 1. Python Test Matrix (`python-test-matrix.yml`)
+## Invariants and guardrails
 
-**Trigger:** Push/PR to master  
-**Purpose:** Test Python 3.10, 3.12, 3.14 on Linux
+This refactor relies on strict invariants. Breaking them can reintroduce hard-to-debug segfaults and import-order issues.
 
-**Workflow:**
-1. Build CmdStan once (cached)
-2. Test matrix in parallel
-3. Update coverage badge (3.12 only)
+### 1) Main process must not import `rpy2.robjects`
 
-**Key Features:**
-- Shared R/CmdStan cache
-- Parallel execution
-- Coverage reporting
+Enforced in multiple layers:
 
-### 2. R Dependencies Tests (`r-dependencies-tests.yml`)
+- **Import-linter contracts** forbid importing `rpy2.robjects` outside the allowlist (see `.importlinter` and `script/importlinter_contracts.py`). This is run via `lint-imports` (wired into `./run_tests.sh`).
+- **Runtime sanity check**: importing `brmspy.brms` in the main process will raise if `rpy2.robjects` was already imported (this catches “import order footguns” early).
+- **Test sentinel**: tests install a “bomb” in `sys.modules["rpy2.robjects*"]` in the main process so accidental access fails fast (see `tests/conftest.py`).
 
-**Trigger:** Push/PR to master  
-**Purpose:** Test on Linux, macOS, Windows
+### 2) Worker-only modules must stay worker-only
 
-**Workflow:**
-- Python 3.12 only
-- Tests marked with `@pytest.mark.rdeps`
-- Fail-fast disabled
+Large parts of the codebase are explicitly worker-only, including:
 
-### 3. Documentation (`docs.yml`)
+- the rpy2 conversion helpers
+- the brms wrapper functions
+- runtime activation/install logic
 
-**Trigger:** Push to master  
-**Purpose:** Deploy docs to GitHub Pages
+The import-linter setup also enforces layering constraints between these modules to prevent dependency cycles and accidental “main imports worker-only” leaks.
 
-**Stack:**
-- mkdocstrings for API docs
-- Auto-deploys to https://kaitumisuuringute-keskus.github.io/brmspy/
-
-### 4. PyPI Publish (`python-publish.yml`)
-
-**Trigger:** GitHub Release created  
-**Purpose:** Publish to PyPI
-
-**Workflow:**
-1. Run full test suite
-2. Build: `python -m build`
-3. Upload: `twine upload dist/*`
-
-**Requirements:** `PYPI_USERNAME`, `PYPI_PASSWORD` secrets
-
-### 5. Runtime Publish (`runtime-publish.yml`)
-
-**Trigger:** Manual dispatch
-**Purpose:** Build prebuilt runtimes for all platforms
-
-**Architecture:**
-1. Create GitHub Release (tag: `runtime`)
-2. Build runtimes in parallel (Linux in Docker, macOS/Windows native)
-3. Upload to release with attestation
-
-**Linux Build (Docker):**
-```yaml
-- Pull: ghcr.io/.../brmspy-runtime-builder:ubuntu18-gcc9
-- Install R 4.5.0
-- Build runtime using internal build script
-- Upload tarball
-```
-
-**macOS/Windows Build (Native):**
-```yaml
-- Setup Python 3.12 + R 4.5
-- Install dependencies
-- Build runtime using internal build script
-- Upload tarball
-```
-
-**Note:** Runtime building uses internal tooling. The public API for users is [`brmspy.runtime.install(use_prebuilt=True)`](../brmspy/runtime/__init__.py).
-
-### 6. Linux Runtime Builder (`build-linux-runtime-image.yml`)
-
-**Trigger:** Manual dispatch  
-**Purpose:** Build Docker image for Linux runtime compilation
-
-**Image:** Ubuntu 18.04 + GCC 9 + Python 3.12 (for old glibc compatibility)
-
-## Runtime Builder (`.runtime_builder/linux/`)
-
-### Dockerfile
-
-Creates build environment:
-- **Base:** Ubuntu 18.04 (glibc 2.27)
-- **Toolchain:** GCC 9, g++ 9, gfortran 9
-- **Python:** 3.12.7 (compiled from source)
-- **Dependencies:** BLAS, LAPACK, V8, GLPK, graphics libs
-
-### install_r.sh
-
-Smart R installation:
-1. Try APT (fast)
-2. Fallback to source compilation if version unavailable
-
-### publish.sh
-
-Builds and pushes Docker image to GHCR:
-```bash
-docker build -t ghcr.io/{owner}/brmspy-runtime-builder:{tag}
-docker push ghcr.io/{owner}/brmspy-runtime-builder:{tag}
-```
+---
 
 ## Testing
 
-### Test Structure
+### Test markers and categories
 
-```
-tests/
-├── conftest.py                      # Pytest fixtures (sample_dataframe, etc.)
-├── test_basic.py                    # Basic functionality tests
-├── test_diagnostics.py              # Diagnostics functions tests (14 tests)
-├── test_families.py                 # Family specifications tests
-├── test_generic.py                  # Generic function caller tests
-├── test_integration.py              # End-to-end integration tests
-├── test_io.py                       # I/O functions tests
-├── test_predictions.py              # Prediction functions tests
-├── test_priors.py                   # Prior specification tests
-├── test_conversion.py               # Type conversion tests
-├── test_log.py                      # Logging utility tests
-├── test_rdeps_1_install.py          # Runtime installation tests (marked @pytest.mark.rdeps)
-├── test_rdeps_build.py              # Runtime building tests
-├── test_rdeps_config.py             # Config management tests
-├── test_rdeps_github.py             # GitHub API tests
-├── test_rdeps_install_extended.py   # Extended installation tests
-├── test_runtime_r_env.py            # R environment management tests
-└── test_runtime_storage.py          # Runtime storage tests
-```
+- `@pytest.mark.requires_brms`
+  - tests that need brms to be installed and loadable inside the worker
+- `@pytest.mark.rdeps`
+  - **destructive** R-dependency tests; only run when explicitly enabled
+- `@pytest.mark.worker`
+  - run the test function inside the worker process (useful for testing worker-only code paths safely)
 
-**Test Coverage:**
-- **14 diagnostics tests** covering summary, fixef, ranef, posterior_summary, prior_summary, loo, loo_compare, validate_newdata
-- **2 generic function tests** for call() wrapper
-- All tests use `iter=100, warmup=50` for fast CI execution
-- Tests marked with `@pytest.mark.slow` and `@pytest.mark.requires_brms`
+### Main-process protection: “no rpy2 in tests”
 
-### Running Tests
+Tests install a sentinel object in `sys.modules` for `rpy2.robjects*` in the main process so that any accidental usage fails fast.
+
+This is intentional: it keeps contributor tests honest and ensures the “no rpy2 in main” invariant stays true.
+
+### Running tests locally
+
+Main test run (pytest + coverage combine + import-linter):
 
 ```bash
-pytest tests/ -v                    # All tests
-pytest tests/ -v --cov=brmspy      # With coverage
-pytest -m rdeps                    # DESTRUCTIVE rdeps tests
-pytest -n auto                     # Parallel (requires pytest-xdist)
+./run_tests.sh
 ```
 
-### Test Markers
+Notes:
+
+- `./run_tests.sh` runs `lint-imports` at the end (provided by the `import-linter` package).
+- If `uv` is installed, the script prefers `uv run ...` for reproducibility.
+
+R-dependency tests (destructive; opt-in):
+
+```bash
+BRMSPY_DESTRUCTIVE_RDEPS_TESTS=1 ./run_tests_rdeps.sh
+```
+
+Worker-marked tests:
+
+```bash
+pytest -m worker -v
+```
+
+Notes for `@pytest.mark.worker`:
+
+- Worker tests currently must not use pytest fixtures (until fixture shipping is implemented).
+- Worker tests are executed by telling the worker to import the test module and call the function by name (an internal `_RUN_TEST_BY_NAME` command).
+- In non-rdeps runs, the test collection step tries to ensure a prebuilt brms environment exists (typically named `_test`) so contributor test runs work “out of the box” without manual R setup.
+
+---
+
+## CI/CD
+
+Workflows live in `.github/workflows/`.
+
+### `python-test-matrix`
+
+- Builds and caches CmdStan + R libs per OS (cache keys include cmdstanr/brms/posterior and CmdStan 2.36.0).
+- Runs Python matrix:
+  - Linux: Python 3.10 / 3.12 / 3.14
+  - macOS/Windows: Python 3.12
+- Uses R 4.5 in CI and fixes ABI-mode environment vars (R_HOME + LD_LIBRARY_PATH on Unix).
+- Runs `./run_tests.sh` (pytest + coverage combine + `lint-imports`).
+- Updates the main coverage badge from the Ubuntu 3.12 job on `master`.
+
+### `r-dependencies-tests`
+
+- Runs destructive R dependency tests on Linux/macOS/Windows.
+- Enables destructive mode via `BRMSPY_DESTRUCTIVE_RDEPS_TESTS=1`.
+- Ensures ABI-mode environment setup (R_HOME + platform-specific dynamic library search config).
+- On Windows, caches and provides an Rtools installer so toolchain installation can be tested.
+- Runs `./run_tests_rdeps.sh` which executes `pytest -m rdeps` and merges coverage shards.
+- Uploads per-OS coverage artifacts and merges them on Ubuntu for a combined rdeps coverage badge.
+
+### `runtime-publish`
+
+Manual workflow to build prebuilt runtimes for:
+
+- OS: Linux (in Docker), macOS, Windows
+- R versions: 4.0 through 4.5
+
+Linux builds happen inside the pinned builder image to keep glibc compatibility stable.
+
+The runtime archive is produced by:
+
+```bash
+python -m brmspy.build --output-dir dist/runtime --runtime-version "$RUNTIME_VERSION"
+```
+
+### `python-publish`
+
+- Runs tests, builds distributions, uploads to PyPI on release tags following the repo conventions.
+- Uses cached CmdStan + R libs similarly to the test matrix.
+
+### `docs`
+
+- Builds mkdocs and deploys GitHub Pages on push to `master`.
+
+---
+
+## Debugging worker issues
+
+### Understand the logging pipeline
+
+Worker output is forwarded to the main process:
+
+- Worker uses a log queue to forward Python logging records to the parent’s handlers.
+- Worker also overrides `print()` so that raw output (including carriage returns used by progress bars) is emitted via logging without losing control characters.
+
+Practical consequence: R output, cmdstan progress, and Python logs all show up in one stream when the main process logger is configured.
+
+### Common environment variables
+
+These are the most relevant knobs when diagnosing issues:
+
+- `BRMSPY_WORKER=1`
+  - run “worker mode” directly (no proxy). This is useful to isolate “IPC/proxy” issues from “rpy2/R” issues during debugging, but it is not the recommended normal usage mode.
+- `BRMSPY_AUTOLOAD=0|1`
+  - whether the worker should auto-activate the last runtime from `runtime_state.json` on startup
+- `BRMSPY_TEST=1`
+  - enables some test-only paths (notably worker test execution by name)
+- `BRMSPY_DESTRUCTIVE_RDEPS_TESTS=1`
+  - required to run `@pytest.mark.rdeps`
+- `RPY2_CFFI_MODE=ABI`
+  - recommended for stability
+- `R_HOME`
+  - explicit R home directory; can help when multiple R installations exist
+- `LD_LIBRARY_PATH`
+  - Unix-only; must include `$R_HOME/lib` for ABI mode to find libR. The main session tries to construct this itself for current R home.
+- `PATH` (Windows)
+  - must include the R `bin/x64` directory so DLLs are discoverable
+
+### Reproducing failures
+
+Prefer short, deterministic repro scripts that:
+
+- create a new environment via `brms.manage(environment_name="...")`
+- install dependencies
+- run a single operation (`brms.brm`, `brms.loo`, etc.)
+
+Example structure:
 
 ```python
-@pytest.mark.rdeps
-def test_basic_fit():
-    """Runs on all platforms in CI"""
-    pass
+from brmspy import brms
+
+with brms.manage(environment_name="repro") as ctx:
+    ctx.install_brms(use_prebuilt=True)
+
+# then run the minimal call that crashes
 ```
 
-## Build and Release
+### Restarting a stuck session during development
 
-### Version Management
+The proxy owns the worker lifecycle. If the worker gets into a bad state during development, restarting the Python process is the most reliable reset.
 
-Update in:
-- `pyproject.toml`
-- `settings.ini`
-- `brmspy/__init__.py`
+For internal debugging, the proxy also supports restarting/shutdown, but these are not public API guarantees and may change.
 
-### Release Process
-
-1. **Update versions** and CHANGELOG.md
-2. **Test:** `pytest`
-4. **Build:** `make build`
-5. **Create GitHub Release** (tag: `release-0...`)
-6. **CI automatically** tests and publishes to PyPI
-
-### Building Runtimes
-
-**Via GitHub Actions (Recommended):**
-1. Go to **Actions** → **runtime-publish**
-2. **Run workflow** with version and tag
-3. Runtimes published to: `releases/tag/runtime`
-
-**Local Development:**
-Runtime building for local development uses internal scripts not exposed in the public API. For testing, use:
-
-```python
-# Install from source for testing
-import brmspy
-brmspy.install_brms()  # Traditional installation
-
-# Or test with prebuilt from GitHub
-brmspy.install_brms(use_prebuilt=True)
-```
+---
 
 ## Documentation
 
-### mkdocs Configuration
+Docs are built with mkdocs (see `mkdocs.yml`) and deployed via the `docs` GitHub Actions workflow.
 
-**File:** `mkdocs.yml`
+### Docstring style
 
-```yaml
-site_name: brmspy
-theme:
-  name: shadcn
-plugins:
-  ...
-```
+Docstrings use NumPy style and Markdown fenced code blocks.
 
-### Docstring Style
-
-All docstrings use **NumPy style** with `` ```python `` code blocks (no `.. code-block::`):
-
-```python
-def example(param: str) -> dict:
-    """
-    One-line summary.
-
-    Detailed description.
-
-    Parameters
-    ----------
-    param : str
-        Parameter description
-
-    Returns
-    -------
-    dict
-        Return description
-
-    Examples
-    --------
-    Basic usage:
-
-    ```python
-    result = example("hello")
-    print(result)
-    ```
-    """
-    return {"param": param}
-```
-
-## Performance
-
-### R Package Caching
-
-**Singleton pattern** in `brmspy/helpers/singleton.py`:
-
-```python
-from brmspy.helpers.singleton import get_r_package
-
-brms = get_r_package("brms")  # First call: imports
-brms = get_r_package("brms")  # Cached, instant
-```
-
-### Prebuilt Runtimes
-
-| Method | Installation Time |
-|--------|------------------|
-| From source | 20-30 minutes |
-| Prebuilt runtime | 20-60 seconds |
-
-## Troubleshooting
-
-### R Package Installation Fails
-
-```bash
-# Check R version (need 4.0+)
-R --version
-
-# Manual install
-R -e "install.packages(c('cmdstanr', 'brms', 'posterior'))"
-```
-
-### CmdStan Compilation Fails
-
-**Linux:**
-```bash
-sudo apt-get install build-essential
-```
-
-**macOS:**
-```bash
-xcode-select --install
-```
-
-**Windows:**
-```python
-import brmspy
-# Automatically installs Rtools if needed
-brmspy.install_brms(install_rtools=True)
-```
-
-Or manually via the runtime API:
-```python
-from brmspy.runtime import _rtools
-_rtools.ensure_installed()  # Internal API
-```
-
-### Runtime Incompatibility
-
-```python
-# Check compatibility
-from brmspy import runtime
-status = runtime.status()
-print(f"Can use prebuilt: {status.can_use_prebuilt}")
-print(f"Issues: {status.compatibility_issues}")
-
-# Install matching prebuilt (auto-detects platform)
-import brmspy
-brmspy.install_brms(use_prebuilt=True)
-
-# Or install from source
-brmspy.install_brms()  # Traditional installation
-```
+---
 
 ## Contributing
 
-### Code Style
+### Code style
 
-- **Docstrings:** NumPy style
-- **Type hints:** Required for public APIs
+- Format/lint: `ruff`
+- Type checking: `mypy`
+- Import discipline: `import-linter` (run as part of `./run_tests.sh`)
 
-### PR Process
+### PR expectations
 
-1. Fork and create feature branch
-2. Make changes and add tests
-3. Run: `make format && make lint && make test`
-4. Commit with conventional commits format
-5. Open PR with clear description
-
-## Resources
-
-- **Documentation:** https://kaitumisuuringute-keskus.github.io/brmspy/
-- **Repository:** https://github.com/kaitumisuuringute-keskus/brmspy
-- **Issues:** https://github.com/kaitumisuuringute-keskus/brmspy/issues
-- **PyPI:** https://pypi.org/project/brmspy/
+- Keep the “no rpy2 in main process” invariant.
+- Prefer adding coverage via:
+  - main-process tests for proxy behavior, codec behavior, and high-level API behavior
+  - `@pytest.mark.worker` tests for worker-only implementation details

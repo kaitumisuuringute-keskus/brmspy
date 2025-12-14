@@ -1,50 +1,73 @@
-import logging
 import inspect
-from typing import Optional
+import logging
+import sys
+
+
+# --- filters ---------------------------------------------------------
+
+
+def _running_under_pytest() -> bool:
+    return (
+        "PYTEST_CURRENT_TEST" in os.environ  # reliable with pytest >=3
+        or "pytest" in sys.modules
+    )
+
+
+class PrintOnlyFilter(logging.Filter):
+    """Allow only records that came from our print() override."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return getattr(record, "from_print", False)
+
+
+class NonPrintFilter(logging.Filter):
+    """Block records that came from print()."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return not getattr(record, "from_print", False)
 
 
 # ANSI color codes
 class Colors:
-    RESET = '\033[0m'
-    RED = '\033[91m'
-    YELLOW = '\033[93m'
-    BOLD = '\033[1m'
+    RESET = "\033[0m"
+    RED = "\033[91m"
+    YELLOW = "\033[93m"
+    BOLD = "\033[1m"
 
 
-# Custom formatter that adds the [brmspy][method_name] prefix with colors
+# Custom formatter that adds the `[brmspy][method_name]` prefix with colors
 class BrmspyFormatter(logging.Formatter):
     """
     Custom formatter that formats log messages as [brmspy][method_name] msg.
     Adds color coding for warnings (yellow) and errors (red) when terminal supports it.
     """
-    
+
     def format(self, record):
         # Get method name from record or use the function name
-        method_name = getattr(record, 'method_name', record.funcName)
-        
-        # Determine prefix based on log level
+        method_name = getattr(record, "method_name", record.funcName)
+
         if record.levelno >= logging.ERROR:
             # Red color for errors and critical
-            level_label = 'ERROR' if record.levelno == logging.ERROR else 'CRITICAL'
-            prefix = f'{Colors.RED}{Colors.BOLD}[brmspy][{method_name}][{level_label}]{Colors.RESET}'
+            level_label = "ERROR" if record.levelno == logging.ERROR else "CRITICAL"
+            prefix = f"{Colors.RED}{Colors.BOLD}[brmspy][{method_name}][{level_label}]{Colors.RESET}"
         elif record.levelno == logging.WARNING:
             # Yellow color for warnings
-            prefix = f'{Colors.YELLOW}[brmspy][{method_name}][WARNING]{Colors.RESET}'
+            prefix = f"{Colors.YELLOW}[brmspy][{method_name}][WARNING]{Colors.RESET}"
         else:
             # No color for info and debug
-            prefix = f'[brmspy][{method_name}]'
-        
+            prefix = f"[brmspy][{method_name}]"
+
         prefix = prefix.replace("[<module>]", "")
-        
+
         # Format the message with the custom prefix
         original_format = self._style._fmt
-        self._style._fmt = f'{prefix} %(message)s'
-        
+        self._style._fmt = f"{prefix} %(message)s"
+
         result = super().format(record)
-        
+
         # Restore original format
         self._style._fmt = original_format
-        
+
         return result
 
 
@@ -55,15 +78,15 @@ _logger = None
 def get_logger() -> logging.Logger:
     """
     Get or create the brmspy logger instance.
-    
+
     Returns a configured logger with a custom formatter that outputs
-    messages in the format: [brmspy][method_name] msg here
-    
+    messages in the format: `[brmspy][method_name] msg here`
+
     Returns
     -------
     logging.Logger
         Configured brmspy logger instance
-    
+
     Examples
     --------
     >>> from brmspy.helpers.log import get_logger
@@ -71,27 +94,37 @@ def get_logger() -> logging.Logger:
     >>> logger.info("Starting process")  # Prints: [brmspy][<module>] Starting process
     """
     global _logger
-    
+
     if _logger is None:
-        _logger = logging.getLogger('brmspy')
+        _logger = logging.getLogger("brmspy")
         _logger.setLevel(logging.INFO)
-        
-        # Only add handler if none exists (avoid duplicate handlers)
+
         if not _logger.handlers:
-            handler = logging.StreamHandler()
-            handler.setFormatter(BrmspyFormatter())
-            _logger.addHandler(handler)
-        
-        # Prevent propagation to root logger to avoid duplicate messages
-        _logger.propagate = False
-    
+            # Handler for "normal" logs
+            normal_handler = logging.StreamHandler()
+            normal_handler.setFormatter(BrmspyFormatter())
+            normal_handler.addFilter(NonPrintFilter())
+            _logger.addHandler(normal_handler)
+
+            # print logs: preserve control chars and explicit \n/\r
+            print_handler = logging.StreamHandler()
+            print_handler.setFormatter(logging.Formatter("%(message)s"))
+            print_handler.addFilter(PrintOnlyFilter())
+            print_handler.terminator = ""
+            _logger.addHandler(print_handler)
+
+        if _running_under_pytest():
+            _logger.propagate = True
+        else:
+            _logger.propagate = False
+
     return _logger
 
 
 def _get_caller_name() -> str:
     """
     Get the name of the calling function/method.
-    
+
     Returns
     -------
     str
@@ -113,10 +146,10 @@ def _get_caller_name() -> str:
     return "unknown"
 
 
-def log(msg: str, method_name: Optional[str] = None, level: int = logging.INFO):
+def log(*msg: str, method_name: str | None = None, level: int = logging.INFO):
     """
     Log a message with automatic method name detection.
-    
+
     Parameters
     ----------
     msg : str
@@ -128,15 +161,17 @@ def log(msg: str, method_name: Optional[str] = None, level: int = logging.INFO):
     """
     if method_name is None:
         method_name = _get_caller_name()
-    
+
+    msg_str = " ".join(str(v) for v in msg)
+
     logger = get_logger()
-    logger.log(level, msg, extra={'method_name': method_name})
+    logger.log(level, msg_str, extra={"method_name": method_name})
 
 
-def log_info(msg: str, method_name: Optional[str] = None):
+def log_info(msg: str, method_name: str | None = None):
     """
     Log an info message.
-    
+
     Parameters
     ----------
     msg : str
@@ -147,10 +182,10 @@ def log_info(msg: str, method_name: Optional[str] = None):
     log(msg, method_name=method_name, level=logging.INFO)
 
 
-def log_debug(msg: str, method_name: Optional[str] = None):
+def log_debug(msg: str, method_name: str | None = None):
     """
     Log a debug message.
-    
+
     Parameters
     ----------
     msg : str
@@ -162,10 +197,10 @@ def log_debug(msg: str, method_name: Optional[str] = None):
     log(msg, method_name=method_name, level=logging.DEBUG)
 
 
-def log_warning(msg: str, method_name: Optional[str] = None):
+def log_warning(msg: str, method_name: str | None = None):
     """
     Log a warning message.
-    
+
     Parameters
     ----------
     msg : str
@@ -177,10 +212,10 @@ def log_warning(msg: str, method_name: Optional[str] = None):
     log(msg, method_name=method_name, level=logging.WARNING)
 
 
-def log_error(msg: str, method_name: Optional[str] = None):
+def log_error(msg: str, method_name: str | None = None):
     """
     Log an error message.
-    
+
     Parameters
     ----------
     msg : str
@@ -191,10 +226,10 @@ def log_error(msg: str, method_name: Optional[str] = None):
     log(msg, method_name=method_name, level=logging.ERROR)
 
 
-def log_critical(msg: str, method_name: Optional[str] = None):
+def log_critical(msg: str, method_name: str | None = None):
     """
     Log a critical message.
-    
+
     Parameters
     ----------
     msg : str
@@ -208,7 +243,7 @@ def log_critical(msg: str, method_name: Optional[str] = None):
 def set_log_level(level: int):
     """
     Set the logging level for brmspy logger.
-    
+
     Parameters
     ----------
     level : int
@@ -218,7 +253,9 @@ def set_log_level(level: int):
     logger.setLevel(level)
 
 
+import os
 import time
+
 
 class LogTime:
     def __init__(self, name="process"):
@@ -231,9 +268,3 @@ class LogTime:
     def __exit__(self, exc_type, exc_val, exc_tb):
         elapsed = time.perf_counter() - self.start
         log(f"[{self.name}] took {elapsed:.2f} seconds")
-
-
-def greet():
-    log_warning("brmspy <0.2 is still evolving; APIs may change.")
-    log_warning("Feedback or a star on GitHub helps guide development:")
-    log_warning("https://github.com/kaitumisuuringute-keskus/brmspy")

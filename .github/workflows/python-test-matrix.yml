@@ -252,16 +252,12 @@ jobs:
           mkdir -p coverage
 
       - name: Test with pytest
+        shell: bash
         env:
           GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
           CMDSTAN_DIR: ${{ env.CMDSTAN_DIR }} # not used in here atm
           R_LIBS_USER: ${{ env.R_LIBS_USER }}
-        run: >
-          python -m pytest tests/ -v --cov=brmspy 
-          --cov-report=term 
-          --cov-report=xml 
-          --cov-report=json 
-          --cov-config=.coveragerc-main
+        run: set -xeuo pipefail && ./run_tests.sh
       
       - name: Update Coverage Badge
         if: github.event_name == 'push' &&

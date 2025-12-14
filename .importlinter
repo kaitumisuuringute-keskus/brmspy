@@ -1,0 +1,133 @@
+[importlinter]
+root_package = brmspy
+log_level = DEBUG
+include_external_packages=True
+contract_types =
+    forbid_external_submodule_import: script.importlinter_contracts.ForbidExternalSubmoduleImportContract
+
+
+
+[importlinter:contract:protect-rpy2-robjects]
+name = Protect rpy2.robjects
+type = forbid_external_submodule_import
+source_modules =
+    brmspy.**
+forbidden_submodule = rpy2.robjects
+allowed_importers =
+    brmspy._brms_functions.*
+    brmspy.helpers._rpy2.*
+    brmspy._runtime._r_packages
+    brmspy._runtime._r_env
+    brmspy._runtime._state
+    brmspy._runtime._rtools
+    brmspy._build.*
+    brmspy._session.worker.*
+    brmspy.brms._manage_module
+    
+
+[importlinter:contract:protect-rpy2-dependents]
+name = Protect internal imports
+type = protected
+protected_modules =
+    brmspy._brms_functions
+    brmspy.helpers._rpy2
+    brmspy._runtime._r_packages
+    brmspy._runtime._r_env
+    brmspy._runtime._state
+    brmspy._runtime._rtools
+    brmspy._build.*
+    brmspy._session.worker.*
+    
+allowed_importers =
+    brmspy.brms._brms_module
+    brmspy.brms._manage_module
+    brmspy.brms._build_module
+    brmspy._build
+    brmspy._session.worker
+    brmspy._brms_functions
+    brmspy.helpers._rpy2
+    brmspy._runtime
+
+[importlinter:contract:protect-worker]
+name = Worker only imported from module session
+type = protected
+protected_modules =
+    brmspy._session.worker
+allowed_importers =
+    brmspy._session.session
+
+[importlinter:contract:protect-worker-deps]
+name = Protect internal worker imports
+type = protected
+protected_modules =
+    brmspy._session.worker.setup
+    brmspy._session.worker.logging
+    brmspy._session.worker.sexp_cache
+allowed_importers =
+    brmspy._session.worker
+
+[importlinter:contract:protect-parent-deps]
+name = Protect internal parent imports
+type = protected
+protected_modules =
+    brmspy._session.environment_parent
+allowed_importers =
+    brmspy._session.session
+
+[importlinter:contract:acyclic_siblings]
+name = acyclic siblings contract
+type = acyclic_siblings
+ancestors = brmspy
+ignore_imports =
+    brmspy._singleton._brms -> brmspy.brms
+
+
+[importlinter:contract: layering]
+name = brmspy general layering
+type = layers
+layers =
+    brmspy.brms
+    brmspy._session
+    brmspy._build
+    brmspy._runtime
+    brmspy._brms_functions
+    brmspy.helpers._rpy2
+    brmspy.helpers.log
+    brmspy.types
+    
+ignore_imports =
+    brmspy._singleton._brms -> brmspy.brms
+
+[importlinter:contract: runtime-layering]
+name = brmspy runtime layering
+type = layers
+layers =
+    brmspy._session
+    brmspy._runtime._activation
+    brmspy._runtime._install
+    brmspy._runtime._download
+    brmspy._runtime._manifest
+    brmspy._runtime._rtools
+    brmspy._runtime._state
+    brmspy._runtime._r_packages
+    brmspy._runtime._r_env
+    brmspy._runtime._github
+    brmspy._runtime._storage
+    brmspy._runtime._config
+    brmspy._runtime._platform
+    brmspy.types.runtime
+
+[importlinter:contract: main-worker-flow]
+name = brmspy worker flow layering
+type = layers
+layers =
+    brmspy._session.session
+    brmspy._session.worker.worker
+    brmspy._session.environment
+    brmspy._session.codec
+    brmspy._session.worker.sexp_cache
+    brmspy._session.worker.logging
+    brmspy._brms_functions
+    brmspy.helpers._rpy2
+
+

@@ -1,4 +1,4 @@
-::: brmspy.brms_functions.io
+::: brmspy._brms_functions.io
     options:
       show_root_heading: false
       show_source: false

@@ -15,11 +15,11 @@ class TestGenericCallFunction:
         - Results are converted back to Python types
         - Works with functions that return numeric values
         """
-        import brmspy
+        from brmspy import brms
         import numpy as np
         
         # Fit a simple model
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1",
             data=sample_dataframe,
             family="gaussian",
@@ -32,7 +32,7 @@ class TestGenericCallFunction:
         
         # Call neff_ratio (effective sample size ratio) via generic call
         # This is a brms function that returns numeric values
-        result = brmspy.call("neff_ratio", model)
+        result = brms.call("neff_ratio", model)
         
         # Verify result is returned
         assert result is not None, \
@@ -67,11 +67,11 @@ class TestGenericCallFunction:
         - Can call functions with complex parameter structures
         - Results are properly converted back
         """
-        import brmspy
+        from brmspy import brms
         import pandas as pd
         
         # Fit a simple model
-        model = brmspy.fit(
+        model = brms.fit(
             formula="y ~ x1",
             data=sample_dataframe,
             family="gaussian",
@@ -85,7 +85,7 @@ class TestGenericCallFunction:
         # Call VarCorr (variance-covariance matrix of random effects)
         # This should work even with no random effects (returns empty structure)
         try:
-            result = brmspy.call("VarCorr", model)
+            result = brms.call("VarCorr", model)
             # Result might be None, empty dict, or a structure
             # The important thing is that the call succeeds
             assert True, "call() with VarCorr executed successfully"
@@ -96,7 +96,7 @@ class TestGenericCallFunction:
         
         # Alternative test: call a function that definitely exists
         # nobs (number of observations)
-        result_nobs = brmspy.call("nobs", model)
+        result_nobs = brms.call("nobs", model)
         
         # Should return the number of observations
         assert isinstance(result_nobs, (int, float)), \

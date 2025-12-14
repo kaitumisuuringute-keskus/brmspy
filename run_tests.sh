@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# run_main_tests.sh
+# Run pytest with coverage collection only, then combine and report.
+
+# Decide runner: uv if available, else python -m
+if command -v uv >/dev/null 2>&1; then
+  echo "[run_main_tests] Using 'uv run'"
+  PYTEST_CMD=(uv run pytest)
+  COVERAGE_CMD=(uv run coverage)
+  IMPORTLINTER_CMD=(uv run lint-imports)
+else
+  echo "[run_main_tests] 'uv' not found, using 'python -m'"
+  PYTEST_CMD=(python -m pytest)
+  COVERAGE_CMD=(python -m coverage)
+  IMPORTLINTER_CMD=(lint-imports)
+fi
+
+TESTS="tests/"
+RCFILE=".coveragerc"
+
+# 1) Run tests, collect coverage but DO NOT print report from pytest
+"${PYTEST_CMD[@]}" "$TESTS" -v \
+  --cov=brmspy \
+  --cov-config="$RCFILE" \
+  --cov-report= \
+
+# 2) Combine main-process .coverage + all .coverage.* shards
+#    --append: include existing .coverage in the union
+#    --keep:   keep .coverage.* for debugging/inspection
+COVERAGE_FILE=.coverage "${COVERAGE_CMD[@]}" combine --append --keep --rcfile="$RCFILE"
+
+# 3) Final reports (only these are shown)
+COVERAGE_FILE=.coverage "${COVERAGE_CMD[@]}" report -m --rcfile="$RCFILE"   # term
+COVERAGE_FILE=.coverage "${COVERAGE_CMD[@]}" xml --rcfile="$RCFILE"         # coverage.xml
+COVERAGE_FILE=.coverage "${COVERAGE_CMD[@]}" json --rcfile="$RCFILE"        # coverage.json
+
+
+"${IMPORTLINTER_CMD[@]}"

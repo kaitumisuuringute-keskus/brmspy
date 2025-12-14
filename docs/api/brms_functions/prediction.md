@@ -1,4 +1,4 @@
-::: brmspy.brms_functions.prediction
+::: brmspy._brms_functions.prediction
     options:
       show_root_heading: false
       show_source: false
