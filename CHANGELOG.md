@@ -1,4 +1,5 @@
 ## 0.3.0 - Process-Isolated R & Hot-Swappable Runtimes
+*25.12.14*
 
 This release introduces a redesigned main–worker–R architecture to address stability issues caused by embedding R directly in the Python process. In real-world use, unpredictable failures, ranging from R segfaults to rpy2 crashes, could take down the entire Python runtime, invalidate IDE sessions, and make test behavior OS-dependent. The old single-process model also made R state effectively immutable after import, limited runtime switching, and required brittle workarounds for package management and CI isolation. These issues were not fixable at the level of defensive coding alone.
 
