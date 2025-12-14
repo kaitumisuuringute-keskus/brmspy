@@ -1,10 +1,10 @@
 site_name: brmspy
 site_description: Python interface to R's brms for Bayesian regression modeling
 site_author: Remi Sebastian Kits
-site_url: https://kaitumisuuringute-keskus.github.io/brmspy
+site_url: https://kaitumisuuringute-keskus.github.io/brmspy/
 
 repo_name: kaitumisuuringute-keskus/brmspy
-repo_url: https://github.com/kaitumisuuringute-keskus/brmspy
+repo_url: https://github.com/kaitumisuuringute-keskus/brmspy/
 
 theme:
   name: material
@@ -47,6 +47,15 @@ theme:
 plugins:
   - search
   - mkdocs-jupyter
+  - mike:
+      # These fields are all optional; the defaults are as below...
+      alias_type: symlink
+      redirect_template: null
+      deploy_prefix: ""
+      canonical_version: null
+      version_selector: true
+      css_dir: css
+      javascript_dir: js
   - mkdocstrings:
       handlers:
         python:
@@ -174,3 +183,8 @@ extra_javascript:
   - static/plausible.js
 extra_css:
   - static/shadcn-ish.css
+
+extra:
+  version:
+    provider: mike
+    default: stable

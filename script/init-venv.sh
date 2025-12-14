@@ -121,7 +121,7 @@ echo ""
 
 # Install with all optional dependencies
 uv pip install -e ".[all]"
-uv pip install mkdocs-material mkdocs-jupyter "mkdocstrings[python]"
+uv pip install mkdocs-material mike mkdocs-jupyter "mkdocstrings[python]"
 
 success "All packages installed successfully!"
 
