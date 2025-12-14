@@ -11,9 +11,11 @@ isolated environments.
 
 Examples
 --------
->>> from brmspy import brms
->>> with brms.manage(environment_name="default") as ctx:
-...     ctx.install_brms(use_prebuilt=True)
+```python
+from brmspy import brms
+with brms.manage(environment_name="default") as ctx:
+    ctx.install_brms(use_prebuilt=True)
+```
 """
 
 import os

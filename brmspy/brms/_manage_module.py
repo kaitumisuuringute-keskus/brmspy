@@ -8,6 +8,17 @@ The file is safe to import in the *main* Python process (no top-level
 `manage()` context, and the actual work executes in the worker process that
 hosts the embedded R session.
 
+Example:
+```python
+env = "mrp"
+if not brms.environment_exists(env):
+    with brms.manage(environment_name=env) as ctx:
+        ctx.install_brms(use_prebuilt=True)
+        ctx.install_rpackage("MCMCglmm")
+else:
+    brms.environment_activate(env)
+```
+
 Notes
 -----
 - Use the context manager to ensure the worker (and its embedded R session) is
