@@ -1,4 +1,4 @@
-::: brmspy.brms._brms_module
+::: brmspy._singleton._brms
     options:
       show_root_heading: false
       show_source: true

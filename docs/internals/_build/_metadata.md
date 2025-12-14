@@ -1,4 +1,4 @@
-::: brmspy.brms._brms_module
+::: brmspy._build._metadata
     options:
       show_root_heading: false
       show_source: true

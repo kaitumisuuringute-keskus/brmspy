@@ -105,21 +105,67 @@ nav:
       - Estimating multivariate models: examples/brmspy-estimating-multivariate-models.ipynb
       - Variational Inference: examples/brmspy-vi-sampling.ipynb
   - Internals:
-      - Modules:
-          - _brms_module: internals/brms/_brms_module.md
-          - _manage_module: internals/brms/_manage_module.md
-          - _build_module: internals/brms/_build_module.md
-      - Build:
+      - _brms_functions:
+          - brm: internals/_brms_functions/brm.md
+          - diagnostics: internals/_brms_functions/diagnostics.md
+          - families: internals/_brms_functions/families.md
+          - formula: internals/_brms_functions/formula.md
+          - generic: internals/_brms_functions/generic.md
+          - io: internals/_brms_functions/io.md
+          - prediction: internals/_brms_functions/prediction.md
+          - prior: internals/_brms_functions/prior.md
+          - stan: internals/_brms_functions/stan.md
+      - _build:
           - _metadata: internals/_build/_metadata.md
           - _pack: internals/_build/_pack.md
           - _stage: internals/_build/_stage.md
-      - Runtime:
+      - _runtime:
           - _activation: internals/_runtime/_activation.md
           - _config: internals/_runtime/_config.md
-          - _download: internals/_runtime/_config.md
+          - _download: internals/_runtime/_download.md
           - _github: internals/_runtime/_github.md
           - _install: internals/_runtime/_install.md
           - _manifest: internals/_runtime/_manifest.md
+          - _platform: internals/_runtime/_platform.md
+          - _r_env: internals/_runtime/_r_env.md
+          - _r_packages: internals/_runtime/_r_packages.md
+          - _rtools: internals/_runtime/_rtools.md
+          - _state: internals/_runtime/_state.md
+          - _storage: internals/_runtime/_storage.md
+      - _session:
+          - environment: internals/_session/environment.md
+          - environment_parent: internals/_session/environment_parent.md
+          - session: internals/_session/session.md
+          - transport: internals/_session/transport.md
+          - codec:
+              - base: internals/_session/codec/base.md
+              - builtin: internals/_session/codec/builtin.md
+              - dataclass: internals/_session/codec/dataclass.md
+              - registry: internals/_session/codec/registry.md
+          - worker:
+              - logging: internals/_session/worker/logging.md
+              - setup: internals/_session/worker/setup.md
+              - sexp_cache: internals/_session/worker/sexp_cache.md
+              - worker: internals/_session/worker/worker.md
+      - _singleton:
+          - _brms: internals/_singleton/_brms.md
+          - _shm_singleton: internals/_singleton/_shm_singleton.md
+      - brms:
+          - _brms_module: internals/brms/_brms_module.md
+          - _build_module: internals/brms/_build_module.md
+          - _manage_module: internals/brms/_manage_module.md
+      - helpers:
+          - _rpy2:
+              - _conversion: internals/helpers/_rpy2/_conversion.md
+              - _priors: internals/helpers/_rpy2/_priors.md
+              - _robject_iter: internals/helpers/_rpy2/_robject_iter.md
+              - _converters:
+                  - _arrays: internals/helpers/_rpy2/_converters/_arrays.md
+                  - _dispatch: internals/helpers/_rpy2/_converters/_dispatch.md
+                  - _formula: internals/helpers/_rpy2/_converters/_formula.md
+                  - _generic: internals/helpers/_rpy2/_converters/_generic.md
+                  - _registry: internals/helpers/_rpy2/_converters/_registry.md
+                  - _vectors: internals/helpers/_rpy2/_converters/_vectors.md
 
   - Development: development/development.md
   - Changelog: changelog.md

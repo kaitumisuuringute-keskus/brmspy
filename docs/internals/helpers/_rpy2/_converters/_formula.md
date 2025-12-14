@@ -1,4 +1,4 @@
-::: brmspy.brms._brms_module
+::: brmspy.helpers._rpy2._converters._formula
     options:
       show_root_heading: false
       show_source: true

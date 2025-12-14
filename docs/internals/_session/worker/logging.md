@@ -1,4 +1,4 @@
-::: brmspy.brms._brms_module
+::: brmspy._session.worker.logging
     options:
       show_root_heading: false
       show_source: true
