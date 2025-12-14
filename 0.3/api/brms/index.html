@@ -7825,8 +7825,8 @@ arviz.loo : LOO-CV using log-likelihood</p>
         <p>Python representation of a brms prior specification.</p>
 <p>This dataclass provides a typed interface to <code>brms::prior_string()</code> arguments,
 allowing Python developers to specify priors with IDE autocomplete and type
-checking. Use the <a href="brmspy/_brms_functions/prior.py"><code>prior()</code></a> factory
-function to create instances.</p>
+checking. Use the <a class="autorefs autorefs-internal" title="prior(prior, class_=None, coef=None, group=None, dpar=None, resp=None, nlpar=None, lb=None, ub=None, **kwargs)" href="#brmspy.brms.prior"><code>prior()</code></a> factory function to create
+instances.</p>
 
 
 <p><span class="doc-section-title">Attributes:</span></p>
@@ -7994,7 +7994,7 @@ brms::prior_string : <a href="https://paulbuerkner.com/brms/reference/prior_stri
 </details>
 
 <p><span class="doc-section-title">Examples:</span></p>
-    <p>Create prior specifications (prefer using <a href="brmspy/_brms_functions/prior.py"><code>prior()</code></a>):</p>
+    <p>Create prior specifications (prefer using <a class="autorefs autorefs-internal" title="prior(prior, class_=None, coef=None, group=None, dpar=None, resp=None, nlpar=None, lb=None, ub=None, **kwargs)" href="#brmspy.brms.prior"><code>prior()</code></a>):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">brmspy.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">PriorSpec</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># Fixed effect prior</span>
@@ -8110,7 +8110,7 @@ the <code>class_</code> -&gt; <code>class</code> parameter name conversion.</p>
         <p>A composite formula expression built from parts.</p>
 <p><code>FormulaConstruct</code> stores a tree of nodes (<code>FormulaPart</code> and/or R objects)
 representing expressions combined with <code>+</code>. It is primarily created by
-calling the public formula helpers exposed by <a href="brmspy/brms/__init__.py"><code>brmspy.brms</code></a>.</p>
+calling the public formula helpers exposed by <a class="autorefs autorefs-internal" href="#brmspy.brms"><code>brmspy.brms</code></a>.</p>
 
 
 <details class="note" open>
@@ -8120,8 +8120,8 @@ calling the public formula helpers exposed by <a href="brmspy/brms/__init__.py">
 <li><code>a + b + c</code> becomes a single summand (one “group”)</li>
 <li><code>(a + b) + (a + b)</code> becomes two summands (two “groups”)</li>
 </ul>
-<p>Use <a href="brmspy/types/formula_dsl.py"><code>iter_summands()</code></a> to iterate over these
-groups in a deterministic way.</p>
+<p>Use <a class="autorefs autorefs-internal" title="iter_summands()" href="../types/formula_dsl/#brmspy.types.formula_dsl.FormulaConstruct.iter_summands"><code>iter_summands()</code></a>
+to iterate over these groups in a deterministic way.</p>
 </details>
 
 
@@ -8309,7 +8309,7 @@ groups in a deterministic way.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Alias for <a href="brmspy/types/formula_dsl.py"><code>iter_summands()</code></a>.</p>
+        <p>Alias for <a class="autorefs autorefs-internal" title="iter_summands()" href="../types/formula_dsl/#brmspy.types.formula_dsl.FormulaConstruct.iter_summands"><code>iter_summands()</code></a>.</p>
 
 
     </div>
@@ -8328,8 +8328,9 @@ groups in a deterministic way.</p>
     <div class="doc doc-contents ">
 
         <p>Iterate over all leaf nodes in left-to-right order.</p>
-<p>This flattens the expression tree, unlike <a href="brmspy/types/formula_dsl.py"><code>iter_summands()</code></a>,
-which respects grouping.</p>
+<p>This flattens the expression tree, unlike
+<a class="autorefs autorefs-internal" title="iter_summands()" href="../types/formula_dsl/#brmspy.types.formula_dsl.FormulaConstruct.iter_summands"><code>iter_summands()</code></a>, which
+respects grouping.</p>
 
 
     <p><span class="doc-section-title">Returns:</span></p>
@@ -8398,7 +8399,12 @@ which respects grouping.</p>
         <p>A single formula helper invocation.</p>
 <p>Instances of this type represent a call like <code>bf("y ~ x")</code> or <code>set_rescor(True)</code>
 without executing anything. They are primarily used as nodes inside a
-<a href="brmspy/types/formula_dsl.py"><code>FormulaConstruct</code></a>.</p>
+<a class="autorefs autorefs-internal" title="FormulaConstruct
+
+
+  
+      dataclass
+  " href="../types/formula_dsl/#brmspy.types.formula_dsl.FormulaConstruct"><code>FormulaConstruct</code></a>.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -8467,7 +8473,7 @@ without executing anything. They are primarily used as nodes inside a
 <details class="note" open>
   <summary>Notes</summary>
   <p>This is a low-level type. Most users should construct these via the public
-helper functions in <a href="brmspy/brms/__init__.py"><code>brmspy.brms</code></a>.</p>
+helper functions in <a class="autorefs autorefs-internal" href="#brmspy.brms"><code>brmspy.brms</code></a>.</p>
 </details>
 
 
@@ -13784,21 +13790,6 @@ on the link scale (before applying the inverse link), unless you pass
             </td>
             <td>
                   <code>None</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>bhaz</code>
-            </td>
-            <td>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Currently for experimental purposes only.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
             </td>
           </tr>
       </tbody>

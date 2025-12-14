@@ -4635,9 +4635,10 @@
     <div class="doc doc-contents first">
 
         <p>Codec registry construction helpers (internal).</p>
-<p>The session layer uses a single default <a href="brmspy/_session/codec/base.py"><code>CodecRegistry</code></a>
-instance per process. The registry is ordered: the first codec that accepts a value
-wins, so the registration order is significant.</p>
+<p>The session layer uses a single default
+<a class="autorefs autorefs-internal" href="../base/#brmspy._session.codec.base.CodecRegistry"><code>CodecRegistry</code></a> instance per process. The
+registry is ordered: the first codec that accepts a value wins, so the registration
+order is significant.</p>
 <p>Important invariants:
 - SHM-backed codecs should be registered before pickle.
 - Pickle fallback MUST be registered last.</p>
@@ -7347,8 +7348,7 @@ are still stored in SHM to keep pipe traffic small and bounded.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>brmspy/_session/codec/registry.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-25">25</a></span>
-<span class="normal"><a href="#__codelineno-0-26">26</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-26">26</a></span>
 <span class="normal"><a href="#__codelineno-0-27">27</a></span>
 <span class="normal"><a href="#__codelineno-0-28">28</a></span>
 <span class="normal"><a href="#__codelineno-0-29">29</a></span>
@@ -7369,29 +7369,30 @@ are still stored in SHM to keep pipe traffic small and bounded.</p>
 <span class="normal"><a href="#__codelineno-0-44">44</a></span>
 <span class="normal"><a href="#__codelineno-0-45">45</a></span>
 <span class="normal"><a href="#__codelineno-0-46">46</a></span>
-<span class="normal"><a href="#__codelineno-0-47">47</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-25" name="__codelineno-0-25"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_default_registry</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">CodecRegistry</span><span class="p">:</span>
-<a id="__codelineno-0-26" name="__codelineno-0-26"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-27" name="__codelineno-0-27"></a><span class="sd">    Return the process-global default codec registry.</span>
-<a id="__codelineno-0-28" name="__codelineno-0-28"></a>
-<a id="__codelineno-0-29" name="__codelineno-0-29"></a><span class="sd">    Returns</span>
-<a id="__codelineno-0-30" name="__codelineno-0-30"></a><span class="sd">    -------</span>
-<a id="__codelineno-0-31" name="__codelineno-0-31"></a><span class="sd">    brmspy._session.codec.base.CodecRegistry</span>
-<a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="sd">        Registry with SHM-first codecs registered, plus a pickle fallback.</span>
-<a id="__codelineno-0-33" name="__codelineno-0-33"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-34" name="__codelineno-0-34"></a>    <span class="k">global</span> <span class="n">_default_registry</span>
-<a id="__codelineno-0-35" name="__codelineno-0-35"></a>    <span class="k">if</span> <span class="n">_default_registry</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-36" name="__codelineno-0-36"></a>        <span class="n">reg</span> <span class="o">=</span> <span class="n">CodecRegistry</span><span class="p">()</span>
-<a id="__codelineno-0-37" name="__codelineno-0-37"></a>        <span class="n">reg</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">NumpyArrayCodec</span><span class="p">())</span>
-<a id="__codelineno-0-38" name="__codelineno-0-38"></a>        <span class="n">reg</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">InferenceDataCodec</span><span class="p">())</span>
-<a id="__codelineno-0-39" name="__codelineno-0-39"></a>        <span class="n">reg</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">PandasDFCodec</span><span class="p">())</span>
-<a id="__codelineno-0-40" name="__codelineno-0-40"></a>
-<a id="__codelineno-0-41" name="__codelineno-0-41"></a>        <span class="n">register_dataclasses</span><span class="p">(</span><span class="n">reg</span><span class="p">)</span>
-<a id="__codelineno-0-42" name="__codelineno-0-42"></a>
-<a id="__codelineno-0-43" name="__codelineno-0-43"></a>        <span class="c1"># MUST BE LAST</span>
-<a id="__codelineno-0-44" name="__codelineno-0-44"></a>        <span class="n">reg</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">PickleCodec</span><span class="p">())</span>
-<a id="__codelineno-0-45" name="__codelineno-0-45"></a>
-<a id="__codelineno-0-46" name="__codelineno-0-46"></a>        <span class="n">_default_registry</span> <span class="o">=</span> <span class="n">reg</span>
-<a id="__codelineno-0-47" name="__codelineno-0-47"></a>    <span class="k">return</span> <span class="n">_default_registry</span>
+<span class="normal"><a href="#__codelineno-0-47">47</a></span>
+<span class="normal"><a href="#__codelineno-0-48">48</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-26" name="__codelineno-0-26"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_default_registry</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">CodecRegistry</span><span class="p">:</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28"></a><span class="sd">    Return the process-global default codec registry.</span>
+<a id="__codelineno-0-29" name="__codelineno-0-29"></a>
+<a id="__codelineno-0-30" name="__codelineno-0-30"></a><span class="sd">    Returns</span>
+<a id="__codelineno-0-31" name="__codelineno-0-31"></a><span class="sd">    -------</span>
+<a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="sd">    brmspy._session.codec.base.CodecRegistry</span>
+<a id="__codelineno-0-33" name="__codelineno-0-33"></a><span class="sd">        Registry with SHM-first codecs registered, plus a pickle fallback.</span>
+<a id="__codelineno-0-34" name="__codelineno-0-34"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-35" name="__codelineno-0-35"></a>    <span class="k">global</span> <span class="n">_default_registry</span>
+<a id="__codelineno-0-36" name="__codelineno-0-36"></a>    <span class="k">if</span> <span class="n">_default_registry</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-37" name="__codelineno-0-37"></a>        <span class="n">reg</span> <span class="o">=</span> <span class="n">CodecRegistry</span><span class="p">()</span>
+<a id="__codelineno-0-38" name="__codelineno-0-38"></a>        <span class="n">reg</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">NumpyArrayCodec</span><span class="p">())</span>
+<a id="__codelineno-0-39" name="__codelineno-0-39"></a>        <span class="n">reg</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">InferenceDataCodec</span><span class="p">())</span>
+<a id="__codelineno-0-40" name="__codelineno-0-40"></a>        <span class="n">reg</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">PandasDFCodec</span><span class="p">())</span>
+<a id="__codelineno-0-41" name="__codelineno-0-41"></a>
+<a id="__codelineno-0-42" name="__codelineno-0-42"></a>        <span class="n">register_dataclasses</span><span class="p">(</span><span class="n">reg</span><span class="p">)</span>
+<a id="__codelineno-0-43" name="__codelineno-0-43"></a>
+<a id="__codelineno-0-44" name="__codelineno-0-44"></a>        <span class="c1"># MUST BE LAST</span>
+<a id="__codelineno-0-45" name="__codelineno-0-45"></a>        <span class="n">reg</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">PickleCodec</span><span class="p">())</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46"></a>
+<a id="__codelineno-0-47" name="__codelineno-0-47"></a>        <span class="n">_default_registry</span> <span class="o">=</span> <span class="n">reg</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a>    <span class="k">return</span> <span class="n">_default_registry</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>

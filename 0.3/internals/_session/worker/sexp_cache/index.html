@@ -4188,8 +4188,13 @@
 
         <p>Worker-side cache for rpy2 <code>Sexp</code> objects (internal).</p>
 <p>The main process must not hold live rpy2 objects. Instead, the worker replaces R
-objects with lightweight <a href="brmspy/types/session.py"><code>SexpWrapper</code></a> handles and stores
-the real <code>Sexp</code> in a local cache keyed by <code>rid</code>.</p>
+objects with lightweight <a class="autorefs autorefs-internal" title="SexpWrapper
+
+
+  
+      dataclass
+  " href="../../../../api/types/session/#brmspy.types.session.SexpWrapper"><code>SexpWrapper</code></a> handles and
+stores the real <code>Sexp</code> in a local cache keyed by <code>rid</code>.</p>
 <p>This module also installs pickle reducers so that any accidental pickling of a <code>Sexp</code>
 turns into a wrapper rather than attempting to serialize the R object.</p>
 
@@ -4656,8 +4661,13 @@ with <code>None</code>.</p>
     <div class="doc doc-contents ">
 
         <p>Pickle reducer for <code>Sexp</code> (worker-side).</p>
-<p>Converts the <code>Sexp</code> into a cached <a href="brmspy/types/session.py"><code>SexpWrapper</code></a> so the
-main process never receives a live rpy2 object.</p>
+<p>Converts the <code>Sexp</code> into a cached <a class="autorefs autorefs-internal" title="SexpWrapper
+
+
+  
+      dataclass
+  " href="../../../../api/types/session/#brmspy.types.session.SexpWrapper"><code>SexpWrapper</code></a> so
+the main process never receives a live rpy2 object.</p>
 
 
             <details class="mkdocstrings-source">
@@ -4674,8 +4684,8 @@ main process never receives a live rpy2 object.</p>
 <a id="__codelineno-0-86" name="__codelineno-0-86"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-0-87" name="__codelineno-0-87"></a><span class="sd">    Pickle reducer for `Sexp` (worker-side).</span>
 <a id="__codelineno-0-88" name="__codelineno-0-88"></a>
-<a id="__codelineno-0-89" name="__codelineno-0-89"></a><span class="sd">    Converts the `Sexp` into a cached [`SexpWrapper`](brmspy/types/session.py) so the</span>
-<a id="__codelineno-0-90" name="__codelineno-0-90"></a><span class="sd">    main process never receives a live rpy2 object.</span>
+<a id="__codelineno-0-89" name="__codelineno-0-89"></a><span class="sd">    Converts the `Sexp` into a cached [`SexpWrapper`][brmspy.types.session.SexpWrapper] so</span>
+<a id="__codelineno-0-90" name="__codelineno-0-90"></a><span class="sd">    the main process never receives a live rpy2 object.</span>
 <a id="__codelineno-0-91" name="__codelineno-0-91"></a><span class="sd">    &quot;&quot;&quot;</span>
 <a id="__codelineno-0-92" name="__codelineno-0-92"></a>    <span class="n">wrapper</span> <span class="o">=</span> <span class="n">_cache_single</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
 <a id="__codelineno-0-93" name="__codelineno-0-93"></a>    <span class="k">return</span> <span class="p">(</span><span class="n">SexpWrapper</span><span class="p">,</span> <span class="p">(</span><span class="n">wrapper</span><span class="o">.</span><span class="n">_rid</span><span class="p">,</span> <span class="n">wrapper</span><span class="o">.</span><span class="n">_repr</span><span class="p">))</span>

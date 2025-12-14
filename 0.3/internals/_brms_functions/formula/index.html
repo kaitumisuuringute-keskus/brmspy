@@ -5210,7 +5210,7 @@ resolved to the original <code>Sexp</code> again.</p>
         <p>A composite formula expression built from parts.</p>
 <p><code>FormulaConstruct</code> stores a tree of nodes (<code>FormulaPart</code> and/or R objects)
 representing expressions combined with <code>+</code>. It is primarily created by
-calling the public formula helpers exposed by <a href="brmspy/brms/__init__.py"><code>brmspy.brms</code></a>.</p>
+calling the public formula helpers exposed by <a class="autorefs autorefs-internal" href="../../../api/brms/#brmspy.brms"><code>brmspy.brms</code></a>.</p>
 
 
 <details class="note" open>
@@ -5220,8 +5220,8 @@ calling the public formula helpers exposed by <a href="brmspy/brms/__init__.py">
 <li><code>a + b + c</code> becomes a single summand (one “group”)</li>
 <li><code>(a + b) + (a + b)</code> becomes two summands (two “groups”)</li>
 </ul>
-<p>Use <a href="brmspy/types/formula_dsl.py"><code>iter_summands()</code></a> to iterate over these
-groups in a deterministic way.</p>
+<p>Use <a class="autorefs autorefs-internal" title="iter_summands()" href="../../../api/types/formula_dsl/#brmspy.types.formula_dsl.FormulaConstruct.iter_summands"><code>iter_summands()</code></a>
+to iterate over these groups in a deterministic way.</p>
 </details>
 
 
@@ -5425,14 +5425,15 @@ groups in a deterministic way.</p>
 <span class="normal"><a href="#__codelineno-0-359">359</a></span>
 <span class="normal"><a href="#__codelineno-0-360">360</a></span>
 <span class="normal"><a href="#__codelineno-0-361">361</a></span>
-<span class="normal"><a href="#__codelineno-0-362">362</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-169" name="__codelineno-0-169"></a><span class="nd">@dataclass</span>
+<span class="normal"><a href="#__codelineno-0-362">362</a></span>
+<span class="normal"><a href="#__codelineno-0-363">363</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-169" name="__codelineno-0-169"></a><span class="nd">@dataclass</span>
 <a id="__codelineno-0-170" name="__codelineno-0-170"></a><span class="k">class</span><span class="w"> </span><span class="nc">FormulaConstruct</span><span class="p">:</span>
 <a id="__codelineno-0-171" name="__codelineno-0-171"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-0-172" name="__codelineno-0-172"></a><span class="sd">    A composite formula expression built from parts.</span>
 <a id="__codelineno-0-173" name="__codelineno-0-173"></a>
 <a id="__codelineno-0-174" name="__codelineno-0-174"></a><span class="sd">    `FormulaConstruct` stores a tree of nodes (`FormulaPart` and/or R objects)</span>
 <a id="__codelineno-0-175" name="__codelineno-0-175"></a><span class="sd">    representing expressions combined with `+`. It is primarily created by</span>
-<a id="__codelineno-0-176" name="__codelineno-0-176"></a><span class="sd">    calling the public formula helpers exposed by [`brmspy.brms`](brmspy/brms/__init__.py).</span>
+<a id="__codelineno-0-176" name="__codelineno-0-176"></a><span class="sd">    calling the public formula helpers exposed by [`brmspy.brms`][brmspy.brms].</span>
 <a id="__codelineno-0-177" name="__codelineno-0-177"></a>
 <a id="__codelineno-0-178" name="__codelineno-0-178"></a><span class="sd">    Notes</span>
 <a id="__codelineno-0-179" name="__codelineno-0-179"></a><span class="sd">    -----</span>
@@ -5441,8 +5442,8 @@ groups in a deterministic way.</p>
 <a id="__codelineno-0-182" name="__codelineno-0-182"></a><span class="sd">    - `a + b + c` becomes a single summand (one “group”)</span>
 <a id="__codelineno-0-183" name="__codelineno-0-183"></a><span class="sd">    - `(a + b) + (a + b)` becomes two summands (two “groups”)</span>
 <a id="__codelineno-0-184" name="__codelineno-0-184"></a>
-<a id="__codelineno-0-185" name="__codelineno-0-185"></a><span class="sd">    Use [`iter_summands()`](brmspy/types/formula_dsl.py) to iterate over these</span>
-<a id="__codelineno-0-186" name="__codelineno-0-186"></a><span class="sd">    groups in a deterministic way.</span>
+<a id="__codelineno-0-185" name="__codelineno-0-185"></a><span class="sd">    Use [`iter_summands()`][brmspy.types.formula_dsl.FormulaConstruct.iter_summands]</span>
+<a id="__codelineno-0-186" name="__codelineno-0-186"></a><span class="sd">    to iterate over these groups in a deterministic way.</span>
 <a id="__codelineno-0-187" name="__codelineno-0-187"></a><span class="sd">    &quot;&quot;&quot;</span>
 <a id="__codelineno-0-188" name="__codelineno-0-188"></a>
 <a id="__codelineno-0-189" name="__codelineno-0-189"></a>    <span class="n">_parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Node</span><span class="p">]</span>
@@ -5559,66 +5560,67 @@ groups in a deterministic way.</p>
 <a id="__codelineno-0-300" name="__codelineno-0-300"></a>
 <a id="__codelineno-0-301" name="__codelineno-0-301"></a>    <span class="c1"># Make __iter__ return summands by default</span>
 <a id="__codelineno-0-302" name="__codelineno-0-302"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Summand</span><span class="p">]:</span>
-<a id="__codelineno-0-303" name="__codelineno-0-303"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Alias for [`iter_summands()`](brmspy/types/formula_dsl.py).&quot;&quot;&quot;</span>
+<a id="__codelineno-0-303" name="__codelineno-0-303"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Alias for [`iter_summands()`][brmspy.types.formula_dsl.FormulaConstruct.iter_summands].&quot;&quot;&quot;</span>
 <a id="__codelineno-0-304" name="__codelineno-0-304"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_summands</span><span class="p">()</span>
 <a id="__codelineno-0-305" name="__codelineno-0-305"></a>
 <a id="__codelineno-0-306" name="__codelineno-0-306"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">iterate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">FormulaPart</span> <span class="o">|</span> <span class="n">ProxyListSexpVector</span><span class="p">]:</span>
 <a id="__codelineno-0-307" name="__codelineno-0-307"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-0-308" name="__codelineno-0-308"></a><span class="sd">        Iterate over all leaf nodes in left-to-right order.</span>
 <a id="__codelineno-0-309" name="__codelineno-0-309"></a>
-<a id="__codelineno-0-310" name="__codelineno-0-310"></a><span class="sd">        This flattens the expression tree, unlike [`iter_summands()`](brmspy/types/formula_dsl.py),</span>
-<a id="__codelineno-0-311" name="__codelineno-0-311"></a><span class="sd">        which respects grouping.</span>
-<a id="__codelineno-0-312" name="__codelineno-0-312"></a>
-<a id="__codelineno-0-313" name="__codelineno-0-313"></a><span class="sd">        Returns</span>
-<a id="__codelineno-0-314" name="__codelineno-0-314"></a><span class="sd">        -------</span>
-<a id="__codelineno-0-315" name="__codelineno-0-315"></a><span class="sd">        Iterator[FormulaPart | ProxyListSexpVector]</span>
-<a id="__codelineno-0-316" name="__codelineno-0-316"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-317" name="__codelineno-0-317"></a>
-<a id="__codelineno-0-318" name="__codelineno-0-318"></a>        <span class="k">def</span><span class="w"> </span><span class="nf">_walk</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">Node</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">FormulaPart</span> <span class="o">|</span> <span class="n">ProxyListSexpVector</span><span class="p">]:</span>
-<a id="__codelineno-0-319" name="__codelineno-0-319"></a>            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">FormulaPart</span><span class="p">):</span>
-<a id="__codelineno-0-320" name="__codelineno-0-320"></a>                <span class="k">yield</span> <span class="n">node</span>
-<a id="__codelineno-0-321" name="__codelineno-0-321"></a>            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ProxyListSexpVector</span><span class="p">):</span>
-<a id="__codelineno-0-322" name="__codelineno-0-322"></a>                <span class="k">yield</span> <span class="n">node</span>
-<a id="__codelineno-0-323" name="__codelineno-0-323"></a>            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-<a id="__codelineno-0-324" name="__codelineno-0-324"></a>                <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="p">:</span>
-<a id="__codelineno-0-325" name="__codelineno-0-325"></a>                    <span class="k">yield from</span> <span class="n">_walk</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
-<a id="__codelineno-0-326" name="__codelineno-0-326"></a>            <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-327" name="__codelineno-0-327"></a>                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-<a id="__codelineno-0-328" name="__codelineno-0-328"></a>                    <span class="sa">f</span><span class="s2">&quot;Unexpected node type in FormulaConstruct: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">node</span><span class="p">)</span><span class="si">!r}</span><span class="s2">&quot;</span>
-<a id="__codelineno-0-329" name="__codelineno-0-329"></a>                <span class="p">)</span>
-<a id="__codelineno-0-330" name="__codelineno-0-330"></a>
-<a id="__codelineno-0-331" name="__codelineno-0-331"></a>        <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parts</span><span class="p">:</span>
-<a id="__codelineno-0-332" name="__codelineno-0-332"></a>            <span class="k">yield from</span> <span class="n">_walk</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
-<a id="__codelineno-0-333" name="__codelineno-0-333"></a>
-<a id="__codelineno-0-334" name="__codelineno-0-334"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-335" name="__codelineno-0-335"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pretty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parts</span><span class="p">)</span>
-<a id="__codelineno-0-336" name="__codelineno-0-336"></a>
-<a id="__codelineno-0-337" name="__codelineno-0-337"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_pretty</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">_outer</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-338" name="__codelineno-0-338"></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">FormulaPart</span><span class="p">):</span>
-<a id="__codelineno-0-339" name="__codelineno-0-339"></a>            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-<a id="__codelineno-0-340" name="__codelineno-0-340"></a>
-<a id="__codelineno-0-341" name="__codelineno-0-341"></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="p">(</span><span class="n">ProxyListSexpVector</span><span class="p">,</span> <span class="n">Sexp</span><span class="p">)):</span>
-<a id="__codelineno-0-342" name="__codelineno-0-342"></a>            <span class="k">return</span> <span class="n">_sexp_to_str</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-<a id="__codelineno-0-343" name="__codelineno-0-343"></a>
-<a id="__codelineno-0-344" name="__codelineno-0-344"></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-<a id="__codelineno-0-345" name="__codelineno-0-345"></a>            <span class="c1"># Pretty-print each child</span>
-<a id="__codelineno-0-346" name="__codelineno-0-346"></a>            <span class="n">rendered</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_pretty</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">_outer</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="p">]</span>
-<a id="__codelineno-0-347" name="__codelineno-0-347"></a>
-<a id="__codelineno-0-348" name="__codelineno-0-348"></a>            <span class="c1"># If only one child, no parentheses needed</span>
-<a id="__codelineno-0-349" name="__codelineno-0-349"></a>            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rendered</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-<a id="__codelineno-0-350" name="__codelineno-0-350"></a>                <span class="k">return</span> <span class="n">rendered</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<a id="__codelineno-0-351" name="__codelineno-0-351"></a>
-<a id="__codelineno-0-352" name="__codelineno-0-352"></a>            <span class="c1"># Multiple children → join with &quot; + &quot;</span>
-<a id="__codelineno-0-353" name="__codelineno-0-353"></a>            <span class="n">inner</span> <span class="o">=</span> <span class="s2">&quot; + &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rendered</span><span class="p">)</span>
-<a id="__codelineno-0-354" name="__codelineno-0-354"></a>            <span class="k">if</span> <span class="n">_outer</span><span class="p">:</span>
-<a id="__codelineno-0-355" name="__codelineno-0-355"></a>                <span class="k">return</span> <span class="n">inner</span>
-<a id="__codelineno-0-356" name="__codelineno-0-356"></a>            <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-357" name="__codelineno-0-357"></a>                <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">inner</span><span class="si">}</span><span class="s2">)&quot;</span>
-<a id="__codelineno-0-358" name="__codelineno-0-358"></a>
-<a id="__codelineno-0-359" name="__codelineno-0-359"></a>        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected node type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">node</span><span class="p">)</span><span class="si">!r}</span><span class="s2"> in pretty-printer&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-360" name="__codelineno-0-360"></a>
-<a id="__codelineno-0-361" name="__codelineno-0-361"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-362" name="__codelineno-0-362"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span>
+<a id="__codelineno-0-310" name="__codelineno-0-310"></a><span class="sd">        This flattens the expression tree, unlike</span>
+<a id="__codelineno-0-311" name="__codelineno-0-311"></a><span class="sd">        [`iter_summands()`][brmspy.types.formula_dsl.FormulaConstruct.iter_summands], which</span>
+<a id="__codelineno-0-312" name="__codelineno-0-312"></a><span class="sd">        respects grouping.</span>
+<a id="__codelineno-0-313" name="__codelineno-0-313"></a>
+<a id="__codelineno-0-314" name="__codelineno-0-314"></a><span class="sd">        Returns</span>
+<a id="__codelineno-0-315" name="__codelineno-0-315"></a><span class="sd">        -------</span>
+<a id="__codelineno-0-316" name="__codelineno-0-316"></a><span class="sd">        Iterator[FormulaPart | ProxyListSexpVector]</span>
+<a id="__codelineno-0-317" name="__codelineno-0-317"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-318" name="__codelineno-0-318"></a>
+<a id="__codelineno-0-319" name="__codelineno-0-319"></a>        <span class="k">def</span><span class="w"> </span><span class="nf">_walk</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">Node</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">FormulaPart</span> <span class="o">|</span> <span class="n">ProxyListSexpVector</span><span class="p">]:</span>
+<a id="__codelineno-0-320" name="__codelineno-0-320"></a>            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">FormulaPart</span><span class="p">):</span>
+<a id="__codelineno-0-321" name="__codelineno-0-321"></a>                <span class="k">yield</span> <span class="n">node</span>
+<a id="__codelineno-0-322" name="__codelineno-0-322"></a>            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ProxyListSexpVector</span><span class="p">):</span>
+<a id="__codelineno-0-323" name="__codelineno-0-323"></a>                <span class="k">yield</span> <span class="n">node</span>
+<a id="__codelineno-0-324" name="__codelineno-0-324"></a>            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+<a id="__codelineno-0-325" name="__codelineno-0-325"></a>                <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="p">:</span>
+<a id="__codelineno-0-326" name="__codelineno-0-326"></a>                    <span class="k">yield from</span> <span class="n">_walk</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+<a id="__codelineno-0-327" name="__codelineno-0-327"></a>            <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-328" name="__codelineno-0-328"></a>                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+<a id="__codelineno-0-329" name="__codelineno-0-329"></a>                    <span class="sa">f</span><span class="s2">&quot;Unexpected node type in FormulaConstruct: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">node</span><span class="p">)</span><span class="si">!r}</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-330" name="__codelineno-0-330"></a>                <span class="p">)</span>
+<a id="__codelineno-0-331" name="__codelineno-0-331"></a>
+<a id="__codelineno-0-332" name="__codelineno-0-332"></a>        <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parts</span><span class="p">:</span>
+<a id="__codelineno-0-333" name="__codelineno-0-333"></a>            <span class="k">yield from</span> <span class="n">_walk</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+<a id="__codelineno-0-334" name="__codelineno-0-334"></a>
+<a id="__codelineno-0-335" name="__codelineno-0-335"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-336" name="__codelineno-0-336"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pretty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parts</span><span class="p">)</span>
+<a id="__codelineno-0-337" name="__codelineno-0-337"></a>
+<a id="__codelineno-0-338" name="__codelineno-0-338"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_pretty</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">_outer</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-339" name="__codelineno-0-339"></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">FormulaPart</span><span class="p">):</span>
+<a id="__codelineno-0-340" name="__codelineno-0-340"></a>            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+<a id="__codelineno-0-341" name="__codelineno-0-341"></a>
+<a id="__codelineno-0-342" name="__codelineno-0-342"></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="p">(</span><span class="n">ProxyListSexpVector</span><span class="p">,</span> <span class="n">Sexp</span><span class="p">)):</span>
+<a id="__codelineno-0-343" name="__codelineno-0-343"></a>            <span class="k">return</span> <span class="n">_sexp_to_str</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+<a id="__codelineno-0-344" name="__codelineno-0-344"></a>
+<a id="__codelineno-0-345" name="__codelineno-0-345"></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+<a id="__codelineno-0-346" name="__codelineno-0-346"></a>            <span class="c1"># Pretty-print each child</span>
+<a id="__codelineno-0-347" name="__codelineno-0-347"></a>            <span class="n">rendered</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_pretty</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">_outer</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="p">]</span>
+<a id="__codelineno-0-348" name="__codelineno-0-348"></a>
+<a id="__codelineno-0-349" name="__codelineno-0-349"></a>            <span class="c1"># If only one child, no parentheses needed</span>
+<a id="__codelineno-0-350" name="__codelineno-0-350"></a>            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rendered</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+<a id="__codelineno-0-351" name="__codelineno-0-351"></a>                <span class="k">return</span> <span class="n">rendered</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<a id="__codelineno-0-352" name="__codelineno-0-352"></a>
+<a id="__codelineno-0-353" name="__codelineno-0-353"></a>            <span class="c1"># Multiple children → join with &quot; + &quot;</span>
+<a id="__codelineno-0-354" name="__codelineno-0-354"></a>            <span class="n">inner</span> <span class="o">=</span> <span class="s2">&quot; + &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rendered</span><span class="p">)</span>
+<a id="__codelineno-0-355" name="__codelineno-0-355"></a>            <span class="k">if</span> <span class="n">_outer</span><span class="p">:</span>
+<a id="__codelineno-0-356" name="__codelineno-0-356"></a>                <span class="k">return</span> <span class="n">inner</span>
+<a id="__codelineno-0-357" name="__codelineno-0-357"></a>            <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-358" name="__codelineno-0-358"></a>                <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">inner</span><span class="si">}</span><span class="s2">)&quot;</span>
+<a id="__codelineno-0-359" name="__codelineno-0-359"></a>
+<a id="__codelineno-0-360" name="__codelineno-0-360"></a>        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected node type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">node</span><span class="p">)</span><span class="si">!r}</span><span class="s2"> in pretty-printer&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-361" name="__codelineno-0-361"></a>
+<a id="__codelineno-0-362" name="__codelineno-0-362"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-363" name="__codelineno-0-363"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -6126,7 +6128,7 @@ or <code>ProxyListSexpVector</code>.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Alias for <a href="brmspy/types/formula_dsl.py"><code>iter_summands()</code></a>.</p>
+        <p>Alias for <a class="autorefs autorefs-internal" title="iter_summands()" href="../../../api/types/formula_dsl/#brmspy.types.formula_dsl.FormulaConstruct.iter_summands"><code>iter_summands()</code></a>.</p>
 
 
             <details class="mkdocstrings-source">
@@ -6134,7 +6136,7 @@ or <code>ProxyListSexpVector</code>.</p>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-302">302</a></span>
 <span class="normal"><a href="#__codelineno-0-303">303</a></span>
 <span class="normal"><a href="#__codelineno-0-304">304</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-302" name="__codelineno-0-302"></a><span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Summand</span><span class="p">]:</span>
-<a id="__codelineno-0-303" name="__codelineno-0-303"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Alias for [`iter_summands()`](brmspy/types/formula_dsl.py).&quot;&quot;&quot;</span>
+<a id="__codelineno-0-303" name="__codelineno-0-303"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Alias for [`iter_summands()`][brmspy.types.formula_dsl.FormulaConstruct.iter_summands].&quot;&quot;&quot;</span>
 <a id="__codelineno-0-304" name="__codelineno-0-304"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_summands</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -6154,8 +6156,9 @@ or <code>ProxyListSexpVector</code>.</p>
     <div class="doc doc-contents ">
 
         <p>Iterate over all leaf nodes in left-to-right order.</p>
-<p>This flattens the expression tree, unlike <a href="brmspy/types/formula_dsl.py"><code>iter_summands()</code></a>,
-which respects grouping.</p>
+<p>This flattens the expression tree, unlike
+<a class="autorefs autorefs-internal" title="iter_summands()" href="../../../api/types/formula_dsl/#brmspy.types.formula_dsl.FormulaConstruct.iter_summands"><code>iter_summands()</code></a>, which
+respects grouping.</p>
 
 
     <p><span class="doc-section-title">Returns:</span></p>
@@ -6218,33 +6221,35 @@ which respects grouping.</p>
 <span class="normal"><a href="#__codelineno-0-329">329</a></span>
 <span class="normal"><a href="#__codelineno-0-330">330</a></span>
 <span class="normal"><a href="#__codelineno-0-331">331</a></span>
-<span class="normal"><a href="#__codelineno-0-332">332</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-306" name="__codelineno-0-306"></a><span class="k">def</span><span class="w"> </span><span class="nf">iterate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">FormulaPart</span> <span class="o">|</span> <span class="n">ProxyListSexpVector</span><span class="p">]:</span>
+<span class="normal"><a href="#__codelineno-0-332">332</a></span>
+<span class="normal"><a href="#__codelineno-0-333">333</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-306" name="__codelineno-0-306"></a><span class="k">def</span><span class="w"> </span><span class="nf">iterate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">FormulaPart</span> <span class="o">|</span> <span class="n">ProxyListSexpVector</span><span class="p">]:</span>
 <a id="__codelineno-0-307" name="__codelineno-0-307"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-0-308" name="__codelineno-0-308"></a><span class="sd">    Iterate over all leaf nodes in left-to-right order.</span>
 <a id="__codelineno-0-309" name="__codelineno-0-309"></a>
-<a id="__codelineno-0-310" name="__codelineno-0-310"></a><span class="sd">    This flattens the expression tree, unlike [`iter_summands()`](brmspy/types/formula_dsl.py),</span>
-<a id="__codelineno-0-311" name="__codelineno-0-311"></a><span class="sd">    which respects grouping.</span>
-<a id="__codelineno-0-312" name="__codelineno-0-312"></a>
-<a id="__codelineno-0-313" name="__codelineno-0-313"></a><span class="sd">    Returns</span>
-<a id="__codelineno-0-314" name="__codelineno-0-314"></a><span class="sd">    -------</span>
-<a id="__codelineno-0-315" name="__codelineno-0-315"></a><span class="sd">    Iterator[FormulaPart | ProxyListSexpVector]</span>
-<a id="__codelineno-0-316" name="__codelineno-0-316"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-317" name="__codelineno-0-317"></a>
-<a id="__codelineno-0-318" name="__codelineno-0-318"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_walk</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">Node</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">FormulaPart</span> <span class="o">|</span> <span class="n">ProxyListSexpVector</span><span class="p">]:</span>
-<a id="__codelineno-0-319" name="__codelineno-0-319"></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">FormulaPart</span><span class="p">):</span>
-<a id="__codelineno-0-320" name="__codelineno-0-320"></a>            <span class="k">yield</span> <span class="n">node</span>
-<a id="__codelineno-0-321" name="__codelineno-0-321"></a>        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ProxyListSexpVector</span><span class="p">):</span>
-<a id="__codelineno-0-322" name="__codelineno-0-322"></a>            <span class="k">yield</span> <span class="n">node</span>
-<a id="__codelineno-0-323" name="__codelineno-0-323"></a>        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-<a id="__codelineno-0-324" name="__codelineno-0-324"></a>            <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="p">:</span>
-<a id="__codelineno-0-325" name="__codelineno-0-325"></a>                <span class="k">yield from</span> <span class="n">_walk</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
-<a id="__codelineno-0-326" name="__codelineno-0-326"></a>        <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-327" name="__codelineno-0-327"></a>            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-<a id="__codelineno-0-328" name="__codelineno-0-328"></a>                <span class="sa">f</span><span class="s2">&quot;Unexpected node type in FormulaConstruct: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">node</span><span class="p">)</span><span class="si">!r}</span><span class="s2">&quot;</span>
-<a id="__codelineno-0-329" name="__codelineno-0-329"></a>            <span class="p">)</span>
-<a id="__codelineno-0-330" name="__codelineno-0-330"></a>
-<a id="__codelineno-0-331" name="__codelineno-0-331"></a>    <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parts</span><span class="p">:</span>
-<a id="__codelineno-0-332" name="__codelineno-0-332"></a>        <span class="k">yield from</span> <span class="n">_walk</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+<a id="__codelineno-0-310" name="__codelineno-0-310"></a><span class="sd">    This flattens the expression tree, unlike</span>
+<a id="__codelineno-0-311" name="__codelineno-0-311"></a><span class="sd">    [`iter_summands()`][brmspy.types.formula_dsl.FormulaConstruct.iter_summands], which</span>
+<a id="__codelineno-0-312" name="__codelineno-0-312"></a><span class="sd">    respects grouping.</span>
+<a id="__codelineno-0-313" name="__codelineno-0-313"></a>
+<a id="__codelineno-0-314" name="__codelineno-0-314"></a><span class="sd">    Returns</span>
+<a id="__codelineno-0-315" name="__codelineno-0-315"></a><span class="sd">    -------</span>
+<a id="__codelineno-0-316" name="__codelineno-0-316"></a><span class="sd">    Iterator[FormulaPart | ProxyListSexpVector]</span>
+<a id="__codelineno-0-317" name="__codelineno-0-317"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-318" name="__codelineno-0-318"></a>
+<a id="__codelineno-0-319" name="__codelineno-0-319"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_walk</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">Node</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">FormulaPart</span> <span class="o">|</span> <span class="n">ProxyListSexpVector</span><span class="p">]:</span>
+<a id="__codelineno-0-320" name="__codelineno-0-320"></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">FormulaPart</span><span class="p">):</span>
+<a id="__codelineno-0-321" name="__codelineno-0-321"></a>            <span class="k">yield</span> <span class="n">node</span>
+<a id="__codelineno-0-322" name="__codelineno-0-322"></a>        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ProxyListSexpVector</span><span class="p">):</span>
+<a id="__codelineno-0-323" name="__codelineno-0-323"></a>            <span class="k">yield</span> <span class="n">node</span>
+<a id="__codelineno-0-324" name="__codelineno-0-324"></a>        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+<a id="__codelineno-0-325" name="__codelineno-0-325"></a>            <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="p">:</span>
+<a id="__codelineno-0-326" name="__codelineno-0-326"></a>                <span class="k">yield from</span> <span class="n">_walk</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+<a id="__codelineno-0-327" name="__codelineno-0-327"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-328" name="__codelineno-0-328"></a>            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+<a id="__codelineno-0-329" name="__codelineno-0-329"></a>                <span class="sa">f</span><span class="s2">&quot;Unexpected node type in FormulaConstruct: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">node</span><span class="p">)</span><span class="si">!r}</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-330" name="__codelineno-0-330"></a>            <span class="p">)</span>
+<a id="__codelineno-0-331" name="__codelineno-0-331"></a>
+<a id="__codelineno-0-332" name="__codelineno-0-332"></a>    <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parts</span><span class="p">:</span>
+<a id="__codelineno-0-333" name="__codelineno-0-333"></a>        <span class="k">yield from</span> <span class="n">_walk</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -6265,9 +6270,9 @@ which respects grouping.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>brmspy/types/formula_dsl.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-334">334</a></span>
-<span class="normal"><a href="#__codelineno-0-335">335</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-334" name="__codelineno-0-334"></a><span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-335" name="__codelineno-0-335"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pretty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parts</span><span class="p">)</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-335">335</a></span>
+<span class="normal"><a href="#__codelineno-0-336">336</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-335" name="__codelineno-0-335"></a><span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-336" name="__codelineno-0-336"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pretty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parts</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -6288,8 +6293,7 @@ which respects grouping.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>brmspy/types/formula_dsl.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-337">337</a></span>
-<span class="normal"><a href="#__codelineno-0-338">338</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-338">338</a></span>
 <span class="normal"><a href="#__codelineno-0-339">339</a></span>
 <span class="normal"><a href="#__codelineno-0-340">340</a></span>
 <span class="normal"><a href="#__codelineno-0-341">341</a></span>
@@ -6310,29 +6314,30 @@ which respects grouping.</p>
 <span class="normal"><a href="#__codelineno-0-356">356</a></span>
 <span class="normal"><a href="#__codelineno-0-357">357</a></span>
 <span class="normal"><a href="#__codelineno-0-358">358</a></span>
-<span class="normal"><a href="#__codelineno-0-359">359</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-337" name="__codelineno-0-337"></a><span class="k">def</span><span class="w"> </span><span class="nf">_pretty</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">_outer</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-338" name="__codelineno-0-338"></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">FormulaPart</span><span class="p">):</span>
-<a id="__codelineno-0-339" name="__codelineno-0-339"></a>        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-<a id="__codelineno-0-340" name="__codelineno-0-340"></a>
-<a id="__codelineno-0-341" name="__codelineno-0-341"></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="p">(</span><span class="n">ProxyListSexpVector</span><span class="p">,</span> <span class="n">Sexp</span><span class="p">)):</span>
-<a id="__codelineno-0-342" name="__codelineno-0-342"></a>        <span class="k">return</span> <span class="n">_sexp_to_str</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-<a id="__codelineno-0-343" name="__codelineno-0-343"></a>
-<a id="__codelineno-0-344" name="__codelineno-0-344"></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-<a id="__codelineno-0-345" name="__codelineno-0-345"></a>        <span class="c1"># Pretty-print each child</span>
-<a id="__codelineno-0-346" name="__codelineno-0-346"></a>        <span class="n">rendered</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_pretty</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">_outer</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="p">]</span>
-<a id="__codelineno-0-347" name="__codelineno-0-347"></a>
-<a id="__codelineno-0-348" name="__codelineno-0-348"></a>        <span class="c1"># If only one child, no parentheses needed</span>
-<a id="__codelineno-0-349" name="__codelineno-0-349"></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rendered</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-<a id="__codelineno-0-350" name="__codelineno-0-350"></a>            <span class="k">return</span> <span class="n">rendered</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<a id="__codelineno-0-351" name="__codelineno-0-351"></a>
-<a id="__codelineno-0-352" name="__codelineno-0-352"></a>        <span class="c1"># Multiple children → join with &quot; + &quot;</span>
-<a id="__codelineno-0-353" name="__codelineno-0-353"></a>        <span class="n">inner</span> <span class="o">=</span> <span class="s2">&quot; + &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rendered</span><span class="p">)</span>
-<a id="__codelineno-0-354" name="__codelineno-0-354"></a>        <span class="k">if</span> <span class="n">_outer</span><span class="p">:</span>
-<a id="__codelineno-0-355" name="__codelineno-0-355"></a>            <span class="k">return</span> <span class="n">inner</span>
-<a id="__codelineno-0-356" name="__codelineno-0-356"></a>        <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-357" name="__codelineno-0-357"></a>            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">inner</span><span class="si">}</span><span class="s2">)&quot;</span>
-<a id="__codelineno-0-358" name="__codelineno-0-358"></a>
-<a id="__codelineno-0-359" name="__codelineno-0-359"></a>    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected node type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">node</span><span class="p">)</span><span class="si">!r}</span><span class="s2"> in pretty-printer&quot;</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-359">359</a></span>
+<span class="normal"><a href="#__codelineno-0-360">360</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-338" name="__codelineno-0-338"></a><span class="k">def</span><span class="w"> </span><span class="nf">_pretty</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">_outer</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-339" name="__codelineno-0-339"></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">FormulaPart</span><span class="p">):</span>
+<a id="__codelineno-0-340" name="__codelineno-0-340"></a>        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+<a id="__codelineno-0-341" name="__codelineno-0-341"></a>
+<a id="__codelineno-0-342" name="__codelineno-0-342"></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="p">(</span><span class="n">ProxyListSexpVector</span><span class="p">,</span> <span class="n">Sexp</span><span class="p">)):</span>
+<a id="__codelineno-0-343" name="__codelineno-0-343"></a>        <span class="k">return</span> <span class="n">_sexp_to_str</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+<a id="__codelineno-0-344" name="__codelineno-0-344"></a>
+<a id="__codelineno-0-345" name="__codelineno-0-345"></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+<a id="__codelineno-0-346" name="__codelineno-0-346"></a>        <span class="c1"># Pretty-print each child</span>
+<a id="__codelineno-0-347" name="__codelineno-0-347"></a>        <span class="n">rendered</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_pretty</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">_outer</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="p">]</span>
+<a id="__codelineno-0-348" name="__codelineno-0-348"></a>
+<a id="__codelineno-0-349" name="__codelineno-0-349"></a>        <span class="c1"># If only one child, no parentheses needed</span>
+<a id="__codelineno-0-350" name="__codelineno-0-350"></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rendered</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+<a id="__codelineno-0-351" name="__codelineno-0-351"></a>            <span class="k">return</span> <span class="n">rendered</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<a id="__codelineno-0-352" name="__codelineno-0-352"></a>
+<a id="__codelineno-0-353" name="__codelineno-0-353"></a>        <span class="c1"># Multiple children → join with &quot; + &quot;</span>
+<a id="__codelineno-0-354" name="__codelineno-0-354"></a>        <span class="n">inner</span> <span class="o">=</span> <span class="s2">&quot; + &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rendered</span><span class="p">)</span>
+<a id="__codelineno-0-355" name="__codelineno-0-355"></a>        <span class="k">if</span> <span class="n">_outer</span><span class="p">:</span>
+<a id="__codelineno-0-356" name="__codelineno-0-356"></a>            <span class="k">return</span> <span class="n">inner</span>
+<a id="__codelineno-0-357" name="__codelineno-0-357"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-358" name="__codelineno-0-358"></a>            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">inner</span><span class="si">}</span><span class="s2">)&quot;</span>
+<a id="__codelineno-0-359" name="__codelineno-0-359"></a>
+<a id="__codelineno-0-360" name="__codelineno-0-360"></a>    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected node type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">node</span><span class="p">)</span><span class="si">!r}</span><span class="s2"> in pretty-printer&quot;</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -6353,9 +6358,9 @@ which respects grouping.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>brmspy/types/formula_dsl.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-361">361</a></span>
-<span class="normal"><a href="#__codelineno-0-362">362</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-361" name="__codelineno-0-361"></a><span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-362" name="__codelineno-0-362"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-362">362</a></span>
+<span class="normal"><a href="#__codelineno-0-363">363</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-362" name="__codelineno-0-362"></a><span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-363" name="__codelineno-0-363"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -6408,7 +6413,12 @@ which respects grouping.</p>
         <p>A single formula helper invocation.</p>
 <p>Instances of this type represent a call like <code>bf("y ~ x")</code> or <code>set_rescor(True)</code>
 without executing anything. They are primarily used as nodes inside a
-<a href="brmspy/types/formula_dsl.py"><code>FormulaConstruct</code></a>.</p>
+<a class="autorefs autorefs-internal" title="FormulaConstruct
+
+
+  
+      dataclass
+  " href="../../../api/types/formula_dsl/#brmspy.types.formula_dsl.FormulaConstruct"><code>FormulaConstruct</code></a>.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -6477,7 +6487,7 @@ without executing anything. They are primarily used as nodes inside a
 <details class="note" open>
   <summary>Notes</summary>
   <p>This is a low-level type. Most users should construct these via the public
-helper functions in <a href="brmspy/brms/__init__.py"><code>brmspy.brms</code></a>.</p>
+helper functions in <a class="autorefs autorefs-internal" href="../../../api/brms/#brmspy.brms"><code>brmspy.brms</code></a>.</p>
 </details>
 
 
@@ -6552,7 +6562,7 @@ helper functions in <a href="brmspy/brms/__init__.py"><code>brmspy.brms</code></
 <a id="__codelineno-0-62" name="__codelineno-0-62"></a>
 <a id="__codelineno-0-63" name="__codelineno-0-63"></a><span class="sd">    Instances of this type represent a call like `bf(&quot;y ~ x&quot;)` or `set_rescor(True)`</span>
 <a id="__codelineno-0-64" name="__codelineno-0-64"></a><span class="sd">    without executing anything. They are primarily used as nodes inside a</span>
-<a id="__codelineno-0-65" name="__codelineno-0-65"></a><span class="sd">    [`FormulaConstruct`](brmspy/types/formula_dsl.py).</span>
+<a id="__codelineno-0-65" name="__codelineno-0-65"></a><span class="sd">    [`FormulaConstruct`][brmspy.types.formula_dsl.FormulaConstruct].</span>
 <a id="__codelineno-0-66" name="__codelineno-0-66"></a>
 <a id="__codelineno-0-67" name="__codelineno-0-67"></a><span class="sd">    Parameters</span>
 <a id="__codelineno-0-68" name="__codelineno-0-68"></a><span class="sd">    ----------</span>
@@ -6566,7 +6576,7 @@ helper functions in <a href="brmspy/brms/__init__.py"><code>brmspy.brms</code></
 <a id="__codelineno-0-76" name="__codelineno-0-76"></a><span class="sd">    Notes</span>
 <a id="__codelineno-0-77" name="__codelineno-0-77"></a><span class="sd">    -----</span>
 <a id="__codelineno-0-78" name="__codelineno-0-78"></a><span class="sd">    This is a low-level type. Most users should construct these via the public</span>
-<a id="__codelineno-0-79" name="__codelineno-0-79"></a><span class="sd">    helper functions in [`brmspy.brms`](brmspy/brms/__init__.py).</span>
+<a id="__codelineno-0-79" name="__codelineno-0-79"></a><span class="sd">    helper functions in [`brmspy.brms`][brmspy.brms].</span>
 <a id="__codelineno-0-80" name="__codelineno-0-80"></a><span class="sd">    &quot;&quot;&quot;</span>
 <a id="__codelineno-0-81" name="__codelineno-0-81"></a>
 <a id="__codelineno-0-82" name="__codelineno-0-82"></a>    <span class="n">_fun</span><span class="p">:</span> <span class="n">_FORMULA_FUNCTION_WHITELIST</span>

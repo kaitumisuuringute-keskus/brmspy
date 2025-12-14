@@ -4107,8 +4107,9 @@ having this alias.</p>
 
 
         <p>Minimal interface for allocating and attaching shared-memory blocks.</p>
-<p>The concrete implementation lives in <a href="brmspy/_session/transport.py"><code>brmspy._session.transport.ShmPool</code></a>
-and tracks blocks so they can be closed on teardown.</p>
+<p>The concrete implementation lives in
+<a class="autorefs autorefs-internal" title="ShmPool" href="../../../../_session/transport/#brmspy._session.transport.ShmPool"><code>brmspy._session.transport.ShmPool</code></a> and tracks
+blocks so they can be closed on teardown.</p>
 
 
 
@@ -4180,68 +4181,70 @@ and tracks blocks so they can be closed on teardown.</p>
 <span class="normal"><a href="#__codelineno-0-134">134</a></span>
 <span class="normal"><a href="#__codelineno-0-135">135</a></span>
 <span class="normal"><a href="#__codelineno-0-136">136</a></span>
-<span class="normal"><a href="#__codelineno-0-137">137</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-76" name="__codelineno-0-76"></a><span class="k">class</span><span class="w"> </span><span class="nc">ShmPool</span><span class="p">:</span>
+<span class="normal"><a href="#__codelineno-0-137">137</a></span>
+<span class="normal"><a href="#__codelineno-0-138">138</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-76" name="__codelineno-0-76"></a><span class="k">class</span><span class="w"> </span><span class="nc">ShmPool</span><span class="p">:</span>
 <a id="__codelineno-0-77" name="__codelineno-0-77"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-0-78" name="__codelineno-0-78"></a><span class="sd">    Minimal interface for allocating and attaching shared-memory blocks.</span>
 <a id="__codelineno-0-79" name="__codelineno-0-79"></a>
-<a id="__codelineno-0-80" name="__codelineno-0-80"></a><span class="sd">    The concrete implementation lives in [`brmspy._session.transport.ShmPool`](brmspy/_session/transport.py)</span>
-<a id="__codelineno-0-81" name="__codelineno-0-81"></a><span class="sd">    and tracks blocks so they can be closed on teardown.</span>
-<a id="__codelineno-0-82" name="__codelineno-0-82"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-83" name="__codelineno-0-83"></a>
-<a id="__codelineno-0-84" name="__codelineno-0-84"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">manager</span><span class="p">:</span> <span class="n">SharedMemoryManager</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-85" name="__codelineno-0-85"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-86" name="__codelineno-0-86"></a><span class="sd">        Create a pool bound to an existing `SharedMemoryManager`.</span>
-<a id="__codelineno-0-87" name="__codelineno-0-87"></a>
-<a id="__codelineno-0-88" name="__codelineno-0-88"></a><span class="sd">        Parameters</span>
-<a id="__codelineno-0-89" name="__codelineno-0-89"></a><span class="sd">        ----------</span>
-<a id="__codelineno-0-90" name="__codelineno-0-90"></a><span class="sd">        manager : multiprocessing.managers.SharedMemoryManager</span>
-<a id="__codelineno-0-91" name="__codelineno-0-91"></a><span class="sd">            Manager used to allocate blocks.</span>
-<a id="__codelineno-0-92" name="__codelineno-0-92"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-93" name="__codelineno-0-93"></a>        <span class="o">...</span>
-<a id="__codelineno-0-94" name="__codelineno-0-94"></a>
-<a id="__codelineno-0-95" name="__codelineno-0-95"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">alloc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ShmBlock</span><span class="p">:</span>
-<a id="__codelineno-0-96" name="__codelineno-0-96"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-97" name="__codelineno-0-97"></a><span class="sd">        Allocate a new shared-memory block.</span>
-<a id="__codelineno-0-98" name="__codelineno-0-98"></a>
-<a id="__codelineno-0-99" name="__codelineno-0-99"></a><span class="sd">        Parameters</span>
-<a id="__codelineno-0-100" name="__codelineno-0-100"></a><span class="sd">        ----------</span>
-<a id="__codelineno-0-101" name="__codelineno-0-101"></a><span class="sd">        size : int</span>
-<a id="__codelineno-0-102" name="__codelineno-0-102"></a><span class="sd">            Size in bytes.</span>
-<a id="__codelineno-0-103" name="__codelineno-0-103"></a>
-<a id="__codelineno-0-104" name="__codelineno-0-104"></a><span class="sd">        Returns</span>
-<a id="__codelineno-0-105" name="__codelineno-0-105"></a><span class="sd">        -------</span>
-<a id="__codelineno-0-106" name="__codelineno-0-106"></a><span class="sd">        ShmBlock</span>
-<a id="__codelineno-0-107" name="__codelineno-0-107"></a><span class="sd">            Newly allocated block.</span>
-<a id="__codelineno-0-108" name="__codelineno-0-108"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-109" name="__codelineno-0-109"></a>        <span class="o">...</span>
-<a id="__codelineno-0-110" name="__codelineno-0-110"></a>
-<a id="__codelineno-0-111" name="__codelineno-0-111"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">attach</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ShmBlock</span><span class="p">:</span>
-<a id="__codelineno-0-112" name="__codelineno-0-112"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-113" name="__codelineno-0-113"></a><span class="sd">        Attach to an existing shared-memory block by name.</span>
-<a id="__codelineno-0-114" name="__codelineno-0-114"></a>
-<a id="__codelineno-0-115" name="__codelineno-0-115"></a><span class="sd">        Parameters</span>
-<a id="__codelineno-0-116" name="__codelineno-0-116"></a><span class="sd">        ----------</span>
-<a id="__codelineno-0-117" name="__codelineno-0-117"></a><span class="sd">        name : str</span>
-<a id="__codelineno-0-118" name="__codelineno-0-118"></a><span class="sd">            Shared memory block name.</span>
-<a id="__codelineno-0-119" name="__codelineno-0-119"></a><span class="sd">        size : int</span>
-<a id="__codelineno-0-120" name="__codelineno-0-120"></a><span class="sd">            Allocated block size in bytes.</span>
-<a id="__codelineno-0-121" name="__codelineno-0-121"></a>
-<a id="__codelineno-0-122" name="__codelineno-0-122"></a><span class="sd">        Returns</span>
-<a id="__codelineno-0-123" name="__codelineno-0-123"></a><span class="sd">        -------</span>
-<a id="__codelineno-0-124" name="__codelineno-0-124"></a><span class="sd">        ShmBlock</span>
-<a id="__codelineno-0-125" name="__codelineno-0-125"></a><span class="sd">            Attached block.</span>
-<a id="__codelineno-0-126" name="__codelineno-0-126"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-127" name="__codelineno-0-127"></a>        <span class="o">...</span>
-<a id="__codelineno-0-128" name="__codelineno-0-128"></a>
-<a id="__codelineno-0-129" name="__codelineno-0-129"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">close_all</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-130" name="__codelineno-0-130"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-131" name="__codelineno-0-131"></a><span class="sd">        Close all tracked shared-memory handles owned by this pool.</span>
-<a id="__codelineno-0-132" name="__codelineno-0-132"></a>
-<a id="__codelineno-0-133" name="__codelineno-0-133"></a><span class="sd">        Returns</span>
-<a id="__codelineno-0-134" name="__codelineno-0-134"></a><span class="sd">        -------</span>
-<a id="__codelineno-0-135" name="__codelineno-0-135"></a><span class="sd">        None</span>
-<a id="__codelineno-0-136" name="__codelineno-0-136"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-137" name="__codelineno-0-137"></a>        <span class="o">...</span>
+<a id="__codelineno-0-80" name="__codelineno-0-80"></a><span class="sd">    The concrete implementation lives in</span>
+<a id="__codelineno-0-81" name="__codelineno-0-81"></a><span class="sd">    [`brmspy._session.transport.ShmPool`][brmspy._session.transport.ShmPool] and tracks</span>
+<a id="__codelineno-0-82" name="__codelineno-0-82"></a><span class="sd">    blocks so they can be closed on teardown.</span>
+<a id="__codelineno-0-83" name="__codelineno-0-83"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-84" name="__codelineno-0-84"></a>
+<a id="__codelineno-0-85" name="__codelineno-0-85"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">manager</span><span class="p">:</span> <span class="n">SharedMemoryManager</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-86" name="__codelineno-0-86"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-87" name="__codelineno-0-87"></a><span class="sd">        Create a pool bound to an existing `SharedMemoryManager`.</span>
+<a id="__codelineno-0-88" name="__codelineno-0-88"></a>
+<a id="__codelineno-0-89" name="__codelineno-0-89"></a><span class="sd">        Parameters</span>
+<a id="__codelineno-0-90" name="__codelineno-0-90"></a><span class="sd">        ----------</span>
+<a id="__codelineno-0-91" name="__codelineno-0-91"></a><span class="sd">        manager : multiprocessing.managers.SharedMemoryManager</span>
+<a id="__codelineno-0-92" name="__codelineno-0-92"></a><span class="sd">            Manager used to allocate blocks.</span>
+<a id="__codelineno-0-93" name="__codelineno-0-93"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-94" name="__codelineno-0-94"></a>        <span class="o">...</span>
+<a id="__codelineno-0-95" name="__codelineno-0-95"></a>
+<a id="__codelineno-0-96" name="__codelineno-0-96"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">alloc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ShmBlock</span><span class="p">:</span>
+<a id="__codelineno-0-97" name="__codelineno-0-97"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-98" name="__codelineno-0-98"></a><span class="sd">        Allocate a new shared-memory block.</span>
+<a id="__codelineno-0-99" name="__codelineno-0-99"></a>
+<a id="__codelineno-0-100" name="__codelineno-0-100"></a><span class="sd">        Parameters</span>
+<a id="__codelineno-0-101" name="__codelineno-0-101"></a><span class="sd">        ----------</span>
+<a id="__codelineno-0-102" name="__codelineno-0-102"></a><span class="sd">        size : int</span>
+<a id="__codelineno-0-103" name="__codelineno-0-103"></a><span class="sd">            Size in bytes.</span>
+<a id="__codelineno-0-104" name="__codelineno-0-104"></a>
+<a id="__codelineno-0-105" name="__codelineno-0-105"></a><span class="sd">        Returns</span>
+<a id="__codelineno-0-106" name="__codelineno-0-106"></a><span class="sd">        -------</span>
+<a id="__codelineno-0-107" name="__codelineno-0-107"></a><span class="sd">        ShmBlock</span>
+<a id="__codelineno-0-108" name="__codelineno-0-108"></a><span class="sd">            Newly allocated block.</span>
+<a id="__codelineno-0-109" name="__codelineno-0-109"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-110" name="__codelineno-0-110"></a>        <span class="o">...</span>
+<a id="__codelineno-0-111" name="__codelineno-0-111"></a>
+<a id="__codelineno-0-112" name="__codelineno-0-112"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">attach</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ShmBlock</span><span class="p">:</span>
+<a id="__codelineno-0-113" name="__codelineno-0-113"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-114" name="__codelineno-0-114"></a><span class="sd">        Attach to an existing shared-memory block by name.</span>
+<a id="__codelineno-0-115" name="__codelineno-0-115"></a>
+<a id="__codelineno-0-116" name="__codelineno-0-116"></a><span class="sd">        Parameters</span>
+<a id="__codelineno-0-117" name="__codelineno-0-117"></a><span class="sd">        ----------</span>
+<a id="__codelineno-0-118" name="__codelineno-0-118"></a><span class="sd">        name : str</span>
+<a id="__codelineno-0-119" name="__codelineno-0-119"></a><span class="sd">            Shared memory block name.</span>
+<a id="__codelineno-0-120" name="__codelineno-0-120"></a><span class="sd">        size : int</span>
+<a id="__codelineno-0-121" name="__codelineno-0-121"></a><span class="sd">            Allocated block size in bytes.</span>
+<a id="__codelineno-0-122" name="__codelineno-0-122"></a>
+<a id="__codelineno-0-123" name="__codelineno-0-123"></a><span class="sd">        Returns</span>
+<a id="__codelineno-0-124" name="__codelineno-0-124"></a><span class="sd">        -------</span>
+<a id="__codelineno-0-125" name="__codelineno-0-125"></a><span class="sd">        ShmBlock</span>
+<a id="__codelineno-0-126" name="__codelineno-0-126"></a><span class="sd">            Attached block.</span>
+<a id="__codelineno-0-127" name="__codelineno-0-127"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-128" name="__codelineno-0-128"></a>        <span class="o">...</span>
+<a id="__codelineno-0-129" name="__codelineno-0-129"></a>
+<a id="__codelineno-0-130" name="__codelineno-0-130"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">close_all</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-131" name="__codelineno-0-131"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-132" name="__codelineno-0-132"></a><span class="sd">        Close all tracked shared-memory handles owned by this pool.</span>
+<a id="__codelineno-0-133" name="__codelineno-0-133"></a>
+<a id="__codelineno-0-134" name="__codelineno-0-134"></a><span class="sd">        Returns</span>
+<a id="__codelineno-0-135" name="__codelineno-0-135"></a><span class="sd">        -------</span>
+<a id="__codelineno-0-136" name="__codelineno-0-136"></a><span class="sd">        None</span>
+<a id="__codelineno-0-137" name="__codelineno-0-137"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-138" name="__codelineno-0-138"></a>        <span class="o">...</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -4305,8 +4308,7 @@ and tracks blocks so they can be closed on teardown.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>brmspy/types/shm.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-84">84</a></span>
-<span class="normal"><a href="#__codelineno-0-85">85</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-85">85</a></span>
 <span class="normal"><a href="#__codelineno-0-86">86</a></span>
 <span class="normal"><a href="#__codelineno-0-87">87</a></span>
 <span class="normal"><a href="#__codelineno-0-88">88</a></span>
@@ -4314,16 +4316,17 @@ and tracks blocks so they can be closed on teardown.</p>
 <span class="normal"><a href="#__codelineno-0-90">90</a></span>
 <span class="normal"><a href="#__codelineno-0-91">91</a></span>
 <span class="normal"><a href="#__codelineno-0-92">92</a></span>
-<span class="normal"><a href="#__codelineno-0-93">93</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-84" name="__codelineno-0-84"></a><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">manager</span><span class="p">:</span> <span class="n">SharedMemoryManager</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-85" name="__codelineno-0-85"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-86" name="__codelineno-0-86"></a><span class="sd">    Create a pool bound to an existing `SharedMemoryManager`.</span>
-<a id="__codelineno-0-87" name="__codelineno-0-87"></a>
-<a id="__codelineno-0-88" name="__codelineno-0-88"></a><span class="sd">    Parameters</span>
-<a id="__codelineno-0-89" name="__codelineno-0-89"></a><span class="sd">    ----------</span>
-<a id="__codelineno-0-90" name="__codelineno-0-90"></a><span class="sd">    manager : multiprocessing.managers.SharedMemoryManager</span>
-<a id="__codelineno-0-91" name="__codelineno-0-91"></a><span class="sd">        Manager used to allocate blocks.</span>
-<a id="__codelineno-0-92" name="__codelineno-0-92"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-93" name="__codelineno-0-93"></a>    <span class="o">...</span>
+<span class="normal"><a href="#__codelineno-0-93">93</a></span>
+<span class="normal"><a href="#__codelineno-0-94">94</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-85" name="__codelineno-0-85"></a><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">manager</span><span class="p">:</span> <span class="n">SharedMemoryManager</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-86" name="__codelineno-0-86"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-87" name="__codelineno-0-87"></a><span class="sd">    Create a pool bound to an existing `SharedMemoryManager`.</span>
+<a id="__codelineno-0-88" name="__codelineno-0-88"></a>
+<a id="__codelineno-0-89" name="__codelineno-0-89"></a><span class="sd">    Parameters</span>
+<a id="__codelineno-0-90" name="__codelineno-0-90"></a><span class="sd">    ----------</span>
+<a id="__codelineno-0-91" name="__codelineno-0-91"></a><span class="sd">    manager : multiprocessing.managers.SharedMemoryManager</span>
+<a id="__codelineno-0-92" name="__codelineno-0-92"></a><span class="sd">        Manager used to allocate blocks.</span>
+<a id="__codelineno-0-93" name="__codelineno-0-93"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-94" name="__codelineno-0-94"></a>    <span class="o">...</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4405,8 +4408,7 @@ and tracks blocks so they can be closed on teardown.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>brmspy/types/shm.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-95"> 95</a></span>
-<span class="normal"><a href="#__codelineno-0-96"> 96</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-96"> 96</a></span>
 <span class="normal"><a href="#__codelineno-0-97"> 97</a></span>
 <span class="normal"><a href="#__codelineno-0-98"> 98</a></span>
 <span class="normal"><a href="#__codelineno-0-99"> 99</a></span>
@@ -4419,21 +4421,22 @@ and tracks blocks so they can be closed on teardown.</p>
 <span class="normal"><a href="#__codelineno-0-106">106</a></span>
 <span class="normal"><a href="#__codelineno-0-107">107</a></span>
 <span class="normal"><a href="#__codelineno-0-108">108</a></span>
-<span class="normal"><a href="#__codelineno-0-109">109</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-95" name="__codelineno-0-95"></a><span class="k">def</span><span class="w"> </span><span class="nf">alloc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ShmBlock</span><span class="p">:</span>
-<a id="__codelineno-0-96" name="__codelineno-0-96"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-97" name="__codelineno-0-97"></a><span class="sd">    Allocate a new shared-memory block.</span>
-<a id="__codelineno-0-98" name="__codelineno-0-98"></a>
-<a id="__codelineno-0-99" name="__codelineno-0-99"></a><span class="sd">    Parameters</span>
-<a id="__codelineno-0-100" name="__codelineno-0-100"></a><span class="sd">    ----------</span>
-<a id="__codelineno-0-101" name="__codelineno-0-101"></a><span class="sd">    size : int</span>
-<a id="__codelineno-0-102" name="__codelineno-0-102"></a><span class="sd">        Size in bytes.</span>
-<a id="__codelineno-0-103" name="__codelineno-0-103"></a>
-<a id="__codelineno-0-104" name="__codelineno-0-104"></a><span class="sd">    Returns</span>
-<a id="__codelineno-0-105" name="__codelineno-0-105"></a><span class="sd">    -------</span>
-<a id="__codelineno-0-106" name="__codelineno-0-106"></a><span class="sd">    ShmBlock</span>
-<a id="__codelineno-0-107" name="__codelineno-0-107"></a><span class="sd">        Newly allocated block.</span>
-<a id="__codelineno-0-108" name="__codelineno-0-108"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-109" name="__codelineno-0-109"></a>    <span class="o">...</span>
+<span class="normal"><a href="#__codelineno-0-109">109</a></span>
+<span class="normal"><a href="#__codelineno-0-110">110</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-96" name="__codelineno-0-96"></a><span class="k">def</span><span class="w"> </span><span class="nf">alloc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ShmBlock</span><span class="p">:</span>
+<a id="__codelineno-0-97" name="__codelineno-0-97"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-98" name="__codelineno-0-98"></a><span class="sd">    Allocate a new shared-memory block.</span>
+<a id="__codelineno-0-99" name="__codelineno-0-99"></a>
+<a id="__codelineno-0-100" name="__codelineno-0-100"></a><span class="sd">    Parameters</span>
+<a id="__codelineno-0-101" name="__codelineno-0-101"></a><span class="sd">    ----------</span>
+<a id="__codelineno-0-102" name="__codelineno-0-102"></a><span class="sd">    size : int</span>
+<a id="__codelineno-0-103" name="__codelineno-0-103"></a><span class="sd">        Size in bytes.</span>
+<a id="__codelineno-0-104" name="__codelineno-0-104"></a>
+<a id="__codelineno-0-105" name="__codelineno-0-105"></a><span class="sd">    Returns</span>
+<a id="__codelineno-0-106" name="__codelineno-0-106"></a><span class="sd">    -------</span>
+<a id="__codelineno-0-107" name="__codelineno-0-107"></a><span class="sd">    ShmBlock</span>
+<a id="__codelineno-0-108" name="__codelineno-0-108"></a><span class="sd">        Newly allocated block.</span>
+<a id="__codelineno-0-109" name="__codelineno-0-109"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-110" name="__codelineno-0-110"></a>    <span class="o">...</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4531,8 +4534,7 @@ and tracks blocks so they can be closed on teardown.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>brmspy/types/shm.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-111">111</a></span>
-<span class="normal"><a href="#__codelineno-0-112">112</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-112">112</a></span>
 <span class="normal"><a href="#__codelineno-0-113">113</a></span>
 <span class="normal"><a href="#__codelineno-0-114">114</a></span>
 <span class="normal"><a href="#__codelineno-0-115">115</a></span>
@@ -4547,23 +4549,24 @@ and tracks blocks so they can be closed on teardown.</p>
 <span class="normal"><a href="#__codelineno-0-124">124</a></span>
 <span class="normal"><a href="#__codelineno-0-125">125</a></span>
 <span class="normal"><a href="#__codelineno-0-126">126</a></span>
-<span class="normal"><a href="#__codelineno-0-127">127</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-111" name="__codelineno-0-111"></a><span class="k">def</span><span class="w"> </span><span class="nf">attach</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ShmBlock</span><span class="p">:</span>
-<a id="__codelineno-0-112" name="__codelineno-0-112"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-113" name="__codelineno-0-113"></a><span class="sd">    Attach to an existing shared-memory block by name.</span>
-<a id="__codelineno-0-114" name="__codelineno-0-114"></a>
-<a id="__codelineno-0-115" name="__codelineno-0-115"></a><span class="sd">    Parameters</span>
-<a id="__codelineno-0-116" name="__codelineno-0-116"></a><span class="sd">    ----------</span>
-<a id="__codelineno-0-117" name="__codelineno-0-117"></a><span class="sd">    name : str</span>
-<a id="__codelineno-0-118" name="__codelineno-0-118"></a><span class="sd">        Shared memory block name.</span>
-<a id="__codelineno-0-119" name="__codelineno-0-119"></a><span class="sd">    size : int</span>
-<a id="__codelineno-0-120" name="__codelineno-0-120"></a><span class="sd">        Allocated block size in bytes.</span>
-<a id="__codelineno-0-121" name="__codelineno-0-121"></a>
-<a id="__codelineno-0-122" name="__codelineno-0-122"></a><span class="sd">    Returns</span>
-<a id="__codelineno-0-123" name="__codelineno-0-123"></a><span class="sd">    -------</span>
-<a id="__codelineno-0-124" name="__codelineno-0-124"></a><span class="sd">    ShmBlock</span>
-<a id="__codelineno-0-125" name="__codelineno-0-125"></a><span class="sd">        Attached block.</span>
-<a id="__codelineno-0-126" name="__codelineno-0-126"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-127" name="__codelineno-0-127"></a>    <span class="o">...</span>
+<span class="normal"><a href="#__codelineno-0-127">127</a></span>
+<span class="normal"><a href="#__codelineno-0-128">128</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-112" name="__codelineno-0-112"></a><span class="k">def</span><span class="w"> </span><span class="nf">attach</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ShmBlock</span><span class="p">:</span>
+<a id="__codelineno-0-113" name="__codelineno-0-113"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-114" name="__codelineno-0-114"></a><span class="sd">    Attach to an existing shared-memory block by name.</span>
+<a id="__codelineno-0-115" name="__codelineno-0-115"></a>
+<a id="__codelineno-0-116" name="__codelineno-0-116"></a><span class="sd">    Parameters</span>
+<a id="__codelineno-0-117" name="__codelineno-0-117"></a><span class="sd">    ----------</span>
+<a id="__codelineno-0-118" name="__codelineno-0-118"></a><span class="sd">    name : str</span>
+<a id="__codelineno-0-119" name="__codelineno-0-119"></a><span class="sd">        Shared memory block name.</span>
+<a id="__codelineno-0-120" name="__codelineno-0-120"></a><span class="sd">    size : int</span>
+<a id="__codelineno-0-121" name="__codelineno-0-121"></a><span class="sd">        Allocated block size in bytes.</span>
+<a id="__codelineno-0-122" name="__codelineno-0-122"></a>
+<a id="__codelineno-0-123" name="__codelineno-0-123"></a><span class="sd">    Returns</span>
+<a id="__codelineno-0-124" name="__codelineno-0-124"></a><span class="sd">    -------</span>
+<a id="__codelineno-0-125" name="__codelineno-0-125"></a><span class="sd">    ShmBlock</span>
+<a id="__codelineno-0-126" name="__codelineno-0-126"></a><span class="sd">        Attached block.</span>
+<a id="__codelineno-0-127" name="__codelineno-0-127"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-128" name="__codelineno-0-128"></a>    <span class="o">...</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4609,23 +4612,23 @@ and tracks blocks so they can be closed on teardown.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>brmspy/types/shm.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-129">129</a></span>
-<span class="normal"><a href="#__codelineno-0-130">130</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-130">130</a></span>
 <span class="normal"><a href="#__codelineno-0-131">131</a></span>
 <span class="normal"><a href="#__codelineno-0-132">132</a></span>
 <span class="normal"><a href="#__codelineno-0-133">133</a></span>
 <span class="normal"><a href="#__codelineno-0-134">134</a></span>
 <span class="normal"><a href="#__codelineno-0-135">135</a></span>
 <span class="normal"><a href="#__codelineno-0-136">136</a></span>
-<span class="normal"><a href="#__codelineno-0-137">137</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-129" name="__codelineno-0-129"></a><span class="k">def</span><span class="w"> </span><span class="nf">close_all</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-130" name="__codelineno-0-130"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-131" name="__codelineno-0-131"></a><span class="sd">    Close all tracked shared-memory handles owned by this pool.</span>
-<a id="__codelineno-0-132" name="__codelineno-0-132"></a>
-<a id="__codelineno-0-133" name="__codelineno-0-133"></a><span class="sd">    Returns</span>
-<a id="__codelineno-0-134" name="__codelineno-0-134"></a><span class="sd">    -------</span>
-<a id="__codelineno-0-135" name="__codelineno-0-135"></a><span class="sd">    None</span>
-<a id="__codelineno-0-136" name="__codelineno-0-136"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-137" name="__codelineno-0-137"></a>    <span class="o">...</span>
+<span class="normal"><a href="#__codelineno-0-137">137</a></span>
+<span class="normal"><a href="#__codelineno-0-138">138</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-130" name="__codelineno-0-130"></a><span class="k">def</span><span class="w"> </span><span class="nf">close_all</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-131" name="__codelineno-0-131"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-132" name="__codelineno-0-132"></a><span class="sd">    Close all tracked shared-memory handles owned by this pool.</span>
+<a id="__codelineno-0-133" name="__codelineno-0-133"></a>
+<a id="__codelineno-0-134" name="__codelineno-0-134"></a><span class="sd">    Returns</span>
+<a id="__codelineno-0-135" name="__codelineno-0-135"></a><span class="sd">    -------</span>
+<a id="__codelineno-0-136" name="__codelineno-0-136"></a><span class="sd">    None</span>
+<a id="__codelineno-0-137" name="__codelineno-0-137"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-138" name="__codelineno-0-138"></a>    <span class="o">...</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>

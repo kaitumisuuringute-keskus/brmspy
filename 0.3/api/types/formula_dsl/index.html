@@ -4005,11 +4005,11 @@
 
         <p>Formula DSL types.</p>
 <p>This module contains lightweight Python types used by the public formula helpers
-(<a href="brmspy/_brms_functions/formula.py"><code>bf()</code></a>, <a href="brmspy/_brms_functions/formula.py"><code>set_rescor()</code></a>, etc.)
+(<a class="autorefs autorefs-internal" title="bf(*formulas, **formula_args)" href="../../brms/#brmspy.brms.bf"><code>bf()</code></a>, <a class="autorefs autorefs-internal" title="set_rescor(rescor=True)" href="../../brms/#brmspy.brms.set_rescor"><code>set_rescor()</code></a>, etc.)
 to represent brms formula expressions in a structured way.</p>
 <p>The main entry point for end users is the set of helpers exposed via
-<a href="brmspy/brms/__init__.py"><code>brmspy.brms</code></a>. Those helpers return <code>FormulaConstruct</code>
-instances which can be combined with <code>+</code> to build multivariate or compound models.</p>
+<a class="autorefs autorefs-internal" href="../../brms/#brmspy.brms"><code>brmspy.brms</code></a>. Those helpers return <code>FormulaConstruct</code> instances
+which can be combined with <code>+</code> to build multivariate or compound models.</p>
 
 
 <details class="note" open>
@@ -4072,7 +4072,12 @@ instances which can be combined with <code>+</code> to build multivariate or com
         <p>A single formula helper invocation.</p>
 <p>Instances of this type represent a call like <code>bf("y ~ x")</code> or <code>set_rescor(True)</code>
 without executing anything. They are primarily used as nodes inside a
-<a href="brmspy/types/formula_dsl.py"><code>FormulaConstruct</code></a>.</p>
+<a class="autorefs autorefs-internal" title="FormulaConstruct
+
+
+  
+      dataclass
+  " href="#brmspy.types.formula_dsl.FormulaConstruct"><code>FormulaConstruct</code></a>.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -4141,7 +4146,7 @@ without executing anything. They are primarily used as nodes inside a
 <details class="note" open>
   <summary>Notes</summary>
   <p>This is a low-level type. Most users should construct these via the public
-helper functions in <a href="brmspy/brms/__init__.py"><code>brmspy.brms</code></a>.</p>
+helper functions in <a class="autorefs autorefs-internal" href="../../brms/#brmspy.brms"><code>brmspy.brms</code></a>.</p>
 </details>
 
 
@@ -4230,7 +4235,7 @@ helper functions in <a href="brmspy/brms/__init__.py"><code>brmspy.brms</code></
         <p>A composite formula expression built from parts.</p>
 <p><code>FormulaConstruct</code> stores a tree of nodes (<code>FormulaPart</code> and/or R objects)
 representing expressions combined with <code>+</code>. It is primarily created by
-calling the public formula helpers exposed by <a href="brmspy/brms/__init__.py"><code>brmspy.brms</code></a>.</p>
+calling the public formula helpers exposed by <a class="autorefs autorefs-internal" href="../../brms/#brmspy.brms"><code>brmspy.brms</code></a>.</p>
 
 
 <details class="note" open>
@@ -4240,8 +4245,8 @@ calling the public formula helpers exposed by <a href="brmspy/brms/__init__.py">
 <li><code>a + b + c</code> becomes a single summand (one “group”)</li>
 <li><code>(a + b) + (a + b)</code> becomes two summands (two “groups”)</li>
 </ul>
-<p>Use <a href="brmspy/types/formula_dsl.py"><code>iter_summands()</code></a> to iterate over these
-groups in a deterministic way.</p>
+<p>Use <a class="autorefs autorefs-internal" title="iter_summands()" href="#brmspy.types.formula_dsl.FormulaConstruct.iter_summands"><code>iter_summands()</code></a>
+to iterate over these groups in a deterministic way.</p>
 </details>
 
 
@@ -4429,7 +4434,7 @@ groups in a deterministic way.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Alias for <a href="brmspy/types/formula_dsl.py"><code>iter_summands()</code></a>.</p>
+        <p>Alias for <a class="autorefs autorefs-internal" title="iter_summands()" href="#brmspy.types.formula_dsl.FormulaConstruct.iter_summands"><code>iter_summands()</code></a>.</p>
 
 
     </div>
@@ -4448,8 +4453,9 @@ groups in a deterministic way.</p>
     <div class="doc doc-contents ">
 
         <p>Iterate over all leaf nodes in left-to-right order.</p>
-<p>This flattens the expression tree, unlike <a href="brmspy/types/formula_dsl.py"><code>iter_summands()</code></a>,
-which respects grouping.</p>
+<p>This flattens the expression tree, unlike
+<a class="autorefs autorefs-internal" title="iter_summands()" href="#brmspy.types.formula_dsl.FormulaConstruct.iter_summands"><code>iter_summands()</code></a>, which
+respects grouping.</p>
 
 
     <p><span class="doc-section-title">Returns:</span></p>
