@@ -6134,10 +6134,7 @@ containers (recursively).</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>brmspy/_session/worker/sexp_cache.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-38">38</a></span>
-<span class="normal"><a href="#__codelineno-0-39">39</a></span>
-<span class="normal"><a href="#__codelineno-0-40">40</a></span>
-<span class="normal"><a href="#__codelineno-0-41">41</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-41">41</a></span>
 <span class="normal"><a href="#__codelineno-0-42">42</a></span>
 <span class="normal"><a href="#__codelineno-0-43">43</a></span>
 <span class="normal"><a href="#__codelineno-0-44">44</a></span>
@@ -6150,23 +6147,26 @@ containers (recursively).</p>
 <span class="normal"><a href="#__codelineno-0-51">51</a></span>
 <span class="normal"><a href="#__codelineno-0-52">52</a></span>
 <span class="normal"><a href="#__codelineno-0-53">53</a></span>
-<span class="normal"><a href="#__codelineno-0-54">54</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="k">def</span><span class="w"> </span><span class="nf">cache_sexp</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<a id="__codelineno-0-39" name="__codelineno-0-39"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-40" name="__codelineno-0-40"></a><span class="sd">    Replace any `Sexp` instances inside `obj` with `SexpWrapper` handles.</span>
-<a id="__codelineno-0-41" name="__codelineno-0-41"></a>
-<a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="sd">    Supports plain `Sexp`, objects with an `.r` attribute, and `list`/`dict`</span>
-<a id="__codelineno-0-43" name="__codelineno-0-43"></a><span class="sd">    containers (recursively).</span>
-<a id="__codelineno-0-44" name="__codelineno-0-44"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-45" name="__codelineno-0-45"></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">Sexp</span><span class="p">):</span>
-<a id="__codelineno-0-46" name="__codelineno-0-46"></a>        <span class="k">return</span> <span class="n">_cache_single</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-<a id="__codelineno-0-47" name="__codelineno-0-47"></a>    <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">r</span><span class="p">,</span> <span class="n">Sexp</span><span class="p">):</span>
-<a id="__codelineno-0-48" name="__codelineno-0-48"></a>        <span class="n">obj</span><span class="o">.</span><span class="n">r</span> <span class="o">=</span> <span class="n">_cache_single</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">r</span><span class="p">)</span>
-<a id="__codelineno-0-49" name="__codelineno-0-49"></a>        <span class="k">return</span> <span class="n">obj</span>
-<a id="__codelineno-0-50" name="__codelineno-0-50"></a>    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-<a id="__codelineno-0-51" name="__codelineno-0-51"></a>        <span class="k">return</span> <span class="p">[</span><span class="n">cache_sexp</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">]</span>
-<a id="__codelineno-0-52" name="__codelineno-0-52"></a>    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-<a id="__codelineno-0-53" name="__codelineno-0-53"></a>        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">cache_sexp</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
-<a id="__codelineno-0-54" name="__codelineno-0-54"></a>    <span class="k">return</span> <span class="n">obj</span>
+<span class="normal"><a href="#__codelineno-0-54">54</a></span>
+<span class="normal"><a href="#__codelineno-0-55">55</a></span>
+<span class="normal"><a href="#__codelineno-0-56">56</a></span>
+<span class="normal"><a href="#__codelineno-0-57">57</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="k">def</span><span class="w"> </span><span class="nf">cache_sexp</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-43" name="__codelineno-0-43"></a><span class="sd">    Replace any `Sexp` instances inside `obj` with `SexpWrapper` handles.</span>
+<a id="__codelineno-0-44" name="__codelineno-0-44"></a>
+<a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="sd">    Supports plain `Sexp`, objects with an `.r` attribute, and `list`/`dict`</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46"></a><span class="sd">    containers (recursively).</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">Sexp</span><span class="p">):</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a>        <span class="k">return</span> <span class="n">_cache_single</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50"></a>    <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">r</span><span class="p">,</span> <span class="n">Sexp</span><span class="p">):</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51"></a>        <span class="n">obj</span><span class="o">.</span><span class="n">r</span> <span class="o">=</span> <span class="n">_cache_single</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">r</span><span class="p">)</span>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a>        <span class="k">return</span> <span class="n">obj</span>
+<a id="__codelineno-0-53" name="__codelineno-0-53"></a>    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a>        <span class="k">return</span> <span class="p">[</span><span class="n">cache_sexp</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">]</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a>    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+<a id="__codelineno-0-56" name="__codelineno-0-56"></a>        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">cache_sexp</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57"></a>    <span class="k">return</span> <span class="n">obj</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -6191,10 +6191,7 @@ with <code>None</code>.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>brmspy/_session/worker/sexp_cache.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-57">57</a></span>
-<span class="normal"><a href="#__codelineno-0-58">58</a></span>
-<span class="normal"><a href="#__codelineno-0-59">59</a></span>
-<span class="normal"><a href="#__codelineno-0-60">60</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-60">60</a></span>
 <span class="normal"><a href="#__codelineno-0-61">61</a></span>
 <span class="normal"><a href="#__codelineno-0-62">62</a></span>
 <span class="normal"><a href="#__codelineno-0-63">63</a></span>
@@ -6212,28 +6209,31 @@ with <code>None</code>.</p>
 <span class="normal"><a href="#__codelineno-0-75">75</a></span>
 <span class="normal"><a href="#__codelineno-0-76">76</a></span>
 <span class="normal"><a href="#__codelineno-0-77">77</a></span>
-<span class="normal"><a href="#__codelineno-0-78">78</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="k">def</span><span class="w"> </span><span class="nf">reattach_sexp</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<a id="__codelineno-0-58" name="__codelineno-0-58"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-59" name="__codelineno-0-59"></a><span class="sd">    Replace any `SexpWrapper` handles inside `obj` with the cached `Sexp`.</span>
-<a id="__codelineno-0-60" name="__codelineno-0-60"></a>
-<a id="__codelineno-0-61" name="__codelineno-0-61"></a><span class="sd">    If a wrapper cannot be resolved (rid not in cache), the wrapper is replaced</span>
-<a id="__codelineno-0-62" name="__codelineno-0-62"></a><span class="sd">    with `None`.</span>
-<a id="__codelineno-0-63" name="__codelineno-0-63"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-64" name="__codelineno-0-64"></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-<a id="__codelineno-0-65" name="__codelineno-0-65"></a>        <span class="k">return</span> <span class="p">[</span><span class="n">reattach_sexp</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">]</span>
-<a id="__codelineno-0-66" name="__codelineno-0-66"></a>    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-<a id="__codelineno-0-67" name="__codelineno-0-67"></a>        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">reattach_sexp</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
-<a id="__codelineno-0-68" name="__codelineno-0-68"></a>    <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">r</span><span class="p">,</span> <span class="n">SexpWrapper</span><span class="p">):</span>
-<a id="__codelineno-0-69" name="__codelineno-0-69"></a>        <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">_rid</span> <span class="ow">in</span> <span class="n">_SEXP_CACHE</span><span class="p">:</span>
-<a id="__codelineno-0-70" name="__codelineno-0-70"></a>            <span class="n">obj</span><span class="o">.</span><span class="n">r</span> <span class="o">=</span> <span class="n">_SEXP_CACHE</span><span class="p">[</span><span class="n">obj</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">_rid</span><span class="p">]</span>
-<a id="__codelineno-0-71" name="__codelineno-0-71"></a>        <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-72" name="__codelineno-0-72"></a>            <span class="n">obj</span><span class="o">.</span><span class="n">r</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-73" name="__codelineno-0-73"></a>    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">SexpWrapper</span><span class="p">):</span>
-<a id="__codelineno-0-74" name="__codelineno-0-74"></a>        <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">_rid</span> <span class="ow">in</span> <span class="n">_SEXP_CACHE</span><span class="p">:</span>
-<a id="__codelineno-0-75" name="__codelineno-0-75"></a>            <span class="k">return</span> <span class="n">_SEXP_CACHE</span><span class="p">[</span><span class="n">obj</span><span class="o">.</span><span class="n">_rid</span><span class="p">]</span>
-<a id="__codelineno-0-76" name="__codelineno-0-76"></a>        <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-77" name="__codelineno-0-77"></a>            <span class="k">return</span> <span class="kc">None</span>
-<a id="__codelineno-0-78" name="__codelineno-0-78"></a>    <span class="k">return</span> <span class="n">obj</span>
+<span class="normal"><a href="#__codelineno-0-78">78</a></span>
+<span class="normal"><a href="#__codelineno-0-79">79</a></span>
+<span class="normal"><a href="#__codelineno-0-80">80</a></span>
+<span class="normal"><a href="#__codelineno-0-81">81</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-60" name="__codelineno-0-60"></a><span class="k">def</span><span class="w"> </span><span class="nf">reattach_sexp</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<a id="__codelineno-0-61" name="__codelineno-0-61"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-62" name="__codelineno-0-62"></a><span class="sd">    Replace any `SexpWrapper` handles inside `obj` with the cached `Sexp`.</span>
+<a id="__codelineno-0-63" name="__codelineno-0-63"></a>
+<a id="__codelineno-0-64" name="__codelineno-0-64"></a><span class="sd">    If a wrapper cannot be resolved (rid not in cache), the wrapper is replaced</span>
+<a id="__codelineno-0-65" name="__codelineno-0-65"></a><span class="sd">    with `None`.</span>
+<a id="__codelineno-0-66" name="__codelineno-0-66"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-67" name="__codelineno-0-67"></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+<a id="__codelineno-0-68" name="__codelineno-0-68"></a>        <span class="k">return</span> <span class="p">[</span><span class="n">reattach_sexp</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">]</span>
+<a id="__codelineno-0-69" name="__codelineno-0-69"></a>    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+<a id="__codelineno-0-70" name="__codelineno-0-70"></a>        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">reattach_sexp</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+<a id="__codelineno-0-71" name="__codelineno-0-71"></a>    <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">r</span><span class="p">,</span> <span class="n">SexpWrapper</span><span class="p">):</span>
+<a id="__codelineno-0-72" name="__codelineno-0-72"></a>        <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">_rid</span> <span class="ow">in</span> <span class="n">_SEXP_CACHE</span><span class="p">:</span>
+<a id="__codelineno-0-73" name="__codelineno-0-73"></a>            <span class="n">obj</span><span class="o">.</span><span class="n">r</span> <span class="o">=</span> <span class="n">_SEXP_CACHE</span><span class="p">[</span><span class="n">obj</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">_rid</span><span class="p">]</span>
+<a id="__codelineno-0-74" name="__codelineno-0-74"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-75" name="__codelineno-0-75"></a>            <span class="n">obj</span><span class="o">.</span><span class="n">r</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-76" name="__codelineno-0-76"></a>    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">SexpWrapper</span><span class="p">):</span>
+<a id="__codelineno-0-77" name="__codelineno-0-77"></a>        <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">_rid</span> <span class="ow">in</span> <span class="n">_SEXP_CACHE</span><span class="p">:</span>
+<a id="__codelineno-0-78" name="__codelineno-0-78"></a>            <span class="k">return</span> <span class="n">_SEXP_CACHE</span><span class="p">[</span><span class="n">obj</span><span class="o">.</span><span class="n">_rid</span><span class="p">]</span>
+<a id="__codelineno-0-79" name="__codelineno-0-79"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-80" name="__codelineno-0-80"></a>            <span class="k">return</span> <span class="kc">None</span>
+<a id="__codelineno-0-81" name="__codelineno-0-81"></a>    <span class="k">return</span> <span class="n">obj</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
