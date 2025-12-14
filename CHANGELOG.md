@@ -1,8 +1,52 @@
-## 0.3.0 - Hotswappable and process safe R
+## 0.3.0 - Process-Isolated R & Hot-Swappable Runtimes
 
 This release introduces a redesigned main–worker–R architecture to address stability issues caused by embedding R directly in the Python process. In real-world use, unpredictable failures, ranging from R segfaults to rpy2 crashes, could take down the entire Python runtime, invalidate IDE sessions, and make test behavior OS-dependent. The old single-process model also made R state effectively immutable after import, limited runtime switching, and required brittle workarounds for package management and CI isolation. These issues were not fixable at the level of defensive coding alone.
 
-The new architecture isolates R inside a dedicated worker process with shared-memory transport, zero-copy codecs, and a proxy module session that preserves the public API. All R data structures (matrices, data frames, ArviZ objects) transfer via shared memory without heap duplication, keeping memory use equivalent to the original design even for multi-gigabyte posteriors. R runtimes and environments are now fully isolated, hot-swappable, and safely mutable through a context manager. Worker-side crashes no longer affect the main interpreter, and previously fragile operations (e.g., loo functions) run without instability. The result is a predictable, reproducible, OS-agnostic execution model with significantly reduced failure modes.
+The new architecture jails R inside a dedicated worker process with shared-memory transport, zero-copy codecs, and a proxy module session that preserves the public API. All R data structures (matrices, data frames, ArviZ objects) transfer via shared memory without heap duplication, keeping memory use equivalent to the original design even for multi-gigabyte posteriors. R runtimes and environments are now fully isolated, hot-swappable, and safely mutable through a context manager. Worker-side crashes no longer affect the main interpreter, and previously fragile operations (e.g., loo functions) run without instability. The result is a predictable, reproducible, OS-agnostic execution model with significantly reduced failure modes.
+
+
+### Breaking Changes
+
+*   **Removal of top-level functions**: `brmspy.fit`, `brmspy.install_brms`, and other direct exports from the root package have been removed. Users should import the `brms` module (e.g., `from brmspy import brms` or `from brmspy.brms import bf`).
+*   **`install_brms` API change**: Global installation functions (`install_brms`, `install_runtime`, `install_rpackage`) are removed from the public namespace. Installation and environment modification must now be performed inside a `brms.manage()` context to ensure safe worker restarts.
+*   **Opaque R handles**: The `.r` attribute on result objects (e.g., `FitResult.r`) is no longer a live `rpy2` object but a `SexpWrapper` handle. These handles cannot be manipulated directly in the main process but can be passed back into `brms` functions for processing in the worker. They retain the R repr for debugging purposes.
+*   **Runtime module internalization**: `brmspy.runtime` has been moved to `brmspy._runtime` and is considered internal. Public runtime interactions should occur via `brms.manage()`.
+*   **Formula logic**: `FormulaResult` has been replaced by `FormulaConstruct`. Formulas are now built as pure Python DSL trees and only converted to R objects during execution in the worker.
+
+### New Features
+
+*   **Context-managed environments**: Added `brms.manage()`, a context manager that spins up a dedicated worker for administrative tasks. Exposes methods `ctx.install_brms()`, `ctx.install_runtime()`, and `ctx.install_rpackage()` among others which persist changes to the active environment.
+*   **Multi-environment support**: Users can create and switch between named environments (e.g., `with brms.manage(environment_name="dev"): ...`) which maintain separate user libraries (`Rlib`) layered on top of the base runtime.
+*   **Environment persistence**: Active environment configurations are saved to `~/.brmspy/environment_state.json` and `~/.brmspy/environment/<name>/config.json`.
+*   **Status API**: Added `brms.environment_exists()` and `brms.environment_activate()` helpers for managing the lifecycle of R environments programmatically.
+
+### Environments & Runtime
+
+*   **Process Isolation**: R now runs in a dedicated `spawn`ed worker process. Calls from the main process are serialized and sent via IPC.
+*   **Shared Memory Transport**: Implemented a custom `SharedMemoryManager` based transport layer. Large numeric payloads (NumPy arrays, pandas DataFrames, ArviZ InferenceData) are written to shared memory buffers, avoiding serialization overhead.
+*   **Hot-swappable sessions**: The R worker can be restarted with a different configuration (R_HOME, library paths) on the fly without restarting the Python interpreter.
+*   **Zero-copy codecs**: Added internal codecs (`NumpyArrayCodec`, `PandasDFCodec`, `InferenceDataCodec`) that handle SHM allocation and view reconstruction transparently.
+*   **Sexp Cache**: Implemented a worker-side cache for R objects (`Sexp`). The main process holds lightweight `SexpWrapper` references (by ID) which are rehydrated into real R objects when passed back to the worker.
+
+### API & Behaviour
+
+*   **Pure Python Formulas**: Formula helpers (`bf`, `lf`, `nlf`, etc.) now return `FormulaConstruct` dataclasses. This allows formula composition (`+` operator) to happen in Python without requiring a running R session until fit time.
+*   **Worker Proxy**: The `brmspy.brms` module is now a dynamic proxy (`RModuleSession`). Accessing attributes triggers remote lookups, and calling functions triggers IPC requests.
+*   **Logging Bridge**: Worker-side logs (including R console output) are captured and forwarded to the main process's logging handlers via a `QueueListener`.
+
+### Documentation & Infrastructure
+
+*   **Versioned Documentation**: Added `mike` support for deploying versioned docs (e.g., `/0.3/`, `/stable/`) to GitHub Pages via the `docs-versioned` workflow.
+*   **Architecture enforcement**: Added `import-linter` with strict contracts to prevent leakage of internal layers (e.g., ensuring `rpy2.robjects` is never imported in the main process).
+*   **Internal Docs Generation**: Added scripts to auto-generate API reference stubs for internal modules (`_runtime`, `_session`, etc.) to aid development.
+
+### Testing & CI
+
+*   **Worker Test Marker**: Introduced `@pytest.mark.worker` and a `worker_runner` fixture to execute specific tests inside the isolated worker process.
+*   **Coverage Aggregation**: Updated CI to merge coverage reports from the main process and the spawned worker process.
+*   **R Dependency Tests**: Switched `r-dependencies-tests` workflow to use the new isolated test runner script.
+
+
 
 
 
