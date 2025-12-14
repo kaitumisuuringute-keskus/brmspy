@@ -2781,6 +2781,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#brmspy._session.codec.dataclass.CodecRegistry._attach_shm_lifetime" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        _attach_shm_lifetime
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#brmspy._session.codec.dataclass.CodecRegistry.decode" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4166,6 +4177,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#brmspy._session.codec.dataclass.CodecRegistry._attach_shm_lifetime" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        _attach_shm_lifetime
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#brmspy._session.codec.dataclass.CodecRegistry.decode" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4489,12 +4511,7 @@ DSL nodes).</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>brmspy/_session/codec/base.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-19"> 19</a></span>
-<span class="normal"><a href="#__codelineno-0-20"> 20</a></span>
-<span class="normal"><a href="#__codelineno-0-21"> 21</a></span>
-<span class="normal"><a href="#__codelineno-0-22"> 22</a></span>
-<span class="normal"><a href="#__codelineno-0-23"> 23</a></span>
-<span class="normal"><a href="#__codelineno-0-24"> 24</a></span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-24"> 24</a></span>
 <span class="normal"><a href="#__codelineno-0-25"> 25</a></span>
 <span class="normal"><a href="#__codelineno-0-26"> 26</a></span>
 <span class="normal"><a href="#__codelineno-0-27"> 27</a></span>
@@ -4573,91 +4590,126 @@ DSL nodes).</p>
 <span class="normal"><a href="#__codelineno-0-100">100</a></span>
 <span class="normal"><a href="#__codelineno-0-101">101</a></span>
 <span class="normal"><a href="#__codelineno-0-102">102</a></span>
-<span class="normal"><a href="#__codelineno-0-103">103</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-19" name="__codelineno-0-19"></a><span class="k">class</span><span class="w"> </span><span class="nc">CodecRegistry</span><span class="p">:</span>
-<a id="__codelineno-0-20" name="__codelineno-0-20"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Ordered registry of encoders used for IPC serialization.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-21" name="__codelineno-0-21"></a>
-<a id="__codelineno-0-22" name="__codelineno-0-22"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-23" name="__codelineno-0-23"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_by_codec</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Encoder</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-<a id="__codelineno-0-24" name="__codelineno-0-24"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_encoders</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Encoder</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-0-25" name="__codelineno-0-25"></a>
-<a id="__codelineno-0-26" name="__codelineno-0-26"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">encoder</span><span class="p">:</span> <span class="n">Encoder</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-27" name="__codelineno-0-27"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-28" name="__codelineno-0-28"></a><span class="sd">        Register an encoder instance.</span>
-<a id="__codelineno-0-29" name="__codelineno-0-29"></a>
-<a id="__codelineno-0-30" name="__codelineno-0-30"></a><span class="sd">        Parameters</span>
-<a id="__codelineno-0-31" name="__codelineno-0-31"></a><span class="sd">        ----------</span>
-<a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="sd">        encoder : brmspy.types.session.Encoder</span>
-<a id="__codelineno-0-33" name="__codelineno-0-33"></a><span class="sd">            Encoder to register. Its `codec` attribute is used as the key when present,</span>
-<a id="__codelineno-0-34" name="__codelineno-0-34"></a><span class="sd">            otherwise the class name is used.</span>
-<a id="__codelineno-0-35" name="__codelineno-0-35"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-36" name="__codelineno-0-36"></a>        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">encoder</span><span class="p">,</span> <span class="s2">&quot;codec&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">encoder</span><span class="o">.</span><span class="n">codec</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
-<a id="__codelineno-0-37" name="__codelineno-0-37"></a>            <span class="n">codec_name</span> <span class="o">=</span> <span class="n">encoder</span><span class="o">.</span><span class="n">codec</span>  <span class="c1"># type: ignore</span>
-<a id="__codelineno-0-38" name="__codelineno-0-38"></a>        <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-39" name="__codelineno-0-39"></a>            <span class="n">codec_name</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">encoder</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
-<a id="__codelineno-0-40" name="__codelineno-0-40"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_by_codec</span><span class="p">[</span><span class="n">codec_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">encoder</span>
-<a id="__codelineno-0-41" name="__codelineno-0-41"></a>        <span class="n">encoder</span><span class="o">.</span><span class="n">codec</span> <span class="o">=</span> <span class="n">codec_name</span>  <span class="c1"># type: ignore</span>
-<a id="__codelineno-0-42" name="__codelineno-0-42"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_encoders</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">encoder</span><span class="p">)</span>
-<a id="__codelineno-0-43" name="__codelineno-0-43"></a>
-<a id="__codelineno-0-44" name="__codelineno-0-44"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">shm_pool</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EncodeResult</span><span class="p">:</span>
-<a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-46" name="__codelineno-0-46"></a><span class="sd">        Encode an object by selecting the first encoder that accepts it.</span>
-<a id="__codelineno-0-47" name="__codelineno-0-47"></a>
-<a id="__codelineno-0-48" name="__codelineno-0-48"></a><span class="sd">        Parameters</span>
-<a id="__codelineno-0-49" name="__codelineno-0-49"></a><span class="sd">        ----------</span>
-<a id="__codelineno-0-50" name="__codelineno-0-50"></a><span class="sd">        obj : Any</span>
-<a id="__codelineno-0-51" name="__codelineno-0-51"></a><span class="sd">            Value to encode.</span>
-<a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="sd">        shm_pool : Any</span>
-<a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="sd">            SHM pool used by codecs for allocating buffers.</span>
-<a id="__codelineno-0-54" name="__codelineno-0-54"></a>
-<a id="__codelineno-0-55" name="__codelineno-0-55"></a><span class="sd">        Returns</span>
-<a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="sd">        -------</span>
-<a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="sd">        brmspy.types.session.EncodeResult</span>
-<a id="__codelineno-0-58" name="__codelineno-0-58"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-59" name="__codelineno-0-59"></a>        <span class="k">for</span> <span class="n">enc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoders</span><span class="p">:</span>
-<a id="__codelineno-0-60" name="__codelineno-0-60"></a>            <span class="k">if</span> <span class="n">enc</span><span class="o">.</span><span class="n">can_encode</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
-<a id="__codelineno-0-61" name="__codelineno-0-61"></a>                <span class="n">res</span> <span class="o">=</span> <span class="n">enc</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">shm_pool</span><span class="p">)</span>
-<a id="__codelineno-0-62" name="__codelineno-0-62"></a>                <span class="k">if</span> <span class="ow">not</span> <span class="n">res</span><span class="o">.</span><span class="n">codec</span><span class="p">:</span>
-<a id="__codelineno-0-63" name="__codelineno-0-63"></a>                    <span class="n">res</span><span class="o">.</span><span class="n">codec</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">enc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
-<a id="__codelineno-0-64" name="__codelineno-0-64"></a>                <span class="k">return</span> <span class="n">res</span>
-<a id="__codelineno-0-65" name="__codelineno-0-65"></a>
-<a id="__codelineno-0-66" name="__codelineno-0-66"></a>        <span class="c1"># fallback to pickle</span>
-<a id="__codelineno-0-67" name="__codelineno-0-67"></a>        <span class="k">if</span> <span class="s2">&quot;PickleCodec&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_by_codec</span><span class="p">:</span>
-<a id="__codelineno-0-68" name="__codelineno-0-68"></a>            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;No pickle codec registered&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-69" name="__codelineno-0-69"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_by_codec</span><span class="p">[</span><span class="s2">&quot;PickleCodec&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">shm_pool</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-103">103</a></span>
+<span class="normal"><a href="#__codelineno-0-104">104</a></span>
+<span class="normal"><a href="#__codelineno-0-105">105</a></span>
+<span class="normal"><a href="#__codelineno-0-106">106</a></span>
+<span class="normal"><a href="#__codelineno-0-107">107</a></span>
+<span class="normal"><a href="#__codelineno-0-108">108</a></span>
+<span class="normal"><a href="#__codelineno-0-109">109</a></span>
+<span class="normal"><a href="#__codelineno-0-110">110</a></span>
+<span class="normal"><a href="#__codelineno-0-111">111</a></span>
+<span class="normal"><a href="#__codelineno-0-112">112</a></span>
+<span class="normal"><a href="#__codelineno-0-113">113</a></span>
+<span class="normal"><a href="#__codelineno-0-114">114</a></span>
+<span class="normal"><a href="#__codelineno-0-115">115</a></span>
+<span class="normal"><a href="#__codelineno-0-116">116</a></span>
+<span class="normal"><a href="#__codelineno-0-117">117</a></span>
+<span class="normal"><a href="#__codelineno-0-118">118</a></span>
+<span class="normal"><a href="#__codelineno-0-119">119</a></span>
+<span class="normal"><a href="#__codelineno-0-120">120</a></span>
+<span class="normal"><a href="#__codelineno-0-121">121</a></span>
+<span class="normal"><a href="#__codelineno-0-122">122</a></span>
+<span class="normal"><a href="#__codelineno-0-123">123</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-24" name="__codelineno-0-24"></a><span class="k">class</span><span class="w"> </span><span class="nc">CodecRegistry</span><span class="p">:</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Ordered registry of encoders used for IPC serialization.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-26" name="__codelineno-0-26"></a>
+<a id="__codelineno-0-27" name="__codelineno-0-27"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_by_codec</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Encoder</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<a id="__codelineno-0-29" name="__codelineno-0-29"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_encoders</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Encoder</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-30" name="__codelineno-0-30"></a>
+<a id="__codelineno-0-31" name="__codelineno-0-31"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">encoder</span><span class="p">:</span> <span class="n">Encoder</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-33" name="__codelineno-0-33"></a><span class="sd">        Register an encoder instance.</span>
+<a id="__codelineno-0-34" name="__codelineno-0-34"></a>
+<a id="__codelineno-0-35" name="__codelineno-0-35"></a><span class="sd">        Parameters</span>
+<a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="sd">        ----------</span>
+<a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="sd">        encoder : brmspy.types.session.Encoder</span>
+<a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="sd">            Encoder to register. Its `codec` attribute is used as the key when present,</span>
+<a id="__codelineno-0-39" name="__codelineno-0-39"></a><span class="sd">            otherwise the class name is used.</span>
+<a id="__codelineno-0-40" name="__codelineno-0-40"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-41" name="__codelineno-0-41"></a>        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">encoder</span><span class="p">,</span> <span class="s2">&quot;codec&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">encoder</span><span class="o">.</span><span class="n">codec</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42"></a>            <span class="n">codec_name</span> <span class="o">=</span> <span class="n">encoder</span><span class="o">.</span><span class="n">codec</span>  <span class="c1"># type: ignore</span>
+<a id="__codelineno-0-43" name="__codelineno-0-43"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-44" name="__codelineno-0-44"></a>            <span class="n">codec_name</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">encoder</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+<a id="__codelineno-0-45" name="__codelineno-0-45"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_by_codec</span><span class="p">[</span><span class="n">codec_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">encoder</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46"></a>        <span class="n">encoder</span><span class="o">.</span><span class="n">codec</span> <span class="o">=</span> <span class="n">codec_name</span>  <span class="c1"># type: ignore</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_encoders</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">encoder</span><span class="p">)</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">shm_pool</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EncodeResult</span><span class="p">:</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51"></a><span class="sd">        Encode an object by selecting the first encoder that accepts it.</span>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a>
+<a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="sd">        Parameters</span>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="sd">        ----------</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a><span class="sd">        obj : Any</span>
+<a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="sd">            Value to encode.</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="sd">        shm_pool : Any</span>
+<a id="__codelineno-0-58" name="__codelineno-0-58"></a><span class="sd">            SHM pool used by codecs for allocating buffers.</span>
+<a id="__codelineno-0-59" name="__codelineno-0-59"></a>
+<a id="__codelineno-0-60" name="__codelineno-0-60"></a><span class="sd">        Returns</span>
+<a id="__codelineno-0-61" name="__codelineno-0-61"></a><span class="sd">        -------</span>
+<a id="__codelineno-0-62" name="__codelineno-0-62"></a><span class="sd">        brmspy.types.session.EncodeResult</span>
+<a id="__codelineno-0-63" name="__codelineno-0-63"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-64" name="__codelineno-0-64"></a>        <span class="k">for</span> <span class="n">enc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoders</span><span class="p">:</span>
+<a id="__codelineno-0-65" name="__codelineno-0-65"></a>            <span class="k">if</span> <span class="n">enc</span><span class="o">.</span><span class="n">can_encode</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+<a id="__codelineno-0-66" name="__codelineno-0-66"></a>                <span class="n">res</span> <span class="o">=</span> <span class="n">enc</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">shm_pool</span><span class="p">)</span>
+<a id="__codelineno-0-67" name="__codelineno-0-67"></a>                <span class="k">if</span> <span class="ow">not</span> <span class="n">res</span><span class="o">.</span><span class="n">codec</span><span class="p">:</span>
+<a id="__codelineno-0-68" name="__codelineno-0-68"></a>                    <span class="n">res</span><span class="o">.</span><span class="n">codec</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">enc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+<a id="__codelineno-0-69" name="__codelineno-0-69"></a>                <span class="k">return</span> <span class="n">res</span>
 <a id="__codelineno-0-70" name="__codelineno-0-70"></a>
-<a id="__codelineno-0-71" name="__codelineno-0-71"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">decode</span><span class="p">(</span>
-<a id="__codelineno-0-72" name="__codelineno-0-72"></a>        <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-0-73" name="__codelineno-0-73"></a>        <span class="n">codec</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-74" name="__codelineno-0-74"></a>        <span class="n">meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
-<a id="__codelineno-0-75" name="__codelineno-0-75"></a>        <span class="n">buffers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">memoryview</span><span class="p">],</span>
-<a id="__codelineno-0-76" name="__codelineno-0-76"></a>        <span class="n">buffer_specs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span>
-<a id="__codelineno-0-77" name="__codelineno-0-77"></a>        <span class="n">shm_pool</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<a id="__codelineno-0-78" name="__codelineno-0-78"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<a id="__codelineno-0-79" name="__codelineno-0-79"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-80" name="__codelineno-0-80"></a><span class="sd">        Decode a payload using a named codec.</span>
-<a id="__codelineno-0-81" name="__codelineno-0-81"></a>
-<a id="__codelineno-0-82" name="__codelineno-0-82"></a><span class="sd">        Parameters</span>
-<a id="__codelineno-0-83" name="__codelineno-0-83"></a><span class="sd">        ----------</span>
-<a id="__codelineno-0-84" name="__codelineno-0-84"></a><span class="sd">        codec : str</span>
-<a id="__codelineno-0-85" name="__codelineno-0-85"></a><span class="sd">            Codec identifier previously returned by `encode()`.</span>
-<a id="__codelineno-0-86" name="__codelineno-0-86"></a><span class="sd">        meta : dict[str, Any]</span>
-<a id="__codelineno-0-87" name="__codelineno-0-87"></a><span class="sd">            Codec metadata.</span>
-<a id="__codelineno-0-88" name="__codelineno-0-88"></a><span class="sd">        buffers : list[memoryview]</span>
-<a id="__codelineno-0-89" name="__codelineno-0-89"></a><span class="sd">            Memoryviews for attached SHM buffers.</span>
-<a id="__codelineno-0-90" name="__codelineno-0-90"></a><span class="sd">        buffer_specs : list[dict]</span>
-<a id="__codelineno-0-91" name="__codelineno-0-91"></a><span class="sd">            Original buffer specs (name/size) corresponding to `buffers`.</span>
-<a id="__codelineno-0-92" name="__codelineno-0-92"></a><span class="sd">        shm_pool : Any</span>
-<a id="__codelineno-0-93" name="__codelineno-0-93"></a><span class="sd">            SHM pool (some codecs may attach additional buffers).</span>
-<a id="__codelineno-0-94" name="__codelineno-0-94"></a>
-<a id="__codelineno-0-95" name="__codelineno-0-95"></a><span class="sd">        Returns</span>
-<a id="__codelineno-0-96" name="__codelineno-0-96"></a><span class="sd">        -------</span>
-<a id="__codelineno-0-97" name="__codelineno-0-97"></a><span class="sd">        Any</span>
-<a id="__codelineno-0-98" name="__codelineno-0-98"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-99" name="__codelineno-0-99"></a>        <span class="k">if</span> <span class="n">codec</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_by_codec</span><span class="p">:</span>
-<a id="__codelineno-0-100" name="__codelineno-0-100"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-<a id="__codelineno-0-101" name="__codelineno-0-101"></a>                <span class="sa">f</span><span class="s2">&quot;Unknown codec: </span><span class="si">{</span><span class="n">codec</span><span class="si">}</span><span class="s2">, available: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_by_codec</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span>
-<a id="__codelineno-0-102" name="__codelineno-0-102"></a>            <span class="p">)</span>
-<a id="__codelineno-0-103" name="__codelineno-0-103"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_by_codec</span><span class="p">[</span><span class="n">codec</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">buffers</span><span class="p">,</span> <span class="n">buffer_specs</span><span class="p">,</span> <span class="n">shm_pool</span><span class="p">)</span>
+<a id="__codelineno-0-71" name="__codelineno-0-71"></a>        <span class="c1"># fallback to pickle</span>
+<a id="__codelineno-0-72" name="__codelineno-0-72"></a>        <span class="k">if</span> <span class="s2">&quot;PickleCodec&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_by_codec</span><span class="p">:</span>
+<a id="__codelineno-0-73" name="__codelineno-0-73"></a>            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;No pickle codec registered&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-74" name="__codelineno-0-74"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_by_codec</span><span class="p">[</span><span class="s2">&quot;PickleCodec&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">shm_pool</span><span class="p">)</span>
+<a id="__codelineno-0-75" name="__codelineno-0-75"></a>
+<a id="__codelineno-0-76" name="__codelineno-0-76"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_attach_shm_lifetime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">shms</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ShmBlock</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-77" name="__codelineno-0-77"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Keep SHM blocks alive as long as `obj` is alive.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-78" name="__codelineno-0-78"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">shms</span><span class="p">:</span>
+<a id="__codelineno-0-79" name="__codelineno-0-79"></a>            <span class="k">return</span>
+<a id="__codelineno-0-80" name="__codelineno-0-80"></a>        <span class="k">if</span> <span class="n">obj</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+<a id="__codelineno-0-81" name="__codelineno-0-81"></a>            <span class="k">return</span>
+<a id="__codelineno-0-82" name="__codelineno-0-82"></a>
+<a id="__codelineno-0-83" name="__codelineno-0-83"></a>        <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-84" name="__codelineno-0-84"></a>            <span class="n">weakref</span><span class="o">.</span><span class="n">finalize</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">_noop</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">shms</span><span class="p">))</span>
+<a id="__codelineno-0-85" name="__codelineno-0-85"></a>        <span class="k">except</span><span class="p">:</span>
+<a id="__codelineno-0-86" name="__codelineno-0-86"></a>            <span class="k">return</span>
+<a id="__codelineno-0-87" name="__codelineno-0-87"></a>
+<a id="__codelineno-0-88" name="__codelineno-0-88"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">decode</span><span class="p">(</span>
+<a id="__codelineno-0-89" name="__codelineno-0-89"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-90" name="__codelineno-0-90"></a>        <span class="n">codec</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-91" name="__codelineno-0-91"></a>        <span class="n">meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+<a id="__codelineno-0-92" name="__codelineno-0-92"></a>        <span class="n">buffers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ShmBlock</span><span class="p">],</span>
+<a id="__codelineno-0-93" name="__codelineno-0-93"></a>        <span class="n">buffer_specs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span>
+<a id="__codelineno-0-94" name="__codelineno-0-94"></a>        <span class="n">shm_pool</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<a id="__codelineno-0-95" name="__codelineno-0-95"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<a id="__codelineno-0-96" name="__codelineno-0-96"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-97" name="__codelineno-0-97"></a><span class="sd">        Decode a payload using a named codec.</span>
+<a id="__codelineno-0-98" name="__codelineno-0-98"></a>
+<a id="__codelineno-0-99" name="__codelineno-0-99"></a><span class="sd">        Parameters</span>
+<a id="__codelineno-0-100" name="__codelineno-0-100"></a><span class="sd">        ----------</span>
+<a id="__codelineno-0-101" name="__codelineno-0-101"></a><span class="sd">        codec : str</span>
+<a id="__codelineno-0-102" name="__codelineno-0-102"></a><span class="sd">            Codec identifier previously returned by `encode()`.</span>
+<a id="__codelineno-0-103" name="__codelineno-0-103"></a><span class="sd">        meta : dict[str, Any]</span>
+<a id="__codelineno-0-104" name="__codelineno-0-104"></a><span class="sd">            Codec metadata.</span>
+<a id="__codelineno-0-105" name="__codelineno-0-105"></a><span class="sd">        buffers : list[memoryview]</span>
+<a id="__codelineno-0-106" name="__codelineno-0-106"></a><span class="sd">            Memoryviews for attached SHM buffers.</span>
+<a id="__codelineno-0-107" name="__codelineno-0-107"></a><span class="sd">        buffer_specs : list[dict]</span>
+<a id="__codelineno-0-108" name="__codelineno-0-108"></a><span class="sd">            Original buffer specs (name/size) corresponding to `buffers`.</span>
+<a id="__codelineno-0-109" name="__codelineno-0-109"></a><span class="sd">        shm_pool : Any</span>
+<a id="__codelineno-0-110" name="__codelineno-0-110"></a><span class="sd">            SHM pool (some codecs may attach additional buffers).</span>
+<a id="__codelineno-0-111" name="__codelineno-0-111"></a>
+<a id="__codelineno-0-112" name="__codelineno-0-112"></a><span class="sd">        Returns</span>
+<a id="__codelineno-0-113" name="__codelineno-0-113"></a><span class="sd">        -------</span>
+<a id="__codelineno-0-114" name="__codelineno-0-114"></a><span class="sd">        Any</span>
+<a id="__codelineno-0-115" name="__codelineno-0-115"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-116" name="__codelineno-0-116"></a>        <span class="k">if</span> <span class="n">codec</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_by_codec</span><span class="p">:</span>
+<a id="__codelineno-0-117" name="__codelineno-0-117"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+<a id="__codelineno-0-118" name="__codelineno-0-118"></a>                <span class="sa">f</span><span class="s2">&quot;Unknown codec: </span><span class="si">{</span><span class="n">codec</span><span class="si">}</span><span class="s2">, available: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_by_codec</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-119" name="__codelineno-0-119"></a>            <span class="p">)</span>
+<a id="__codelineno-0-120" name="__codelineno-0-120"></a>        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_by_codec</span><span class="p">[</span><span class="n">codec</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">buffers</span><span class="p">,</span> <span class="n">buffer_specs</span><span class="p">,</span> <span class="n">shm_pool</span><span class="p">)</span>
+<a id="__codelineno-0-121" name="__codelineno-0-121"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_attach_shm_lifetime</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">buffers</span><span class="p">)</span>
+<a id="__codelineno-0-122" name="__codelineno-0-122"></a>
+<a id="__codelineno-0-123" name="__codelineno-0-123"></a>        <span class="k">return</span> <span class="n">value</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -4728,11 +4780,11 @@ DSL nodes).</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>brmspy/_session/codec/base.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-22">22</a></span>
-<span class="normal"><a href="#__codelineno-0-23">23</a></span>
-<span class="normal"><a href="#__codelineno-0-24">24</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-22" name="__codelineno-0-22"></a><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-23" name="__codelineno-0-23"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_by_codec</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Encoder</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-<a id="__codelineno-0-24" name="__codelineno-0-24"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_encoders</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Encoder</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-27">27</a></span>
+<span class="normal"><a href="#__codelineno-0-28">28</a></span>
+<span class="normal"><a href="#__codelineno-0-29">29</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-27" name="__codelineno-0-27"></a><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_by_codec</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Encoder</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<a id="__codelineno-0-29" name="__codelineno-0-29"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_encoders</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Encoder</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4787,12 +4839,7 @@ otherwise the class name is used.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>brmspy/_session/codec/base.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-26">26</a></span>
-<span class="normal"><a href="#__codelineno-0-27">27</a></span>
-<span class="normal"><a href="#__codelineno-0-28">28</a></span>
-<span class="normal"><a href="#__codelineno-0-29">29</a></span>
-<span class="normal"><a href="#__codelineno-0-30">30</a></span>
-<span class="normal"><a href="#__codelineno-0-31">31</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-31">31</a></span>
 <span class="normal"><a href="#__codelineno-0-32">32</a></span>
 <span class="normal"><a href="#__codelineno-0-33">33</a></span>
 <span class="normal"><a href="#__codelineno-0-34">34</a></span>
@@ -4803,23 +4850,28 @@ otherwise the class name is used.</p>
 <span class="normal"><a href="#__codelineno-0-39">39</a></span>
 <span class="normal"><a href="#__codelineno-0-40">40</a></span>
 <span class="normal"><a href="#__codelineno-0-41">41</a></span>
-<span class="normal"><a href="#__codelineno-0-42">42</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-26" name="__codelineno-0-26"></a><span class="k">def</span><span class="w"> </span><span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">encoder</span><span class="p">:</span> <span class="n">Encoder</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-27" name="__codelineno-0-27"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-28" name="__codelineno-0-28"></a><span class="sd">    Register an encoder instance.</span>
-<a id="__codelineno-0-29" name="__codelineno-0-29"></a>
-<a id="__codelineno-0-30" name="__codelineno-0-30"></a><span class="sd">    Parameters</span>
-<a id="__codelineno-0-31" name="__codelineno-0-31"></a><span class="sd">    ----------</span>
-<a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="sd">    encoder : brmspy.types.session.Encoder</span>
-<a id="__codelineno-0-33" name="__codelineno-0-33"></a><span class="sd">        Encoder to register. Its `codec` attribute is used as the key when present,</span>
-<a id="__codelineno-0-34" name="__codelineno-0-34"></a><span class="sd">        otherwise the class name is used.</span>
-<a id="__codelineno-0-35" name="__codelineno-0-35"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-36" name="__codelineno-0-36"></a>    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">encoder</span><span class="p">,</span> <span class="s2">&quot;codec&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">encoder</span><span class="o">.</span><span class="n">codec</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
-<a id="__codelineno-0-37" name="__codelineno-0-37"></a>        <span class="n">codec_name</span> <span class="o">=</span> <span class="n">encoder</span><span class="o">.</span><span class="n">codec</span>  <span class="c1"># type: ignore</span>
-<a id="__codelineno-0-38" name="__codelineno-0-38"></a>    <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-39" name="__codelineno-0-39"></a>        <span class="n">codec_name</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">encoder</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
-<a id="__codelineno-0-40" name="__codelineno-0-40"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_by_codec</span><span class="p">[</span><span class="n">codec_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">encoder</span>
-<a id="__codelineno-0-41" name="__codelineno-0-41"></a>    <span class="n">encoder</span><span class="o">.</span><span class="n">codec</span> <span class="o">=</span> <span class="n">codec_name</span>  <span class="c1"># type: ignore</span>
-<a id="__codelineno-0-42" name="__codelineno-0-42"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_encoders</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">encoder</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-42">42</a></span>
+<span class="normal"><a href="#__codelineno-0-43">43</a></span>
+<span class="normal"><a href="#__codelineno-0-44">44</a></span>
+<span class="normal"><a href="#__codelineno-0-45">45</a></span>
+<span class="normal"><a href="#__codelineno-0-46">46</a></span>
+<span class="normal"><a href="#__codelineno-0-47">47</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-31" name="__codelineno-0-31"></a><span class="k">def</span><span class="w"> </span><span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">encoder</span><span class="p">:</span> <span class="n">Encoder</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-33" name="__codelineno-0-33"></a><span class="sd">    Register an encoder instance.</span>
+<a id="__codelineno-0-34" name="__codelineno-0-34"></a>
+<a id="__codelineno-0-35" name="__codelineno-0-35"></a><span class="sd">    Parameters</span>
+<a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="sd">    ----------</span>
+<a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="sd">    encoder : brmspy.types.session.Encoder</span>
+<a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="sd">        Encoder to register. Its `codec` attribute is used as the key when present,</span>
+<a id="__codelineno-0-39" name="__codelineno-0-39"></a><span class="sd">        otherwise the class name is used.</span>
+<a id="__codelineno-0-40" name="__codelineno-0-40"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-41" name="__codelineno-0-41"></a>    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">encoder</span><span class="p">,</span> <span class="s2">&quot;codec&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">encoder</span><span class="o">.</span><span class="n">codec</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42"></a>        <span class="n">codec_name</span> <span class="o">=</span> <span class="n">encoder</span><span class="o">.</span><span class="n">codec</span>  <span class="c1"># type: ignore</span>
+<a id="__codelineno-0-43" name="__codelineno-0-43"></a>    <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-44" name="__codelineno-0-44"></a>        <span class="n">codec_name</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">encoder</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+<a id="__codelineno-0-45" name="__codelineno-0-45"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_by_codec</span><span class="p">[</span><span class="n">codec_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">encoder</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46"></a>    <span class="n">encoder</span><span class="o">.</span><span class="n">codec</span> <span class="o">=</span> <span class="n">codec_name</span>  <span class="c1"># type: ignore</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_encoders</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">encoder</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4917,12 +4969,7 @@ otherwise the class name is used.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>brmspy/_session/codec/base.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-44">44</a></span>
-<span class="normal"><a href="#__codelineno-0-45">45</a></span>
-<span class="normal"><a href="#__codelineno-0-46">46</a></span>
-<span class="normal"><a href="#__codelineno-0-47">47</a></span>
-<span class="normal"><a href="#__codelineno-0-48">48</a></span>
-<span class="normal"><a href="#__codelineno-0-49">49</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-49">49</a></span>
 <span class="normal"><a href="#__codelineno-0-50">50</a></span>
 <span class="normal"><a href="#__codelineno-0-51">51</a></span>
 <span class="normal"><a href="#__codelineno-0-52">52</a></span>
@@ -4942,32 +4989,80 @@ otherwise the class name is used.</p>
 <span class="normal"><a href="#__codelineno-0-66">66</a></span>
 <span class="normal"><a href="#__codelineno-0-67">67</a></span>
 <span class="normal"><a href="#__codelineno-0-68">68</a></span>
-<span class="normal"><a href="#__codelineno-0-69">69</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-44" name="__codelineno-0-44"></a><span class="k">def</span><span class="w"> </span><span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">shm_pool</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EncodeResult</span><span class="p">:</span>
-<a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-46" name="__codelineno-0-46"></a><span class="sd">    Encode an object by selecting the first encoder that accepts it.</span>
-<a id="__codelineno-0-47" name="__codelineno-0-47"></a>
-<a id="__codelineno-0-48" name="__codelineno-0-48"></a><span class="sd">    Parameters</span>
-<a id="__codelineno-0-49" name="__codelineno-0-49"></a><span class="sd">    ----------</span>
-<a id="__codelineno-0-50" name="__codelineno-0-50"></a><span class="sd">    obj : Any</span>
-<a id="__codelineno-0-51" name="__codelineno-0-51"></a><span class="sd">        Value to encode.</span>
-<a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="sd">    shm_pool : Any</span>
-<a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="sd">        SHM pool used by codecs for allocating buffers.</span>
-<a id="__codelineno-0-54" name="__codelineno-0-54"></a>
-<a id="__codelineno-0-55" name="__codelineno-0-55"></a><span class="sd">    Returns</span>
-<a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="sd">    -------</span>
-<a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="sd">    brmspy.types.session.EncodeResult</span>
-<a id="__codelineno-0-58" name="__codelineno-0-58"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-59" name="__codelineno-0-59"></a>    <span class="k">for</span> <span class="n">enc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoders</span><span class="p">:</span>
-<a id="__codelineno-0-60" name="__codelineno-0-60"></a>        <span class="k">if</span> <span class="n">enc</span><span class="o">.</span><span class="n">can_encode</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
-<a id="__codelineno-0-61" name="__codelineno-0-61"></a>            <span class="n">res</span> <span class="o">=</span> <span class="n">enc</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">shm_pool</span><span class="p">)</span>
-<a id="__codelineno-0-62" name="__codelineno-0-62"></a>            <span class="k">if</span> <span class="ow">not</span> <span class="n">res</span><span class="o">.</span><span class="n">codec</span><span class="p">:</span>
-<a id="__codelineno-0-63" name="__codelineno-0-63"></a>                <span class="n">res</span><span class="o">.</span><span class="n">codec</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">enc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
-<a id="__codelineno-0-64" name="__codelineno-0-64"></a>            <span class="k">return</span> <span class="n">res</span>
-<a id="__codelineno-0-65" name="__codelineno-0-65"></a>
-<a id="__codelineno-0-66" name="__codelineno-0-66"></a>    <span class="c1"># fallback to pickle</span>
-<a id="__codelineno-0-67" name="__codelineno-0-67"></a>    <span class="k">if</span> <span class="s2">&quot;PickleCodec&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_by_codec</span><span class="p">:</span>
-<a id="__codelineno-0-68" name="__codelineno-0-68"></a>        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;No pickle codec registered&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-69" name="__codelineno-0-69"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_by_codec</span><span class="p">[</span><span class="s2">&quot;PickleCodec&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">shm_pool</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-69">69</a></span>
+<span class="normal"><a href="#__codelineno-0-70">70</a></span>
+<span class="normal"><a href="#__codelineno-0-71">71</a></span>
+<span class="normal"><a href="#__codelineno-0-72">72</a></span>
+<span class="normal"><a href="#__codelineno-0-73">73</a></span>
+<span class="normal"><a href="#__codelineno-0-74">74</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-49" name="__codelineno-0-49"></a><span class="k">def</span><span class="w"> </span><span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">shm_pool</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EncodeResult</span><span class="p">:</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51"></a><span class="sd">    Encode an object by selecting the first encoder that accepts it.</span>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a>
+<a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="sd">    Parameters</span>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="sd">    ----------</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a><span class="sd">    obj : Any</span>
+<a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="sd">        Value to encode.</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="sd">    shm_pool : Any</span>
+<a id="__codelineno-0-58" name="__codelineno-0-58"></a><span class="sd">        SHM pool used by codecs for allocating buffers.</span>
+<a id="__codelineno-0-59" name="__codelineno-0-59"></a>
+<a id="__codelineno-0-60" name="__codelineno-0-60"></a><span class="sd">    Returns</span>
+<a id="__codelineno-0-61" name="__codelineno-0-61"></a><span class="sd">    -------</span>
+<a id="__codelineno-0-62" name="__codelineno-0-62"></a><span class="sd">    brmspy.types.session.EncodeResult</span>
+<a id="__codelineno-0-63" name="__codelineno-0-63"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-64" name="__codelineno-0-64"></a>    <span class="k">for</span> <span class="n">enc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoders</span><span class="p">:</span>
+<a id="__codelineno-0-65" name="__codelineno-0-65"></a>        <span class="k">if</span> <span class="n">enc</span><span class="o">.</span><span class="n">can_encode</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+<a id="__codelineno-0-66" name="__codelineno-0-66"></a>            <span class="n">res</span> <span class="o">=</span> <span class="n">enc</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">shm_pool</span><span class="p">)</span>
+<a id="__codelineno-0-67" name="__codelineno-0-67"></a>            <span class="k">if</span> <span class="ow">not</span> <span class="n">res</span><span class="o">.</span><span class="n">codec</span><span class="p">:</span>
+<a id="__codelineno-0-68" name="__codelineno-0-68"></a>                <span class="n">res</span><span class="o">.</span><span class="n">codec</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">enc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+<a id="__codelineno-0-69" name="__codelineno-0-69"></a>            <span class="k">return</span> <span class="n">res</span>
+<a id="__codelineno-0-70" name="__codelineno-0-70"></a>
+<a id="__codelineno-0-71" name="__codelineno-0-71"></a>    <span class="c1"># fallback to pickle</span>
+<a id="__codelineno-0-72" name="__codelineno-0-72"></a>    <span class="k">if</span> <span class="s2">&quot;PickleCodec&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_by_codec</span><span class="p">:</span>
+<a id="__codelineno-0-73" name="__codelineno-0-73"></a>        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;No pickle codec registered&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-74" name="__codelineno-0-74"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_by_codec</span><span class="p">[</span><span class="s2">&quot;PickleCodec&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">shm_pool</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="brmspy._session.codec.dataclass.CodecRegistry._attach_shm_lifetime" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">_attach_shm_lifetime</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">shms</span><span class="p">)</span></code>
+
+<a href="#brmspy._session.codec.dataclass.CodecRegistry._attach_shm_lifetime" class="headerlink" title="Permanent link">&para;</a></h5>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Keep SHM blocks alive as long as <code>obj</code> is alive.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>brmspy/_session/codec/base.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-76">76</a></span>
+<span class="normal"><a href="#__codelineno-0-77">77</a></span>
+<span class="normal"><a href="#__codelineno-0-78">78</a></span>
+<span class="normal"><a href="#__codelineno-0-79">79</a></span>
+<span class="normal"><a href="#__codelineno-0-80">80</a></span>
+<span class="normal"><a href="#__codelineno-0-81">81</a></span>
+<span class="normal"><a href="#__codelineno-0-82">82</a></span>
+<span class="normal"><a href="#__codelineno-0-83">83</a></span>
+<span class="normal"><a href="#__codelineno-0-84">84</a></span>
+<span class="normal"><a href="#__codelineno-0-85">85</a></span>
+<span class="normal"><a href="#__codelineno-0-86">86</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-76" name="__codelineno-0-76"></a><span class="k">def</span><span class="w"> </span><span class="nf">_attach_shm_lifetime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">shms</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ShmBlock</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-77" name="__codelineno-0-77"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Keep SHM blocks alive as long as `obj` is alive.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-78" name="__codelineno-0-78"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">shms</span><span class="p">:</span>
+<a id="__codelineno-0-79" name="__codelineno-0-79"></a>        <span class="k">return</span>
+<a id="__codelineno-0-80" name="__codelineno-0-80"></a>    <span class="k">if</span> <span class="n">obj</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+<a id="__codelineno-0-81" name="__codelineno-0-81"></a>        <span class="k">return</span>
+<a id="__codelineno-0-82" name="__codelineno-0-82"></a>
+<a id="__codelineno-0-83" name="__codelineno-0-83"></a>    <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-84" name="__codelineno-0-84"></a>        <span class="n">weakref</span><span class="o">.</span><span class="n">finalize</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">_noop</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">shms</span><span class="p">))</span>
+<a id="__codelineno-0-85" name="__codelineno-0-85"></a>    <span class="k">except</span><span class="p">:</span>
+<a id="__codelineno-0-86" name="__codelineno-0-86"></a>        <span class="k">return</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -5108,24 +5203,7 @@ otherwise the class name is used.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>brmspy/_session/codec/base.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-71"> 71</a></span>
-<span class="normal"><a href="#__codelineno-0-72"> 72</a></span>
-<span class="normal"><a href="#__codelineno-0-73"> 73</a></span>
-<span class="normal"><a href="#__codelineno-0-74"> 74</a></span>
-<span class="normal"><a href="#__codelineno-0-75"> 75</a></span>
-<span class="normal"><a href="#__codelineno-0-76"> 76</a></span>
-<span class="normal"><a href="#__codelineno-0-77"> 77</a></span>
-<span class="normal"><a href="#__codelineno-0-78"> 78</a></span>
-<span class="normal"><a href="#__codelineno-0-79"> 79</a></span>
-<span class="normal"><a href="#__codelineno-0-80"> 80</a></span>
-<span class="normal"><a href="#__codelineno-0-81"> 81</a></span>
-<span class="normal"><a href="#__codelineno-0-82"> 82</a></span>
-<span class="normal"><a href="#__codelineno-0-83"> 83</a></span>
-<span class="normal"><a href="#__codelineno-0-84"> 84</a></span>
-<span class="normal"><a href="#__codelineno-0-85"> 85</a></span>
-<span class="normal"><a href="#__codelineno-0-86"> 86</a></span>
-<span class="normal"><a href="#__codelineno-0-87"> 87</a></span>
-<span class="normal"><a href="#__codelineno-0-88"> 88</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-88"> 88</a></span>
 <span class="normal"><a href="#__codelineno-0-89"> 89</a></span>
 <span class="normal"><a href="#__codelineno-0-90"> 90</a></span>
 <span class="normal"><a href="#__codelineno-0-91"> 91</a></span>
@@ -5140,39 +5218,62 @@ otherwise the class name is used.</p>
 <span class="normal"><a href="#__codelineno-0-100">100</a></span>
 <span class="normal"><a href="#__codelineno-0-101">101</a></span>
 <span class="normal"><a href="#__codelineno-0-102">102</a></span>
-<span class="normal"><a href="#__codelineno-0-103">103</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-71" name="__codelineno-0-71"></a><span class="k">def</span><span class="w"> </span><span class="nf">decode</span><span class="p">(</span>
-<a id="__codelineno-0-72" name="__codelineno-0-72"></a>    <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-0-73" name="__codelineno-0-73"></a>    <span class="n">codec</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-74" name="__codelineno-0-74"></a>    <span class="n">meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
-<a id="__codelineno-0-75" name="__codelineno-0-75"></a>    <span class="n">buffers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">memoryview</span><span class="p">],</span>
-<a id="__codelineno-0-76" name="__codelineno-0-76"></a>    <span class="n">buffer_specs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span>
-<a id="__codelineno-0-77" name="__codelineno-0-77"></a>    <span class="n">shm_pool</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<a id="__codelineno-0-78" name="__codelineno-0-78"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<a id="__codelineno-0-79" name="__codelineno-0-79"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-80" name="__codelineno-0-80"></a><span class="sd">    Decode a payload using a named codec.</span>
-<a id="__codelineno-0-81" name="__codelineno-0-81"></a>
-<a id="__codelineno-0-82" name="__codelineno-0-82"></a><span class="sd">    Parameters</span>
-<a id="__codelineno-0-83" name="__codelineno-0-83"></a><span class="sd">    ----------</span>
-<a id="__codelineno-0-84" name="__codelineno-0-84"></a><span class="sd">    codec : str</span>
-<a id="__codelineno-0-85" name="__codelineno-0-85"></a><span class="sd">        Codec identifier previously returned by `encode()`.</span>
-<a id="__codelineno-0-86" name="__codelineno-0-86"></a><span class="sd">    meta : dict[str, Any]</span>
-<a id="__codelineno-0-87" name="__codelineno-0-87"></a><span class="sd">        Codec metadata.</span>
-<a id="__codelineno-0-88" name="__codelineno-0-88"></a><span class="sd">    buffers : list[memoryview]</span>
-<a id="__codelineno-0-89" name="__codelineno-0-89"></a><span class="sd">        Memoryviews for attached SHM buffers.</span>
-<a id="__codelineno-0-90" name="__codelineno-0-90"></a><span class="sd">    buffer_specs : list[dict]</span>
-<a id="__codelineno-0-91" name="__codelineno-0-91"></a><span class="sd">        Original buffer specs (name/size) corresponding to `buffers`.</span>
-<a id="__codelineno-0-92" name="__codelineno-0-92"></a><span class="sd">    shm_pool : Any</span>
-<a id="__codelineno-0-93" name="__codelineno-0-93"></a><span class="sd">        SHM pool (some codecs may attach additional buffers).</span>
-<a id="__codelineno-0-94" name="__codelineno-0-94"></a>
-<a id="__codelineno-0-95" name="__codelineno-0-95"></a><span class="sd">    Returns</span>
-<a id="__codelineno-0-96" name="__codelineno-0-96"></a><span class="sd">    -------</span>
-<a id="__codelineno-0-97" name="__codelineno-0-97"></a><span class="sd">    Any</span>
-<a id="__codelineno-0-98" name="__codelineno-0-98"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-99" name="__codelineno-0-99"></a>    <span class="k">if</span> <span class="n">codec</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_by_codec</span><span class="p">:</span>
-<a id="__codelineno-0-100" name="__codelineno-0-100"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-<a id="__codelineno-0-101" name="__codelineno-0-101"></a>            <span class="sa">f</span><span class="s2">&quot;Unknown codec: </span><span class="si">{</span><span class="n">codec</span><span class="si">}</span><span class="s2">, available: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_by_codec</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span>
-<a id="__codelineno-0-102" name="__codelineno-0-102"></a>        <span class="p">)</span>
-<a id="__codelineno-0-103" name="__codelineno-0-103"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_by_codec</span><span class="p">[</span><span class="n">codec</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">buffers</span><span class="p">,</span> <span class="n">buffer_specs</span><span class="p">,</span> <span class="n">shm_pool</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-103">103</a></span>
+<span class="normal"><a href="#__codelineno-0-104">104</a></span>
+<span class="normal"><a href="#__codelineno-0-105">105</a></span>
+<span class="normal"><a href="#__codelineno-0-106">106</a></span>
+<span class="normal"><a href="#__codelineno-0-107">107</a></span>
+<span class="normal"><a href="#__codelineno-0-108">108</a></span>
+<span class="normal"><a href="#__codelineno-0-109">109</a></span>
+<span class="normal"><a href="#__codelineno-0-110">110</a></span>
+<span class="normal"><a href="#__codelineno-0-111">111</a></span>
+<span class="normal"><a href="#__codelineno-0-112">112</a></span>
+<span class="normal"><a href="#__codelineno-0-113">113</a></span>
+<span class="normal"><a href="#__codelineno-0-114">114</a></span>
+<span class="normal"><a href="#__codelineno-0-115">115</a></span>
+<span class="normal"><a href="#__codelineno-0-116">116</a></span>
+<span class="normal"><a href="#__codelineno-0-117">117</a></span>
+<span class="normal"><a href="#__codelineno-0-118">118</a></span>
+<span class="normal"><a href="#__codelineno-0-119">119</a></span>
+<span class="normal"><a href="#__codelineno-0-120">120</a></span>
+<span class="normal"><a href="#__codelineno-0-121">121</a></span>
+<span class="normal"><a href="#__codelineno-0-122">122</a></span>
+<span class="normal"><a href="#__codelineno-0-123">123</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-88" name="__codelineno-0-88"></a><span class="k">def</span><span class="w"> </span><span class="nf">decode</span><span class="p">(</span>
+<a id="__codelineno-0-89" name="__codelineno-0-89"></a>    <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-90" name="__codelineno-0-90"></a>    <span class="n">codec</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-91" name="__codelineno-0-91"></a>    <span class="n">meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+<a id="__codelineno-0-92" name="__codelineno-0-92"></a>    <span class="n">buffers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ShmBlock</span><span class="p">],</span>
+<a id="__codelineno-0-93" name="__codelineno-0-93"></a>    <span class="n">buffer_specs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span>
+<a id="__codelineno-0-94" name="__codelineno-0-94"></a>    <span class="n">shm_pool</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<a id="__codelineno-0-95" name="__codelineno-0-95"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<a id="__codelineno-0-96" name="__codelineno-0-96"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-97" name="__codelineno-0-97"></a><span class="sd">    Decode a payload using a named codec.</span>
+<a id="__codelineno-0-98" name="__codelineno-0-98"></a>
+<a id="__codelineno-0-99" name="__codelineno-0-99"></a><span class="sd">    Parameters</span>
+<a id="__codelineno-0-100" name="__codelineno-0-100"></a><span class="sd">    ----------</span>
+<a id="__codelineno-0-101" name="__codelineno-0-101"></a><span class="sd">    codec : str</span>
+<a id="__codelineno-0-102" name="__codelineno-0-102"></a><span class="sd">        Codec identifier previously returned by `encode()`.</span>
+<a id="__codelineno-0-103" name="__codelineno-0-103"></a><span class="sd">    meta : dict[str, Any]</span>
+<a id="__codelineno-0-104" name="__codelineno-0-104"></a><span class="sd">        Codec metadata.</span>
+<a id="__codelineno-0-105" name="__codelineno-0-105"></a><span class="sd">    buffers : list[memoryview]</span>
+<a id="__codelineno-0-106" name="__codelineno-0-106"></a><span class="sd">        Memoryviews for attached SHM buffers.</span>
+<a id="__codelineno-0-107" name="__codelineno-0-107"></a><span class="sd">    buffer_specs : list[dict]</span>
+<a id="__codelineno-0-108" name="__codelineno-0-108"></a><span class="sd">        Original buffer specs (name/size) corresponding to `buffers`.</span>
+<a id="__codelineno-0-109" name="__codelineno-0-109"></a><span class="sd">    shm_pool : Any</span>
+<a id="__codelineno-0-110" name="__codelineno-0-110"></a><span class="sd">        SHM pool (some codecs may attach additional buffers).</span>
+<a id="__codelineno-0-111" name="__codelineno-0-111"></a>
+<a id="__codelineno-0-112" name="__codelineno-0-112"></a><span class="sd">    Returns</span>
+<a id="__codelineno-0-113" name="__codelineno-0-113"></a><span class="sd">    -------</span>
+<a id="__codelineno-0-114" name="__codelineno-0-114"></a><span class="sd">    Any</span>
+<a id="__codelineno-0-115" name="__codelineno-0-115"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-116" name="__codelineno-0-116"></a>    <span class="k">if</span> <span class="n">codec</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_by_codec</span><span class="p">:</span>
+<a id="__codelineno-0-117" name="__codelineno-0-117"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+<a id="__codelineno-0-118" name="__codelineno-0-118"></a>            <span class="sa">f</span><span class="s2">&quot;Unknown codec: </span><span class="si">{</span><span class="n">codec</span><span class="si">}</span><span class="s2">, available: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_by_codec</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-119" name="__codelineno-0-119"></a>        <span class="p">)</span>
+<a id="__codelineno-0-120" name="__codelineno-0-120"></a>    <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_by_codec</span><span class="p">[</span><span class="n">codec</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">buffers</span><span class="p">,</span> <span class="n">buffer_specs</span><span class="p">,</span> <span class="n">shm_pool</span><span class="p">)</span>
+<a id="__codelineno-0-121" name="__codelineno-0-121"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_attach_shm_lifetime</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">buffers</span><span class="p">)</span>
+<a id="__codelineno-0-122" name="__codelineno-0-122"></a>
+<a id="__codelineno-0-123" name="__codelineno-0-123"></a>    <span class="k">return</span> <span class="n">value</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -5218,20 +5319,7 @@ fields that must not cross the boundary.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>brmspy/_session/codec/builtin.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-423">423</a></span>
-<span class="normal"><a href="#__codelineno-0-424">424</a></span>
-<span class="normal"><a href="#__codelineno-0-425">425</a></span>
-<span class="normal"><a href="#__codelineno-0-426">426</a></span>
-<span class="normal"><a href="#__codelineno-0-427">427</a></span>
-<span class="normal"><a href="#__codelineno-0-428">428</a></span>
-<span class="normal"><a href="#__codelineno-0-429">429</a></span>
-<span class="normal"><a href="#__codelineno-0-430">430</a></span>
-<span class="normal"><a href="#__codelineno-0-431">431</a></span>
-<span class="normal"><a href="#__codelineno-0-432">432</a></span>
-<span class="normal"><a href="#__codelineno-0-433">433</a></span>
-<span class="normal"><a href="#__codelineno-0-434">434</a></span>
-<span class="normal"><a href="#__codelineno-0-435">435</a></span>
-<span class="normal"><a href="#__codelineno-0-436">436</a></span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-436">436</a></span>
 <span class="normal"><a href="#__codelineno-0-437">437</a></span>
 <span class="normal"><a href="#__codelineno-0-438">438</a></span>
 <span class="normal"><a href="#__codelineno-0-439">439</a></span>
@@ -5314,103 +5402,116 @@ fields that must not cross the boundary.</p>
 <span class="normal"><a href="#__codelineno-0-516">516</a></span>
 <span class="normal"><a href="#__codelineno-0-517">517</a></span>
 <span class="normal"><a href="#__codelineno-0-518">518</a></span>
-<span class="normal"><a href="#__codelineno-0-519">519</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-423" name="__codelineno-0-423"></a><span class="k">class</span><span class="w"> </span><span class="nc">GenericDataClassCodec</span><span class="p">(</span><span class="n">Encoder</span><span class="p">):</span>
-<a id="__codelineno-0-424" name="__codelineno-0-424"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-425" name="__codelineno-0-425"></a><span class="sd">    Generic codec for dataclasses (internal).</span>
-<a id="__codelineno-0-426" name="__codelineno-0-426"></a>
-<a id="__codelineno-0-427" name="__codelineno-0-427"></a><span class="sd">    Encodes each `init=True` field by delegating to a</span>
-<a id="__codelineno-0-428" name="__codelineno-0-428"></a><span class="sd">    [`CodecRegistry`][brmspy._session.codec.base.CodecRegistry]. Use `skip_fields` to exclude</span>
-<a id="__codelineno-0-429" name="__codelineno-0-429"></a><span class="sd">    fields that must not cross the boundary.</span>
-<a id="__codelineno-0-430" name="__codelineno-0-430"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-431" name="__codelineno-0-431"></a>
-<a id="__codelineno-0-432" name="__codelineno-0-432"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-<a id="__codelineno-0-433" name="__codelineno-0-433"></a>        <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-0-434" name="__codelineno-0-434"></a>        <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
-<a id="__codelineno-0-435" name="__codelineno-0-435"></a>        <span class="n">registry</span><span class="p">:</span> <span class="n">CodecRegistry</span><span class="p">,</span>
-<a id="__codelineno-0-436" name="__codelineno-0-436"></a>        <span class="o">*</span><span class="p">,</span>
-<a id="__codelineno-0-437" name="__codelineno-0-437"></a>        <span class="n">skip_fields</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-438" name="__codelineno-0-438"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-439" name="__codelineno-0-439"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_dataclass</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-<a id="__codelineno-0-440" name="__codelineno-0-440"></a>            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="si">!r}</span><span class="s2"> is not a dataclass&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-441" name="__codelineno-0-441"></a>
-<a id="__codelineno-0-442" name="__codelineno-0-442"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_cls</span> <span class="o">=</span> <span class="bp">cls</span>
-<a id="__codelineno-0-443" name="__codelineno-0-443"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_registry</span> <span class="o">=</span> <span class="n">registry</span>
-<a id="__codelineno-0-444" name="__codelineno-0-444"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">codec</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;dataclass::</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">&quot;</span>
-<a id="__codelineno-0-445" name="__codelineno-0-445"></a>
-<a id="__codelineno-0-446" name="__codelineno-0-446"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_skip_fields</span> <span class="o">=</span> <span class="n">skip_fields</span> <span class="ow">or</span> <span class="nb">set</span><span class="p">()</span>
-<a id="__codelineno-0-447" name="__codelineno-0-447"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-0-448" name="__codelineno-0-448"></a>
-<a id="__codelineno-0-449" name="__codelineno-0-449"></a>        <span class="c1"># Precompute which fields we actually encode</span>
-<a id="__codelineno-0-450" name="__codelineno-0-450"></a>        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">dc_fields</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-<a id="__codelineno-0-451" name="__codelineno-0-451"></a>            <span class="k">if</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">init</span><span class="p">:</span>
-<a id="__codelineno-0-452" name="__codelineno-0-452"></a>                <span class="k">continue</span>
-<a id="__codelineno-0-453" name="__codelineno-0-453"></a>            <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_skip_fields</span><span class="p">:</span>
-<a id="__codelineno-0-454" name="__codelineno-0-454"></a>                <span class="k">continue</span>
-<a id="__codelineno-0-455" name="__codelineno-0-455"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-<a id="__codelineno-0-456" name="__codelineno-0-456"></a>
-<a id="__codelineno-0-457" name="__codelineno-0-457"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">can_encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<a id="__codelineno-0-458" name="__codelineno-0-458"></a>        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cls</span><span class="p">)</span>
-<a id="__codelineno-0-459" name="__codelineno-0-459"></a>
-<a id="__codelineno-0-460" name="__codelineno-0-460"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">shm_pool</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EncodeResult</span><span class="p">:</span>
-<a id="__codelineno-0-461" name="__codelineno-0-461"></a>        <span class="n">buffers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ShmBlockSpec</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-0-462" name="__codelineno-0-462"></a>        <span class="n">fields_meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-<a id="__codelineno-0-463" name="__codelineno-0-463"></a>
-<a id="__codelineno-0-464" name="__codelineno-0-464"></a>        <span class="k">for</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span><span class="p">:</span>
-<a id="__codelineno-0-465" name="__codelineno-0-465"></a>            <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">field_name</span><span class="p">)</span>
-<a id="__codelineno-0-466" name="__codelineno-0-466"></a>
-<a id="__codelineno-0-467" name="__codelineno-0-467"></a>            <span class="c1"># Delegate to registry; chooses right encoder for the actual *runtime* type</span>
-<a id="__codelineno-0-468" name="__codelineno-0-468"></a>            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">shm_pool</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-519">519</a></span>
+<span class="normal"><a href="#__codelineno-0-520">520</a></span>
+<span class="normal"><a href="#__codelineno-0-521">521</a></span>
+<span class="normal"><a href="#__codelineno-0-522">522</a></span>
+<span class="normal"><a href="#__codelineno-0-523">523</a></span>
+<span class="normal"><a href="#__codelineno-0-524">524</a></span>
+<span class="normal"><a href="#__codelineno-0-525">525</a></span>
+<span class="normal"><a href="#__codelineno-0-526">526</a></span>
+<span class="normal"><a href="#__codelineno-0-527">527</a></span>
+<span class="normal"><a href="#__codelineno-0-528">528</a></span>
+<span class="normal"><a href="#__codelineno-0-529">529</a></span>
+<span class="normal"><a href="#__codelineno-0-530">530</a></span>
+<span class="normal"><a href="#__codelineno-0-531">531</a></span>
+<span class="normal"><a href="#__codelineno-0-532">532</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-436" name="__codelineno-0-436"></a><span class="k">class</span><span class="w"> </span><span class="nc">GenericDataClassCodec</span><span class="p">(</span><span class="n">Encoder</span><span class="p">):</span>
+<a id="__codelineno-0-437" name="__codelineno-0-437"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-438" name="__codelineno-0-438"></a><span class="sd">    Generic codec for dataclasses (internal).</span>
+<a id="__codelineno-0-439" name="__codelineno-0-439"></a>
+<a id="__codelineno-0-440" name="__codelineno-0-440"></a><span class="sd">    Encodes each `init=True` field by delegating to a</span>
+<a id="__codelineno-0-441" name="__codelineno-0-441"></a><span class="sd">    [`CodecRegistry`][brmspy._session.codec.base.CodecRegistry]. Use `skip_fields` to exclude</span>
+<a id="__codelineno-0-442" name="__codelineno-0-442"></a><span class="sd">    fields that must not cross the boundary.</span>
+<a id="__codelineno-0-443" name="__codelineno-0-443"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-444" name="__codelineno-0-444"></a>
+<a id="__codelineno-0-445" name="__codelineno-0-445"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+<a id="__codelineno-0-446" name="__codelineno-0-446"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-447" name="__codelineno-0-447"></a>        <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+<a id="__codelineno-0-448" name="__codelineno-0-448"></a>        <span class="n">registry</span><span class="p">:</span> <span class="n">CodecRegistry</span><span class="p">,</span>
+<a id="__codelineno-0-449" name="__codelineno-0-449"></a>        <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-0-450" name="__codelineno-0-450"></a>        <span class="n">skip_fields</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-451" name="__codelineno-0-451"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-452" name="__codelineno-0-452"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_dataclass</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+<a id="__codelineno-0-453" name="__codelineno-0-453"></a>            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="si">!r}</span><span class="s2"> is not a dataclass&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-454" name="__codelineno-0-454"></a>
+<a id="__codelineno-0-455" name="__codelineno-0-455"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_cls</span> <span class="o">=</span> <span class="bp">cls</span>
+<a id="__codelineno-0-456" name="__codelineno-0-456"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_registry</span> <span class="o">=</span> <span class="n">registry</span>
+<a id="__codelineno-0-457" name="__codelineno-0-457"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">codec</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;dataclass::</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-458" name="__codelineno-0-458"></a>
+<a id="__codelineno-0-459" name="__codelineno-0-459"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_skip_fields</span> <span class="o">=</span> <span class="n">skip_fields</span> <span class="ow">or</span> <span class="nb">set</span><span class="p">()</span>
+<a id="__codelineno-0-460" name="__codelineno-0-460"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-461" name="__codelineno-0-461"></a>
+<a id="__codelineno-0-462" name="__codelineno-0-462"></a>        <span class="c1"># Precompute which fields we actually encode</span>
+<a id="__codelineno-0-463" name="__codelineno-0-463"></a>        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">dc_fields</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+<a id="__codelineno-0-464" name="__codelineno-0-464"></a>            <span class="k">if</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">init</span><span class="p">:</span>
+<a id="__codelineno-0-465" name="__codelineno-0-465"></a>                <span class="k">continue</span>
+<a id="__codelineno-0-466" name="__codelineno-0-466"></a>            <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_skip_fields</span><span class="p">:</span>
+<a id="__codelineno-0-467" name="__codelineno-0-467"></a>                <span class="k">continue</span>
+<a id="__codelineno-0-468" name="__codelineno-0-468"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 <a id="__codelineno-0-469" name="__codelineno-0-469"></a>
-<a id="__codelineno-0-470" name="__codelineno-0-470"></a>            <span class="n">start</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">buffers</span><span class="p">)</span>
-<a id="__codelineno-0-471" name="__codelineno-0-471"></a>            <span class="n">count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">buffers</span><span class="p">)</span>
+<a id="__codelineno-0-470" name="__codelineno-0-470"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">can_encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-0-471" name="__codelineno-0-471"></a>        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cls</span><span class="p">)</span>
 <a id="__codelineno-0-472" name="__codelineno-0-472"></a>
-<a id="__codelineno-0-473" name="__codelineno-0-473"></a>            <span class="n">fields_meta</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-0-474" name="__codelineno-0-474"></a>                <span class="s2">&quot;codec&quot;</span><span class="p">:</span> <span class="n">res</span><span class="o">.</span><span class="n">codec</span><span class="p">,</span>
-<a id="__codelineno-0-475" name="__codelineno-0-475"></a>                <span class="s2">&quot;meta&quot;</span><span class="p">:</span> <span class="n">res</span><span class="o">.</span><span class="n">meta</span><span class="p">,</span>
-<a id="__codelineno-0-476" name="__codelineno-0-476"></a>                <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="n">start</span><span class="p">,</span>
-<a id="__codelineno-0-477" name="__codelineno-0-477"></a>                <span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="n">count</span><span class="p">,</span>
-<a id="__codelineno-0-478" name="__codelineno-0-478"></a>            <span class="p">}</span>
+<a id="__codelineno-0-473" name="__codelineno-0-473"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">shm_pool</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EncodeResult</span><span class="p">:</span>
+<a id="__codelineno-0-474" name="__codelineno-0-474"></a>        <span class="n">buffers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ShmBlockSpec</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-475" name="__codelineno-0-475"></a>        <span class="n">fields_meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<a id="__codelineno-0-476" name="__codelineno-0-476"></a>
+<a id="__codelineno-0-477" name="__codelineno-0-477"></a>        <span class="k">for</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span><span class="p">:</span>
+<a id="__codelineno-0-478" name="__codelineno-0-478"></a>            <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">field_name</span><span class="p">)</span>
 <a id="__codelineno-0-479" name="__codelineno-0-479"></a>
-<a id="__codelineno-0-480" name="__codelineno-0-480"></a>            <span class="n">buffers</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">buffers</span><span class="p">)</span>
-<a id="__codelineno-0-481" name="__codelineno-0-481"></a>
-<a id="__codelineno-0-482" name="__codelineno-0-482"></a>        <span class="n">meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-0-483" name="__codelineno-0-483"></a>            <span class="s2">&quot;module&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cls</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
-<a id="__codelineno-0-484" name="__codelineno-0-484"></a>            <span class="s2">&quot;qualname&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cls</span><span class="o">.</span><span class="vm">__qualname__</span><span class="p">,</span>
-<a id="__codelineno-0-485" name="__codelineno-0-485"></a>            <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="n">fields_meta</span><span class="p">,</span>
-<a id="__codelineno-0-486" name="__codelineno-0-486"></a>        <span class="p">}</span>
-<a id="__codelineno-0-487" name="__codelineno-0-487"></a>
-<a id="__codelineno-0-488" name="__codelineno-0-488"></a>        <span class="k">return</span> <span class="n">EncodeResult</span><span class="p">(</span>
-<a id="__codelineno-0-489" name="__codelineno-0-489"></a>            <span class="n">codec</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">codec</span><span class="p">,</span>
-<a id="__codelineno-0-490" name="__codelineno-0-490"></a>            <span class="n">meta</span><span class="o">=</span><span class="n">meta</span><span class="p">,</span>
-<a id="__codelineno-0-491" name="__codelineno-0-491"></a>            <span class="n">buffers</span><span class="o">=</span><span class="n">buffers</span><span class="p">,</span>
-<a id="__codelineno-0-492" name="__codelineno-0-492"></a>        <span class="p">)</span>
-<a id="__codelineno-0-493" name="__codelineno-0-493"></a>
-<a id="__codelineno-0-494" name="__codelineno-0-494"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">decode</span><span class="p">(</span>
-<a id="__codelineno-0-495" name="__codelineno-0-495"></a>        <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-0-496" name="__codelineno-0-496"></a>        <span class="n">meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
-<a id="__codelineno-0-497" name="__codelineno-0-497"></a>        <span class="n">buffers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">memoryview</span><span class="p">],</span>
-<a id="__codelineno-0-498" name="__codelineno-0-498"></a>        <span class="n">buffer_specs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span>
-<a id="__codelineno-0-499" name="__codelineno-0-499"></a>        <span class="n">shm_pool</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<a id="__codelineno-0-500" name="__codelineno-0-500"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<a id="__codelineno-0-501" name="__codelineno-0-501"></a>        <span class="n">fields_meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;fields&quot;</span><span class="p">]</span>
-<a id="__codelineno-0-502" name="__codelineno-0-502"></a>        <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-<a id="__codelineno-0-503" name="__codelineno-0-503"></a>
-<a id="__codelineno-0-504" name="__codelineno-0-504"></a>        <span class="k">for</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">fmeta</span> <span class="ow">in</span> <span class="n">fields_meta</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-<a id="__codelineno-0-505" name="__codelineno-0-505"></a>            <span class="n">codec_name</span> <span class="o">=</span> <span class="n">fmeta</span><span class="p">[</span><span class="s2">&quot;codec&quot;</span><span class="p">]</span>
-<a id="__codelineno-0-506" name="__codelineno-0-506"></a>            <span class="n">start</span> <span class="o">=</span> <span class="n">fmeta</span><span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">]</span>
-<a id="__codelineno-0-507" name="__codelineno-0-507"></a>            <span class="n">count</span> <span class="o">=</span> <span class="n">fmeta</span><span class="p">[</span><span class="s2">&quot;count&quot;</span><span class="p">]</span>
-<a id="__codelineno-0-508" name="__codelineno-0-508"></a>
-<a id="__codelineno-0-509" name="__codelineno-0-509"></a>            <span class="c1"># IMPORTANT: slice buffer_specs in the same way as buffers</span>
-<a id="__codelineno-0-510" name="__codelineno-0-510"></a>            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span>
-<a id="__codelineno-0-511" name="__codelineno-0-511"></a>                <span class="n">codec_name</span><span class="p">,</span>
-<a id="__codelineno-0-512" name="__codelineno-0-512"></a>                <span class="n">fmeta</span><span class="p">[</span><span class="s2">&quot;meta&quot;</span><span class="p">],</span>
-<a id="__codelineno-0-513" name="__codelineno-0-513"></a>                <span class="n">buffers</span><span class="p">[</span><span class="n">start</span> <span class="p">:</span> <span class="n">start</span> <span class="o">+</span> <span class="n">count</span><span class="p">],</span>
-<a id="__codelineno-0-514" name="__codelineno-0-514"></a>                <span class="n">buffer_specs</span><span class="p">[</span><span class="n">start</span> <span class="p">:</span> <span class="n">start</span> <span class="o">+</span> <span class="n">count</span><span class="p">],</span>
-<a id="__codelineno-0-515" name="__codelineno-0-515"></a>                <span class="n">shm_pool</span><span class="p">,</span>
-<a id="__codelineno-0-516" name="__codelineno-0-516"></a>            <span class="p">)</span>
-<a id="__codelineno-0-517" name="__codelineno-0-517"></a>            <span class="n">kwargs</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-<a id="__codelineno-0-518" name="__codelineno-0-518"></a>
-<a id="__codelineno-0-519" name="__codelineno-0-519"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cls</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<a id="__codelineno-0-480" name="__codelineno-0-480"></a>            <span class="c1"># Delegate to registry; chooses right encoder for the actual *runtime* type</span>
+<a id="__codelineno-0-481" name="__codelineno-0-481"></a>            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">shm_pool</span><span class="p">)</span>
+<a id="__codelineno-0-482" name="__codelineno-0-482"></a>
+<a id="__codelineno-0-483" name="__codelineno-0-483"></a>            <span class="n">start</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">buffers</span><span class="p">)</span>
+<a id="__codelineno-0-484" name="__codelineno-0-484"></a>            <span class="n">count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">buffers</span><span class="p">)</span>
+<a id="__codelineno-0-485" name="__codelineno-0-485"></a>
+<a id="__codelineno-0-486" name="__codelineno-0-486"></a>            <span class="n">fields_meta</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-0-487" name="__codelineno-0-487"></a>                <span class="s2">&quot;codec&quot;</span><span class="p">:</span> <span class="n">res</span><span class="o">.</span><span class="n">codec</span><span class="p">,</span>
+<a id="__codelineno-0-488" name="__codelineno-0-488"></a>                <span class="s2">&quot;meta&quot;</span><span class="p">:</span> <span class="n">res</span><span class="o">.</span><span class="n">meta</span><span class="p">,</span>
+<a id="__codelineno-0-489" name="__codelineno-0-489"></a>                <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="n">start</span><span class="p">,</span>
+<a id="__codelineno-0-490" name="__codelineno-0-490"></a>                <span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="n">count</span><span class="p">,</span>
+<a id="__codelineno-0-491" name="__codelineno-0-491"></a>            <span class="p">}</span>
+<a id="__codelineno-0-492" name="__codelineno-0-492"></a>
+<a id="__codelineno-0-493" name="__codelineno-0-493"></a>            <span class="n">buffers</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">buffers</span><span class="p">)</span>
+<a id="__codelineno-0-494" name="__codelineno-0-494"></a>
+<a id="__codelineno-0-495" name="__codelineno-0-495"></a>        <span class="n">meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-0-496" name="__codelineno-0-496"></a>            <span class="s2">&quot;module&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cls</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
+<a id="__codelineno-0-497" name="__codelineno-0-497"></a>            <span class="s2">&quot;qualname&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cls</span><span class="o">.</span><span class="vm">__qualname__</span><span class="p">,</span>
+<a id="__codelineno-0-498" name="__codelineno-0-498"></a>            <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="n">fields_meta</span><span class="p">,</span>
+<a id="__codelineno-0-499" name="__codelineno-0-499"></a>        <span class="p">}</span>
+<a id="__codelineno-0-500" name="__codelineno-0-500"></a>
+<a id="__codelineno-0-501" name="__codelineno-0-501"></a>        <span class="k">return</span> <span class="n">EncodeResult</span><span class="p">(</span>
+<a id="__codelineno-0-502" name="__codelineno-0-502"></a>            <span class="n">codec</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">codec</span><span class="p">,</span>
+<a id="__codelineno-0-503" name="__codelineno-0-503"></a>            <span class="n">meta</span><span class="o">=</span><span class="n">meta</span><span class="p">,</span>
+<a id="__codelineno-0-504" name="__codelineno-0-504"></a>            <span class="n">buffers</span><span class="o">=</span><span class="n">buffers</span><span class="p">,</span>
+<a id="__codelineno-0-505" name="__codelineno-0-505"></a>        <span class="p">)</span>
+<a id="__codelineno-0-506" name="__codelineno-0-506"></a>
+<a id="__codelineno-0-507" name="__codelineno-0-507"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">decode</span><span class="p">(</span>
+<a id="__codelineno-0-508" name="__codelineno-0-508"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-509" name="__codelineno-0-509"></a>        <span class="n">meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+<a id="__codelineno-0-510" name="__codelineno-0-510"></a>        <span class="n">buffers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ShmBlock</span><span class="p">],</span>
+<a id="__codelineno-0-511" name="__codelineno-0-511"></a>        <span class="n">buffer_specs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span>
+<a id="__codelineno-0-512" name="__codelineno-0-512"></a>        <span class="n">shm_pool</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<a id="__codelineno-0-513" name="__codelineno-0-513"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<a id="__codelineno-0-514" name="__codelineno-0-514"></a>        <span class="n">fields_meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;fields&quot;</span><span class="p">]</span>
+<a id="__codelineno-0-515" name="__codelineno-0-515"></a>        <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<a id="__codelineno-0-516" name="__codelineno-0-516"></a>
+<a id="__codelineno-0-517" name="__codelineno-0-517"></a>        <span class="k">for</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">fmeta</span> <span class="ow">in</span> <span class="n">fields_meta</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+<a id="__codelineno-0-518" name="__codelineno-0-518"></a>            <span class="n">codec_name</span> <span class="o">=</span> <span class="n">fmeta</span><span class="p">[</span><span class="s2">&quot;codec&quot;</span><span class="p">]</span>
+<a id="__codelineno-0-519" name="__codelineno-0-519"></a>            <span class="n">start</span> <span class="o">=</span> <span class="n">fmeta</span><span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">]</span>
+<a id="__codelineno-0-520" name="__codelineno-0-520"></a>            <span class="n">count</span> <span class="o">=</span> <span class="n">fmeta</span><span class="p">[</span><span class="s2">&quot;count&quot;</span><span class="p">]</span>
+<a id="__codelineno-0-521" name="__codelineno-0-521"></a>
+<a id="__codelineno-0-522" name="__codelineno-0-522"></a>            <span class="c1"># IMPORTANT: slice buffer_specs in the same way as buffers</span>
+<a id="__codelineno-0-523" name="__codelineno-0-523"></a>            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span>
+<a id="__codelineno-0-524" name="__codelineno-0-524"></a>                <span class="n">codec_name</span><span class="p">,</span>
+<a id="__codelineno-0-525" name="__codelineno-0-525"></a>                <span class="n">fmeta</span><span class="p">[</span><span class="s2">&quot;meta&quot;</span><span class="p">],</span>
+<a id="__codelineno-0-526" name="__codelineno-0-526"></a>                <span class="n">buffers</span><span class="p">[</span><span class="n">start</span> <span class="p">:</span> <span class="n">start</span> <span class="o">+</span> <span class="n">count</span><span class="p">],</span>
+<a id="__codelineno-0-527" name="__codelineno-0-527"></a>                <span class="n">buffer_specs</span><span class="p">[</span><span class="n">start</span> <span class="p">:</span> <span class="n">start</span> <span class="o">+</span> <span class="n">count</span><span class="p">],</span>
+<a id="__codelineno-0-528" name="__codelineno-0-528"></a>                <span class="n">shm_pool</span><span class="p">,</span>
+<a id="__codelineno-0-529" name="__codelineno-0-529"></a>            <span class="p">)</span>
+<a id="__codelineno-0-530" name="__codelineno-0-530"></a>            <span class="n">kwargs</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+<a id="__codelineno-0-531" name="__codelineno-0-531"></a>
+<a id="__codelineno-0-532" name="__codelineno-0-532"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cls</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -5541,20 +5642,7 @@ fields that must not cross the boundary.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>brmspy/_session/codec/builtin.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-432">432</a></span>
-<span class="normal"><a href="#__codelineno-0-433">433</a></span>
-<span class="normal"><a href="#__codelineno-0-434">434</a></span>
-<span class="normal"><a href="#__codelineno-0-435">435</a></span>
-<span class="normal"><a href="#__codelineno-0-436">436</a></span>
-<span class="normal"><a href="#__codelineno-0-437">437</a></span>
-<span class="normal"><a href="#__codelineno-0-438">438</a></span>
-<span class="normal"><a href="#__codelineno-0-439">439</a></span>
-<span class="normal"><a href="#__codelineno-0-440">440</a></span>
-<span class="normal"><a href="#__codelineno-0-441">441</a></span>
-<span class="normal"><a href="#__codelineno-0-442">442</a></span>
-<span class="normal"><a href="#__codelineno-0-443">443</a></span>
-<span class="normal"><a href="#__codelineno-0-444">444</a></span>
-<span class="normal"><a href="#__codelineno-0-445">445</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-445">445</a></span>
 <span class="normal"><a href="#__codelineno-0-446">446</a></span>
 <span class="normal"><a href="#__codelineno-0-447">447</a></span>
 <span class="normal"><a href="#__codelineno-0-448">448</a></span>
@@ -5564,30 +5652,43 @@ fields that must not cross the boundary.</p>
 <span class="normal"><a href="#__codelineno-0-452">452</a></span>
 <span class="normal"><a href="#__codelineno-0-453">453</a></span>
 <span class="normal"><a href="#__codelineno-0-454">454</a></span>
-<span class="normal"><a href="#__codelineno-0-455">455</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-432" name="__codelineno-0-432"></a><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-<a id="__codelineno-0-433" name="__codelineno-0-433"></a>    <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-0-434" name="__codelineno-0-434"></a>    <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
-<a id="__codelineno-0-435" name="__codelineno-0-435"></a>    <span class="n">registry</span><span class="p">:</span> <span class="n">CodecRegistry</span><span class="p">,</span>
-<a id="__codelineno-0-436" name="__codelineno-0-436"></a>    <span class="o">*</span><span class="p">,</span>
-<a id="__codelineno-0-437" name="__codelineno-0-437"></a>    <span class="n">skip_fields</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-438" name="__codelineno-0-438"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-439" name="__codelineno-0-439"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">is_dataclass</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-<a id="__codelineno-0-440" name="__codelineno-0-440"></a>        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="si">!r}</span><span class="s2"> is not a dataclass&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-441" name="__codelineno-0-441"></a>
-<a id="__codelineno-0-442" name="__codelineno-0-442"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_cls</span> <span class="o">=</span> <span class="bp">cls</span>
-<a id="__codelineno-0-443" name="__codelineno-0-443"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_registry</span> <span class="o">=</span> <span class="n">registry</span>
-<a id="__codelineno-0-444" name="__codelineno-0-444"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">codec</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;dataclass::</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">&quot;</span>
-<a id="__codelineno-0-445" name="__codelineno-0-445"></a>
-<a id="__codelineno-0-446" name="__codelineno-0-446"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_skip_fields</span> <span class="o">=</span> <span class="n">skip_fields</span> <span class="ow">or</span> <span class="nb">set</span><span class="p">()</span>
-<a id="__codelineno-0-447" name="__codelineno-0-447"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-0-448" name="__codelineno-0-448"></a>
-<a id="__codelineno-0-449" name="__codelineno-0-449"></a>    <span class="c1"># Precompute which fields we actually encode</span>
-<a id="__codelineno-0-450" name="__codelineno-0-450"></a>    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">dc_fields</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-<a id="__codelineno-0-451" name="__codelineno-0-451"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">init</span><span class="p">:</span>
-<a id="__codelineno-0-452" name="__codelineno-0-452"></a>            <span class="k">continue</span>
-<a id="__codelineno-0-453" name="__codelineno-0-453"></a>        <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_skip_fields</span><span class="p">:</span>
-<a id="__codelineno-0-454" name="__codelineno-0-454"></a>            <span class="k">continue</span>
-<a id="__codelineno-0-455" name="__codelineno-0-455"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-455">455</a></span>
+<span class="normal"><a href="#__codelineno-0-456">456</a></span>
+<span class="normal"><a href="#__codelineno-0-457">457</a></span>
+<span class="normal"><a href="#__codelineno-0-458">458</a></span>
+<span class="normal"><a href="#__codelineno-0-459">459</a></span>
+<span class="normal"><a href="#__codelineno-0-460">460</a></span>
+<span class="normal"><a href="#__codelineno-0-461">461</a></span>
+<span class="normal"><a href="#__codelineno-0-462">462</a></span>
+<span class="normal"><a href="#__codelineno-0-463">463</a></span>
+<span class="normal"><a href="#__codelineno-0-464">464</a></span>
+<span class="normal"><a href="#__codelineno-0-465">465</a></span>
+<span class="normal"><a href="#__codelineno-0-466">466</a></span>
+<span class="normal"><a href="#__codelineno-0-467">467</a></span>
+<span class="normal"><a href="#__codelineno-0-468">468</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-445" name="__codelineno-0-445"></a><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+<a id="__codelineno-0-446" name="__codelineno-0-446"></a>    <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-447" name="__codelineno-0-447"></a>    <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+<a id="__codelineno-0-448" name="__codelineno-0-448"></a>    <span class="n">registry</span><span class="p">:</span> <span class="n">CodecRegistry</span><span class="p">,</span>
+<a id="__codelineno-0-449" name="__codelineno-0-449"></a>    <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-0-450" name="__codelineno-0-450"></a>    <span class="n">skip_fields</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-451" name="__codelineno-0-451"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-452" name="__codelineno-0-452"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">is_dataclass</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+<a id="__codelineno-0-453" name="__codelineno-0-453"></a>        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="si">!r}</span><span class="s2"> is not a dataclass&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-454" name="__codelineno-0-454"></a>
+<a id="__codelineno-0-455" name="__codelineno-0-455"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_cls</span> <span class="o">=</span> <span class="bp">cls</span>
+<a id="__codelineno-0-456" name="__codelineno-0-456"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_registry</span> <span class="o">=</span> <span class="n">registry</span>
+<a id="__codelineno-0-457" name="__codelineno-0-457"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">codec</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;dataclass::</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-458" name="__codelineno-0-458"></a>
+<a id="__codelineno-0-459" name="__codelineno-0-459"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_skip_fields</span> <span class="o">=</span> <span class="n">skip_fields</span> <span class="ow">or</span> <span class="nb">set</span><span class="p">()</span>
+<a id="__codelineno-0-460" name="__codelineno-0-460"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-461" name="__codelineno-0-461"></a>
+<a id="__codelineno-0-462" name="__codelineno-0-462"></a>    <span class="c1"># Precompute which fields we actually encode</span>
+<a id="__codelineno-0-463" name="__codelineno-0-463"></a>    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">dc_fields</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+<a id="__codelineno-0-464" name="__codelineno-0-464"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">init</span><span class="p">:</span>
+<a id="__codelineno-0-465" name="__codelineno-0-465"></a>            <span class="k">continue</span>
+<a id="__codelineno-0-466" name="__codelineno-0-466"></a>        <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_skip_fields</span><span class="p">:</span>
+<a id="__codelineno-0-467" name="__codelineno-0-467"></a>            <span class="k">continue</span>
+<a id="__codelineno-0-468" name="__codelineno-0-468"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -5608,9 +5709,9 @@ fields that must not cross the boundary.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>brmspy/_session/codec/builtin.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-457">457</a></span>
-<span class="normal"><a href="#__codelineno-0-458">458</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-457" name="__codelineno-0-457"></a><span class="k">def</span><span class="w"> </span><span class="nf">can_encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<a id="__codelineno-0-458" name="__codelineno-0-458"></a>    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cls</span><span class="p">)</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-470">470</a></span>
+<span class="normal"><a href="#__codelineno-0-471">471</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-470" name="__codelineno-0-470"></a><span class="k">def</span><span class="w"> </span><span class="nf">can_encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-0-471" name="__codelineno-0-471"></a>    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cls</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -5631,20 +5732,7 @@ fields that must not cross the boundary.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>brmspy/_session/codec/builtin.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-460">460</a></span>
-<span class="normal"><a href="#__codelineno-0-461">461</a></span>
-<span class="normal"><a href="#__codelineno-0-462">462</a></span>
-<span class="normal"><a href="#__codelineno-0-463">463</a></span>
-<span class="normal"><a href="#__codelineno-0-464">464</a></span>
-<span class="normal"><a href="#__codelineno-0-465">465</a></span>
-<span class="normal"><a href="#__codelineno-0-466">466</a></span>
-<span class="normal"><a href="#__codelineno-0-467">467</a></span>
-<span class="normal"><a href="#__codelineno-0-468">468</a></span>
-<span class="normal"><a href="#__codelineno-0-469">469</a></span>
-<span class="normal"><a href="#__codelineno-0-470">470</a></span>
-<span class="normal"><a href="#__codelineno-0-471">471</a></span>
-<span class="normal"><a href="#__codelineno-0-472">472</a></span>
-<span class="normal"><a href="#__codelineno-0-473">473</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-473">473</a></span>
 <span class="normal"><a href="#__codelineno-0-474">474</a></span>
 <span class="normal"><a href="#__codelineno-0-475">475</a></span>
 <span class="normal"><a href="#__codelineno-0-476">476</a></span>
@@ -5663,39 +5751,52 @@ fields that must not cross the boundary.</p>
 <span class="normal"><a href="#__codelineno-0-489">489</a></span>
 <span class="normal"><a href="#__codelineno-0-490">490</a></span>
 <span class="normal"><a href="#__codelineno-0-491">491</a></span>
-<span class="normal"><a href="#__codelineno-0-492">492</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-460" name="__codelineno-0-460"></a><span class="k">def</span><span class="w"> </span><span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">shm_pool</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EncodeResult</span><span class="p">:</span>
-<a id="__codelineno-0-461" name="__codelineno-0-461"></a>    <span class="n">buffers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ShmBlockSpec</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-0-462" name="__codelineno-0-462"></a>    <span class="n">fields_meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-<a id="__codelineno-0-463" name="__codelineno-0-463"></a>
-<a id="__codelineno-0-464" name="__codelineno-0-464"></a>    <span class="k">for</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span><span class="p">:</span>
-<a id="__codelineno-0-465" name="__codelineno-0-465"></a>        <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">field_name</span><span class="p">)</span>
-<a id="__codelineno-0-466" name="__codelineno-0-466"></a>
-<a id="__codelineno-0-467" name="__codelineno-0-467"></a>        <span class="c1"># Delegate to registry; chooses right encoder for the actual *runtime* type</span>
-<a id="__codelineno-0-468" name="__codelineno-0-468"></a>        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">shm_pool</span><span class="p">)</span>
-<a id="__codelineno-0-469" name="__codelineno-0-469"></a>
-<a id="__codelineno-0-470" name="__codelineno-0-470"></a>        <span class="n">start</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">buffers</span><span class="p">)</span>
-<a id="__codelineno-0-471" name="__codelineno-0-471"></a>        <span class="n">count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">buffers</span><span class="p">)</span>
-<a id="__codelineno-0-472" name="__codelineno-0-472"></a>
-<a id="__codelineno-0-473" name="__codelineno-0-473"></a>        <span class="n">fields_meta</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-0-474" name="__codelineno-0-474"></a>            <span class="s2">&quot;codec&quot;</span><span class="p">:</span> <span class="n">res</span><span class="o">.</span><span class="n">codec</span><span class="p">,</span>
-<a id="__codelineno-0-475" name="__codelineno-0-475"></a>            <span class="s2">&quot;meta&quot;</span><span class="p">:</span> <span class="n">res</span><span class="o">.</span><span class="n">meta</span><span class="p">,</span>
-<a id="__codelineno-0-476" name="__codelineno-0-476"></a>            <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="n">start</span><span class="p">,</span>
-<a id="__codelineno-0-477" name="__codelineno-0-477"></a>            <span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="n">count</span><span class="p">,</span>
-<a id="__codelineno-0-478" name="__codelineno-0-478"></a>        <span class="p">}</span>
+<span class="normal"><a href="#__codelineno-0-492">492</a></span>
+<span class="normal"><a href="#__codelineno-0-493">493</a></span>
+<span class="normal"><a href="#__codelineno-0-494">494</a></span>
+<span class="normal"><a href="#__codelineno-0-495">495</a></span>
+<span class="normal"><a href="#__codelineno-0-496">496</a></span>
+<span class="normal"><a href="#__codelineno-0-497">497</a></span>
+<span class="normal"><a href="#__codelineno-0-498">498</a></span>
+<span class="normal"><a href="#__codelineno-0-499">499</a></span>
+<span class="normal"><a href="#__codelineno-0-500">500</a></span>
+<span class="normal"><a href="#__codelineno-0-501">501</a></span>
+<span class="normal"><a href="#__codelineno-0-502">502</a></span>
+<span class="normal"><a href="#__codelineno-0-503">503</a></span>
+<span class="normal"><a href="#__codelineno-0-504">504</a></span>
+<span class="normal"><a href="#__codelineno-0-505">505</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-473" name="__codelineno-0-473"></a><span class="k">def</span><span class="w"> </span><span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">shm_pool</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EncodeResult</span><span class="p">:</span>
+<a id="__codelineno-0-474" name="__codelineno-0-474"></a>    <span class="n">buffers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ShmBlockSpec</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-475" name="__codelineno-0-475"></a>    <span class="n">fields_meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<a id="__codelineno-0-476" name="__codelineno-0-476"></a>
+<a id="__codelineno-0-477" name="__codelineno-0-477"></a>    <span class="k">for</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_field_names</span><span class="p">:</span>
+<a id="__codelineno-0-478" name="__codelineno-0-478"></a>        <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">field_name</span><span class="p">)</span>
 <a id="__codelineno-0-479" name="__codelineno-0-479"></a>
-<a id="__codelineno-0-480" name="__codelineno-0-480"></a>        <span class="n">buffers</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">buffers</span><span class="p">)</span>
-<a id="__codelineno-0-481" name="__codelineno-0-481"></a>
-<a id="__codelineno-0-482" name="__codelineno-0-482"></a>    <span class="n">meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-0-483" name="__codelineno-0-483"></a>        <span class="s2">&quot;module&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cls</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
-<a id="__codelineno-0-484" name="__codelineno-0-484"></a>        <span class="s2">&quot;qualname&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cls</span><span class="o">.</span><span class="vm">__qualname__</span><span class="p">,</span>
-<a id="__codelineno-0-485" name="__codelineno-0-485"></a>        <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="n">fields_meta</span><span class="p">,</span>
-<a id="__codelineno-0-486" name="__codelineno-0-486"></a>    <span class="p">}</span>
-<a id="__codelineno-0-487" name="__codelineno-0-487"></a>
-<a id="__codelineno-0-488" name="__codelineno-0-488"></a>    <span class="k">return</span> <span class="n">EncodeResult</span><span class="p">(</span>
-<a id="__codelineno-0-489" name="__codelineno-0-489"></a>        <span class="n">codec</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">codec</span><span class="p">,</span>
-<a id="__codelineno-0-490" name="__codelineno-0-490"></a>        <span class="n">meta</span><span class="o">=</span><span class="n">meta</span><span class="p">,</span>
-<a id="__codelineno-0-491" name="__codelineno-0-491"></a>        <span class="n">buffers</span><span class="o">=</span><span class="n">buffers</span><span class="p">,</span>
-<a id="__codelineno-0-492" name="__codelineno-0-492"></a>    <span class="p">)</span>
+<a id="__codelineno-0-480" name="__codelineno-0-480"></a>        <span class="c1"># Delegate to registry; chooses right encoder for the actual *runtime* type</span>
+<a id="__codelineno-0-481" name="__codelineno-0-481"></a>        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">shm_pool</span><span class="p">)</span>
+<a id="__codelineno-0-482" name="__codelineno-0-482"></a>
+<a id="__codelineno-0-483" name="__codelineno-0-483"></a>        <span class="n">start</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">buffers</span><span class="p">)</span>
+<a id="__codelineno-0-484" name="__codelineno-0-484"></a>        <span class="n">count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">buffers</span><span class="p">)</span>
+<a id="__codelineno-0-485" name="__codelineno-0-485"></a>
+<a id="__codelineno-0-486" name="__codelineno-0-486"></a>        <span class="n">fields_meta</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-0-487" name="__codelineno-0-487"></a>            <span class="s2">&quot;codec&quot;</span><span class="p">:</span> <span class="n">res</span><span class="o">.</span><span class="n">codec</span><span class="p">,</span>
+<a id="__codelineno-0-488" name="__codelineno-0-488"></a>            <span class="s2">&quot;meta&quot;</span><span class="p">:</span> <span class="n">res</span><span class="o">.</span><span class="n">meta</span><span class="p">,</span>
+<a id="__codelineno-0-489" name="__codelineno-0-489"></a>            <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="n">start</span><span class="p">,</span>
+<a id="__codelineno-0-490" name="__codelineno-0-490"></a>            <span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="n">count</span><span class="p">,</span>
+<a id="__codelineno-0-491" name="__codelineno-0-491"></a>        <span class="p">}</span>
+<a id="__codelineno-0-492" name="__codelineno-0-492"></a>
+<a id="__codelineno-0-493" name="__codelineno-0-493"></a>        <span class="n">buffers</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">buffers</span><span class="p">)</span>
+<a id="__codelineno-0-494" name="__codelineno-0-494"></a>
+<a id="__codelineno-0-495" name="__codelineno-0-495"></a>    <span class="n">meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-0-496" name="__codelineno-0-496"></a>        <span class="s2">&quot;module&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cls</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span>
+<a id="__codelineno-0-497" name="__codelineno-0-497"></a>        <span class="s2">&quot;qualname&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cls</span><span class="o">.</span><span class="vm">__qualname__</span><span class="p">,</span>
+<a id="__codelineno-0-498" name="__codelineno-0-498"></a>        <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="n">fields_meta</span><span class="p">,</span>
+<a id="__codelineno-0-499" name="__codelineno-0-499"></a>    <span class="p">}</span>
+<a id="__codelineno-0-500" name="__codelineno-0-500"></a>
+<a id="__codelineno-0-501" name="__codelineno-0-501"></a>    <span class="k">return</span> <span class="n">EncodeResult</span><span class="p">(</span>
+<a id="__codelineno-0-502" name="__codelineno-0-502"></a>        <span class="n">codec</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">codec</span><span class="p">,</span>
+<a id="__codelineno-0-503" name="__codelineno-0-503"></a>        <span class="n">meta</span><span class="o">=</span><span class="n">meta</span><span class="p">,</span>
+<a id="__codelineno-0-504" name="__codelineno-0-504"></a>        <span class="n">buffers</span><span class="o">=</span><span class="n">buffers</span><span class="p">,</span>
+<a id="__codelineno-0-505" name="__codelineno-0-505"></a>    <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -5716,20 +5817,7 @@ fields that must not cross the boundary.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>brmspy/_session/codec/builtin.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-494">494</a></span>
-<span class="normal"><a href="#__codelineno-0-495">495</a></span>
-<span class="normal"><a href="#__codelineno-0-496">496</a></span>
-<span class="normal"><a href="#__codelineno-0-497">497</a></span>
-<span class="normal"><a href="#__codelineno-0-498">498</a></span>
-<span class="normal"><a href="#__codelineno-0-499">499</a></span>
-<span class="normal"><a href="#__codelineno-0-500">500</a></span>
-<span class="normal"><a href="#__codelineno-0-501">501</a></span>
-<span class="normal"><a href="#__codelineno-0-502">502</a></span>
-<span class="normal"><a href="#__codelineno-0-503">503</a></span>
-<span class="normal"><a href="#__codelineno-0-504">504</a></span>
-<span class="normal"><a href="#__codelineno-0-505">505</a></span>
-<span class="normal"><a href="#__codelineno-0-506">506</a></span>
-<span class="normal"><a href="#__codelineno-0-507">507</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-507">507</a></span>
 <span class="normal"><a href="#__codelineno-0-508">508</a></span>
 <span class="normal"><a href="#__codelineno-0-509">509</a></span>
 <span class="normal"><a href="#__codelineno-0-510">510</a></span>
@@ -5741,32 +5829,45 @@ fields that must not cross the boundary.</p>
 <span class="normal"><a href="#__codelineno-0-516">516</a></span>
 <span class="normal"><a href="#__codelineno-0-517">517</a></span>
 <span class="normal"><a href="#__codelineno-0-518">518</a></span>
-<span class="normal"><a href="#__codelineno-0-519">519</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-494" name="__codelineno-0-494"></a><span class="k">def</span><span class="w"> </span><span class="nf">decode</span><span class="p">(</span>
-<a id="__codelineno-0-495" name="__codelineno-0-495"></a>    <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-0-496" name="__codelineno-0-496"></a>    <span class="n">meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
-<a id="__codelineno-0-497" name="__codelineno-0-497"></a>    <span class="n">buffers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">memoryview</span><span class="p">],</span>
-<a id="__codelineno-0-498" name="__codelineno-0-498"></a>    <span class="n">buffer_specs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span>
-<a id="__codelineno-0-499" name="__codelineno-0-499"></a>    <span class="n">shm_pool</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<a id="__codelineno-0-500" name="__codelineno-0-500"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<a id="__codelineno-0-501" name="__codelineno-0-501"></a>    <span class="n">fields_meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;fields&quot;</span><span class="p">]</span>
-<a id="__codelineno-0-502" name="__codelineno-0-502"></a>    <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-<a id="__codelineno-0-503" name="__codelineno-0-503"></a>
-<a id="__codelineno-0-504" name="__codelineno-0-504"></a>    <span class="k">for</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">fmeta</span> <span class="ow">in</span> <span class="n">fields_meta</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-<a id="__codelineno-0-505" name="__codelineno-0-505"></a>        <span class="n">codec_name</span> <span class="o">=</span> <span class="n">fmeta</span><span class="p">[</span><span class="s2">&quot;codec&quot;</span><span class="p">]</span>
-<a id="__codelineno-0-506" name="__codelineno-0-506"></a>        <span class="n">start</span> <span class="o">=</span> <span class="n">fmeta</span><span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">]</span>
-<a id="__codelineno-0-507" name="__codelineno-0-507"></a>        <span class="n">count</span> <span class="o">=</span> <span class="n">fmeta</span><span class="p">[</span><span class="s2">&quot;count&quot;</span><span class="p">]</span>
-<a id="__codelineno-0-508" name="__codelineno-0-508"></a>
-<a id="__codelineno-0-509" name="__codelineno-0-509"></a>        <span class="c1"># IMPORTANT: slice buffer_specs in the same way as buffers</span>
-<a id="__codelineno-0-510" name="__codelineno-0-510"></a>        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span>
-<a id="__codelineno-0-511" name="__codelineno-0-511"></a>            <span class="n">codec_name</span><span class="p">,</span>
-<a id="__codelineno-0-512" name="__codelineno-0-512"></a>            <span class="n">fmeta</span><span class="p">[</span><span class="s2">&quot;meta&quot;</span><span class="p">],</span>
-<a id="__codelineno-0-513" name="__codelineno-0-513"></a>            <span class="n">buffers</span><span class="p">[</span><span class="n">start</span> <span class="p">:</span> <span class="n">start</span> <span class="o">+</span> <span class="n">count</span><span class="p">],</span>
-<a id="__codelineno-0-514" name="__codelineno-0-514"></a>            <span class="n">buffer_specs</span><span class="p">[</span><span class="n">start</span> <span class="p">:</span> <span class="n">start</span> <span class="o">+</span> <span class="n">count</span><span class="p">],</span>
-<a id="__codelineno-0-515" name="__codelineno-0-515"></a>            <span class="n">shm_pool</span><span class="p">,</span>
-<a id="__codelineno-0-516" name="__codelineno-0-516"></a>        <span class="p">)</span>
-<a id="__codelineno-0-517" name="__codelineno-0-517"></a>        <span class="n">kwargs</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-<a id="__codelineno-0-518" name="__codelineno-0-518"></a>
-<a id="__codelineno-0-519" name="__codelineno-0-519"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cls</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-519">519</a></span>
+<span class="normal"><a href="#__codelineno-0-520">520</a></span>
+<span class="normal"><a href="#__codelineno-0-521">521</a></span>
+<span class="normal"><a href="#__codelineno-0-522">522</a></span>
+<span class="normal"><a href="#__codelineno-0-523">523</a></span>
+<span class="normal"><a href="#__codelineno-0-524">524</a></span>
+<span class="normal"><a href="#__codelineno-0-525">525</a></span>
+<span class="normal"><a href="#__codelineno-0-526">526</a></span>
+<span class="normal"><a href="#__codelineno-0-527">527</a></span>
+<span class="normal"><a href="#__codelineno-0-528">528</a></span>
+<span class="normal"><a href="#__codelineno-0-529">529</a></span>
+<span class="normal"><a href="#__codelineno-0-530">530</a></span>
+<span class="normal"><a href="#__codelineno-0-531">531</a></span>
+<span class="normal"><a href="#__codelineno-0-532">532</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-507" name="__codelineno-0-507"></a><span class="k">def</span><span class="w"> </span><span class="nf">decode</span><span class="p">(</span>
+<a id="__codelineno-0-508" name="__codelineno-0-508"></a>    <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-509" name="__codelineno-0-509"></a>    <span class="n">meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+<a id="__codelineno-0-510" name="__codelineno-0-510"></a>    <span class="n">buffers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ShmBlock</span><span class="p">],</span>
+<a id="__codelineno-0-511" name="__codelineno-0-511"></a>    <span class="n">buffer_specs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span>
+<a id="__codelineno-0-512" name="__codelineno-0-512"></a>    <span class="n">shm_pool</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<a id="__codelineno-0-513" name="__codelineno-0-513"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<a id="__codelineno-0-514" name="__codelineno-0-514"></a>    <span class="n">fields_meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;fields&quot;</span><span class="p">]</span>
+<a id="__codelineno-0-515" name="__codelineno-0-515"></a>    <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<a id="__codelineno-0-516" name="__codelineno-0-516"></a>
+<a id="__codelineno-0-517" name="__codelineno-0-517"></a>    <span class="k">for</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">fmeta</span> <span class="ow">in</span> <span class="n">fields_meta</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+<a id="__codelineno-0-518" name="__codelineno-0-518"></a>        <span class="n">codec_name</span> <span class="o">=</span> <span class="n">fmeta</span><span class="p">[</span><span class="s2">&quot;codec&quot;</span><span class="p">]</span>
+<a id="__codelineno-0-519" name="__codelineno-0-519"></a>        <span class="n">start</span> <span class="o">=</span> <span class="n">fmeta</span><span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">]</span>
+<a id="__codelineno-0-520" name="__codelineno-0-520"></a>        <span class="n">count</span> <span class="o">=</span> <span class="n">fmeta</span><span class="p">[</span><span class="s2">&quot;count&quot;</span><span class="p">]</span>
+<a id="__codelineno-0-521" name="__codelineno-0-521"></a>
+<a id="__codelineno-0-522" name="__codelineno-0-522"></a>        <span class="c1"># IMPORTANT: slice buffer_specs in the same way as buffers</span>
+<a id="__codelineno-0-523" name="__codelineno-0-523"></a>        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span>
+<a id="__codelineno-0-524" name="__codelineno-0-524"></a>            <span class="n">codec_name</span><span class="p">,</span>
+<a id="__codelineno-0-525" name="__codelineno-0-525"></a>            <span class="n">fmeta</span><span class="p">[</span><span class="s2">&quot;meta&quot;</span><span class="p">],</span>
+<a id="__codelineno-0-526" name="__codelineno-0-526"></a>            <span class="n">buffers</span><span class="p">[</span><span class="n">start</span> <span class="p">:</span> <span class="n">start</span> <span class="o">+</span> <span class="n">count</span><span class="p">],</span>
+<a id="__codelineno-0-527" name="__codelineno-0-527"></a>            <span class="n">buffer_specs</span><span class="p">[</span><span class="n">start</span> <span class="p">:</span> <span class="n">start</span> <span class="o">+</span> <span class="n">count</span><span class="p">],</span>
+<a id="__codelineno-0-528" name="__codelineno-0-528"></a>            <span class="n">shm_pool</span><span class="p">,</span>
+<a id="__codelineno-0-529" name="__codelineno-0-529"></a>        <span class="p">)</span>
+<a id="__codelineno-0-530" name="__codelineno-0-530"></a>        <span class="n">kwargs</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+<a id="__codelineno-0-531" name="__codelineno-0-531"></a>
+<a id="__codelineno-0-532" name="__codelineno-0-532"></a>    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cls</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
