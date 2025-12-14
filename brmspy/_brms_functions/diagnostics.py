@@ -67,7 +67,7 @@ from ..types.brms_results import FitResult, SummaryResult
 
 def summary(model: FitResult, **kwargs) -> SummaryResult:
     """
-    Generate comprehensive summary statistics for fitted brms model.
+    Generate comprehensive summary statistics for a fitted brms model.
 
     Returns a `SummaryResult` dataclass containing model information,
     parameter estimates, and diagnostic information. The SummaryResult object provides
@@ -78,7 +78,7 @@ def summary(model: FitResult, **kwargs) -> SummaryResult:
     Parameters
     ----------
     model : FitResult
-        Fitted model from [`fit()`](brmspy/brms_functions/brm.py:1)
+        Fitted model returned by `brmspy.brms.brm()`.
     **kwargs
         Additional arguments passed to brms::summary(), such as:
         - probs: Quantiles for credible intervals, e.g., `probs=(0.025, 0.975)`
@@ -111,8 +111,7 @@ def summary(model: FitResult, **kwargs) -> SummaryResult:
 
     See Also
     --------
-    brms::summary.brmsfit : R documentation
-        https://paulbuerkner.com/brms/reference/summary.brmsfit.html
+    brms::summary.brmsfit : [R documentation](https://paulbuerkner.com/brms/reference/summary.brmsfit.html)
 
     Examples
     --------
@@ -208,7 +207,7 @@ def fixef(
     Parameters
     ----------
     object : FitResult or ListSexpVector
-        Fitted model from [`fit()`](brmspy/brms_functions/brm.py:1) or R brmsfit object
+        Fitted model returned by `brmspy.brms.brm()` or an R brmsfit object.
     summary : bool, default=True
         If True, return summary statistics (mean/median, SE/MAD, credible intervals).
         If False, return matrix of posterior samples (iterations × parameters).
@@ -238,8 +237,7 @@ def fixef(
 
     See Also
     --------
-    brms::fixef.brmsfit : R documentation
-        https://paulbuerkner.com/brms/reference/fixef.brmsfit.html
+    brms::fixef.brmsfit : [R documentation](https://paulbuerkner.com/brms/reference/fixef.brmsfit.html)
     summary() : Full model summary with all parameter types
 
     Examples
@@ -456,15 +454,15 @@ def posterior_summary(
 
     Provides a DataFrame with estimates, standard errors, and credible intervals
     for all parameters in a brms model, including fixed effects, random effects,
-    and auxiliary parameters. More comprehensive than [`fixef()`](brmspy/brms_functions/diagnostics.py:137)
-    or [`ranef()`](brmspy/brms_functions/diagnostics.py:260) as it covers all parameter types.
+    and auxiliary parameters. More comprehensive than `fixef()` or `ranef()` as it covers all
+    parameter types.
 
     [BRMS documentation](https://paulbuerkner.com/brms/reference/posterior_summary.brmsfit.html)
 
     Parameters
     ----------
     object : FitResult or ListSexpVector
-        Fitted model from [`fit()`](brmspy/brms_functions/brm.py:1) or R brmsfit object
+        Fitted model returned by `brmspy.brms.brm()` or an R brmsfit object.
     variable : str or list of str, optional
         Specific variable name(s) to extract. If None, returns all parameters.
         Supports regex patterns for flexible selection.
@@ -486,8 +484,8 @@ def posterior_summary(
     --------
     brms::posterior_summary : R documentation
         https://paulbuerkner.com/brms/reference/posterior_summary.brmsfit.html
-    [`fixef()`](brmspy/brms_functions/diagnostics.py:137) : Extract only population-level effects
-    [`ranef()`](brmspy/brms_functions/diagnostics.py:260) : Extract only group-level effects
+    fixef() : Extract only population-level effects
+    ranef() : Extract only group-level effects
 
     Examples
     --------
@@ -554,7 +552,7 @@ def prior_summary(
     Parameters
     ----------
     object : FitResult or ListVector
-        Fitted model from [`fit()`](brmspy/brms_functions/brm.py:1) or R brmsfit object
+        Fitted model returned by `brmspy.brms.brm()` or an R brmsfit object.
     all : bool, default=True
         If True, return all priors including default priors.
         If False, return only explicitly set priors.
@@ -579,8 +577,8 @@ def prior_summary(
     --------
     brms::prior_summary : R documentation
         https://paulbuerkner.com/brms/reference/prior_summary.brmsfit.html
-    [`get_prior()`](brmspy/brms_functions/prior.py:1) : Get prior structure before fitting
-    [`default_prior()`](brmspy/brms_functions/prior.py:1) : Get default priors for a model
+    get_prior() : Get prior structure before fitting
+    default_prior() : Get default priors for a model
 
     Examples
     --------
@@ -659,7 +657,7 @@ def validate_newdata(
         DataFrame containing new data to be validated against the model.
         Must include all predictor variables used in the model formula.
     object : FitResult or ListSexpVector
-        Fitted model from [`fit()`](brmspy/brms_functions/brm.py:1) or R brmsfit object
+        Fitted model returned by `brmspy.brms.brm()` or an R brmsfit object.
     re_formula : str, optional
         Formula string specifying group-level effects to include in validation.
         If None (default), include all group-level effects.
@@ -709,8 +707,8 @@ def validate_newdata(
     --------
     brms::validate_newdata : R documentation
         https://paulbuerkner.com/brms/reference/validate_newdata.html
-    [`posterior_predict()`](brmspy/brms_functions/prediction.py:1) : Uses validate_newdata internally
-    [`posterior_epred()`](brmspy/brms_functions/prediction.py:1) : Uses validate_newdata internally
+    posterior_predict() : Uses validate_newdata internally
+    posterior_epred() : Uses validate_newdata internally
 
     Examples
     --------

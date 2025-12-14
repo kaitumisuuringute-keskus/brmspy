@@ -3,7 +3,6 @@
 Reference:
 [https://paulbuerkner.com/brms/reference/brmsfamily.html](https://paulbuerkner.com/brms/reference/brmsfamily.html)
 
-family()
 """
 
 from collections.abc import Callable

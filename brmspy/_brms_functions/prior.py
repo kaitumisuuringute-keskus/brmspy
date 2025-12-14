@@ -1,3 +1,14 @@
+"""
+Prior specification helpers.
+
+This module provides helpers for constructing brms-compatible prior
+specifications and for querying the default priors implied by a model.
+
+Notes
+-----
+Executed inside the worker process that hosts the embedded R session.
+"""
+
 from collections.abc import Callable
 from typing import Any, cast
 
@@ -75,41 +86,28 @@ def prior(
     Returns
     -------
     PriorSpec
-        A typed prior specification object used by ``brmspy.fit()`` and
-        ``brmspy.make_stancode()``.
+        A typed prior specification object used by `brmspy.brms.brm()` and
+        `brmspy.brms.make_stancode()`.
+
+    See Also
+    --------
+    brms::prior_string : [R documentation](https://paulbuerkner.com/brms/reference/prior_string.html)
 
     Notes
     -----
     This function does **not** validate the prior expression string itself —
-    validation occurs inside brms. Its purpose is to construct a structured,
-    editor-friendly representation that seamlessly maps to rpy2 calls.
+    validation occurs inside brms.
 
     Examples
     --------
-    Prior on the intercept ::
+    ```python
+    from brmspy.brms import prior
 
-        p = prior("student_t(3, 0, 1.95)", class_="Intercept")
-
-    Prior on a coefficient ::
-
-        p = prior("normal(0, 1)", class_="b", coef="age")
-
-    Group-level (hierarchical) SD prior ::
-
-        p = prior("exponential(2)", class_="sd", group="region")
-
-    Truncated prior ::
-
-        p = prior("normal(0, 1)", class_="b", coef="income", lb=0)
-
-    Multiple priors passed to ``fit`` ::
-
-        from brmspy import prior
-        priors = [
-            prior("student_t(3, 0, 2)", class_="b", coef="zAge"),
-            prior("exponential(2)", class_="sd", group="patient"),
-        ]
-        model = brms.fit("y ~ zAge + (1|patient)", data=df, priors=priors)
+    p_intercept = prior("student_t(3, 0, 1.95)", class_="Intercept")
+    p_slope = prior("normal(0, 1)", class_="b", coef="age")
+    p_sd = prior("exponential(2)", class_="sd", group="region")
+    p_trunc = prior("normal(0, 1)", class_="b", coef="income", lb=0)
+    ```
     """
     if "class" in kwargs:
         kwargs["class_"] = kwargs["class"]
@@ -132,15 +130,17 @@ def get_prior(
     formula: str | FormulaConstruct, data=None, family="gaussian", **kwargs
 ) -> pd.DataFrame:
     """
-    Get default priors for all model parameters.
+    Get default priors for a model specification.
+
+    Wrapper around R ``brms::get_prior()``.
 
     Returns a DataFrame with default priors for each parameter class in the specified
     brms model. Useful for reviewing and customizing priors before fitting.
 
     Parameters
     ----------
-    formula : str or FormulaResult
-        Model formula (e.g., "y ~ x + (1|group)") or FormulaResult object
+    formula : str or FormulaConstruct
+        Model formula (e.g. ``"y ~ x + (1|group)"``) or a composed formula.
     data : pd.DataFrame or dict, optional
         Dataset containing model variables. Required for data-dependent priors
     family : str or ListSexpVector, default="gaussian"
@@ -159,42 +159,22 @@ def get_prior(
     --------
     default_prior : Generic function for getting default priors
     prior : Create custom prior specifications
-    brms::get_prior : R documentation
-        https://paulbuerkner.com/brms/reference/get_prior.html
+    brms::get_prior : [R documentation](https://paulbuerkner.com/brms/reference/get_prior.html)
 
     Examples
     --------
-    Review default priors for a model:
-
     ```python
     from brmspy import brms
+    from brmspy.brms import prior
 
-    priors = brms.get_prior(
-        formula="count ~ zAge + zBase * Trt + (1|patient)",
-        data=epilepsy,
-        family="poisson"
-    )
-    print(priors)
-    #   prior       class    coef      group  ...
-    #   student_t() Intercept  ...    ...     ...
-    #   (flat)      b          zAge    ...    ...
-    ```
-
-    Customize and use priors:
-
-    ```python
-    from brmspy import brms, prior
-
-    # Get defaults
     priors_df = brms.get_prior("y ~ x", data=df)
 
-    # Create custom priors based on review
     custom_priors = [
         prior("normal(0, 0.5)", class_="b"),
-        prior("exponential(2)", class_="sigma")
+        prior("exponential(2)", class_="sigma"),
     ]
 
-    model = brms.fit("y ~ x", data=df, priors=custom_priors)
+    fit = brms.brm("y ~ x", data=df, priors=custom_priors, chains=4)
     ```
     """
     import rpy2.robjects as ro
@@ -220,6 +200,8 @@ def default_prior(
 ) -> pd.DataFrame:
     """
     Get default priors for brms model parameters (generic function).
+
+    Wrapper around R ``brms::default_prior()``.
 
     Generic function to retrieve default prior specifications for all parameters
     in a brms model. Accepts formula objects, brmsformula objects, or other model
@@ -250,8 +232,7 @@ def default_prior(
     --------
     get_prior : Convenience function with formula parameter
     prior : Create custom prior specifications
-    brms::default_prior : R documentation
-        https://paulbuerkner.com/brms/reference/get_prior.html
+    brms::default_prior : [R documentation](https://paulbuerkner.com/brms/reference/default_prior.html)
 
     Examples
     --------

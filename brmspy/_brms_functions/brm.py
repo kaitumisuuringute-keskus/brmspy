@@ -1,3 +1,15 @@
+"""
+Model fitting wrappers.
+
+This module contains the `brms::brm()` wrapper used by `brmspy.brms.fit()` /
+`brmspy.brms.brm()`.
+
+Notes
+-----
+This code executes inside the worker process (the process that hosts the embedded
+R session).
+"""
+
 from collections.abc import Callable, Sequence
 from typing import Any, cast
 
@@ -17,9 +29,10 @@ from .formula import _execute_formula, bf
 _formula_fn = bf
 
 
-_WARNING_CORES = """`cores <= 1` is unsafe in embedded R sessions. The single-process
-code path used by brmsfit manipulation or creation functions can crash the interpreter.
-Always use `cores >= 2` to force parallel workers and avoid segfaults."""
+_WARNING_CORES = (
+    "`cores <= 1` can be unstable in embedded R sessions and may crash the worker "
+    "process. Prefer `cores >= 2`."
+)
 
 
 def _warn_cores(cores: int | None):
@@ -40,116 +53,59 @@ def brm(
     **brm_args,
 ) -> FitResult:
     """
-    Fit Bayesian regression model using brms.
+    Fit a Bayesian regression model with brms.
 
-    Uses brms with cmdstanr backend for proper parameter naming.
-    Returns FitResult with .idata (arviz.InferenceData) and .r (brmsfit) attributes.
-
-    [BRMS documentation and parameters](https://paulbuerkner.com/brms/reference/brm.html)
+    This is a thin wrapper around R ``brms::brm()`` that returns a structured
+    `FitResult` (including an ArviZ `InferenceData`).
 
     Parameters
     ----------
-    formula : str
-        brms formula: formula string, e.g "y ~ x + (1|group)" or FormulaResult from formula()
-    data : dict or pd.DataFrame
-        Model data
-    priors : list, default=[]
-        Prior specifications: [("normal(0,1)", "b"), ("cauchy(0,2)", "sd")]
-    family : str, default="gaussian"
-        Distribution family: "gaussian", "poisson", "binomial", etc.
+    formula : str or FormulaConstruct
+        Model formula. Accepts a plain brms formula string (e.g. ``"y ~ x + (1|g)"``)
+        or a composed formula created via `brmspy.brms.bf()` / `brmspy.brms.lf()`
+        (typically imported as ``from brmspy.brms import bf, lf``).
+    data : dict or pandas.DataFrame
+        Model data.
+    priors : Sequence[PriorSpec] or None, default=None
+        Optional prior specifications created via `brmspy.brms.prior()`.
+    family : str or rpy2.rinterface.ListSexpVector or None, default="gaussian"
+        brms family specification (e.g. ``"gaussian"``, ``"poisson"``).
     sample_prior : str, default="no"
-        Sample from prior: "no", "yes", "only"
+        Passed to brms. Common values: ``"no"``, ``"yes"``, ``"only"``.
     sample : bool, default=True
-        Whether to sample. If False, returns compiled model with empty=TRUE
+        If ``False``, compile the model without sampling (brms ``empty=TRUE``).
     backend : str, default="cmdstanr"
-        Stan backend: "cmdstanr" (recommended), "rstan"
+        Stan backend. Common values: ``"cmdstanr"`` or ``"rstan"``.
+    formula_args : dict or None, default=None
+        Reserved for future use. Currently ignored.
+    cores : int or None, default=2
+        Number of cores for brms/cmdstanr.
     **brm_args
-        Additional brms::brm() arguments:
-        chains=4, iter=2000, warmup=1000, cores=4, seed=123, thin=1, etc.
+        Additional keyword arguments passed to R ``brms::brm()`` (e.g. ``chains``,
+        ``iter``, ``warmup``, ``seed``).
 
     Returns
     -------
     FitResult
-        Object with .idata (arviz.InferenceData) and .r (brmsfit) attributes
+        Result object with `idata` (ArviZ `InferenceData`) and an underlying R handle.
 
     See Also
     --------
-    brms::brm : R documentation
-        https://paulbuerkner.com/brms/reference/brm.html
-    posterior_epred : Expected value predictions
-    posterior_predict : Posterior predictive samples
-    formula : Create formula object with options
+    brms::brm : [R documentation](https://paulbuerkner.com/brms/reference/brm.html)
 
     Warnings
     --------
-    ``cores <= 1`` is unsafe in embedded R sessions. The single-process
-    code path used by ``brms::brm()`` can crash the interpreter.
-    Always use ``cores >= 2`` to force parallel workers and avoid segfaults.
+    Using ``cores <= 1`` can be unstable in embedded R sessions and may crash the
+    worker process. Prefer ``cores >= 2``.
 
     Examples
     --------
-    Basic Poisson regression:
-
     ```python
     from brmspy import brms
-    import arviz as az
 
-    epilepsy = brms.get_brms_data("epilepsy")
-    model = brms.fit(
-        formula="count ~ zAge + zBase * Trt + (1|patient)",
-        data=epilepsy,
-        family="poisson",
-        chains=4,
-        iter=2000
-    )
+    fit = brms.brm("y ~ x + (1|g)", data=df, family="gaussian", chains=4, cores=4)
 
-    az.summary(model.idata)
-    ```
-    With custom priors:
-
-    ```python
-    from brmspy import prior
-
-    model = brms.fit(
-        formula="count ~ zAge + zBase * Trt + (1|patient)",
-        data=epilepsy,
-        priors=[
-            prior("normal(0, 0.5)", class_="b"),
-            prior("exponential(2)", class_="sd", group="patient")
-        ],
-        family="poisson",
-        chains=4
-    )
-    ```
-    Survival model with censoring:
-
-    ```python
-    kidney = brms.get_brms_data("kidney")
-
-    survival_model = brms.fit(
-        formula="time | cens(censored) ~ age + sex + disease + (1|patient)",
-        data=kidney,
-        family="weibull",
-        chains=4,
-        iter=4000,
-        warmup=2000,
-        cores=4,
-        seed=42
-    )
-    ```
-    Gaussian model with distributional regression:
-
-    ```python
-        # Model both mean and variance
-        model = brms.fit(
-            formula=brms.formula(
-                "y ~ x",
-                sigma ~ "z"  # Model heteroscedasticity
-            ),
-            data=data,
-            family="gaussian",
-            chains=4
-        )
+    fit.idata.posterior
     ```
     """
     import rpy2.robjects as ro

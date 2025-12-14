@@ -1,79 +1,84 @@
+"""
+Formula helpers and DSL.
+
+This module provides a small Pythonic DSL for composing brms formulas. The public
+functions (`bf`, `lf`, `nlf`, `acformula`, `set_rescor`, `set_mecor`, `set_nl`)
+build a `FormulaConstruct` that can be passed to `brmspy.brms.brm()` or combined
+using the ``+`` operator.
+
+Notes
+-----
+- The returned objects are lightweight formula specifications; the actual R brms
+  formula object is built in the worker when fitting / generating Stan code.
+- This module is part of the public API documented under docs/api/brms_functions/formula.md.
+"""
+
 from collections.abc import Callable
 from typing import cast, get_args
-from rpy2.rinterface_lib.sexp import Sexp
-from brmspy.helpers.log import log
 
+from rpy2.rinterface_lib.sexp import Sexp
+
+from brmspy.helpers.log import log
 from brmspy.types.session import SexpWrapper
+
 from ..helpers._rpy2._conversion import kwargs_r, py_to_r
+from ..types.brms_results import ProxyListSexpVector
 from ..types.formula_dsl import (
     _FORMULA_FUNCTION_WHITELIST,
     FormulaConstruct,
     FormulaPart,
 )
 
-from ..types.brms_results import ProxyListSexpVector
-
 
 def bf(*formulas: str, **formula_args) -> FormulaConstruct:
     """
-    Set up a model formula for brms package.
+    Build a brms model formula.
 
-    Allows defining (potentially non-linear) additive multilevel models
-    for all parameters of the assumed response distribution.
+    This is the primary entrypoint for specifying the mean model and can be
+    combined with other formula parts (e.g. `lf`, `nlf`, `acformula`) using ``+``.
 
     Parameters
     ----------
-    formula : str
-        brms formula specification, e.g., "y ~ x + (1|group)"
-    **formula_args : dict
-        Additional brms::brmsformula() arguments:
-
-        - decomp : str
-            Decomposition method (e.g., "QR" for QR decomposition)
-        - center : bool
-            Whether to center predictors (default True)
-        - sparse : bool
-            Use sparse matrix representation
-        - nl : bool
-            Whether formula is non-linear
-        - loop : bool
-            Use loop-based Stan code
+    *formulas : str
+        One or more brms formula strings (e.g. ``"y ~ x + (1|group)"``). Multiple
+        formulas are commonly used for multivariate models.
+    **formula_args
+        Keyword arguments forwarded to R ``brms::brmsformula()`` (for example
+        ``decomp="QR"``, ``center=True``, ``sparse=True``, ``nl=True``, ``loop=True``).
 
     Returns
     -------
-    FormulaResult
-        Object with .r (R brmsformula object) and .dict (Python dict) attributes
+    FormulaConstruct
+        A composable formula specification.
 
     See Also
     --------
-    brms::brmsformula : R documentation
-        https://paulbuerkner.com/brms/reference/brmsformula.html
-    fit : Fit model using formula
+    brms::brmsformula : [R documentation](https://paulbuerkner.com/brms/reference/brmsformula.html)
 
     Examples
     --------
     Basic formula:
 
     ```python
-        from brmspy import brms
-        f = brms.bf("y ~ x1 + x2 + (1|group)")
+    from brmspy.brms import bf
+
+    f = bf("y ~ x1 + x2 + (1|group)")
     ```
 
-    With QR decomposition for numerical stability:
+    QR decomposition (often helps with collinearity):
 
     ```python
-    f = brms.bf(
-        "reaction ~ days + (days|subject)",
-        decomp="QR"
-    )
+    from brmspy.brms import bf
+
+    f = bf("reaction ~ days + (days|subject)", decomp="QR")
     ```
 
-    Multivariate formula:
-    ```
-        f = brms.bf(
-            "mvbind(y1, y2) ~ x1 + x2",
-            center=True
-        )
+    Multivariate formula + residual correlation:
+
+    ```python
+    from brmspy.brms import bf, set_rescor
+
+    f = bf("mvbind(y1, y2) ~ x") + set_rescor(True)
     ```
     """
     part = FormulaPart(_fun="bf", _args=list(formulas), _kwargs=formula_args)
@@ -91,29 +96,43 @@ def lf(
     decomp: str | None = None,
 ) -> FormulaConstruct:
     """
-    Specify linear formulas for distributional / non-linear parameters.
+    Add linear formulas for distributional / non-linear parameters.
+
+    This wraps R ``brms::lf()`` and is typically used to model distributional
+    parameters such as ``sigma`` (heteroskedasticity) or to specify predictors
+    for non-linear parameters.
 
     Parameters
     ----------
-    *formulas : str or FormulaResult
-        One or more formulas (e.g. "sigma ~ x", "nu ~ z").
-    flist : list, optional
-        Additional formulas passed as a list.
-    dpar : str, optional
-        Name of the distributional parameter (e.g. "sigma").
-    resp : str, optional
-        Response name in multivariate models.
-    center, cmc, sparse, decomp : optional
-        Passed through to brms::lf().
+    *formulas
+        One or more formulas such as ``"sigma ~ x"``.
+    flist
+        Optional list of formulas (advanced; mirrors brms).
+    dpar : str or None, default=None
+        Distributional parameter name (e.g. ``"sigma"``, ``"phi"``).
+    resp : str or None, default=None
+        Response name for multivariate models.
+    center, cmc, sparse, decomp
+        Forwarded to R ``brms::lf()``.
 
     Returns
     -------
-    FormulaResult
-        Object that can be added to a bf() formula via +.
+    FormulaConstruct
+        A composable formula specification that can be combined using ``+``.
+
+    See Also
+    --------
+    brms::lf : [R documentation](https://paulbuerkner.com/brms/reference/lf.html)
 
     Examples
     --------
-    >>> f = bf("y ~ 1") + lf("sigma ~ x", dpar="sigma")
+    Model mean + sigma:
+
+    ```python
+    from brmspy.brms import bf, lf
+
+    f = bf("y ~ x") + lf("sigma ~ x", dpar="sigma")
+    ```
     """
     formula_args = {
         "flist": flist,
@@ -138,32 +157,40 @@ def nlf(
     loop: bool | None = None,
 ) -> FormulaConstruct:
     """
-    Specify non-linear formulas for distributional parameters.
+    Add non-linear formulas.
+
+    Wraps R ``brms::nlf()``. This is used together with `set_nl()` and parameter
+    definitions in `lf()` to specify non-linear models.
 
     Parameters
     ----------
-    formula : str
-        Non-linear formula, e.g. "sigma ~ a * exp(b * x)".
-    *extra : str or FormulaResult
-        Additional named parameters or formulas (rarely needed here;
-        typically you use lf() for those).
-    flist : list, optional
-        Additional formulas passed as a list.
-    dpar : str, optional
-        Name of the distributional parameter.
-    resp : str, optional
-        Response name in multivariate models.
-    loop : bool, optional
-        Whether to compute inside a loop (brms::nlf(loop=...)).
+    *formulas
+        One or more non-linear formulas (e.g. ``"y ~ a * exp(b * x)"``).
+    flist
+        Optional list of formulas (advanced; mirrors brms).
+    dpar : str or None, default=None
+        Distributional parameter name (optional).
+    resp : str or None, default=None
+        Response name for multivariate models.
+    loop : bool or None, default=None
+        Forwarded to R ``brms::nlf(loop=...)``.
 
     Returns
     -------
-    FormulaResult
-        Object that can be added to a bf() formula via +.
+    FormulaConstruct
+        A composable formula specification.
+
+    See Also
+    --------
+    brms::nlf : [R documentation](https://paulbuerkner.com/brms/reference/nlf.html)
 
     Examples
     --------
-    >>> f = bf("y ~ 1") + nlf("sigma ~ a * exp(b * x)")
+    ```python
+    from brmspy.brms import bf, nlf, set_nl
+
+    f = bf("y ~ 1") + nlf("y ~ a * exp(b * x)") + set_nl()
+    ```
     """
     formula_args = {
         "flist": flist,
@@ -179,24 +206,33 @@ def acformula(
     resp: str | None = None,
 ) -> FormulaConstruct:
     """
-    Specify autocorrelation terms to add to a model.
+    Add an autocorrelation structure.
+
+    Wraps R ``brms::acformula()``.
 
     Parameters
     ----------
     autocor : str
-        One-sided formula with autocorrelation terms,
-        e.g. "~ arma(p = 1, q = 1)".
-    resp : str, optional
-        Response name in multivariate models.
+        One-sided autocorrelation formula (e.g. ``"~ arma(p = 1, q = 1)"``).
+    resp : str or None, default=None
+        Response name for multivariate models.
 
     Returns
     -------
-    FormulaResult
-        Object that can be added to a bf() formula via +.
+    FormulaConstruct
+        A composable formula specification.
+
+    See Also
+    --------
+    brms::acformula : [R documentation](https://paulbuerkner.com/brms/reference/acformula.html)
 
     Examples
     --------
-    >>> f = bf("y ~ x") + acformula("~ arma(p = 1, q = 1)")
+    ```python
+    from brmspy.brms import bf, acformula
+
+    f = bf("y ~ x") + acformula("~ arma(p = 1, q = 1)")
+    ```
     """
     formula_args = {"resp": resp}
     return FormulaConstruct._formula_parse(
@@ -208,19 +244,29 @@ def set_rescor(rescor: bool = True) -> FormulaConstruct:
     """
     Control residual correlations in multivariate models.
 
+    Wraps R ``brms::set_rescor()``.
+
     Parameters
     ----------
-    rescor : bool, default True
+    rescor : bool, default=True
         Whether to model residual correlations.
 
     Returns
     -------
-    FormulaResult
-        Object that can be added to a multivariate formula via +.
+    FormulaConstruct
+        A composable formula specification.
+
+    See Also
+    --------
+    brms::set_rescor : [R documentation](https://paulbuerkner.com/brms/reference/set_rescor.html)
 
     Examples
     --------
-    >>> f = bf("y1 ~ x") + bf("y2 ~ z") + set_rescor(True)
+    ```python
+    from brmspy.brms import bf, set_rescor
+
+    f = bf("y1 ~ x") + bf("y2 ~ z") + set_rescor(True)
+    ```
     """
     formula_args = {
         "rescor": rescor,
@@ -230,21 +276,31 @@ def set_rescor(rescor: bool = True) -> FormulaConstruct:
 
 def set_mecor(mecor: bool = True) -> FormulaConstruct:
     """
-    Control correlations between latent me-terms.
+    Control correlations between latent ``me()`` terms.
+
+    Wraps R ``brms::set_mecor()``.
 
     Parameters
     ----------
-    mecor : bool, default True
-        Whether to model correlations between me() latent variables.
+    mecor : bool, default=True
+        Whether to model correlations between latent variables introduced by ``me()``.
 
     Returns
     -------
-    FormulaResult
-        Object that can be added to a formula via +.
+    FormulaConstruct
+        A composable formula specification.
+
+    See Also
+    --------
+    brms::set_mecor : [R documentation](https://paulbuerkner.com/brms/reference/set_mecor.html)
 
     Examples
     --------
-    >>> f = bf("y ~ me(x, sdx)") + set_mecor(True)
+    ```python
+    from brmspy.brms import bf, set_mecor
+
+    f = bf("y ~ me(x, sdx)") + set_mecor(True)
+    ```
     """
     formula_args = {
         "mecor": mecor,
@@ -257,23 +313,33 @@ def set_nl(
     resp: str | None = None,
 ) -> FormulaConstruct:
     """
-    Mark a formula as non-linear (or parts of it).
+    Mark a model (or part of it) as non-linear.
+
+    Wraps R ``brms::set_nl()``.
 
     Parameters
     ----------
-    dpar : str, optional
+    dpar : str or None, default=None
         Distributional parameter name (if only part of the model is non-linear).
-    resp : str, optional
-        Response name in multivariate models.
+    resp : str or None, default=None
+        Response name for multivariate models.
 
     Returns
     -------
-    FormulaResult
-        Object that can be added to a formula via +.
+    FormulaConstruct
+        A composable formula specification.
+
+    See Also
+    --------
+    brms::set_nl : [R documentation](https://paulbuerkner.com/brms/reference/set_nl.html)
 
     Examples
     --------
-    >>> f = bf("y ~ a * inv_logit(x * b)") + lf("a + b ~ z") + set_nl()
+    ```python
+    from brmspy.brms import bf, lf, set_nl
+
+    f = bf("y ~ a * inv_logit(x * b)") + lf("a + b ~ z") + set_nl()
+    ```
     """
     formula_args = {
         "dpar": dpar,

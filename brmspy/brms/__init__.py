@@ -1,3 +1,21 @@
+"""
+User-facing brms API.
+
+Import this module to call `brms` functions from Python (for example `brm`,
+`prior`, `posterior_predict`, etc.). brmspy runs these calls through an isolated
+runtime so that R-side instability is less likely to take down your Python
+process.
+
+Use `brms.manage()` to install brms / CmdStan, and to work with multiple
+isolated environments.
+
+Examples
+--------
+>>> from brmspy import brms
+>>> with brms.manage(environment_name="default") as ctx:
+...     ctx.install_brms(use_prebuilt=True)
+"""
+
 import os
 import sys
 from types import ModuleType

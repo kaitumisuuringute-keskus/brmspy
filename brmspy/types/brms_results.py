@@ -16,41 +16,41 @@ class PriorSpec:
     """
     Python representation of a brms prior specification.
 
-    This dataclass provides a typed interface to brms::prior_string() arguments,
-    allowing Python developers to specify priors with IDE autocomplete and
-    type checking. Use the `prior()` factory function to create instances.
+    This dataclass provides a typed interface to `brms::prior_string()` arguments,
+    allowing Python developers to specify priors with IDE autocomplete and type
+    checking. Use the [`prior()`](brmspy/_brms_functions/prior.py) factory
+    function to create instances.
 
     Attributes
     ----------
     prior : str
-        Prior distribution as string (e.g., "normal(0, 1)", "exponential(2)")
+        Prior distribution as string (e.g., ``"normal(0, 1)"``, ``"exponential(2)"``).
     class_ : str, optional
-        Parameter class: "b" (fixed effects), "sd" (group SD),
-        "Intercept", "sigma", "cor", etc.
+        Parameter class: ``"b"`` (fixed effects), ``"sd"`` (group SD),
+        ``"Intercept"``, ``"sigma"``, ``"cor"``, etc.
     coef : str, optional
-        Specific coefficient name for class-level priors
+        Specific coefficient name for class-level priors.
     group : str, optional
-        Grouping variable for hierarchical effects
+        Grouping variable for hierarchical effects.
     dpar : str, optional
-        Distributional parameter (e.g., "sigma", "phi", "zi")
+        Distributional parameter (e.g., ``"sigma"``, ``"phi"``, ``"zi"``).
     resp : str, optional
-        Response variable for multivariate models
+        Response variable for multivariate models.
     nlpar : str, optional
-        Non-linear parameter name
+        Non-linear parameter name.
     lb : float, optional
-        Lower bound for truncated priors
+        Lower bound for truncated priors.
     ub : float, optional
-        Upper bound for truncated priors
+        Upper bound for truncated priors.
 
     See Also
     --------
-    prior : Factory function to create PriorSpec instances
-    brms::prior_string : R documentation
-        https://paulbuerkner.com/brms/reference/prior_string.html
+    prior : Factory function to create `PriorSpec` instances.
+    brms::prior_string : [R documentation](https://paulbuerkner.com/brms/reference/prior_string.html)
 
     Examples
     --------
-    Create prior specifications (prefer using `prior()` function):
+    Create prior specifications (prefer using [`prior()`](brmspy/_brms_functions/prior.py)):
 
     ```python
     from brmspy.types import PriorSpec
@@ -59,19 +59,10 @@ class PriorSpec:
     p1 = PriorSpec(prior="normal(0, 1)", class_="b")
 
     # Group-level SD prior
-    p2 = PriorSpec(
-        prior="exponential(2)",
-        class_="sd",
-        group="patient"
-    )
+    p2 = PriorSpec(prior="exponential(2)", class_="sd", group="patient")
 
     # Coefficient-specific prior with bounds
-    p3 = PriorSpec(
-        prior="normal(0, 1)",
-        class_="b",
-        coef="age",
-        lb=0  # Truncated at zero
-    )
+    p3 = PriorSpec(prior="normal(0, 1)", class_="b", coef="age", lb=0)
     ```
     """
 
@@ -134,43 +125,42 @@ class PriorSpec:
 
 class IDFit(az.InferenceData):
     """
-    Typed InferenceData for fitted brms models.
+    Typed `arviz.InferenceData` for fitted brms models.
 
-    Extends arviz.InferenceData with type hints for IDE autocomplete.
-    Guarantees the presence of specific data groups returned by `fit()`.
+    Extends `arviz.InferenceData` with type hints for IDE autocomplete. In brmspy,
+    the fitted model result typically exposes an `.idata` attribute of this type.
 
     Attributes
     ----------
     posterior : xr.Dataset
-        Posterior samples of model parameters
+        Posterior samples of model parameters.
     posterior_predictive : xr.Dataset
-        Posterior predictive samples (with observation noise)
+        Posterior predictive samples (with observation noise).
     log_likelihood : xr.Dataset
-        Log-likelihood values for each observation
+        Log-likelihood values for each observation.
     observed_data : xr.Dataset
-        Original observed response data
+        Original observed response data.
     coords : dict
-        Coordinate mappings for dimensions
+        Coordinate mappings for dimensions (inherited from `arviz.InferenceData`).
     dims : dict
-        Dimension specifications for variables
+        Dimension specifications for variables (inherited from `arviz.InferenceData`).
 
     See Also
     --------
-    brmspy.brms.fit : Creates IDFit objects
-    arviz.InferenceData : Base class documentation
+    brmspy.brms.brm : Creates fitted model results (alias: `brmspy.brms.fit`).
+    arviz.InferenceData : Base class documentation.
 
     Examples
     --------
-
     ```python
     from brmspy import brms
-    model = brms.fit("y ~ x", data=df, chains=4)
+
+    model = brms.brm("y ~ x", data=df, chains=4)
 
     # Type checking and autocomplete
     assert isinstance(model.idata, IDFit)
-    print(model.idata.posterior)  # IDE autocomplete works!
+    print(model.idata.posterior)
     ```
-
     """
 
     posterior: xr.Dataset
@@ -410,6 +400,30 @@ class PosteriorLinpredResult(RListVectorExtension):
 
 @dataclass
 class SummaryResult(RListVectorExtension):
+    """
+    Parsed summary output for a fitted model.
+
+    This is a convenience container that holds both:
+
+    - structured Python data (mostly pandas DataFrames)
+    - the underlying R object reference in `.r` (as a worker-side handle)
+
+    Attributes
+    ----------
+    formula : str
+        Model formula string as reported by brms.
+    data_name : str
+        Data name as reported by brms (may be an internal label).
+    nobs : int
+        Number of observations.
+    prior : pandas.DataFrame
+        Prior summary table.
+    fixed : pandas.DataFrame
+        Fixed effects summary table.
+    random : dict[str, pandas.DataFrame] or None
+        Random effects summary tables (if present).
+    """
+
     formula: str
     data_name: str
     group: str | list[str]
@@ -444,6 +458,21 @@ class SummaryResult(RListVectorExtension):
 
 @dataclass
 class LooResult(RListVectorExtension):
+    """
+    Parsed `brms::loo()` result.
+
+    Attributes
+    ----------
+    estimates, pointwise, diagnostics : pandas.DataFrame
+        LOO tables.
+    psis_object : Any or None
+        PSIS object (if present). May be an R-handle wrapper depending on conversion.
+    elpd_loo, p_loo, looic : float
+        Key scalar metrics.
+    se_elpd_loo, se_p_loo, se_looic : float
+        Standard errors for the corresponding scalars.
+    """
+
     estimates: pd.DataFrame
     pointwise: pd.DataFrame
     diagnostics: pd.DataFrame
@@ -488,6 +517,17 @@ class LooResult(RListVectorExtension):
 
 @dataclass
 class LooCompareResult(RListVectorExtension):
+    """
+    Result of comparing models by a LOO-style criterion.
+
+    Attributes
+    ----------
+    table : pandas.DataFrame
+        Comparison table.
+    criterion : str
+        Criterion name (e.g. ``"loo"``).
+    """
+
     table: pd.DataFrame
     criterion: str
 

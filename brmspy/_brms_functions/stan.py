@@ -1,3 +1,14 @@
+"""
+Stan code helpers.
+
+This module exposes wrappers for generating Stan code from brms models without
+running sampling.
+
+Notes
+-----
+Executed inside the worker process that hosts the embedded R session.
+"""
+
 import typing
 
 import pandas as pd
@@ -21,81 +32,47 @@ def make_stancode(
     formula_args: dict | None = None,
 ) -> str:
     """
-    Generate Stan code using brms::make_stancode().
+    Generate Stan code using R ``brms::make_stancode()``.
 
-    Useful for inspecting the generated Stan model before fitting,
-    understanding the model structure, or using the code with other
-    Stan interfaces.
+    Useful for inspecting the generated Stan model before fitting.
 
     Parameters
     ----------
-    formula : str or FormulaResult
-        brms formula specification
-    data : pd.DataFrame
-        Model data
-    priors : list of PriorSpec, optional
-        Prior specifications from prior() function
+    formula : str or FormulaConstruct
+        Model formula.
+    data : pandas.DataFrame
+        Model data.
+    priors : Sequence[PriorSpec] or None, default=None
+        Optional prior specifications created via `brmspy.brms.prior()`.
     family : str, default="poisson"
-        Distribution family (gaussian, poisson, binomial, etc.)
+        Distribution family (e.g. ``"gaussian"``, ``"poisson"``).
     sample_prior : str, default="no"
-        Whether to sample from prior:
-        - "no": No prior samples
-        - "yes": Include prior samples alongside posterior
-        - "only": Sample from prior only (no data)
-    formula_args : dict, optional
-        Additional arguments passed to formula()
+        Prior sampling mode passed to brms (``"no"``, ``"yes"``, ``"only"``).
+    formula_args : dict or None, default=None
+        Reserved for future use. Currently ignored.
 
     Returns
     -------
     str
-        Complete Stan program code as string
+        Complete Stan program as a string.
 
     See Also
     --------
-    brms::make_stancode : R documentation
-        https://paulbuerkner.com/brms/reference/make_stancode.html
-    fit : Fit model instead of just generating code
-    make_standata : Generate Stan data block
+    brms::make_stancode : [R documentation](https://paulbuerkner.com/brms/reference/make_stancode.html)
 
     Examples
     --------
-    Generate Stan code for simple model:
-
     ```python
     from brmspy import brms
+
     epilepsy = brms.get_brms_data("epilepsy")
-
-    stan_code = brms.make_stancode(
-        formula="count ~ zAge + zBase * Trt + (1|patient)",
-        data=epilepsy,
-        family="poisson"
-    )
-
-    print(stan_code[:500])  # Print first 500 characters
-    ```
-
-    With custom priors:
-
-    ```python
-        from brmspy import prior
-
-        stan_code = brms.make_stancode(
-            formula="count ~ zAge",
-            data=epilepsy,
-            priors=[prior("normal(0, 1)", class_="b")],
-            family="poisson"
-        )
-    ```
-
-    For prior predictive checks (sample_prior="only"):
-
-    ```
-    stan_code = brms.make_stancode(
-        formula="count ~ zAge",
+    code = brms.make_stancode(
+        "count ~ zAge + zBase * Trt + (1|patient)",
         data=epilepsy,
         family="poisson",
-        sample_prior="only"
     )
+
+    assert isinstance(code, str)
     ```
     """
     import rpy2.robjects as ro

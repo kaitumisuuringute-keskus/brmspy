@@ -1,3 +1,14 @@
+"""
+Prediction helpers for brms models.
+
+This module wraps brms prediction utilities and returns typed result objects that
+contain both an ArviZ `InferenceData` view and the underlying R result.
+
+Notes
+-----
+Executed inside the worker process that hosts the embedded R session.
+"""
+
 import typing
 
 import pandas as pd
@@ -27,25 +38,39 @@ def posterior_epred(
     model: FitResult, newdata: pd.DataFrame | None = None, **kwargs
 ) -> PosteriorEpredResult:
     """
-    Compute expected value of posterior predictive distribution.
+    Compute expected posterior predictions (noise-free).
 
-    Calls brms::posterior_epred() to get E[Y|data] without observation noise.
-
-    [BRMS documentation and parameters](https://paulbuerkner.com/brms/reference/posterior_epred.brmsfit.html)
+    Wrapper around R ``brms::posterior_epred()``. This returns draws of the
+    expected value (typically on the response scale), without observation noise.
 
     Parameters
     ----------
     model : FitResult
-        Fitted model from fit()
-    newdata : pd.DataFrame
-        Data for predictions
+        Fitted model.
+    newdata : pandas.DataFrame or None, default=None
+        New data for predictions. If ``None``, uses the training data.
     **kwargs
-        Additional arguments to brms::posterior_epred()
+        Forwarded to ``brms::posterior_epred()``.
 
     Returns
     -------
     PosteriorEpredResult
-        Object with .idata and .r attributes
+        Result containing `idata` (ArviZ `InferenceData`) and an underlying R handle.
+
+    See Also
+    --------
+    brms::posterior_epred : [R documentation](https://paulbuerkner.com/brms/reference/posterior_epred.brmsfit.html)
+
+    Examples
+    --------
+    ```python
+    from brmspy import brms
+
+    fit = brms.brm("y ~ x", data=df, chains=4)
+    ep = brms.posterior_epred(fit)
+
+    ep.idata.predictions
+    ```
     """
     import rpy2.robjects as ro
 
@@ -68,25 +93,38 @@ def posterior_predict(
     model: FitResult, newdata: pd.DataFrame | None = None, **kwargs
 ) -> PosteriorPredictResult:
     """
-    Generate posterior predictive samples with observation noise.
+    Draw from the posterior predictive distribution (includes observation noise).
 
-    Calls brms::posterior_predict() to get samples of Y_new|data.
-
-    [BRMS documentation and parameters](https://paulbuerkner.com/brms/reference/posterior_predict.brmsfit.html)
+    Wrapper around R ``brms::posterior_predict()``.
 
     Parameters
     ----------
     model : FitResult
-        Fitted model from fit()
-    newdata : pd.DataFrame, optional
-        Data for predictions. If None, uses original data
+        Fitted model.
+    newdata : pandas.DataFrame or None, default=None
+        New data for predictions. If ``None``, uses the training data.
     **kwargs
-        Additional arguments to brms::posterior_predict()
+        Forwarded to ``brms::posterior_predict()``.
 
     Returns
     -------
     PosteriorPredictResult
-        Object with .idata and .r attributes
+        Result containing `idata` (ArviZ `InferenceData`) and an underlying R handle.
+
+    See Also
+    --------
+    brms::posterior_predict : [R documentation](https://paulbuerkner.com/brms/reference/posterior_predict.brmsfit.html)
+
+    Examples
+    --------
+    ```python
+    from brmspy import brms
+
+    fit = brms.brm("y ~ x", data=df, chains=4)
+    pp = brms.posterior_predict(fit)
+
+    pp.idata.posterior_predictive
+    ```
     """
     import rpy2.robjects as ro
 
@@ -114,51 +152,39 @@ def posterior_linpred(
     model: FitResult, newdata: pd.DataFrame | None = None, **kwargs
 ) -> PosteriorLinpredResult:
     """
-    Compute linear predictor of the model.
+    Draw from the linear predictor.
 
-    Returns samples of the linear predictor (before applying the link function).
-    Useful for understanding the model's predictions on the linear scale.
+    Wrapper around R ``brms::posterior_linpred()``. This typically returns draws
+    on the link scale (before applying the inverse link), unless you pass
+    ``transform=True``.
 
     Parameters
     ----------
     model : FitResult
-        Fitted model from fit()
-    newdata : pd.DataFrame, optional
-        Data for predictions. If None, uses original data
-    **kwargs : dict
-        Additional arguments to brms::posterior_linpred():
-
-        - transform : bool - Apply inverse link function (default False)
-        - ndraws : int - Number of posterior draws
-        - summary : bool - Return summary statistics
+        Fitted model.
+    newdata : pandas.DataFrame or None, default=None
+        New data for predictions. If ``None``, uses the training data.
+    **kwargs
+        Forwarded to ``brms::posterior_linpred()`` (commonly ``transform`` or ``ndraws``).
 
     Returns
     -------
     PosteriorLinpredResult
-        Object with .idata (IDLinpred) and .r (R matrix) attributes
+        Result containing `idata` (ArviZ `InferenceData`) and an underlying R handle.
 
     See Also
     --------
-    brms::posterior_linpred : R documentation
-        https://paulbuerkner.com/brms/reference/posterior_linpred.brmsfit.html
-    posterior_epred : Expected values on response scale
+    brms::posterior_linpred : [R documentation](https://paulbuerkner.com/brms/reference/posterior_linpred.brmsfit.html)
 
     Examples
     --------
     ```python
-        from brmspy import brms
+    from brmspy import brms
 
-        epilepsy = brms.get_brms_data("epilepsy")
-        model = brms.fit(
-            "count ~ zAge + zBase * Trt + (1|patient)",
-            data=epilepsy,
-            family="poisson",
-            chains=4
-        )
+    fit = brms.brm("y ~ x", data=df, chains=4)
+    lp = brms.posterior_linpred(fit, transform=False)
 
-        # Linear predictor (log scale for Poisson)
-        linpred = brms.posterior_linpred(model)
-        print(linpred.idata.predictions)
+    lp.idata.predictions
     ```
     """
     import rpy2.robjects as ro
@@ -187,63 +213,38 @@ def log_lik(
     model: FitResult, newdata: pd.DataFrame | None = None, **kwargs
 ) -> LogLikResult:
     """
-    Compute log-likelihood values.
+    Compute pointwise log-likelihood draws.
 
-    Returns log p(y|theta) for each observation. Essential for model
-    comparison via LOO-CV and WAIC.
+    Wrapper around R ``brms::log_lik()``. The result is useful for LOO/WAIC via ArviZ.
 
     Parameters
     ----------
     model : FitResult
-        Fitted model from fit()
-    newdata : pd.DataFrame, optional
-        Data for predictions. If None, uses original data
-    **kwargs : dict
-        Additional arguments to brms::log_lik():
-
-        - ndraws : int - Number of posterior draws
-        - combine_chains : bool - Combine chains (default True)
+        Fitted model.
+    newdata : pandas.DataFrame or None, default=None
+        New data. If ``None``, uses the training data.
+    **kwargs
+        Forwarded to ``brms::log_lik()``.
 
     Returns
     -------
     LogLikResult
-        Object with .idata (IDLogLik) and .r (R matrix) attributes
+        Result containing `idata` (ArviZ `InferenceData`) and an underlying R handle.
 
     See Also
     --------
-    brms::log_lik : R documentation
-        https://paulbuerkner.com/brms/reference/log_lik.brmsfit.html
-    arviz.loo : Leave-One-Out Cross-Validation
-    arviz.waic : Widely Applicable Information Criterion
+    brms::log_lik : [R documentation](https://paulbuerkner.com/brms/reference/log_lik.brmsfit.html)
 
     Examples
     --------
-    Compute log-likelihood for model comparison:
-
     ```python
     from brmspy import brms
     import arviz as az
 
-    epilepsy = brms.get_brms_data("epilepsy")
-    model = brms.fit(
-        "count ~ zAge + zBase * Trt + (1|patient)",
-        data=epilepsy,
-        family="poisson",
-        chains=4
-    )
+    fit = brms.brm("y ~ x", data=df, chains=4)
+    ll = brms.log_lik(fit)
 
-    # LOO-CV for model comparison
-    loo = az.loo(model.idata)
-    print(loo)
-    ```
-
-    Compare multiple models:
-    ```python
-    model1 = brms.fit("count ~ zAge + (1|patient)", data=epilepsy, family="poisson", chains=4)
-    model2 = brms.fit("count ~ zAge + zBase + (1|patient)", data=epilepsy, family="poisson", chains=4)
-
-    comp = az.compare({'model1': model1.idata, 'model2': model2.idata})
-    print(comp)
+    az.loo(ll.idata)
     ```
     """
     import rpy2.robjects as ro

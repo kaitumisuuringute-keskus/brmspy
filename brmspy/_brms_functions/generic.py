@@ -1,3 +1,14 @@
+"""
+Generic R function caller.
+
+Use `call()` to invoke R functions by name (including brms functions) when there
+is no dedicated wrapper in `brmspy.brms`.
+
+Notes
+-----
+Executed inside the worker process that hosts the embedded R session.
+"""
+
 import re
 from collections.abc import Callable
 from typing import Any, cast
@@ -9,33 +20,23 @@ def sanitised_name(function: str) -> str:
     """
     Sanitize a function name for safe R execution.
 
-    Converts Python-style function names to valid R identifiers by:
-    - Replacing invalid characters with underscores
-    - Ensuring the name doesn't start with a number
-    - Preserving namespace separators (::)
-
     Parameters
     ----------
     function : str
-        Function name to sanitize
+        Function name (optionally namespaced, e.g. ``"brms::loo"``).
 
     Returns
     -------
     str
-        Sanitized function name safe for R execution
+        A sanitized name where invalid characters are replaced with underscores,
+        and where leading digits are avoided (except after a namespace).
 
     Examples
     --------
-    ```python
-    from brmspy.brms_functions.generic import sanitised_name
-
-    # Basic sanitization
-    print(sanitised_name("my-function"))  # "my_function"
-    print(sanitised_name("123func"))       # "_123func"
-
-    # Preserves namespace
-    print(sanitised_name("brms::loo"))     # "brms::loo"
-    ```
+    >>> sanitised_name("my-function")
+    'my_function'
+    >>> sanitised_name("123func")
+    '_123func'
     """
     # Replace invalid characters with underscores (except ::)
     sanitized = re.sub(r"[^a-zA-Z0-9_:.]", "_", function)
@@ -49,79 +50,31 @@ def sanitised_name(function: str) -> str:
 
 def call(function: str, *args, **kwargs) -> Any:
     """
-    Call any brms or R function by name with automatic type conversion.
+    Call an R function by name with brmspy type conversion.
 
-    Generic wrapper for calling brms functions that don't have dedicated Python
-    wrappers. Automatically converts Python arguments to R objects and R results
-    back to Python. Tries `brms::function_name` first, then falls back to base R.
-
-    This function is useful for:
-    - Accessing newer brms functions not yet wrapped in brmspy
-    - Calling brms utility functions without writing custom wrappers
-    - Quick exploration of brms functionality from Python
+    This is intended as an escape hatch for R/brms functionality that does not
+    yet have a dedicated wrapper.
 
     Parameters
     ----------
     function : str
-        Name of the R function to call. Will be prefixed with 'brms::' if possible.
-        Can also include namespace (e.g., "stats::predict").
+        Function name. If not namespaced, brmspy tries ``brms::<function>`` first,
+        then falls back to evaluating the name directly (e.g. ``"stats::AIC"``).
     *args
-        Positional arguments passed to the R function. Automatically converted
-        from Python to R types (FitResult → brmsfit, DataFrame → data.frame, etc.).
+        Positional arguments.
     **kwargs
-        Keyword arguments passed to the R function. Python parameter names are
-        automatically converted to R conventions.
+        Keyword arguments.
 
     Returns
     -------
     Any
-        Result from R function, automatically converted to appropriate Python type
-        (R data.frame → pandas DataFrame, R vector → numpy array, etc.).
-
-    See Also
-    --------
-    [`py_to_r`](brmspy/helpers/conversion.py:1) : Python to R type conversion
-    [`r_to_py`](brmspy/helpers/conversion.py:1) : R to Python type conversion
+        Converted return value.
 
     Examples
     --------
-    Call brms functions not yet wrapped:
-
-    ```python
-    from brmspy import brms
-    from brmspy.brms_functions.generic import call
-
-    model = brms.fit("y ~ x", data=data, chains=4)
-
-    # Call brms::neff_ratio (not yet wrapped)
-    neff = call("neff_ratio", model)
-    print(neff)
-
-    # Call brms::rhat (not yet wrapped)
-    rhat = call("rhat", model)
-    print(rhat)
-    ```
-
-    Call with keyword arguments:
-
-    ```python
-    # Call brms::hypothesis for testing hypotheses
-    hypothesis_result = call(
-        "hypothesis",
-        model,
-        hypothesis="b_x1 > 0",
-        alpha=0.05
-    )
-    print(hypothesis_result)
-    ```
-
-    Access functions from other R packages:
-
-    ```python
-    # Call functions with namespace
-    result = call("stats::AIC", model)
-    print(result)
-    ```
+    >>> from brmspy import brms
+    >>> fit = brms.brm("y ~ x", data=df, chains=4)
+    >>> aic = brms.call("stats::AIC", fit)
     """
     import rpy2.robjects as ro
 
@@ -136,5 +89,4 @@ def call(function: str, *args, **kwargs) -> Any:
         r_fun = cast(Callable, ro.r(func_name))
 
     r_result = r_fun(*args, **kwargs)
-    print("generic call() result type", type(r_result))
     return r_to_py(r_result)
