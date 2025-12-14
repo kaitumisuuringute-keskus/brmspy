@@ -42,6 +42,7 @@ The new architecture jails R inside a dedicated worker process with shared-memor
 
 ### Testing & CI
 
+*   **Hot-swap stress tests**: Added tests that repeatedly restart the entire R runtime and SharedMemoryManager in a loop, then immediately access old SHM-backed arrays and InferenceData. These scenarios would crash instantly if any lifetime or reference handling were incorrect, making them an effective torture test of the new architecture.
 *   **Worker Test Marker**: Introduced `@pytest.mark.worker` and a `worker_runner` fixture to execute specific tests inside the isolated worker process.
 *   **Coverage Aggregation**: Updated CI to merge coverage reports from the main process and the spawned worker process.
 *   **R Dependency Tests**: Switched `r-dependencies-tests` workflow to use the new isolated test runner script.
