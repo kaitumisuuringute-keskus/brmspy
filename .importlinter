@@ -1,18 +1,52 @@
 [importlinter]
 root_package = brmspy
 log_level = DEBUG
+include_external_packages=True
+contract_types =
+    forbid_external_submodule_import: script.importlinter_contracts.ForbidExternalSubmoduleImportContract
 
 
-[importlinter:contract:protect-rpy2]
+
+[importlinter:contract:protect-rpy2-robjects]
+name = Protect rpy2.robjects
+type = forbid_external_submodule_import
+source_modules =
+    brmspy.**
+forbidden_submodule = rpy2.robjects
+allowed_importers =
+    brmspy._brms_functions.*
+    brmspy.helpers._rpy2.*
+    brmspy._runtime._r_packages
+    brmspy._runtime._r_env
+    brmspy._runtime._state
+    brmspy._runtime._rtools
+    brmspy._build.*
+    brmspy._session.worker.*
+    brmspy.brms._manage_module
+    
+
+[importlinter:contract:protect-rpy2-dependents]
 name = Protect internal imports
 type = protected
 protected_modules =
     brmspy._brms_functions
     brmspy.helpers._rpy2
+    brmspy._runtime._r_packages
+    brmspy._runtime._r_env
+    brmspy._runtime._state
+    brmspy._runtime._rtools
+    brmspy._build.*
+    brmspy._session.worker.*
+    
 allowed_importers =
     brmspy.brms._brms_module
+    brmspy.brms._manage_module
+    brmspy.brms._build_module
+    brmspy._build
+    brmspy._session.worker
     brmspy._brms_functions
     brmspy.helpers._rpy2
+    brmspy._runtime
 
 [importlinter:contract:protect-worker]
 name = Worker only imported from module session

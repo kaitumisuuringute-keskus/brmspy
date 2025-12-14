@@ -5,7 +5,7 @@ from typing import Any, Literal, Protocol, TypedDict, runtime_checkable
 
 from brmspy.types.shm import ShmBlockSpec, ShmRef
 
-CommandType = Literal["CALL", "SHUTDOWN"]
+CommandType = Literal["CALL", "SHUTDOWN", "PING", "_RUN_TEST_BY_NAME"]
 
 
 @dataclass

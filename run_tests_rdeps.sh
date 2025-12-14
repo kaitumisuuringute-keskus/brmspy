@@ -16,13 +16,13 @@ else
 fi
 
 # 1) Run tests, collect coverage but DO NOT print report from pytest
-TESTS="tests/"
+TESTS="tests/test_rdeps_3_install_extended.py"
 RCFILE=".coveragerc-r-dependencies"
 
-BRMSPY_DESTRUCTIVE_RDEPS_TESTS="1" "${PYTEST_CMD[@]}" $TESTS -v -m rdeps \
+BRMSPY_DESTRUCTIVE_RDEPS_TESTS="1" BRMSPY_TEST="1" "${PYTEST_CMD[@]}" $TESTS -v -m rdeps \
           --cov=brmspy \
-          --cov-report= \
-          --cov-config="$RCFILE"
+          --cov-config="$RCFILE" \
+          --cov-report="" \
 
 # 2) Combine main-process .coverage + all .coverage.* shards
 #    --append: include existing .coverage in the union

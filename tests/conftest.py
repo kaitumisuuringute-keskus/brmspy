@@ -2,7 +2,10 @@
 Pytest configuration and shared fixtures for brmspy tests
 """
 
+import inspect
 from pathlib import Path
+from typing import cast
+from unittest.mock import MagicMock
 import pytest
 import sys
 import os
@@ -12,7 +15,7 @@ import numpy as np
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-os.environ["BRMSPY_COVERAGE"] = "1"
+os.environ["BRMSPY_TEST"] = "1"
 
 
 @pytest.fixture
@@ -90,48 +93,9 @@ def pytest_configure(config):
         "markers",
         "rdeps: rdeps test. only runs within githubs r-dependencies-tests workflow.",
     )
-
-
-@pytest.fixture(autouse=True, scope="module")
-def clean_runtime_dir_between_tests(request):
-    """
-    After each test, remove everything inside get_runtime_base_dir().
-
-    Assumes tests are configured to use a throwaway runtime directory
-    (e.g. via env var) so this doesn't touch real user data.
-    """
-
-    if os.getenv("BRMSPY_DESTRUCTIVE_RDEPS_TESTS") != "1":
-        yield
-        return
-
-    from brmspy._runtime._storage import get_runtime_base_dir
-    import shutil
-
-    base_dir: Path = get_runtime_base_dir()
-
-    # If the dir doesn't exist, nothing to do
-    if not base_dir.exists():
-        yield
-        return
-
-    if ".brmspy" not in str(base_dir):
-        # bail out instead of nuking something sketchy
-        yield
-        return
-
-    # Remove contents, keep the base directory itself
-    for entry in base_dir.iterdir():
-        try:
-            if entry.is_dir():
-                shutil.rmtree(entry, ignore_errors=True)
-            else:
-                entry.unlink(missing_ok=True)
-        except Exception:
-            # make cleanup best-effort, not test-failing
-            pass
-
-    yield
+    config.addinivalue_line(
+        "markers", "worker: run this test inside the brms worker process"
+    )
 
 
 @pytest.fixture(scope="session")
@@ -143,12 +107,131 @@ def brms_available():
     This is a session-scoped fixture that only checks once.
     """
     try:
-        import rpy2.robjects.packages as rpackages
         from brmspy import brms
 
         return brms.get_brms_version() is not None
     except Exception:
         return False
+
+
+class ExplodingRobjects:
+    """
+    Sentinel object put in sys.modules["rpy2.robjects*"].
+
+    Any *test* code that tries to use rpy2.robjects on the main process
+    will immediately hard-fail. Import machinery can still probe dunders.
+    """
+
+    def __init__(self, label: str) -> None:
+        self._label = label
+
+    def __getattr__(self, name: str):
+        # let import/system internals probe dunders without noise
+        if name.startswith("__") and name.endswith("__"):
+            raise AttributeError(name)
+
+        raise RuntimeError(
+            f"rpy2.robjects usage is forbidden in tests on the main process "
+            f"(in {self._label}, tried to access attribute {name!r})"
+        )
+
+    def __call__(self, *args, **kwargs):
+        raise RuntimeError(
+            f"rpy2.robjects usage is forbidden in tests on the main process "
+            f"(in {self._label}, tried to call it like a function)"
+        )
+
+
+@pytest.fixture(autouse=True, scope="module")
+def no_robjects_bomb():
+
+    if os.environ.get("BRMSPY_WORKER") == "1":
+        yield
+        return
+
+    mp = pytest.MonkeyPatch()
+
+    # Module-level import: `import rpy2.robjects as ro`
+    mp.setitem(sys.modules, "rpy2.robjects", ExplodingRobjects("rpy2.robjects"))
+    mp.setitem(
+        sys.modules,
+        "rpy2.robjects.packages",
+        ExplodingRobjects("rpy2.robjects.packages"),
+    )
+    mp.setitem(
+        sys.modules,
+        "rpy2.robjects.vectors",
+        ExplodingRobjects("rpy2.robjects.vectors"),
+    )
+
+    try:
+        yield
+    finally:
+        mp.undo()
+
+
+@pytest.fixture(scope="session")
+def worker_runner():
+    """Returns a function that runs a test fn inside the worker."""
+    from brmspy import brms
+    from brmspy._session.session import RModuleSession
+
+    session = cast(RModuleSession, brms)
+
+    def run_remote(module, cls, func):
+        return session._run_test_by_name(module, cls, func)
+
+    return run_remote
+
+
+def _nodeid_to_target(nodeid: str) -> tuple[str, str | None, str]:
+    """
+    Convert pytest nodeid:
+        tests/test_file.py::TestClass::test_name
+    into:
+        tests.test_file, TestClass, test_name
+    """
+    parts = nodeid.split("::")
+    file_part = parts[0].replace("\\", "/")  # just in case
+    if file_part.endswith(".py"):
+        file_part = file_part[:-3]
+    mod_path = file_part.replace("/", ".")
+
+    if len(parts) >= 3:
+        class_name = parts[-2]
+        func_name = parts[-1]
+    else:
+        class_name = None
+        func_name = parts[-1]
+
+    return mod_path, class_name, func_name
+
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_pyfunc_call(pyfuncitem):
+    """
+    Intercept only @pytest.mark.worker tests and run them remotely.
+    Returning True tells pytest "do not run locally".
+    """
+    if "worker" not in pyfuncitem.keywords:
+        return None  # run normally
+
+    # For now: forbid pytest fixtures in worker tests (until you implement fixture shipping)
+    argnames = tuple(getattr(pyfuncitem, "_fixtureinfo").argnames)
+    if argnames:
+        pytest.fail(
+            f"@pytest.mark.worker tests can't use pytest fixtures yet (found {argnames}).",
+            pytrace=False,
+        )
+
+    run_remote = pyfuncitem._request.getfixturevalue("worker_runner")
+
+    mod_path, class_name, func_name = _nodeid_to_target(pyfuncitem.nodeid)
+
+    # should raise on failure (and pytest will mark FAIL)
+    run_remote(mod_path, class_name, func_name)
+
+    return True
 
 
 def pytest_collection_modifyitems(config, items):

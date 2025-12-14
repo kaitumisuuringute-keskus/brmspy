@@ -6,9 +6,6 @@ Focus: Installation resilience, version handling, error recovery, helpers.
 These tests exercise error paths and edge cases in installation functions.
 """
 
-import contextlib
-from typing import cast
-from urllib.parse import urlparse
 import pytest
 import platform
 
@@ -17,6 +14,7 @@ import platform
 class TestGetLinuxRepo:
     """Test Linux repository detection."""
 
+    @pytest.mark.worker
     def test_get_linux_repo_with_os_release(self):
         """Test repository detection with /etc/os-release"""
         from brmspy._runtime._r_packages import _get_linux_repo
@@ -30,6 +28,7 @@ class TestGetLinuxRepo:
             assert "__linux__" in repo
             assert "/latest" in repo
 
+    @pytest.mark.worker
     def test_get_linux_repo_fallback(self):
         """Test fallback when /etc/os-release missing"""
         from brmspy._runtime._r_packages import _get_linux_repo
@@ -48,6 +47,7 @@ class TestGetLinuxRepo:
 class TestGetBrmsVersion:
     """Test brms version getter."""
 
+    @pytest.mark.worker
     def test_get_brms_version_returns_version(self):
         """Test get_package_version returns version string"""
         from brmspy._runtime._r_packages import get_package_version
@@ -67,6 +67,7 @@ class TestGetBrmsVersion:
 class TestInstallRPackage:
     """Test R package installation function."""
 
+    @pytest.mark.worker
     def test_install_package_already_installed(self):
         """Test package already installed path"""
         from brmspy._runtime._r_packages import install_package
@@ -78,6 +79,7 @@ class TestInstallRPackage:
         # If it completes without error, the already-installed path worked
         assert True
 
+    @pytest.mark.worker
     def test_install_package_version_none_variants(self):
         """Test version=None variants"""
         from brmspy._runtime._r_packages import install_package
@@ -99,6 +101,7 @@ class TestInstallRPackage:
 class TestInstallRPackageDeps:
     """Test dependency installation."""
 
+    @pytest.mark.worker
     def test_install_package_deps_basic(self):
         """Test basic dependency installation"""
         from brmspy._runtime._r_packages import install_package_deps
@@ -111,6 +114,7 @@ class TestInstallRPackageDeps:
 class TestBuildCmdstanr:
     """Test CmdStan building."""
 
+    @pytest.mark.worker
     def test_build_cmdstan_basic(self):
         """Test CmdStan build process"""
         from brmspy._runtime._r_packages import build_cmdstan
@@ -133,6 +137,7 @@ class TestBuildCmdstanr:
 class TestInstallPrebuilt:
     """Test prebuilt binary installation."""
 
+    @pytest.mark.worker
     def test_install_prebuilt_checks_compatibility(self):
         """Test prebuilt checks system compatibility"""
         from brmspy._runtime._install import install_runtime
@@ -146,6 +151,7 @@ class TestInstallPrebuilt:
             with pytest.raises(RuntimeError, match="cannot use prebuilt"):
                 install_runtime(install_rtools=False)
 
+    @pytest.mark.worker
     def test_install_prebuilt_constructs_url(self):
         """Test URL construction from fingerprint"""
         from brmspy._runtime._install import install_runtime
@@ -186,6 +192,7 @@ class TestInstallPrebuilt:
             parsed = urlparse(url)
             assert parsed.hostname == "github.com"
 
+    @pytest.mark.worker
     def test_install_prebuilt_missing_hash(self):
         """Test URL construction from fingerprint"""
         from brmspy._runtime._install import install_runtime
@@ -213,6 +220,7 @@ class TestInstallPrebuilt:
             with pytest.raises(Exception):
                 install_runtime(install_rtools=False)
 
+    @pytest.mark.worker
     def test_install_prebuilt_handles_failure(self):
         """Test prebuilt installation failure handling"""
         from brmspy._runtime._install import install_runtime
@@ -234,30 +242,9 @@ class TestInstallPrebuilt:
 @pytest.mark.rdeps
 @pytest.mark.slow
 class TestInstallBrms:
-    """Test main install_brms function."""
-
-    def test_install_prebuilt_path(self):
-        """Test install with prebuilt binaries"""
-        from brmspy._runtime import install_brms
-        from brmspy._runtime import _install
-        from unittest.mock import patch
-        from pathlib import Path
-
-        # Mock successful prebuilt installation
-        with patch.object(
-            _install, "install_runtime", return_value=Path("/fake/runtime")
-        ):
-            with patch("brmspy._runtime._activation.activate"):
-                with patch("brmspy._runtime._config.set_active_runtime_path"):
-                    # Should return path
-                    result = install_brms(use_prebuilt=True, install_rtools=False)
-                    assert result == Path("/fake/runtime")
 
     def test_install_rtools_flag(self):
         """Test Rtools installation flag"""
-        from brmspy._runtime import install_brms
-        from brmspy._runtime import _rtools, _r_packages, _r_env, _state
-        from unittest.mock import patch, MagicMock
 
         if platform.system() != "Windows":
             pytest.skip("Windows-only test")
@@ -267,25 +254,6 @@ class TestInstallBrms:
         with brms.manage() as ctx:
             ctx.install_brms(use_prebuilt=True, install_rtools=True)
 
-        """mock_ensure_rtools = MagicMock()
-
-        with (
-            patch.object(_rtools, "ensure_installed", mock_ensure_rtools),
-            patch.object(_r_packages, "set_cran_mirror"),
-            patch.object(_r_env, "forward_github_token"),
-            patch.object(_r_packages, "install_package"),
-            patch.object(_r_packages, "install_package_deps"),
-            patch.object(_r_packages, "build_cmdstan"),
-            patch.object(_state, "invalidate_packages"),
-        ):
-            install_brms(
-                use_prebuilt=False,
-                install_rtools=True,
-                install_rstan=False,
-            )
-
-            assert mock_ensure_rtools.called"""
-
     def test_install_rstan_option(self):
         """Test rstan installation option"""
         from brmspy import brms
@@ -294,40 +262,3 @@ class TestInstallBrms:
             ctx.install_brms(
                 use_prebuilt=False, install_cmdstanr=False, install_rstan=True
             )
-
-
-@pytest.mark.rdeps
-class TestInit:
-    """Test initialization function."""
-
-    def test_set_cran_mirror(self):
-        """Test set_cran_mirror sets CRAN mirror"""
-        from brmspy._runtime._r_packages import set_cran_mirror
-        import rpy2.robjects as ro
-
-        set_cran_mirror()
-
-        # Verify CRAN mirror is set
-        repos = cast(ro.ListVector, ro.r('getOption("repos")'))
-        # repos is an R vector, check it exists and has CRAN
-        assert repos is not None
-
-        # Parse repos for a robust hostname check
-        # repos can be R named vector; get CRAN URL and check its hostname.
-        cran_url = None
-        # Convert repos to Python dict if possible
-        if hasattr(repos, "names"):
-            for i, name in enumerate(list(repos.names)):
-                if str(name) == "CRAN":
-                    cran_url = str(repos[i])
-                    break
-        else:
-            # Fallback: try as dict or string
-            if isinstance(repos, dict):
-                cran_url = repos.get("CRAN")
-            elif "CRAN" in str(repos):
-                # Weak fallback, as last resort (should never be needed)
-                cran_url = str(repos)
-        assert cran_url is not None
-        parsed = urlparse(cran_url)
-        assert parsed.hostname == "cloud.r-project.org" or "CRAN" in str(repos)

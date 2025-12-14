@@ -49,6 +49,7 @@ _INTERNAL_ATTRS = {
     "shutdown",
     "environment_exists",
     "environment_activate",
+    "_run_test_by_name",
 }
 
 
@@ -144,9 +145,10 @@ def spawn_worker(
     target, args, env_overrides: dict[str, str], log_queue: mp.Queue | None = None
 ):
     with with_env(env_overrides):
-        daemon = os.environ.get("BRMSPY_COVERAGE") != "1" and not os.environ.get(
+        daemon = os.environ.get("BRMSPY_TEST") != "1" and not os.environ.get(
             "COVERAGE_PROCESS_START"
         )
+        daemon = True
         if log_queue is not None:
             args = (*args, log_queue)
         proc = ctx.Process(target=target, args=args, daemon=daemon)
@@ -386,7 +388,7 @@ class RModuleSession(ModuleType):
 
         # best-effort graceful shutdown
         try:
-            if hasattr(self, "_conn"):
+            if self._conn:
                 req_id = str(uuid.uuid4())
                 self._conn.send(
                     {
@@ -420,7 +422,7 @@ class RModuleSession(ModuleType):
         # give worker a chance to exit, then kill it if needed
         # This is MANDATORY. Unless we want zombies or race conditions running amock
         try:
-            if hasattr(self, "_proc") and self._proc is not None:
+            if self._proc is not None:
                 self._proc.join(timeout=5.0)
                 if self._proc.is_alive():
                     self._proc.terminate()
@@ -676,3 +678,43 @@ class RModuleSession(ModuleType):
                 pass
         else:
             raise Exception("Invalid state. manage is not defined!")
+
+    def _run_test_by_name(
+        self, module_path: str, class_name: str | None, func_name: str
+    ):
+        """Run a test identified by module/class/function INSIDE the worker."""
+        if os.getenv("BRMSPY_TEST") != "1":
+            raise RuntimeError("BRMSPY_TEST=1 required for worker test execution")
+
+        req_id = str(uuid.uuid4())
+        self._conn.send(
+            {
+                "id": req_id,
+                "cmd": "_RUN_TEST_BY_NAME",
+                "target": "",
+                "args": [],
+                "kwargs": {
+                    "module": module_path,
+                    "class": class_name,
+                    "func": func_name,
+                },
+            }
+        )
+
+        resp = self._conn.recv()
+
+        if not resp.get("ok", False):
+            raise RSessionError(
+                resp.get("error", "Worker test failed"),
+                remote_traceback=resp.get("traceback"),
+            )
+
+        pres = resp["result"]
+
+        return self._reg.decode(
+            pres["codec"],
+            pres["meta"],
+            attach_buffers(self._shm_pool, pres["buffers"]),
+            pres["buffers"],
+            shm_pool=self._shm_pool,
+        )

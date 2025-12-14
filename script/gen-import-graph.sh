@@ -1,6 +1,6 @@
 #!/bin/bash
-if [ "$(basename "$PWD")" = "sh" ]; then
-    cd ../../
+if [ "$(basename "$PWD")" = "script" ]; then
+    cd ../
 fi
 mkdir -p ./docs/img/
 source .venv/bin/activate

@@ -154,6 +154,54 @@ def worker_main(
                         }
                     )
 
+                elif cmd == "_RUN_TEST_BY_NAME":
+                    module = req["kwargs"]["module"]
+                    classname = req["kwargs"]["class"]
+                    funcname = req["kwargs"]["func"]
+
+                    try:
+                        mod = importlib.import_module(module)
+
+                        if classname:
+                            cls = getattr(mod, classname)
+                            inst = cls()
+                            fn = getattr(inst, funcname)
+                        else:
+                            fn = getattr(mod, funcname)
+
+                        result = fn()
+
+                        enc = reg.encode(result, shm_pool)
+                        conn.send(
+                            {
+                                "id": req_id,
+                                "ok": True,
+                                "result": {
+                                    "codec": enc.codec,
+                                    "meta": enc.meta,
+                                    "buffers": [
+                                        {"name": b.name, "size": b.size}
+                                        for b in enc.buffers
+                                    ],
+                                },
+                                "error": None,
+                                "traceback": None,
+                            }
+                        )
+
+                    except Exception as e:
+                        import traceback
+
+                        conn.send(
+                            {
+                                "id": req_id,
+                                "ok": False,
+                                "result": None,
+                                "error": str(e),
+                                "traceback": traceback.format_exc(),
+                            }
+                        )
+
                 else:
                     raise ValueError(f"Unknown command: {cmd!r}")
 
