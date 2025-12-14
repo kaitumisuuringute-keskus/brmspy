@@ -17,6 +17,7 @@ from pathlib import Path
 class TestRuntimeDirectoryValidation:
     """Test runtime directory structure validation."""
 
+    @pytest.mark.worker
     def test_is_runtime_dir_valid(self, tmp_path):
         """Return True for valid runtime directory"""
         from brmspy._runtime._storage import is_runtime_dir
@@ -27,6 +28,7 @@ class TestRuntimeDirectoryValidation:
 
         assert is_runtime_dir(runtime_dir) is True
 
+    @pytest.mark.worker
     def test_is_runtime_dir_no_manifest(self, tmp_path):
         """Return False when manifest missing"""
         from brmspy._runtime._storage import is_runtime_dir
@@ -36,6 +38,7 @@ class TestRuntimeDirectoryValidation:
 
         assert is_runtime_dir(runtime_dir) is False
 
+    @pytest.mark.worker
     def test_is_runtime_dir_not_directory(self, tmp_path):
         """Return False for non-directory"""
         from brmspy._runtime._storage import is_runtime_dir
@@ -50,6 +53,7 @@ class TestRuntimeDirectoryValidation:
 class TestHashManagement:
     """Test hash file operations."""
 
+    @pytest.mark.worker
     def test_read_stored_hash_missing(self, tmp_path):
         """Return None when hash file doesn't exist"""
         from brmspy._runtime._storage import read_stored_hash
@@ -60,6 +64,7 @@ class TestHashManagement:
         result = read_stored_hash(runtime_dir)
         assert result is None
 
+    @pytest.mark.worker
     def test_read_write_stored_hash(self, tmp_path):
         """Write and read hash file successfully"""
         from brmspy._runtime._storage import read_stored_hash, write_stored_hash
@@ -73,6 +78,7 @@ class TestHashManagement:
         result = read_stored_hash(runtime_dir)
         assert result == test_hash
 
+    @pytest.mark.worker
     def test_write_stored_hash_strips_whitespace(self, tmp_path):
         """Strip whitespace from hash when writing"""
         from brmspy._runtime._storage import read_stored_hash, write_stored_hash
@@ -91,6 +97,7 @@ class TestHashManagement:
 class TestInstallFromArchive:
     """Test archive extraction and installation."""
 
+    @pytest.mark.worker
     def test_install_from_archive_success(self, tmp_path):
         """Successfully install runtime from archive"""
         from brmspy._runtime._storage import install_from_archive
@@ -127,6 +134,7 @@ class TestInstallFromArchive:
         assert (result / "Rlib").is_dir()
         assert (result / "cmdstan").is_dir()
 
+    @pytest.mark.worker
     def test_install_from_archive_missing_manifest(self, tmp_path):
         """Raise error when archive has no manifest"""
         from brmspy._runtime._storage import install_from_archive
@@ -143,6 +151,7 @@ class TestInstallFromArchive:
         with pytest.raises(RuntimeError, match="Missing manifest.json"):
             install_from_archive(archive_path, fingerprint="test-fp", version="0.1.0")
 
+    @pytest.mark.worker
     def test_install_from_archive_replaces_existing(self, tmp_path, monkeypatch):
         """Replace existing runtime when installing"""
         from brmspy._runtime._storage import install_from_archive
@@ -185,6 +194,7 @@ class TestInstallFromArchive:
 class TestInstallFromDirectory:
     """Test directory-based installation."""
 
+    @pytest.mark.worker
     def test_install_from_directory_success(self, tmp_path, monkeypatch):
         """Successfully install runtime from directory"""
         from brmspy._runtime._storage import install_from_directory
@@ -210,6 +220,7 @@ class TestInstallFromDirectory:
         assert (result / "manifest.json").exists()
         assert (result / "data.txt").exists()
 
+    @pytest.mark.worker
     def test_install_from_directory_same_location(self, tmp_path, monkeypatch):
         """Return same path when already in correct location"""
         from brmspy._runtime._storage import install_from_directory, get_runtime_path
@@ -233,6 +244,7 @@ class TestInstallFromDirectory:
 
         assert result == runtime_dir
 
+    @pytest.mark.worker
     def test_install_from_directory_missing_manifest(self, tmp_path):
         """Raise error when source has no manifest"""
         from brmspy._runtime._storage import install_from_directory
@@ -248,6 +260,7 @@ class TestInstallFromDirectory:
 class TestRuntimeListing:
     """Test runtime listing operations."""
 
+    @pytest.mark.worker
     def test_list_installed_runtimes_empty(self, tmp_path, monkeypatch):
         """Return empty list when no runtimes installed"""
         from brmspy._runtime._storage import list_installed_runtimes
@@ -260,6 +273,7 @@ class TestRuntimeListing:
         result = list_installed_runtimes()
         assert result == []
 
+    @pytest.mark.worker
     def test_list_installed_runtimes_finds_valid(self, tmp_path, monkeypatch):
         """List only valid runtime directories"""
         from brmspy._runtime._storage import list_installed_runtimes
@@ -287,6 +301,7 @@ class TestRuntimeListing:
         assert len(result) == 1
         assert result[0] == runtime1
 
+    @pytest.mark.worker
     def test_find_runtime_by_fingerprint(self, tmp_path, monkeypatch):
         """Find runtime matching fingerprint"""
         from brmspy._runtime._storage import find_runtime_by_fingerprint
@@ -324,6 +339,7 @@ class TestRuntimeListing:
 class TestRuntimeActivation:
     """Test runtime activation (validation only)."""
 
+    @pytest.mark.worker
     def test_activate_validates_structure(self, tmp_path):
         """Activation validates runtime structure"""
         from brmspy._runtime._activation import activate
@@ -335,6 +351,7 @@ class TestRuntimeActivation:
         with pytest.raises(RuntimeError, match="Invalid manifest"):
             activate(runtime_dir)
 
+    @pytest.mark.worker
     def test_activate_validates_fingerprint(self, tmp_path):
         """Activation validates system fingerprint"""
         from brmspy._runtime._activation import activate

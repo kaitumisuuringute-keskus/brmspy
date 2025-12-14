@@ -15,6 +15,7 @@ import os
 class TestGitHubTokenForwarding:
     """Test GitHub token forwarding to R environment."""
 
+    @pytest.mark.worker
     def test_forward_token_when_set(self):
         """Forward GITHUB_TOKEN when set"""
         from brmspy._runtime._r_env import forward_github_token
@@ -46,6 +47,7 @@ class TestGitHubTokenForwarding:
             elif "GITHUB_PAT" in os.environ:
                 del os.environ["GITHUB_PAT"]
 
+    @pytest.mark.worker
     def test_forward_pat_preferred_over_token(self):
         """Forward GITHUB_PAT when both PAT and TOKEN are set"""
         from brmspy._runtime._r_env import forward_github_token
@@ -75,6 +77,7 @@ class TestGitHubTokenForwarding:
             elif "GITHUB_PAT" in os.environ:
                 del os.environ["GITHUB_PAT"]
 
+    @pytest.mark.worker
     def test_forward_token_when_not_set(self):
         """Handle case when neither token is set"""
         from brmspy._runtime._r_env import forward_github_token

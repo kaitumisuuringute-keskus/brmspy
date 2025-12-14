@@ -5,6 +5,8 @@ Focus: Platform detection, toolchain checks, system fingerprinting.
 
 IMPORTANT! _platform module does not use rpy2. We call it directly! If it did, we shouldn't.
 
+It will error if ever rpy2.robjects is directly imported.
+
 These tests exercise platform-specific code paths and error handling.
 """
 

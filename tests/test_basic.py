@@ -49,6 +49,7 @@ class TestImports:
 class TestErrorHandling:
     """Test error handling and messages."""
 
+    @pytest.mark.worker
     def test_brms_not_installed_error_message(self):
         """Test that helpful error is raised when brms is not found"""
         import rpy2.robjects.packages as rpackages

@@ -338,8 +338,6 @@ class TestConversionHelpers:
     def test_epred_to_idata_helper(self, sample_dataframe):
         """Test brms_epred_to_idata helper function"""
         from brmspy import brms
-        from brmspy.helpers._rpy2._conversion import brms_epred_to_idata
-        import rpy2.robjects as ro
 
         # Fit model
         model = brms.fit(

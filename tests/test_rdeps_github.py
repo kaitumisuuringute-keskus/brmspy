@@ -10,21 +10,16 @@ triggered with real GitHub API.
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 
-from brmspy._runtime._github import (
-    parse_release_url,
-    fetch_release_metadata,
-    get_asset_sha256,
-    get_github_asset_sha256_from_url,
-    get_runtime_download_url,
-)
-
 
 @pytest.mark.rdeps
 class TestGitHubReleaseURL:
     """Test GitHub release URL parsing."""
 
+    @pytest.mark.worker
     def test_parse_invalid_url_format(self):
         """Test that invalid GitHub URL format raises ValueError."""
+        from brmspy._runtime._github import parse_release_url
+
         invalid_urls = [
             "https://github.com/owner/repo",
             "https://github.com/owner/repo/releases",
@@ -36,8 +31,11 @@ class TestGitHubReleaseURL:
             with pytest.raises(ValueError, match="Malformed GitHub release URL"):
                 parse_release_url(url)
 
+    @pytest.mark.worker
     def test_parse_valid_url(self):
         """Test parsing valid GitHub release URL."""
+        from brmspy._runtime._github import parse_release_url
+
         url = "https://github.com/owner/repo/releases/download/v1.0.0/asset.tar.gz"
         owner, repo, tag, asset_name = parse_release_url(url)
 
@@ -51,8 +49,11 @@ class TestGitHubReleaseURL:
 class TestGitHubAPIFetch:
     """Test GitHub API metadata fetching."""
 
+    @pytest.mark.worker
     def test_fetch_release_metadata_success(self):
         """Test successful release metadata fetch."""
+        from brmspy._runtime._github import fetch_release_metadata
+
         mock_response = MagicMock()
         mock_response.__enter__ = Mock(return_value=mock_response)
         mock_response.__exit__ = Mock(return_value=False)
@@ -62,8 +63,11 @@ class TestGitHubAPIFetch:
             result = fetch_release_metadata("owner", "repo", "v1.0.0")
             assert result == {"tag_name": "v1.0.0", "assets": []}
 
+    @pytest.mark.worker
     def test_fetch_release_metadata_with_auth_token(self):
         """Test that GITHUB_TOKEN is used when available."""
+        from brmspy._runtime._github import fetch_release_metadata
+
         mock_response = MagicMock()
         mock_response.__enter__ = Mock(return_value=mock_response)
         mock_response.__exit__ = Mock(return_value=False)
@@ -80,8 +84,11 @@ class TestGitHubAPIFetch:
                 request = call_args[0][0]
                 assert request.headers.get("Authorization") == "token test_token"
 
+    @pytest.mark.worker
     def test_fetch_release_metadata_connection_error(self):
         """Test handling of connection errors."""
+        from brmspy._runtime._github import fetch_release_metadata
+
         with patch("urllib.request.urlopen", side_effect=Exception("Network error")):
             with pytest.raises(
                 ConnectionError, match="Failed to fetch release metadata"
@@ -93,8 +100,11 @@ class TestGitHubAPIFetch:
 class TestAssetSHA256:
     """Test SHA256 retrieval from GitHub assets."""
 
+    @pytest.mark.worker
     def test_get_asset_sha256_returns_none_currently(self):
         """Test that get_asset_sha256 returns None (not yet implemented)."""
+        from brmspy._runtime._github import get_asset_sha256
+
         url = "https://github.com/owner/repo/releases/download/v1.0.0/asset.tar.gz"
 
         mock_release_data = {
@@ -110,16 +120,22 @@ class TestAssetSHA256:
             result = get_asset_sha256(url)
             assert result is None
 
+    @pytest.mark.worker
     def test_get_github_asset_sha256_from_url_without_require(self):
         """Test wrapper function without require_digest."""
+        from brmspy._runtime._github import get_github_asset_sha256_from_url
+
         url = "https://github.com/owner/repo/releases/download/v1.0.0/asset.tar.gz"
 
         with patch("brmspy._runtime._github.get_asset_sha256", return_value=None):
             result = get_github_asset_sha256_from_url(url, require_digest=False)
             assert result is None
 
+    @pytest.mark.worker
     def test_get_github_asset_sha256_from_url_with_require_digest(self):
         """Test error when digest required but not available."""
+        from brmspy._runtime._github import get_github_asset_sha256_from_url
+
         url = "https://github.com/owner/repo/releases/download/v1.0.0/asset.tar.gz"
 
         with patch("brmspy._runtime._github.get_asset_sha256", return_value=None):
@@ -131,8 +147,11 @@ class TestAssetSHA256:
 class TestRuntimeDownloadURL:
     """Test runtime download URL construction."""
 
+    @pytest.mark.worker
     def test_get_runtime_download_url_with_version(self):
         """Test URL construction with specific version."""
+        from brmspy._runtime._github import get_runtime_download_url
+
         url = get_runtime_download_url("linux-x86_64-r4.3", version="1.2.3")
 
         from urllib.parse import urlparse
@@ -140,8 +159,11 @@ class TestRuntimeDownloadURL:
         assert urlparse(url).netloc == "github.com"
         assert "brmspy-runtime-1.2.3-linux-x86_64-r4.3.tar.gz" in url
 
+    @pytest.mark.worker
     def test_get_runtime_download_url_with_latest(self):
         """Test URL construction with 'latest' version."""
+        from brmspy._runtime._github import get_runtime_download_url
+
         with patch(
             "brmspy._runtime._github.get_latest_runtime_version", return_value="0.1.0"
         ):

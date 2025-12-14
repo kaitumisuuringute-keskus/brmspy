@@ -6,6 +6,7 @@ import pytest
 class TestDataConversion:
     """Test data conversion utilities."""
 
+    @pytest.mark.worker
     def test_convert_dataframe_to_r(self, sample_dataframe):
         """Test DataFrame to R conversion"""
         from brmspy.helpers._rpy2._conversion import py_to_r
@@ -14,6 +15,7 @@ class TestDataConversion:
         r_data = py_to_r(sample_dataframe)
         assert isinstance(r_data, RDataFrame)
 
+    @pytest.mark.worker
     def test_convert_dict_to_r(self, sample_dict):
         """Test dict to R list conversion"""
         from brmspy.helpers._rpy2._conversion import py_to_r
@@ -26,6 +28,7 @@ class TestDataConversion:
 class TestTypeCoercion:
     """Test Stan type coercion functionality."""
 
+    @pytest.mark.worker
     def test_coerce_types_basic(self):
         """Test basic type coercion from Stan code"""
         from brmspy.helpers._rpy2._conversion import _coerce_stan_types
@@ -56,6 +59,7 @@ class TestTypeCoercion:
         assert result["N"] == 50
         assert result["K"] == 3
 
+    @pytest.mark.worker
     def test_coerce_types_preserves_arrays(self):
         """Test that arrays are preserved correctly"""
         from brmspy.helpers._rpy2._conversion import _coerce_stan_types
@@ -78,6 +82,7 @@ class TestTypeCoercion:
         assert isinstance(result["y"], np.ndarray)
         assert len(result["y"]) == 5
 
+    @pytest.mark.worker
     def test_coerce_int_array(self):
         """Test coercion of int arrays"""
         from brmspy.helpers._rpy2._conversion import _coerce_stan_types
@@ -106,6 +111,7 @@ class TestTypeCoercion:
         assert result["Y"].dtype in [np.int32, np.int64]
         assert np.array_equal(result["Y"], [1, 2, 3, 4, 5])
 
+    @pytest.mark.worker
     def test_coerce_mixed_types(self):
         """Test coercion with mixed int and real types"""
         from brmspy.helpers._rpy2._conversion import _coerce_stan_types
@@ -141,6 +147,7 @@ class TestTypeCoercion:
         assert result["X"].dtype in [np.float32, np.float64]
         assert result["Z"].dtype in [np.float32, np.float64]
 
+    @pytest.mark.worker
     def test_coerce_handles_non_numpy(self):
         """Test coercion handles non-numpy types"""
         from brmspy.helpers._rpy2._conversion import _coerce_stan_types
@@ -163,6 +170,7 @@ class TestTypeCoercion:
         assert result["N"] == 5
         assert result["K"] == 3
 
+    @pytest.mark.worker
     def test_coerce_new_stan_array_syntax(self):
         """Test type coercion with new Stan array syntax: array[N] int Y
 
