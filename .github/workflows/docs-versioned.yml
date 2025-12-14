@@ -1,0 +1,133 @@
+name: docs
+
+on:
+  push:
+    branches: [master]
+    tags: ["release-*"]
+  workflow_dispatch:
+    inputs:
+      build_ref:
+        description: "Branch/tag/SHA to build (e.g. master, release-0.3.0, feature/foo, 1a2b3c4)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout (optional ref override)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+          ref: ${{ (github.event_name == 'workflow_dispatch' && inputs.build_ref != '' && inputs.build_ref) || github.ref }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install docs deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install \
+            mkdocs-material \
+            mkdocs-jupyter \
+            mkdocstrings[python] \
+            mike \
+            "mkdocs-shadcn@git+https://github.com/asiffer/mkdocs-shadcn@30-search-indexing-broken"
+
+      - name: Configure git identity (for mike commits)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch gh-pages (so mike can update it)
+        run: |
+          git fetch origin gh-pages --depth=1 || true
+
+      - name: Extract version from brmspy/__init__.py
+        id: ver
+        run: |
+          python - <<'PY'
+          import os, re, pathlib
+          s = pathlib.Path("brmspy/__init__.py").read_text(encoding="utf-8")
+          m = re.search(r'__version__\s*=\s*"([^"]+)"', s)
+          if not m:
+            raise SystemExit("Could not find __version__ in brmspy/__init__.py")
+          full = m.group(1).strip()
+          mm = re.match(r"^(\d+)\.(\d+)", full)
+          if not mm:
+            raise SystemExit(f"Bad __version__: {full!r} (need MAJOR.MINOR...)")
+          major_minor = f"{int(mm.group(1))}.{int(mm.group(2))}"
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+            f.write(f"full={full}\n")
+            f.write(f"major_minor={major_minor}\n")
+          print("full:", full)
+          print("major_minor:", major_minor)
+          PY
+
+      - name: Verify release tag matches __version__ (push tags only)
+        if: startsWith(github.ref, 'refs/tags/release-')
+        env:
+          TAG: ${{ github.ref_name }} # e.g. release-0.3.0
+          FULL: ${{ steps.ver.outputs.full }}
+        run: |
+          if [ "$TAG" != "release-$FULL" ]; then
+            echo "Tag ($TAG) does not match expected release-$FULL from brmspy/__init__.py"
+            exit 1
+          fi
+
+      - name: Decide if this is a master build (only master gets alias+default)
+        id: is_master
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/master" ]; then
+            echo "value=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            REF="${{ inputs.build_ref }}"
+            if [ "$REF" = "master" ] || [ "$REF" = "refs/heads/master" ]; then
+              echo "value=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+          echo "value=false" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy docs with mike
+        env:
+          FULL: ${{ steps.ver.outputs.full }}
+          MM: ${{ steps.ver.outputs.major_minor }}
+          IS_MASTER: ${{ steps.is_master.outputs.value }}
+        run: |
+          set -euo pipefail
+
+          if [ "$IS_MASTER" = "true" ]; then
+            mike deploy \
+              --branch gh-pages \
+              --push \
+              --alias-type=redirect \
+              -t "$FULL" \
+              "$MM" stable
+          else
+            mike deploy \
+              --branch gh-pages \
+              --push \
+              --alias-type=redirect \
+              -t "$FULL" \
+              "$MM"
+          fi
+
+      - name: Set default (master only)
+        if: steps.is_master.outputs.value == 'true'
+        run: |
+          mike set-default \
+            --branch gh-pages \
+            --push \
+            stable
