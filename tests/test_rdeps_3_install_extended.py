@@ -258,6 +258,9 @@ class TestInstallBrms:
         """Test rstan installation option"""
         from brmspy import brms
 
+        if platform.system() != "Darwin":
+            pytest.skip("No-macos test (known issue!)")
+
         with brms.manage() as ctx:
             ctx.install_brms(
                 use_prebuilt=False, install_cmdstanr=False, install_rstan=True

@@ -120,6 +120,8 @@ def get_active_runtime() -> Path | None:
     """
     Get path to currently active prebuilt runtime.
 
+    Returns CONFIGURED runtime, not whether it is loaded.
+
     Returns
     -------
     Path or None
@@ -144,7 +146,20 @@ def get_active_runtime() -> Path | None:
         print("No active runtime configured")
     ```
     """
-    return status().active_runtime
+    _status = status()
+    if not _status:
+        return None
+
+    return _status.active_runtime
+
+
+def get_loaded_runtime() -> Path | None:
+    _status = status()
+    if not _status:
+        return None
+    if _status.is_activated:
+        return _status.active_runtime
+    return None
 
 
 def install_brms(
@@ -234,7 +249,7 @@ def install_brms(
 
         return runtime_path
     else:
-        if get_active_runtime():
+        if get_loaded_runtime():
             deactivate_runtime()
 
         _install.install_traditional(
