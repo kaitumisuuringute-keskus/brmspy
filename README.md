@@ -2,8 +2,6 @@
 
 Python-first access to R's [brms](https://paul-buerkner.github.io/brms/)  with proper parameter names, ArviZ support, and cmdstanr performance. The easiest way to run brms models from Python.
 
-This is an early development version of the library, use with caution.
-
 [Github repo and issues](https://github.com/kaitumisuuringute-keskus/brmspy)
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
@@ -21,14 +19,17 @@ This is an early development version of the library, use with caution.
 
 R>=4 is required before installing brmspy.
 
-On linux and macos you may need to manually point your environment to the R installation.
+On Linux and macOS brmspy will usually auto-detect `R_HOME`, and the session layer attempts to prepend `$R_HOME/lib` to `LD_LIBRARY_PATH` when needed for rpy2 ABI mode.
 
-Run the following in your terminal:
+If you run into errors like “cannot find libR” (or similar dynamic loader issues), set these explicitly:
 
 ```bash
-# Set R_HOME and add lib directory to LD_LIBRARY_PATH
+# Set R_HOME and add lib directory to LD_LIBRARY_PATH (Unix)
 export R_HOME=$(R RHOME)
 export LD_LIBRARY_PATH="${R_HOME}/lib:${LD_LIBRARY_PATH}"
+
+# Recommended for stability
+export RPY2_CFFI_MODE=ABI
 ```
 
 ### Python
@@ -41,7 +42,9 @@ First-time setup (installs brms, cmdstanr, and CmdStan in R):
 
 ```python
 from brmspy import brms
-brms.install_brms() # requires R to be installed already
+
+with brms.manage() as ctx: # requires R to be installed already
+    ctx.install_brms()
 ```
 
 ## Prebuilt Runtimes (Optional)
@@ -50,7 +53,9 @@ For faster installation (~20-60 seconds vs 20-30 minutes), use prebuilt runtime 
 
 ```python
 from brmspy import brms
-brms.install_brms(use_prebuilt=True)
+
+with brms.manage() as ctx:
+    ctx.install_brms(use_prebuilt=True)
 ```
 
 ## Windows RTools
@@ -61,10 +66,12 @@ Use with caution!
 
 ```python
 from brmspy import brms
-brms.install_brms(
-    use_prebuilt=True,
-    install_rtools=True # works for both prebuilt and compiled binaries.
-)
+
+with brms.manage() as ctx:
+    ctx.install_brms(
+        use_prebuilt=True,
+        install_rtools=True,  # works for both prebuilt and compiled installs
+    )
 ```
 
 ### System Requirements
@@ -72,17 +79,16 @@ brms.install_brms(
 **Linux (x86_64):**
 - glibc >= 2.27 (Ubuntu 18.04+, Debian 10+, RHEL 8+)
 - g++ >= 9.0
-- R >= 4.3
+- R >= 4.0
 
 **macOS (Intel & Apple Silicon):**
 - Xcode Command Line Tools: `xcode-select --install`
 - clang >= 11.0
-- R >= 4.2
+- R >= 4.0
 
 **Windows (x86_64):**
-- Rtools 4.0+ with MinGW toolchain
-- g++ >= 9.0
-- R >= 4.5
+- Rtools
+- R >= 4.0
 
 Download Rtools from: https://cran.r-project.org/bin/windows/Rtools/
 
@@ -91,7 +97,7 @@ Download Rtools from: https://cran.r-project.org/bin/windows/Rtools/
 - **Proper parameter names**: Returns `b_Intercept`, `b_zAge`, `sd_patient__Intercept` instead of generic names like `b_dim_0`
 - **ArviZ integration**: Returns `arviz.InferenceData` by default for Python workflow
 - **brms formula syntax**: Full support for brms formula interface including random effects
-- **Dual access**: Results include both `.idata` (arviz) and `.r` (brmsfit) attributes
+- **Dual access**: Results include `.idata` (ArviZ) plus a lightweight `.r` handle that can be passed back to brmspy to reference the underlying R object (the R object itself stays in the worker process)
 - **No reimplementation**: Delegates all modeling logic to real brms. No Python-side reimplementation, no divergence from native behavior
 - **Prebuilt Binaries**: Fast installation with precompiled runtimes (50x faster, ~25 seconds on Google Colab)
 - **Stays true to brms**: Function names, parameters, and returned objects are designed to be as close as possible to brms
@@ -129,7 +135,8 @@ Model multiple responses simultaneously with seamless ArviZ integration:
 <td>
 
 ```python
-from brmspy import brms, bf, set_rescor
+from brmspy import brms
+from brmspy.brms import bf, set_rescor
 import arviz as az
 
 # Fit multivariate model
@@ -173,7 +180,8 @@ loo_back <- loo(fit, resp = "back")
 Model heteroscedasticity (variance depends on predictors):
 
 ```python
-from brmspy import bf
+from brmspy import brms
+from brmspy.brms import bf
 
 # Model both mean AND variance
 model = brms.brm(
@@ -241,7 +249,7 @@ conditional_effects = brms.call("conditional_effects", model, "x")
 
 **Custom Priors:**
 ```python
-from brmspy import prior
+from brmspy.brms import prior
 
 model = brms.brm(
     "count ~ zAge + (1|patient)",
@@ -275,7 +283,8 @@ az.plot_violin(epred.idata)
 Everything at once - multivariate responses, different families, distributional parameters, splines, and complete diagnostics:
 
 ```python
-from brmspy import brms, bf, lf, set_rescor, skew_normal, gaussian
+from brmspy.brms import bf, lf, set_rescor, skew_normal, gaussian
+from brmspy import brms
 import arviz as az
 
 # Load data
@@ -336,26 +345,30 @@ conditional = brms.call("conditional_effects", model, "hatchdate", resp="back")
 [brms documentation](https://paulbuerkner.com/brms/reference/index.html)
 
 ### Setup Functions
-It is NOT recommended to run installation functions when you have used the session.
 
-- `install_brms()` - Install brms, cmdstanr, and CmdStan from source or runtime
-- `install_runtime()` - Install latest runtime for OS
-- `activate_runtime()` - Activate existing prebuilt runtime
-- `deactivate_runtime()` - Deactivate current runtime - May break on windows.
+Any operation that installs/uninstalls R packages or changes the runtime/environment should be done via `brms.manage()` (it restarts the worker, giving you a fresh embedded R session).
+
+- `brms.manage()` - Context manager for safe installation and environment management
+  - `ctx.install_brms(...)` - Install brms + toolchain (from source or using a prebuilt runtime)
+  - `ctx.install_runtime(...)` - Install the latest prebuilt runtime for the current system
+  - `ctx.install_rpackage(...)` / `ctx.uninstall_rpackage(...)` - Manage extra R packages in an environment user library
+- `environment_exists(name)` - Check if an environment exists
+- `environment_activate(name)` - Activate an existing environment (switches worker session state)
 - `get_brms_version()` - Get installed brms version
-- `find_local_runtime()` - checks if a runtime exists locally in standard directory and returns path if it does
+- `find_local_runtime()` - Find a matching locally installed runtime
+- `get_active_runtime()` - Get the configured runtime path
+- `status()` - Inspect runtime/toolchain status
 
 ### Data Functions
 - `get_brms_data()` - Load example datasets from brms
 - `get_data()` - Load example datasets from any package
-- `save_rds()` - Save brmsfit or another robject
-- `load_rds_fit()` - Load saved brmsfit object as FitResult (with idata)
-- `load_rds_raw()` - Load r object
+- `save_rds()` - Save an R object to .rds (executed in the worker)
+- `read_rds_fit()` - Load saved brmsfit object as FitResult (with idata)
+- `read_rds_raw()` - Load an R object (raw)
 
 ### Model Functions
-- `bf`, `lg`, `nlf`, `acformula`, `set_rescor`, `set_mecor`, `set_nl` - formula functions
+- `bf`, `lf`, `nlf`, `acformula`, `set_rescor`, `set_mecor`, `set_nl` - formula functions
 - `brm()` - Fit Bayesian regression model
-- `add_criterion` - add loo, waic criterions to fit
 - `make_stancode()` - Generate Stan code for model
 
 ### Diagnostics Functions
@@ -389,13 +402,13 @@ It is NOT recommended to run installation functions when you have used the sessi
 
 ## Known issues
 
-- Due to Windows' idiosyncrasies installing existing R packages (or cmdstanr) is NOT guaranteed to succeed in the same session if it has already been used. It is strongly recommended to restart your Python session before doing any installations when you have used it. This also means autoloading previously used prebuilt environment on windows is disabled, call activate() to load existing prebuilt runtime.
+- If you have multiple R installations, explicitly setting `R_HOME` can help avoid “wrong R” / loader issues.
 
 ## Requirements
 
 **Python**: 3.10-3.14
 
-**R packages** (auto-installed via `brms.install_brms()`):
+**R packages** (auto-installed via `ctx.install_brms()` inside `brms.manage()`):
 - brms >= 2.20.0
 - cmdstanr
 - posterior
@@ -411,8 +424,8 @@ It is NOT recommended to run installation functions when you have used the sessi
 ```bash
 git clone https://github.com/kaitumisuuringute-keskus/brmspy.git
 cd brmspy
-./init-venv.sh
-pytest tests/ -v
+sh script/init-venv.sh
+./run_tests.sh
 ```
 
 ## Architecture
@@ -423,7 +436,7 @@ brmspy uses:
 - **arviz** for Python-native analysis and visualization
 - **rpy2** for Python-R communication
 
-Previous versions used CmdStanPy directly, which resulted in generic parameter names. Current version calls brms directly to preserve brms' parameter renaming logic.
+The current architecture isolates embedded R inside a worker process; the main Python process exposes the `brms` API surface and forwards calls to the worker. This improves stability (crash containment) and enables “resettable” R sessions for installs/environment changes.
 
 ## License
 
