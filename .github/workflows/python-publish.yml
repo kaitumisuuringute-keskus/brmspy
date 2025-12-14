@@ -231,7 +231,12 @@ jobs:
           python -m pip install -e ".[dev]"
 
       - name: Test with pytest
-        run: python -m pytest tests/ -v
+        shell: bash
+        env:
+          GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+          CMDSTAN_DIR: ${{ env.CMDSTAN_DIR }} # not used in here atm
+          R_LIBS_USER: ${{ env.R_LIBS_USER }}
+        run: set -xeuo pipefail && ./run_tests.sh
 
       - name: Build and publish
         env:
