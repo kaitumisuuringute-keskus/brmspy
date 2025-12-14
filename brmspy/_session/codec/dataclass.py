@@ -1,9 +1,18 @@
+"""
+Dataclass codec registration (internal).
+
+This module registers `GenericDataClassCodec` for the public dataclasses that
+may cross the main↔worker boundary (primarily result container types and formula
+DSL nodes).
+
+The registry is populated at process startup via `get_default_registry()`.
+"""
+
 from dataclasses import is_dataclass
 from typing import Any
 
 import brmspy.types.brms_results as _all_types
 import brmspy.types.formula_dsl as _all_dsl_types
-from brmspy.helpers.log import log_warning
 
 from .base import CodecRegistry
 from .builtin import GenericDataClassCodec
@@ -25,11 +34,15 @@ _classes.extend(
 _classes.extend(_generics)
 
 
-def register_dataclasses(registry: CodecRegistry):
+def register_dataclasses(registry: CodecRegistry) -> None:
+    """
+    Register codecs for known dataclass types.
 
-    # log_warning(str(_classes))
-    # raise Exception()
-
+    Parameters
+    ----------
+    registry : brmspy._session.codec.base.CodecRegistry
+        Registry to populate.
+    """
     for _cls in _classes:
         codec = GenericDataClassCodec(cls=_cls, registry=registry)
         registry.register(codec)

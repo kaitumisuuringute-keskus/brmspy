@@ -1,3 +1,13 @@
+"""
+Shared-memory transport utilities (internal).
+
+`RModuleSession` uses shared memory to move large payloads between main and worker.
+The parent allocates blocks and passes only `(name, size)` references over the Pipe.
+The worker (or the main process during decode) attaches by name to access buffers.
+
+This module implements the concrete `ShmPool` used by the session layer.
+"""
+
 from multiprocessing.managers import SharedMemoryManager
 from multiprocessing.shared_memory import SharedMemory
 
@@ -7,6 +17,8 @@ from brmspy.types.shm import ShmPool as _ShmPool
 
 
 class ShmPool(_ShmPool):
+    """Concrete shared-memory pool implementation that tracks attached blocks."""
+
     def __init__(self, manager: SharedMemoryManager) -> None:
         self._manager = manager
         self._blocks: dict[str, ShmBlock] = {}
@@ -30,6 +42,21 @@ class ShmPool(_ShmPool):
 
 
 def attach_buffers(pool: ShmPool, refs: list[ShmRef]) -> list[memoryview]:
+    """
+    Attach to a list of SHM blocks and return their `memoryview`s.
+
+    Parameters
+    ----------
+    pool : ShmPool
+        Pool used for attaching blocks by name.
+    refs : list[brmspy.types.session.ShmRef]
+        List of `(name, size)` references.
+
+    Returns
+    -------
+    list[memoryview]
+        Views over each shared-memory buffer.
+    """
     views: list[memoryview] = []
     for ref in refs:
         block = pool.attach(ref["name"], ref["size"])

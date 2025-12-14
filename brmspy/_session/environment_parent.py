@@ -1,5 +1,17 @@
 from __future__ import annotations
 
+"""
+Parent-side persistence for environment configuration.
+
+This module runs in the main process and is responsible for writing:
+
+- `~/.brmspy/environment/<name>/config.json` (full `EnvironmentConfig`)
+- `~/.brmspy/environment_state.json` (last active environment name)
+
+The worker process is restarted for environment changes; the main process persists
+the selected configuration on context manager exit.
+"""
+
 import json
 import os
 from pathlib import Path
@@ -14,6 +26,14 @@ from .environment import (
 
 
 def save(env_conf: EnvironmentConfig) -> None:
+    """
+    Persist an environment configuration and ensure the directory structure exists.
+
+    Parameters
+    ----------
+    env_conf : brmspy.types.session.EnvironmentConfig
+        Environment configuration to write.
+    """
     base_dir = get_environment_base_dir()
     env_dir = base_dir / env_conf.environment_name
     env_rlib_dir = get_environment_userlibs_dir(name=env_conf.environment_name)
@@ -29,6 +49,14 @@ def save(env_conf: EnvironmentConfig) -> None:
 
 
 def save_as_state(env_conf: EnvironmentConfig) -> None:
+    """
+    Record the active environment name in `environment_state.json`.
+
+    Parameters
+    ----------
+    env_conf : brmspy.types.session.EnvironmentConfig
+        Environment configuration whose name should be recorded.
+    """
     state_path = get_environments_state_path()
     with open(state_path, "w", encoding="utf-8") as f:
         json.dump(

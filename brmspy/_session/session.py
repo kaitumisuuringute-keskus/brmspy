@@ -1,10 +1,23 @@
 from __future__ import annotations
 
+"""
+Main↔worker session and proxy module machinery.
+
+This module contains the core implementation of the "module-like proxy" used by
+`brmspy.brms` in the main process:
+
+- spawn an isolated worker process (spawn semantics)
+- set up IPC (Pipe for control + SharedMemoryManager for payload buffers)
+- encode/decode arguments and return values via a codec registry
+- forward worker logs into the parent logger handlers
+
+This is internal infrastructure; end users should go through `brmspy.brms`.
+"""
+
 import atexit
 import inspect
 import logging
 import multiprocessing as mp
-
 import os
 import platform
 import subprocess
@@ -54,7 +67,7 @@ _INTERNAL_ATTRS = {
 
 
 def r_home_from_subprocess() -> str | None:
-    """Return the R home directory from calling 'R RHOME'."""
+    """Return the R home directory by calling `R RHOME` in a subprocess."""
     cmd = ("R", "RHOME")
     tmp = subprocess.check_output(cmd, universal_newlines=True)
     # may raise FileNotFoundError, WindowsError, etc
@@ -144,6 +157,14 @@ def with_env(overrides: dict[str, str]) -> Iterator[None]:
 def spawn_worker(
     target, args, env_overrides: dict[str, str], log_queue: mp.Queue | None = None
 ):
+    """
+    Spawn the worker process with temporary environment overrides.
+
+    Notes
+    -----
+    - brmspy uses spawn semantics (see `ctx = mp.get_context("spawn")`).
+    - The worker receives the log queue as an extra trailing argument when present.
+    """
     with with_env(env_overrides):
         daemon = os.environ.get("BRMSPY_TEST") != "1" and not os.environ.get(
             "COVERAGE_PROCESS_START"
@@ -253,10 +274,40 @@ class ClassProxy:
 
 class RModuleSession(ModuleType):
     """
-    Module-like proxy that forwards function calls to a worker process,
-    where the real module is imported and executed.
+    Module-like proxy that forwards attribute access and function calls to a worker process.
 
-    All R/rpy2/brms logic lives in that module; this class only does IPC.
+    In the main process, `brmspy.brms` is an instance of this class wrapping the
+    real worker-side module. Access patterns are:
+
+    - **Callables** (functions) are wrapped so calling them performs an IPC roundtrip:
+      encode args/kwargs → send request → run in worker → encode result → decode result.
+    - **Non-callables** (constants, types) are mirrored directly from the wrapped module
+      to keep `dir()` and IDE autocomplete useful.
+
+    This class also owns the worker lifecycle:
+
+    - creates a `SharedMemoryManager` for large payload buffers
+    - spawns the worker process using spawn semantics
+    - bridges worker logging back into the parent's handlers via a log queue
+    - performs a `PING` handshake to ensure the worker is ready before requests
+
+    Parameters
+    ----------
+    module : types.ModuleType
+        The module object whose surface is mirrored in the main process. In practice
+        this is the import of the worker-facing module (e.g. `brmspy.brms._brms_module`)
+        but executed in the main process only for metadata / attribute discovery.
+    module_path : str
+        Import path used inside the worker when resolving targets (e.g. ``"brmspy.brms"``).
+    environment_conf : brmspy.types.session.EnvironmentConfig | dict[str, Any] | None, optional
+        Initial environment configuration for the worker. If omitted, brmspy will try
+        to load `default` from the environment store.
+
+    Notes
+    -----
+    - The main process must not import `rpy2.robjects`; the worker owns all embedded-R state.
+    - Any R objects returned by the worker are replaced with lightweight wrappers and can
+      only be reattached inside the same worker process lifetime.
     """
 
     _instances: weakref.WeakSet[RModuleSession] = weakref.WeakSet()
@@ -269,6 +320,23 @@ class RModuleSession(ModuleType):
         module_path: str,
         environment_conf: EnvironmentConfig | dict[str, Any] | None = None,
     ) -> None:
+        """
+        Create a new session proxy and immediately start its worker.
+
+        Parameters
+        ----------
+        module : types.ModuleType
+            Wrapped module used for surface mirroring in the main process.
+        module_path : str
+            Worker import root used for resolving targets.
+        environment_conf : brmspy.types.session.EnvironmentConfig | dict[str, Any] | None
+            Initial worker environment configuration.
+
+        Raises
+        ------
+        RuntimeError
+            If the worker fails to start or does not respond to the startup handshake.
+        """
         # Pretend to be the same module (for IDEs/docs)
         super().__init__(module.__name__, module.__doc__)
 
@@ -312,8 +380,22 @@ class RModuleSession(ModuleType):
             atexit.register(RModuleSession._cleanup_all)
             RModuleSession._atexit_registered = True
 
-    def _setup_worker(self, autoload=True) -> None:
-        """Start SharedMemoryManager and worker process, wire IPC."""
+    def _setup_worker(self, autoload: bool = True) -> None:
+        """
+        Start the SHM manager + worker process and perform the startup handshake.
+
+        Parameters
+        ----------
+        autoload : bool, default=True
+            If True, sets `BRMSPY_AUTOLOAD=1` for the worker, allowing it to auto-activate
+            the last configured runtime on startup. Context-managed tooling flows
+            (e.g. `manage()`) typically start the worker with `autoload=False`.
+
+        Raises
+        ------
+        RuntimeError
+            If the worker fails to start within the handshake timeout or reports an init error.
+        """
 
         mgr = SharedMemoryManager(ctx=ctx)
         mgr.start()
@@ -382,7 +464,21 @@ class RModuleSession(ModuleType):
             raise RuntimeError(f"Worker failed to initialize: {resp.get('error')}")
 
     def _teardown_worker(self) -> None:
-        """Internal helper to stop worker/manager; used by shutdown/restart."""
+        """
+        Tear down worker process, SHM manager, and logging bridge.
+
+        This is best-effort cleanup used by `shutdown()` and `restart()`:
+
+        - sends `SHUTDOWN` (non-fatal if it fails)
+        - stops the `QueueListener` for worker logging
+        - shuts down the `SharedMemoryManager`
+        - joins/terminates the worker if needed
+
+        Notes
+        -----
+        The "join then terminate" sequence is intentional to avoid leaving zombie
+        processes behind in interactive environments.
+        """
         if self._closed:
             return
 
@@ -436,6 +532,12 @@ class RModuleSession(ModuleType):
 
     @classmethod
     def _cleanup_all(cls) -> None:
+        """
+        Atexit hook to shut down all live sessions.
+
+        This is registered once for the class and iterates over a WeakSet of
+        `RModuleSession` instances.
+        """
         for inst in list(cls._instances):
             try:
                 inst.shutdown()
@@ -445,6 +547,23 @@ class RModuleSession(ModuleType):
     # ----------------- IPC helpers --------------------
 
     def _encode_arg(self, obj: Any) -> dict[str, Any]:
+        """
+        Encode a single Python argument into an IPC payload dict.
+
+        Parameters
+        ----------
+        obj : Any
+            Value to encode.
+
+        Returns
+        -------
+        dict[str, Any]
+            A JSON-serializable structure containing:
+
+            - `codec`: registry codec id
+            - `meta`: codec metadata
+            - `buffers`: list of SHM block references (`name`, `size`)
+        """
         enc = self._reg.encode(obj, self._shm_pool)
         return {
             "codec": enc.codec,
@@ -453,6 +572,24 @@ class RModuleSession(ModuleType):
         }
 
     def _decode_result(self, resp: dict[str, Any]) -> Any:
+        """
+        Decode a worker response into a Python value or raise.
+
+        Parameters
+        ----------
+        resp : dict[str, Any]
+            Response message from the worker.
+
+        Returns
+        -------
+        Any
+            Decoded Python object.
+
+        Raises
+        ------
+        brmspy.types.errors.RSessionError
+            If `resp["ok"]` is false. Includes best-effort remote traceback.
+        """
         if not resp["ok"]:
             raise RSessionError(
                 resp.get("error") or "Worker error",
@@ -467,7 +604,32 @@ class RModuleSession(ModuleType):
             shm_pool=self._shm_pool,
         )
 
-    def _call_remote(self, func_name: str, *args, **kwargs) -> Any:
+    def _call_remote(self, func_name: str, *args: Any, **kwargs: Any) -> Any:
+        """
+        Perform a remote call in the worker.
+
+        Parameters
+        ----------
+        func_name : str
+            Function name or fully qualified target.
+
+            - If it starts with ``"mod:"``, it is treated as a full worker target.
+            - Otherwise it is resolved as a function on `self._module_path`.
+        *args, **kwargs
+            Call arguments, encoded via the session codec registry.
+
+        Returns
+        -------
+        Any
+            Decoded return value.
+
+        Raises
+        ------
+        RuntimeError
+            If the session has been shut down.
+        brmspy.types.errors.RSessionError
+            If the worker reports an error while executing the call.
+        """
         if self._closed:
             raise RuntimeError("RModuleSession is closed")
 
@@ -491,6 +653,15 @@ class RModuleSession(ModuleType):
     # ----------------- attribute proxying --------------
 
     def __getattribute__(self, name: str) -> Any:
+        """
+        Proxy attribute access for a module-like experience.
+
+        Rules
+        -----
+        - Internal attributes are handled locally.
+        - Callables found on the wrapped module are returned as wrappers that call into the worker.
+        - Non-callables are mirrored directly.
+        """
         # 1. Always allow access to internal attributes via base implementation
         if name in _INTERNAL_ATTRS or name.startswith("__") and name.endswith("__"):
             return ModuleType.__getattribute__(self, name)
@@ -516,12 +687,29 @@ class RModuleSession(ModuleType):
         # 4. Fallback: use normal module attribute resolution
         return ModuleType.__getattribute__(self, name)
 
-    def _get_or_create_wrapper(self, name: str, orig: Callable[..., Any]):
+    def _get_or_create_wrapper(
+        self, name: str, orig: Callable[..., Any]
+    ) -> Callable[..., Any]:
+        """
+        Return a cached worker-calling wrapper for a callable attribute.
+
+        Parameters
+        ----------
+        name : str
+            Attribute name on the wrapped module.
+        orig : collections.abc.Callable[..., Any]
+            Original callable (used for metadata only).
+
+        Returns
+        -------
+        collections.abc.Callable[..., Any]
+            Wrapper that performs an IPC roundtrip to execute the callable in the worker.
+        """
         func_cache = ModuleType.__getattribute__(self, "_func_cache")
         if name in func_cache:
             return func_cache[name]
 
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any):
             return self._call_remote(name, *args, **kwargs)
 
         wrapper.__name__ = getattr(orig, "__name__", name)
@@ -531,16 +719,19 @@ class RModuleSession(ModuleType):
         func_cache[name] = wrapper
         return wrapper
 
-    def __dir__(self):
+    def __dir__(self) -> list[str]:
+        """Expose the merged surface of the proxy and the wrapped module."""
         module = ModuleType.__getattribute__(self, "_module")
         return sorted(set(self.__dict__) | set(dir(module)))
 
     # ----------------- lifetime ------------------------
 
     def shutdown(self) -> None:
+        """Shut down the worker and related resources."""
         self._teardown_worker()
 
     def __del__(self) -> None:
+        """Best-effort cleanup on GC; errors are suppressed."""
         try:
             self.shutdown()
         except Exception:
@@ -553,17 +744,30 @@ class RModuleSession(ModuleType):
         surface_class_path: str,
     ):
         """
-        Attach a surface (module or class) as a context manager factory.
+        Attach a class-based "surface" API as a context manager factory.
 
-            Yields a ClassProxy exposing only @staticmethod members of the class.
-            Callables execute in worker via:
-                mod:{module_path}::{ClassName}.{name}
-            where `module_path` and `ClassName` are derived from `surface_class_path`.
+        This is used to implement `brmspy.brms.manage()` and `brmspy.brms._build()`
+        without exposing worker internals to the main process.
 
-        Semantics match current `brmspy._session.manage.manage()`:
-        - On enter: resolve env config and restart worker with autoload=False
-        - On exit: persist env via save()/save_as_state(); do not restore old config
-        - Nesting is not allowed (raises)
+        Parameters
+        ----------
+        surface_class : type
+            Class whose `@staticmethod` members define the surface API available inside
+            the context. Only staticmethod members are exposed.
+        surface_class_path : str
+            Fully qualified path like ``"pkg.module.ClassName"`` used for worker target
+            resolution.
+
+        Returns
+        -------
+        collections.abc.Callable[..., contextlib.AbstractContextManager]
+            Factory that produces a context manager. On enter it restarts the worker
+            (autoload disabled) and yields a `ClassProxy` for the surface class.
+
+        Notes
+        -----
+        - Nesting contexts is forbidden; this is enforced via `self._active_ctx`.
+        - On exit, the selected environment config is persisted via the environment store.
         """
 
         session = self
@@ -650,10 +854,19 @@ class RModuleSession(ModuleType):
         autoload: bool = True,
     ) -> None:
         """
-        Restart the underlying worker process and shared-memory manager.
+        Restart the worker process and SHM manager.
 
-        If `environment_conf` is provided, it replaces the existing configuration
-        for the new worker; otherwise the existing `self._environment_conf` is reused.
+        Parameters
+        ----------
+        environment_conf : dict[str, Any] | brmspy.types.session.EnvironmentConfig | None
+            If provided, replaces the existing environment configuration for the new worker.
+        autoload : bool, default=True
+            Whether to enable autoload for the new worker process.
+
+        Notes
+        -----
+        This tears down the existing worker and starts a new one. Any previously
+        returned R object wrappers are no longer reattachable after restart.
         """
         if environment_conf is not None:
             self._environment_conf = EnvironmentConfig.from_obj(environment_conf)
@@ -668,10 +881,34 @@ class RModuleSession(ModuleType):
         # Start a fresh worker with current env conf
         self._setup_worker(autoload=autoload)
 
-    def environment_exists(self, name: str):
+    def environment_exists(self, name: str) -> bool:
+        """
+        Check whether an environment with the given name exists on disk.
+
+        Parameters
+        ----------
+        name : str
+            Environment name.
+
+        Returns
+        -------
+        bool
+        """
         return get_environment_exists(name)
 
-    def environment_activate(self, name: str):
+    def environment_activate(self, name: str) -> None:
+        """
+        Activate an environment by restarting the worker through `manage()`.
+
+        Parameters
+        ----------
+        name : str
+            Environment name to activate.
+
+        Notes
+        -----
+        This is a convenience helper used by tests and developer flows.
+        """
         manage = self.manage
         if manage:
             with manage(environment_name=name) as ctx:
@@ -681,8 +918,31 @@ class RModuleSession(ModuleType):
 
     def _run_test_by_name(
         self, module_path: str, class_name: str | None, func_name: str
-    ):
-        """Run a test identified by module/class/function INSIDE the worker."""
+    ) -> Any:
+        """
+        Run a test identified by module/class/function inside the worker.
+
+        Parameters
+        ----------
+        module_path : str
+            Importable module path (e.g. ``"tests.test_file"``).
+        class_name : str | None
+            Optional class name if the test is a method.
+        func_name : str
+            Test function/method name.
+
+        Returns
+        -------
+        Any
+            Decoded return value from the test function.
+
+        Raises
+        ------
+        RuntimeError
+            If `BRMSPY_TEST=1` is not set.
+        brmspy.types.errors.RSessionError
+            If the worker reports a failure.
+        """
         if os.getenv("BRMSPY_TEST") != "1":
             raise RuntimeError("BRMSPY_TEST=1 required for worker test execution")
 

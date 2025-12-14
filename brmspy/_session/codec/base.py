@@ -1,5 +1,14 @@
 from __future__ import annotations
 
+
+"""
+Codec registry primitives (internal).
+
+The session layer uses a codec registry to serialize Python values across the
+main↔worker boundary. Encoders may allocate shared-memory blocks for large payloads
+and return small metadata + SHM references for IPC transport.
+"""
+
 from dataclasses import is_dataclass
 from typing import Any
 
@@ -8,11 +17,22 @@ from brmspy.types.shm import ShmBlockSpec
 
 
 class CodecRegistry:
+    """Ordered registry of encoders used for IPC serialization."""
+
     def __init__(self) -> None:
         self._by_codec: dict[str, Encoder] = {}
         self._encoders: list[Encoder] = []
 
     def register(self, encoder: Encoder) -> None:
+        """
+        Register an encoder instance.
+
+        Parameters
+        ----------
+        encoder : brmspy.types.session.Encoder
+            Encoder to register. Its `codec` attribute is used as the key when present,
+            otherwise the class name is used.
+        """
         if hasattr(encoder, "codec") and encoder.codec:  # type: ignore
             codec_name = encoder.codec  # type: ignore
         else:
@@ -22,6 +42,20 @@ class CodecRegistry:
         self._encoders.append(encoder)
 
     def encode(self, obj: Any, shm_pool: Any) -> EncodeResult:
+        """
+        Encode an object by selecting the first encoder that accepts it.
+
+        Parameters
+        ----------
+        obj : Any
+            Value to encode.
+        shm_pool : Any
+            SHM pool used by codecs for allocating buffers.
+
+        Returns
+        -------
+        brmspy.types.session.EncodeResult
+        """
         for enc in self._encoders:
             if enc.can_encode(obj):
                 res = enc.encode(obj, shm_pool)
@@ -42,6 +76,26 @@ class CodecRegistry:
         buffer_specs: list[dict],
         shm_pool: Any,
     ) -> Any:
+        """
+        Decode a payload using a named codec.
+
+        Parameters
+        ----------
+        codec : str
+            Codec identifier previously returned by `encode()`.
+        meta : dict[str, Any]
+            Codec metadata.
+        buffers : list[memoryview]
+            Memoryviews for attached SHM buffers.
+        buffer_specs : list[dict]
+            Original buffer specs (name/size) corresponding to `buffers`.
+        shm_pool : Any
+            SHM pool (some codecs may attach additional buffers).
+
+        Returns
+        -------
+        Any
+        """
         if codec not in self._by_codec:
             raise ValueError(
                 f"Unknown codec: {codec}, available: {list(self._by_codec.keys())}"
@@ -51,8 +105,12 @@ class CodecRegistry:
 
 class DataclassCodec(Encoder):
     """
-    Generic codec that encodes/decodes dataclasses by delegating
-    each field to a registered codec in CodecRegistry.
+    Legacy dataclass codec (internal).
+
+    Prefer `GenericDataClassCodec` in [`brmspy._session.codec.builtin`](brmspy/_session/codec/builtin.py),
+    which does not require a per-field codec mapping.
+
+    This class is kept for compatibility and may be removed in the future.
     """
 
     def __init__(
