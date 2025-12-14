@@ -2,7 +2,7 @@ name: docs-versioned
 
 on:
   push:
-    branches: [master]
+    branches: [master, rpy2-session]
     tags: ["release-*"]
   workflow_dispatch:
     inputs:
