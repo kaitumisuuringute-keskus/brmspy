@@ -83,6 +83,19 @@ if os.environ.get("BRMSPY_WORKER") != "1":
 
     brms = cast(BrmsModule, _sess)
     _is_main_process = True
+
+    # Sanity check that rpy2.robjects wasnt imported
+    banned = (
+        "rpy2.robjects",
+        "rpy2.robjects.packages",
+        "rpy2.robjects.vectors",
+    )
+    present = [m for m in banned if m in sys.modules]
+    if present:
+        raise RuntimeError(
+            "Sanity check failed: rpy2.robjects was imported on the main process. "
+            f"Present: {present}. This should only happen inside the worker."
+        )
 else:
     # WORKER PROCESS
     import brmspy.brms._brms_module as brms
