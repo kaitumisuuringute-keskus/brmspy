@@ -30,6 +30,14 @@ class TestSharedMemoryLifetime:
         # Try to be as mean as possible to GC
         gc.collect()
 
-        # If GC tried to collect, this will CRASH the test hard:
-        print(models[0].idata)
-        print(models[1].idata)
+        # Accessing idata must not crash; if SHM was closed, this will instantly die
+        id0 = models[0].idata
+        id1 = models[1].idata
+
+        # Touch the actual SHM-backed arrays
+        _ = id0.posterior.dims
+        _ = id1.posterior.dims
+
+        # Force a repr, which walks the Dataset tree and touches data buffers
+        assert "posterior" in repr(id0)
+        assert "posterior" in repr(id1)
