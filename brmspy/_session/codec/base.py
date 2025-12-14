@@ -1,4 +1,5 @@
 from __future__ import annotations
+import weakref
 
 
 """
@@ -13,7 +14,11 @@ from dataclasses import is_dataclass
 from typing import Any
 
 from brmspy.types.session import Encoder, EncodeResult
-from brmspy.types.shm import ShmBlockSpec
+from brmspy.types.shm import ShmBlock, ShmBlockSpec
+
+
+def _noop(_blocks):
+    pass
 
 
 class CodecRegistry:
@@ -68,11 +73,23 @@ class CodecRegistry:
             raise RuntimeError("No pickle codec registered")
         return self._by_codec["PickleCodec"].encode(obj, shm_pool)
 
+    def _attach_shm_lifetime(self, obj: Any, shms: list[ShmBlock]) -> None:
+        """Keep SHM blocks alive as long as `obj` is alive."""
+        if not shms:
+            return
+        if obj is None or isinstance(obj, (bool, str, int, float)):
+            return
+
+        try:
+            weakref.finalize(obj, _noop, tuple(shms))
+        except:
+            return
+
     def decode(
         self,
         codec: str,
         meta: dict[str, Any],
-        buffers: list[memoryview],
+        buffers: list[ShmBlock],
         buffer_specs: list[dict],
         shm_pool: Any,
     ) -> Any:
@@ -100,7 +117,10 @@ class CodecRegistry:
             raise ValueError(
                 f"Unknown codec: {codec}, available: {list(self._by_codec.keys())}"
             )
-        return self._by_codec[codec].decode(meta, buffers, buffer_specs, shm_pool)
+        value = self._by_codec[codec].decode(meta, buffers, buffer_specs, shm_pool)
+        self._attach_shm_lifetime(value, buffers)
+
+        return value
 
 
 class DataclassCodec(Encoder):
@@ -166,7 +186,7 @@ class DataclassCodec(Encoder):
     def decode(
         self,
         meta: dict[str, Any],
-        buffers: list[memoryview],
+        buffers: list[ShmBlock],
         buffer_specs: list[dict],
         shm_pool: Any,
     ) -> Any:

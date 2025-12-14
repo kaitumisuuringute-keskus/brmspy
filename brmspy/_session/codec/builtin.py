@@ -28,7 +28,7 @@ from brmspy._session.codec.base import CodecRegistry
 from brmspy.types.session import EncodeResult, Encoder
 
 from ...types.shm_extensions import ShmArray, ShmDataFrameColumns, ShmDataFrameSimple
-from ...types.shm import ShmBlockSpec
+from ...types.shm import ShmBlock, ShmBlockSpec
 
 ONE_MB = 1024 * 1024
 
@@ -85,7 +85,7 @@ class NumpyArrayCodec:
     def decode(
         self,
         meta: dict[str, Any],
-        buffers: list[memoryview],
+        buffers: list[ShmBlock],
         buffer_specs: list[dict],
         shm_pool: Any,
     ) -> Any:
@@ -94,9 +94,11 @@ class NumpyArrayCodec:
         shape = tuple(meta["shape"])
         nbytes = int(meta["nbytes"])
         order = meta["order"]
+        assert buf.shm.buf
+        memview = memoryview(buf.shm.buf)
 
         # Only use the slice that actually holds array data
-        view = buf[:nbytes]
+        view = memview[:nbytes]
         arr = np.ndarray(shape=shape, dtype=dtype, buffer=view, order=order)
         return arr
 
@@ -182,14 +184,16 @@ class PandasDFCodec:
     def decode(
         self,
         meta: dict[str, Any],
-        buffers: list[memoryview],
+        buffers: list[ShmBlock],
         buffer_specs: list[dict],
         shm_pool: Any,
     ) -> Any:
         if meta.get("variant") == "empty":
             return pd.DataFrame({})
         elif meta.get("variant") == "single":
-            buf = buffers[0].cast("B")
+            assert buffers[0].shm.buf
+            memview = memoryview(buffers[0].shm.buf)
+            buf = memview.cast("B")
             spec = buffer_specs[0]
             dtype = np.dtype(meta["dtype"])
             nbytes = spec["size"]
@@ -224,7 +228,10 @@ class PandasDFCodec:
             for i, col_name in enumerate(columns):
                 dtype = np.dtype(dtypes[i])
                 spec = buffer_specs[i]
-                buf = buffers[i].cast("B")
+                buf = buffers[i].shm.buf
+                assert buf
+                memview = memoryview(buf)
+                buf = memview.cast("B")
                 nbytes = spec["size"]
 
                 # 1D column
@@ -274,11 +281,13 @@ class PickleCodec:
     def decode(
         self,
         meta: dict[str, Any],
-        buffers: list[memoryview],
+        buffers: list[ShmBlock],
         buffer_specs: list[dict],
         shm_pool: Any,
     ) -> Any:
-        buf = buffers[0]
+        block = buffers[0]
+        assert block.shm.buf
+        buf = memoryview(block.shm.buf)
         length = meta["length"]
         payload = bytes(buf[:length])
         return pickle.loads(payload)
@@ -371,7 +380,7 @@ class InferenceDataCodec(Encoder):
     def decode(
         self,
         meta: dict[str, Any],
-        buffers: list[memoryview],
+        buffers: list[ShmBlock],
         buffer_specs: list[dict],
         shm_pool: Any,
     ) -> Any:
@@ -386,7 +395,9 @@ class InferenceDataCodec(Encoder):
             for cname, cmeta in g_meta["coords"].items():
                 kind = cmeta["kind"]
                 if kind == "array":
-                    buf = buffers[cmeta["buffer_idx"]]
+                    block = buffers[cmeta["buffer_idx"]]
+                    assert block.shm.buf
+                    buf = memoryview(block.shm.buf)
                     nbytes = int(cmeta["nbytes"])
                     view = buf[:nbytes]
                     arr = np.frombuffer(view, dtype=np.dtype(cmeta["dtype"])).reshape(
@@ -401,7 +412,9 @@ class InferenceDataCodec(Encoder):
 
             # Rebuild data_vars
             for vname, vmeta in g_meta["data_vars"].items():
-                buf = buffers[vmeta["buffer_idx"]]
+                block = buffers[vmeta["buffer_idx"]]
+                assert block.shm.buf
+                buf = memoryview(block.shm.buf)
                 nbytes = int(vmeta["nbytes"])
                 view = buf[:nbytes]
                 arr = np.frombuffer(view, dtype=np.dtype(vmeta["dtype"])).reshape(
@@ -494,7 +507,7 @@ class GenericDataClassCodec(Encoder):
     def decode(
         self,
         meta: dict[str, Any],
-        buffers: list[memoryview],
+        buffers: list[ShmBlock],
         buffer_specs: list[dict],
         shm_pool: Any,
     ) -> Any:

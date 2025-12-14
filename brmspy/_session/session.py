@@ -596,13 +596,15 @@ class RModuleSession(ModuleType):
                 remote_traceback=resp.get("traceback"),
             )
         pres = resp["result"]
-        return self._reg.decode(
+        buffer_refs = pres["buffers"]
+        decoded = self._reg.decode(
             pres["codec"],
             pres["meta"],
-            attach_buffers(self._shm_pool, pres["buffers"]),
-            pres["buffers"],
+            attach_buffers(self._shm_pool, buffer_refs),
+            buffer_refs,
             shm_pool=self._shm_pool,
         )
+        return decoded
 
     def _call_remote(self, func_name: str, *args: Any, **kwargs: Any) -> Any:
         """

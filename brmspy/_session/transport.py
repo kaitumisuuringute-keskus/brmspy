@@ -41,7 +41,7 @@ class ShmPool(_ShmPool):
         self._blocks.clear()
 
 
-def attach_buffers(pool: ShmPool, refs: list[ShmRef]) -> list[memoryview]:
+def attach_buffers(pool: ShmPool, refs: list[ShmRef]) -> list[ShmBlock]:
     """
     Attach to a list of SHM blocks and return their `memoryview`s.
 
@@ -57,10 +57,10 @@ def attach_buffers(pool: ShmPool, refs: list[ShmRef]) -> list[memoryview]:
     list[memoryview]
         Views over each shared-memory buffer.
     """
-    views: list[memoryview] = []
+    blocks: list[ShmBlock] = []
     for ref in refs:
         block = pool.attach(ref["name"], ref["size"])
         if block.shm.buf is None:
             raise Exception("block.smh.buf is None!")
-        views.append(memoryview(block.shm.buf))
-    return views
+        blocks.append(block)
+    return blocks

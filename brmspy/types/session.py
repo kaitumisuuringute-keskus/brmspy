@@ -17,7 +17,7 @@ can be reattached inside the worker via its SEXP cache.
 from dataclasses import dataclass, field
 from typing import Any, Literal, Protocol, TypedDict, runtime_checkable
 
-from brmspy.types.shm import ShmBlockSpec, ShmRef
+from brmspy.types.shm import ShmBlock, ShmBlockSpec, ShmRef
 
 CommandType = Literal["CALL", "SHUTDOWN", "PING", "_RUN_TEST_BY_NAME"]
 
@@ -193,7 +193,7 @@ class Encoder(Protocol):
     def decode(
         self,
         meta: dict[str, Any],
-        buffers: list[memoryview],
+        buffers: list[ShmBlock],
         buffer_specs: list[dict],
         shm_pool: Any,
     ) -> Any: ...
