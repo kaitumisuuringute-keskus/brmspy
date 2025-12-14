@@ -1,0 +1,3023 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Python interface to R's brms for Bayesian regression modeling">
+      
+      
+        <meta name="author" content="Remi Sebastian Kits">
+      
+      
+        <link rel="canonical" href="https://kaitumisuuringute-keskus.github.io/brmspy/0.2/development/development/">
+      
+      
+        <link rel="prev" href="../../examples/brmspy-vi-sampling/">
+      
+      
+        <link rel="next" href="../../changelog/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+    
+    
+      
+        <title>Development - brmspy</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=system-ui:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"system-ui";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../static/shadcn-ish.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="gray">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#development-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="brmspy" class="md-header__button md-logo" aria-label="brmspy" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            brmspy
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Development
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="gray"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="gray"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/kaitumisuuringute-keskus/brmspy" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    kaitumisuuringute-keskus/brmspy
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/brms/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../examples/brmspy-google-colab/" class="md-tabs__link">
+          
+  
+  
+  Examples
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Development
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../changelog/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="brmspy" class="md-nav__button md-logo" aria-label="brmspy" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    brmspy
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/kaitumisuuringute-keskus/brmspy" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    kaitumisuuringute-keskus/brmspy
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/brms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Main Module
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Install
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/diagnostics-arviz/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Diagnostics with ArViz
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    BRMS functions
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    BRMS functions
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/brms_functions/brm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    brm
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/brms_functions/diagnostics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    diagnostics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/brms_functions/families/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    families
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/brms_functions/formula/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    formula
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/brms_functions/io/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    io
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/brms_functions/prediction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    prediction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/brms_functions/prior/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    prior
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/brms_functions/stan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    stan
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/brms_functions/generic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    generic
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_6" id="__nav_2_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Helpers
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Helpers
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/helpers/conversion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conversion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/helpers/priors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Priors
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/brmspy-google-colab/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    brmspy - google colab
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/brmspy-estimating-multivariate-models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    brmspy - Estimating Multivariate Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/brmspy-vi-sampling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    brmspy - Variational Inference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Start">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#project-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project Architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Project Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#directory-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Directory Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#core-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Components
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#runtime-system-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime System Architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Runtime System Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#layered-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layered Architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Layered Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-foundation-layer-no-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Foundation Layer (No Dependencies)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-r-layer-depends-on-foundation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. R Layer (Depends on Foundation)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-disk-layer-depends-on-foundation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Disk Layer (Depends on Foundation)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-orchestration-layer-depends-on-all-lower-layers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Orchestration Layer (Depends on All Lower Layers)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#public-api-__init__py" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Public API (__init__.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system-fingerprint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System Fingerprint
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bundle-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bundle Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage Examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cicd-pipelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI/CD Pipelines
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CI/CD Pipelines">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-python-test-matrix-python-test-matrixyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Python Test Matrix (python-test-matrix.yml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-r-dependencies-tests-r-dependencies-testsyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. R Dependencies Tests (r-dependencies-tests.yml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-documentation-docsyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Documentation (docs.yml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-pypi-publish-python-publishyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. PyPI Publish (python-publish.yml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-runtime-publish-runtime-publishyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Runtime Publish (runtime-publish.yml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-linux-runtime-builder-build-linux-runtime-imageyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Linux Runtime Builder (build-linux-runtime-image.yml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#runtime-builder-runtime_builderlinux" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime Builder (.runtime_builder/linux/)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Runtime Builder (.runtime_builder/linux/)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dockerfile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dockerfile
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#install_rsh" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        install_r.sh
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#publishsh" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        publish.sh
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-markers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Markers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#build-and-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build and Release
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Build and Release">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#version-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#release-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release Process
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#building-runtimes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Building Runtimes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Documentation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mkdocs-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mkdocs Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docstring-style" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docstring Style
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Performance">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#r-package-caching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R Package Caching
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prebuilt-runtimes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prebuilt Runtimes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#r-package-installation-fails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R Package Installation Fails
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cmdstan-compilation-fails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CmdStan Compilation Fails
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#runtime-incompatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime Incompatibility
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#code-style" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Style
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pr-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PR Process
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resources
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Start">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#project-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project Architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Project Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#directory-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Directory Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#core-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Components
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#runtime-system-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime System Architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Runtime System Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#layered-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layered Architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Layered Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-foundation-layer-no-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Foundation Layer (No Dependencies)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-r-layer-depends-on-foundation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. R Layer (Depends on Foundation)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-disk-layer-depends-on-foundation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Disk Layer (Depends on Foundation)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-orchestration-layer-depends-on-all-lower-layers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Orchestration Layer (Depends on All Lower Layers)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#public-api-__init__py" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Public API (__init__.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system-fingerprint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System Fingerprint
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bundle-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bundle Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage Examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cicd-pipelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI/CD Pipelines
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CI/CD Pipelines">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-python-test-matrix-python-test-matrixyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Python Test Matrix (python-test-matrix.yml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-r-dependencies-tests-r-dependencies-testsyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. R Dependencies Tests (r-dependencies-tests.yml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-documentation-docsyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Documentation (docs.yml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-pypi-publish-python-publishyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. PyPI Publish (python-publish.yml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-runtime-publish-runtime-publishyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Runtime Publish (runtime-publish.yml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-linux-runtime-builder-build-linux-runtime-imageyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Linux Runtime Builder (build-linux-runtime-image.yml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#runtime-builder-runtime_builderlinux" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime Builder (.runtime_builder/linux/)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Runtime Builder (.runtime_builder/linux/)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dockerfile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dockerfile
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#install_rsh" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        install_r.sh
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#publishsh" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        publish.sh
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-markers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Markers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#build-and-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build and Release
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Build and Release">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#version-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#release-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release Process
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#building-runtimes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Building Runtimes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Documentation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mkdocs-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mkdocs Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docstring-style" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docstring Style
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Performance">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#r-package-caching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R Package Caching
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prebuilt-runtimes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prebuilt Runtimes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#r-package-installation-fails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R Package Installation Fails
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cmdstan-compilation-fails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CmdStan Compilation Fails
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#runtime-incompatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runtime Incompatibility
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#code-style" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Style
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pr-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PR Process
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resources
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="development-guide">Development Guide<a class="headerlink" href="#development-guide" title="Permanent link">&para;</a></h1>
+<p>This guide covers the development infrastructure, build processes, and CI/CD architecture for brmspy.</p>
+<h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
+<h3 id="setup">Setup<a class="headerlink" href="#setup" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Clone and setup</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/kaitumisuuringute-keskus/brmspy.git
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nb">cd</span><span class="w"> </span>brmspy
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># Install with dev dependencies</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="nb">source</span><span class="w"> </span>.venv/bin/activate<span class="w">  </span><span class="c1"># or .venv\Scripts\activate on Windows</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[all]&quot;</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># Install R dependencies (fast with prebuilt runtime)</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import brmspy; brmspy.install_brms(use_prebuilt=True)&quot;</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1"># Or traditional installation from source (~30 minutes)</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="c1"># python -c &quot;import brmspy; brmspy.install_brms()&quot;</span>
+</code></pre></div>
+<h2 id="project-architecture">Project Architecture<a class="headerlink" href="#project-architecture" title="Permanent link">&para;</a></h2>
+<h3 id="directory-structure">Directory Structure<a class="headerlink" href="#directory-structure" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>brmspy/
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>├── brmspy/                    # Main package
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>│   ├── brms.py               # Core API exports
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>│   ├── types.py              # Type definitions and result dataclasses
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>│   ├── brms_functions/       # Modular brms function wrappers
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>│   │   ├── brm.py            # Model fitting (fit, brm)
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>│   │   ├── diagnostics.py    # Model diagnostics (summary, loo, etc.)
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>│   │   ├── families.py       # Family specifications
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>│   │   ├── formula.py        # Formula construction
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>│   │   ├── generic.py        # Generic function caller
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>│   │   ├── io.py             # Data I/O (save_rds, read_rds, etc.)
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>│   │   ├── prediction.py     # Predictions (posterior_predict, etc.)
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>│   │   ├── prior.py          # Prior specifications
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>│   │   └── stan.py           # Stan code generation
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>│   ├── runtime/              # Runtime management system (layered architecture)
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>│   │   ├── __init__.py       # Public API: install(), activate(), deactivate(), status()
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>│   │   ├── _types.py         # Foundation: RuntimeStatus, RuntimeManifest, SystemInfo
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>│   │   ├── _platform.py      # Foundation: Platform detection, fingerprinting
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>│   │   ├── _manifest.py      # Foundation: Manifest reading
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>│   │   ├── _r_packages.py    # R Layer: Package operations
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>│   │   ├── _r_env.py         # R Layer: Environment management
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>│   │   ├── _config.py        # Disk Layer: Config management (~/.brmspy/config.json)
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>│   │   ├── _storage.py       # Disk Layer: Runtime storage (~/.brmspy/runtime/)
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>│   │   ├── _download.py      # Disk Layer: Download utilities
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>│   │   ├── _github.py        # Disk Layer: GitHub API integration
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>│   │   ├── _rtools.py        # Disk Layer: Windows Rtools installation
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>│   │   ├── _state.py         # Orchestration: State management (env snapshots)
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>│   │   ├── _activation.py    # Orchestration: Runtime activation/deactivation
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>│   │   └── _install.py       # Orchestration: Installation logic
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>│   └── helpers/              # Internal utilities
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>│       ├── conversion.py     # Python ↔ R ↔ ArviZ
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>│       ├── log.py            # Logging utilities
+<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>│       ├── priors.py         # Prior builders
+<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>│       ├── robject_iter.py   # R object iteration
+<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>│       ├── rtools.py         # Rtools utilities (legacy)
+<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a>│       └── singleton.py      # R package caching
+<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a>├── .github/workflows/        # CI/CD pipelines
+<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>├── .runtime_builder/         # Docker for Linux builds
+<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a>├── docs/                     # mkdocs documentation
+<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a>└── tests/                    # Test suite
+</code></pre></div>
+<h3 id="core-components">Core Components<a class="headerlink" href="#core-components" title="Permanent link">&para;</a></h3>
+<p><strong>brmspy/brms.py</strong> - Main module that exports all public functions
+<strong>brmspy/types.py</strong> - Type definitions and result dataclasses (FitResult, SummaryResult, LooResult, etc.)
+<strong>brmspy/brms_functions/</strong> - Modular organization of brms function wrappers:
+  - <strong>brm.py</strong> - Model fitting functions
+  - <strong>diagnostics.py</strong> - 8 diagnostic functions (summary, fixef, ranef, loo, loo_compare, validate_newdata, etc.)
+  - <strong>prediction.py</strong> - Prediction functions (posterior_predict, posterior_epred, posterior_linpred, log_lik)
+  - <strong>prior.py</strong> - Prior specification functions
+  - <strong>families.py</strong> - Family specifications and wrappers
+  - <strong>formula.py</strong> - Formula construction helpers
+  - <strong>generic.py</strong> - Generic function caller for unwrapped brms functions
+  - <strong>io.py</strong> - Data I/O functions
+  - <strong>stan.py</strong> - Stan code generation</p>
+<p><strong>brmspy/runtime/</strong> - Runtime management system with layered architecture (see below)
+<strong>brmspy/helpers/</strong> - Internal conversion and utility functions</p>
+<h3 id="data-flow">Data Flow<a class="headerlink" href="#data-flow" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Python Code
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    ↓
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>brmspy.fit() [brms.py]
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    ↓
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>Type Conversions [helpers/conversion.py]
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    ↓
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>R brms via rpy2
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    ↓
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>CmdStan MCMC Sampling
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>    ↓
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>ArviZ InferenceData
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>    ↓
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>Python Result Objects
+</code></pre></div>
+<h2 id="runtime-system-architecture">Runtime System Architecture<a class="headerlink" href="#runtime-system-architecture" title="Permanent link">&para;</a></h2>
+<p>The runtime system provides prebuilt bundles to skip lengthy R package compilation. The new architecture uses a <strong>layered design pattern</strong> with strict separation of concerns.</p>
+<h3 id="layered-architecture">Layered Architecture<a class="headerlink" href="#layered-architecture" title="Permanent link">&para;</a></h3>
+<p>The runtime system is organized into 4 layers, each with specific responsibilities:</p>
+<h4 id="1-foundation-layer-no-dependencies">1. Foundation Layer (No Dependencies)<a class="headerlink" href="#1-foundation-layer-no-dependencies" title="Permanent link">&para;</a></h4>
+<p>Pure functions for system information and data structures.</p>
+<ul>
+<li><strong><code>_types.py</code></strong> - Type definitions: <a href="../brmspy/runtime/_types.py"><code>RuntimeStatus</code></a>, <a href="../brmspy/runtime/_types.py"><code>RuntimeManifest</code></a>, <a href="../brmspy/runtime/_types.py"><code>SystemInfo</code></a></li>
+<li><strong><code>_platform.py</code></strong> - Platform detection, system fingerprinting, compatibility checks</li>
+<li><strong><code>_manifest.py</code></strong> - Manifest file reading and validation</li>
+</ul>
+<h4 id="2-r-layer-depends-on-foundation">2. R Layer (Depends on Foundation)<a class="headerlink" href="#2-r-layer-depends-on-foundation" title="Permanent link">&para;</a></h4>
+<p>R package operations and environment management.</p>
+<ul>
+<li><strong><code>_r_packages.py</code></strong> - Install/unload R packages, build CmdStan</li>
+<li><strong><code>_r_env.py</code></strong> - Manage R environment variables, GitHub token forwarding</li>
+</ul>
+<h4 id="3-disk-layer-depends-on-foundation">3. Disk Layer (Depends on Foundation)<a class="headerlink" href="#3-disk-layer-depends-on-foundation" title="Permanent link">&para;</a></h4>
+<p>File system operations and external integrations.</p>
+<ul>
+<li><strong><code>_config.py</code></strong> - Persistent config at <a href="../brmspy/runtime/_config.py"><code>~/.brmspy/config.json</code></a></li>
+<li><strong><code>_storage.py</code></strong> - Runtime storage at <a href="../brmspy/runtime/_storage.py"><code>~/.brmspy/runtime/</code></a></li>
+<li><strong><code>_download.py</code></strong> - Download and hash verification utilities</li>
+<li><strong><code>_github.py</code></strong> - GitHub API for release discovery</li>
+<li><strong><code>_rtools.py</code></strong> - Windows Rtools installation</li>
+</ul>
+<h4 id="4-orchestration-layer-depends-on-all-lower-layers">4. Orchestration Layer (Depends on All Lower Layers)<a class="headerlink" href="#4-orchestration-layer-depends-on-all-lower-layers" title="Permanent link">&para;</a></h4>
+<p>High-level workflows coordinating multiple components.</p>
+<ul>
+<li><strong><code>_state.py</code></strong> - Environment snapshot/restore for activation</li>
+<li><strong><code>_activation.py</code></strong> - Runtime activation/deactivation logic</li>
+<li><strong><code>_install.py</code></strong> - Installation orchestration (traditional + prebuilt)</li>
+</ul>
+<h4 id="public-api-__init__py">Public API (<code>__init__.py</code>)<a class="headerlink" href="#public-api-__init__py" title="Permanent link">&para;</a></h4>
+<p>Four clean functions for users:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">brmspy</span><span class="w"> </span><span class="kn">import</span> <span class="n">runtime</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># Install R packages traditionally (~30 min) or prebuilt (~1 min)</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">runtime</span><span class="o">.</span><span class="n">install</span><span class="p">(</span><span class="n">use_prebuilt</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1"># Activate a specific runtime</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="n">runtime</span><span class="o">.</span><span class="n">activate</span><span class="p">(</span><span class="n">runtime_path</span><span class="p">)</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="c1"># Deactivate and restore original environment</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="n">runtime</span><span class="o">.</span><span class="n">deactivate</span><span class="p">()</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="c1"># Query current state</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="n">status</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">status</span><span class="p">()</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="nb">print</span><span class="p">(</span><span class="n">status</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">fingerprint</span><span class="p">)</span>  <span class="c1"># e.g., &#39;linux-x86_64-r4.5&#39;</span>
+</code></pre></div>
+<h3 id="system-fingerprint">System Fingerprint<a class="headerlink" href="#system-fingerprint" title="Permanent link">&para;</a></h3>
+<p>Each runtime is identified by: <code>{os}-{arch}-r{major}.{minor}</code></p>
+<p>Examples:
+- <code>linux-x86_64-r4.5</code>
+- <code>macos-arm64-r4.5</code> (Apple Silicon)
+- <code>windows-x86_64-r4.5</code></p>
+<p>Generated by <a href="../brmspy/runtime/_platform.py:52"><code>_platform.system_fingerprint()</code></a></p>
+<h3 id="bundle-structure">Bundle Structure<a class="headerlink" href="#bundle-structure" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>brmspy-runtime-{fingerprint}-{version}.tar.gz
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>├── manifest.json              # Metadata (fingerprint, versions, build info)
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>├── cmdstan/                   # Compiled CmdStan binaries
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>└── Rlib/                      # R libraries (brms, cmdstanr, dependencies)
+</code></pre></div>
+<p>Installed to: <code>~/.brmspy/runtime/{fingerprint}-{version}/</code></p>
+<h3 id="usage-examples">Usage Examples<a class="headerlink" href="#usage-examples" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">brmspy</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="c1"># Fast installation with prebuilt runtime (~1 minute)</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">brmspy</span><span class="o">.</span><span class="n">install_brms</span><span class="p">(</span><span class="n">use_prebuilt</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="c1"># Traditional installation (~30 minutes)</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="n">brmspy</span><span class="o">.</span><span class="n">install_brms</span><span class="p">()</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="c1"># Check current runtime status</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="n">status</span> <span class="o">=</span> <span class="n">brmspy</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">status</span><span class="p">()</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Active: </span><span class="si">{</span><span class="n">status</span><span class="o">.</span><span class="n">active_runtime</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;System: </span><span class="si">{</span><span class="n">status</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">fingerprint</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Can use prebuilt: </span><span class="si">{</span><span class="n">status</span><span class="o">.</span><span class="n">can_use_prebuilt</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="c1"># Manual activation/deactivation</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="n">brmspy</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">activate</span><span class="p">(</span><span class="s2">&quot;/path/to/runtime&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="n">brmspy</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">deactivate</span><span class="p">()</span>
+</code></pre></div>
+<p><strong>Note:</strong> Runtime building is handled internally by CI/CD. Users should use <a href="../brmspy/runtime/__init__.py:236"><code>install(use_prebuilt=True)</code></a> rather than building locally.</p>
+<h2 id="cicd-pipelines">CI/CD Pipelines<a class="headerlink" href="#cicd-pipelines" title="Permanent link">&para;</a></h2>
+<p>All workflows in <code>.github/workflows/</code>:</p>
+<h3 id="1-python-test-matrix-python-test-matrixyml">1. Python Test Matrix (<code>python-test-matrix.yml</code>)<a class="headerlink" href="#1-python-test-matrix-python-test-matrixyml" title="Permanent link">&para;</a></h3>
+<p><strong>Trigger:</strong> Push/PR to master<br />
+<strong>Purpose:</strong> Test Python 3.10, 3.12, 3.14 on Linux</p>
+<p><strong>Workflow:</strong>
+1. Build CmdStan once (cached)
+2. Test matrix in parallel
+3. Update coverage badge (3.12 only)</p>
+<p><strong>Key Features:</strong>
+- Shared R/CmdStan cache
+- Parallel execution
+- Coverage reporting</p>
+<h3 id="2-r-dependencies-tests-r-dependencies-testsyml">2. R Dependencies Tests (<code>r-dependencies-tests.yml</code>)<a class="headerlink" href="#2-r-dependencies-tests-r-dependencies-testsyml" title="Permanent link">&para;</a></h3>
+<p><strong>Trigger:</strong> Push/PR to master<br />
+<strong>Purpose:</strong> Test on Linux, macOS, Windows</p>
+<p><strong>Workflow:</strong>
+- Python 3.12 only
+- Tests marked with <code>@pytest.mark.rdeps</code>
+- Fail-fast disabled</p>
+<h3 id="3-documentation-docsyml">3. Documentation (<code>docs.yml</code>)<a class="headerlink" href="#3-documentation-docsyml" title="Permanent link">&para;</a></h3>
+<p><strong>Trigger:</strong> Push to master<br />
+<strong>Purpose:</strong> Deploy docs to GitHub Pages</p>
+<p><strong>Stack:</strong>
+- mkdocstrings for API docs
+- Auto-deploys to https://kaitumisuuringute-keskus.github.io/brmspy/</p>
+<h3 id="4-pypi-publish-python-publishyml">4. PyPI Publish (<code>python-publish.yml</code>)<a class="headerlink" href="#4-pypi-publish-python-publishyml" title="Permanent link">&para;</a></h3>
+<p><strong>Trigger:</strong> GitHub Release created<br />
+<strong>Purpose:</strong> Publish to PyPI</p>
+<p><strong>Workflow:</strong>
+1. Run full test suite
+2. Build: <code>python -m build</code>
+3. Upload: <code>twine upload dist/*</code></p>
+<p><strong>Requirements:</strong> <code>PYPI_USERNAME</code>, <code>PYPI_PASSWORD</code> secrets</p>
+<h3 id="5-runtime-publish-runtime-publishyml">5. Runtime Publish (<code>runtime-publish.yml</code>)<a class="headerlink" href="#5-runtime-publish-runtime-publishyml" title="Permanent link">&para;</a></h3>
+<p><strong>Trigger:</strong> Manual dispatch
+<strong>Purpose:</strong> Build prebuilt runtimes for all platforms</p>
+<p><strong>Architecture:</strong>
+1. Create GitHub Release (tag: <code>runtime</code>)
+2. Build runtimes in parallel (Linux in Docker, macOS/Windows native)
+3. Upload to release with attestation</p>
+<p><strong>Linux Build (Docker):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">Pull</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ghcr.io/.../brmspy-runtime-builder:ubuntu18-gcc9</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Install R 4.5.0</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Build runtime using internal build script</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Upload tarball</span>
+</code></pre></div></p>
+<p><strong>macOS/Windows Build (Native):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Setup Python 3.12 + R 4.5</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Install dependencies</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Build runtime using internal build script</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Upload tarball</span>
+</code></pre></div></p>
+<p><strong>Note:</strong> Runtime building uses internal tooling. The public API for users is <a href="../brmspy/runtime/__init__.py"><code>brmspy.runtime.install(use_prebuilt=True)</code></a>.</p>
+<h3 id="6-linux-runtime-builder-build-linux-runtime-imageyml">6. Linux Runtime Builder (<code>build-linux-runtime-image.yml</code>)<a class="headerlink" href="#6-linux-runtime-builder-build-linux-runtime-imageyml" title="Permanent link">&para;</a></h3>
+<p><strong>Trigger:</strong> Manual dispatch<br />
+<strong>Purpose:</strong> Build Docker image for Linux runtime compilation</p>
+<p><strong>Image:</strong> Ubuntu 18.04 + GCC 9 + Python 3.12 (for old glibc compatibility)</p>
+<h2 id="runtime-builder-runtime_builderlinux">Runtime Builder (<code>.runtime_builder/linux/</code>)<a class="headerlink" href="#runtime-builder-runtime_builderlinux" title="Permanent link">&para;</a></h2>
+<h3 id="dockerfile">Dockerfile<a class="headerlink" href="#dockerfile" title="Permanent link">&para;</a></h3>
+<p>Creates build environment:
+- <strong>Base:</strong> Ubuntu 18.04 (glibc 2.27)
+- <strong>Toolchain:</strong> GCC 9, g++ 9, gfortran 9
+- <strong>Python:</strong> 3.12.7 (compiled from source)
+- <strong>Dependencies:</strong> BLAS, LAPACK, V8, GLPK, graphics libs</p>
+<h3 id="install_rsh">install_r.sh<a class="headerlink" href="#install_rsh" title="Permanent link">&para;</a></h3>
+<p>Smart R installation:
+1. Try APT (fast)
+2. Fallback to source compilation if version unavailable</p>
+<h3 id="publishsh">publish.sh<a class="headerlink" href="#publishsh" title="Permanent link">&para;</a></h3>
+<p>Builds and pushes Docker image to GHCR:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>docker<span class="w"> </span>build<span class="w"> </span>-t<span class="w"> </span>ghcr.io/<span class="o">{</span>owner<span class="o">}</span>/brmspy-runtime-builder:<span class="o">{</span>tag<span class="o">}</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>docker<span class="w"> </span>push<span class="w"> </span>ghcr.io/<span class="o">{</span>owner<span class="o">}</span>/brmspy-runtime-builder:<span class="o">{</span>tag<span class="o">}</span>
+</code></pre></div></p>
+<h2 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h2>
+<h3 id="test-structure">Test Structure<a class="headerlink" href="#test-structure" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>tests/
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>├── conftest.py                      # Pytest fixtures (sample_dataframe, etc.)
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>├── test_basic.py                    # Basic functionality tests
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>├── test_diagnostics.py              # Diagnostics functions tests (14 tests)
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>├── test_families.py                 # Family specifications tests
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>├── test_generic.py                  # Generic function caller tests
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>├── test_integration.py              # End-to-end integration tests
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>├── test_io.py                       # I/O functions tests
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>├── test_predictions.py              # Prediction functions tests
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>├── test_priors.py                   # Prior specification tests
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>├── test_conversion.py               # Type conversion tests
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>├── test_log.py                      # Logging utility tests
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>├── test_rdeps_1_install.py          # Runtime installation tests (marked @pytest.mark.rdeps)
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>├── test_rdeps_build.py              # Runtime building tests
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>├── test_rdeps_config.py             # Config management tests
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a>├── test_rdeps_github.py             # GitHub API tests
+<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>├── test_rdeps_install_extended.py   # Extended installation tests
+<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a>├── test_runtime_r_env.py            # R environment management tests
+<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a>└── test_runtime_storage.py          # Runtime storage tests
+</code></pre></div>
+<p><strong>Test Coverage:</strong>
+- <strong>14 diagnostics tests</strong> covering summary, fixef, ranef, posterior_summary, prior_summary, loo, loo_compare, validate_newdata
+- <strong>2 generic function tests</strong> for call() wrapper
+- All tests use <code>iter=100, warmup=50</code> for fast CI execution
+- Tests marked with <code>@pytest.mark.slow</code> and <code>@pytest.mark.requires_brms</code></p>
+<h3 id="running-tests">Running Tests<a class="headerlink" href="#running-tests" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>pytest<span class="w"> </span>tests/<span class="w"> </span>-v<span class="w">                    </span><span class="c1"># All tests</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>pytest<span class="w"> </span>tests/<span class="w"> </span>-v<span class="w"> </span>--cov<span class="o">=</span>brmspy<span class="w">      </span><span class="c1"># With coverage</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>pytest<span class="w"> </span>-m<span class="w"> </span>rdeps<span class="w">                    </span><span class="c1"># DESTRUCTIVE rdeps tests</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>pytest<span class="w"> </span>-n<span class="w"> </span>auto<span class="w">                     </span><span class="c1"># Parallel (requires pytest-xdist)</span>
+</code></pre></div>
+<h3 id="test-markers">Test Markers<a class="headerlink" href="#test-markers" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">rdeps</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_basic_fit</span><span class="p">():</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Runs on all platforms in CI&quot;&quot;&quot;</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="k">pass</span>
+</code></pre></div>
+<h2 id="build-and-release">Build and Release<a class="headerlink" href="#build-and-release" title="Permanent link">&para;</a></h2>
+<h3 id="version-management">Version Management<a class="headerlink" href="#version-management" title="Permanent link">&para;</a></h3>
+<p>Update in:
+- <code>pyproject.toml</code>
+- <code>settings.ini</code>
+- <code>brmspy/__init__.py</code></p>
+<h3 id="release-process">Release Process<a class="headerlink" href="#release-process" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Update versions</strong> and CHANGELOG.md</li>
+<li><strong>Test:</strong> <code>pytest</code></li>
+<li><strong>Build:</strong> <code>make build</code></li>
+<li><strong>Create GitHub Release</strong> (tag: <code>release-0...</code>)</li>
+<li><strong>CI automatically</strong> tests and publishes to PyPI</li>
+</ol>
+<h3 id="building-runtimes">Building Runtimes<a class="headerlink" href="#building-runtimes" title="Permanent link">&para;</a></h3>
+<p><strong>Via GitHub Actions (Recommended):</strong>
+1. Go to <strong>Actions</strong> → <strong>runtime-publish</strong>
+2. <strong>Run workflow</strong> with version and tag
+3. Runtimes published to: <code>releases/tag/runtime</code></p>
+<p><strong>Local Development:</strong>
+Runtime building for local development uses internal scripts not exposed in the public API. For testing, use:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Install from source for testing</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">brmspy</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="n">brmspy</span><span class="o">.</span><span class="n">install_brms</span><span class="p">()</span>  <span class="c1"># Traditional installation</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="c1"># Or test with prebuilt from GitHub</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="n">brmspy</span><span class="o">.</span><span class="n">install_brms</span><span class="p">(</span><span class="n">use_prebuilt</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="documentation">Documentation<a class="headerlink" href="#documentation" title="Permanent link">&para;</a></h2>
+<h3 id="mkdocs-configuration">mkdocs Configuration<a class="headerlink" href="#mkdocs-configuration" title="Permanent link">&para;</a></h3>
+<p><strong>File:</strong> <code>mkdocs.yml</code></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nt">site_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">brmspy</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="nt">theme</span><span class="p">:</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">shadcn</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="nt">plugins</span><span class="p">:</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+</code></pre></div>
+<h3 id="docstring-style">Docstring Style<a class="headerlink" href="#docstring-style" title="Permanent link">&para;</a></h3>
+<p>All docstrings use <strong>NumPy style</strong> with <code>```python</code> code blocks (no <code>.. code-block::</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">example</span><span class="p">(</span><span class="n">param</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="sd">    One-line summary.</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="sd">    Detailed description.</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="sd">    Parameters</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="sd">    ----------</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="sd">    param : str</span>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="sd">        Parameter description</span>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a><span class="sd">    Returns</span>
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a><span class="sd">    -------</span>
+<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a><span class="sd">    dict</span>
+<a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a><span class="sd">        Return description</span>
+<a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a>
+<a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a><span class="sd">    Examples</span>
+<a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a><span class="sd">    --------</span>
+<a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a><span class="sd">    Basic usage:</span>
+<a id="__codelineno-14-20" name="__codelineno-14-20" href="#__codelineno-14-20"></a>
+<a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a><span class="sd">    ```python</span>
+<a id="__codelineno-14-22" name="__codelineno-14-22" href="#__codelineno-14-22"></a><span class="sd">    result = example(&quot;hello&quot;)</span>
+<a id="__codelineno-14-23" name="__codelineno-14-23" href="#__codelineno-14-23"></a><span class="sd">    print(result)</span>
+<a id="__codelineno-14-24" name="__codelineno-14-24" href="#__codelineno-14-24"></a><span class="sd">    ```</span>
+<a id="__codelineno-14-25" name="__codelineno-14-25" href="#__codelineno-14-25"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-14-26" name="__codelineno-14-26" href="#__codelineno-14-26"></a>    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;param&quot;</span><span class="p">:</span> <span class="n">param</span><span class="p">}</span>
+</code></pre></div>
+<h2 id="performance">Performance<a class="headerlink" href="#performance" title="Permanent link">&para;</a></h2>
+<h3 id="r-package-caching">R Package Caching<a class="headerlink" href="#r-package-caching" title="Permanent link">&para;</a></h3>
+<p><strong>Singleton pattern</strong> in <code>brmspy/helpers/singleton.py</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">brmspy.helpers.singleton</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_r_package</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="n">brms</span> <span class="o">=</span> <span class="n">get_r_package</span><span class="p">(</span><span class="s2">&quot;brms&quot;</span><span class="p">)</span>  <span class="c1"># First call: imports</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="n">brms</span> <span class="o">=</span> <span class="n">get_r_package</span><span class="p">(</span><span class="s2">&quot;brms&quot;</span><span class="p">)</span>  <span class="c1"># Cached, instant</span>
+</code></pre></div>
+<h3 id="prebuilt-runtimes">Prebuilt Runtimes<a class="headerlink" href="#prebuilt-runtimes" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Installation Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>From source</td>
+<td>20-30 minutes</td>
+</tr>
+<tr>
+<td>Prebuilt runtime</td>
+<td>20-60 seconds</td>
+</tr>
+</tbody>
+</table>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="r-package-installation-fails">R Package Installation Fails<a class="headerlink" href="#r-package-installation-fails" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># Check R version (need 4.0+)</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>R<span class="w"> </span>--version
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="c1"># Manual install</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>R<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;install.packages(c(&#39;cmdstanr&#39;, &#39;brms&#39;, &#39;posterior&#39;))&quot;</span>
+</code></pre></div>
+<h3 id="cmdstan-compilation-fails">CmdStan Compilation Fails<a class="headerlink" href="#cmdstan-compilation-fails" title="Permanent link">&para;</a></h3>
+<p><strong>Linux:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>build-essential
+</code></pre></div></p>
+<p><strong>macOS:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>xcode-select<span class="w"> </span>--install
+</code></pre></div></p>
+<p><strong>Windows:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">brmspy</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="c1"># Automatically installs Rtools if needed</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="n">brmspy</span><span class="o">.</span><span class="n">install_brms</span><span class="p">(</span><span class="n">install_rtools</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div></p>
+<p>Or manually via the runtime API:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">brmspy.runtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">_rtools</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="n">_rtools</span><span class="o">.</span><span class="n">ensure_installed</span><span class="p">()</span>  <span class="c1"># Internal API</span>
+</code></pre></div></p>
+<h3 id="runtime-incompatibility">Runtime Incompatibility<a class="headerlink" href="#runtime-incompatibility" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># Check compatibility</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">brmspy</span><span class="w"> </span><span class="kn">import</span> <span class="n">runtime</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="n">status</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">status</span><span class="p">()</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Can use prebuilt: </span><span class="si">{</span><span class="n">status</span><span class="o">.</span><span class="n">can_use_prebuilt</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Issues: </span><span class="si">{</span><span class="n">status</span><span class="o">.</span><span class="n">compatibility_issues</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="c1"># Install matching prebuilt (auto-detects platform)</span>
+<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a><span class="kn">import</span><span class="w"> </span><span class="nn">brmspy</span>
+<a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a><span class="n">brmspy</span><span class="o">.</span><span class="n">install_brms</span><span class="p">(</span><span class="n">use_prebuilt</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a>
+<a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a><span class="c1"># Or install from source</span>
+<a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a><span class="n">brmspy</span><span class="o">.</span><span class="n">install_brms</span><span class="p">()</span>  <span class="c1"># Traditional installation</span>
+</code></pre></div>
+<h2 id="contributing">Contributing<a class="headerlink" href="#contributing" title="Permanent link">&para;</a></h2>
+<h3 id="code-style">Code Style<a class="headerlink" href="#code-style" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Docstrings:</strong> NumPy style</li>
+<li><strong>Type hints:</strong> Required for public APIs</li>
+</ul>
+<h3 id="pr-process">PR Process<a class="headerlink" href="#pr-process" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Fork and create feature branch</li>
+<li>Make changes and add tests</li>
+<li>Run: <code>make format &amp;&amp; make lint &amp;&amp; make test</code></li>
+<li>Commit with conventional commits format</li>
+<li>Open PR with clear description</li>
+</ol>
+<h2 id="resources">Resources<a class="headerlink" href="#resources" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Documentation:</strong> https://kaitumisuuringute-keskus.github.io/brmspy/</li>
+<li><strong>Repository:</strong> https://github.com/kaitumisuuringute-keskus/brmspy</li>
+<li><strong>Issues:</strong> https://github.com/kaitumisuuringute-keskus/brmspy/issues</li>
+<li><strong>PyPI:</strong> https://pypi.org/project/brmspy/</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      
+        <script src="../../static/plausible.js"></script>
+      
+    
+  </body>
+</html>
