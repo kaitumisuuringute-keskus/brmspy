@@ -32,7 +32,10 @@ def get_sexp(rid: int) -> Sexp:
 def _cache_single(obj: Sexp) -> SexpWrapper:
     """Store `obj` in the cache and return a lightweight wrapper for IPC."""
     _SEXP_CACHE[obj.rid] = obj
-    return SexpWrapper(_rid=obj.rid, _repr=str(obj))
+    _repr = str(obj)
+    if len(_repr) > 16384:
+        _repr = _repr[:16384]
+    return SexpWrapper(_rid=obj.rid, _repr=_repr)
 
 
 def cache_sexp(obj: Any) -> Any:
