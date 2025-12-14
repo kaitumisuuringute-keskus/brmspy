@@ -107,7 +107,7 @@ class DataclassCodec(Encoder):
     """
     Legacy dataclass codec (internal).
 
-    Prefer `GenericDataClassCodec` in [`brmspy._session.codec.builtin`](brmspy/_session/codec/builtin.py),
+    Prefer `GenericDataClassCodec` in [`brmspy._session.codec.builtin`][brmspy._session.codec.builtin],
     which does not require a per-field codec mapping.
 
     This class is kept for compatibility and may be removed in the future.

@@ -9,7 +9,7 @@ Conceptually:
 
 - A *runtime* is a bundle containing CmdStan and a set of R packages installed
   into an isolated library directory (typically under `~/.brmspy/runtime/...`).
-- An *environment* (see [`EnvironmentConfig`](brmspy/types/session.py)) is a
+- An *environment* (see [`EnvironmentConfig`][brmspy.types.session.EnvironmentConfig]) is a
   named, user-managed library (`~/.brmspy/environment/<name>/Rlib`) layered on
   top of a runtime.
 

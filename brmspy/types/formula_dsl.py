@@ -2,12 +2,12 @@
 Formula DSL types.
 
 This module contains lightweight Python types used by the public formula helpers
-([`bf()`](brmspy/_brms_functions/formula.py), [`set_rescor()`](brmspy/_brms_functions/formula.py), etc.)
+([`bf()`][brmspy.brms.bf], [`set_rescor()`][brmspy.brms.set_rescor], etc.)
 to represent brms formula expressions in a structured way.
 
 The main entry point for end users is the set of helpers exposed via
-[`brmspy.brms`](brmspy/brms/__init__.py). Those helpers return `FormulaConstruct`
-instances which can be combined with `+` to build multivariate or compound models.
+[`brmspy.brms`][brmspy.brms]. Those helpers return `FormulaConstruct` instances
+which can be combined with `+` to build multivariate or compound models.
 
 Notes
 -----
@@ -62,7 +62,7 @@ class FormulaPart:
 
     Instances of this type represent a call like `bf("y ~ x")` or `set_rescor(True)`
     without executing anything. They are primarily used as nodes inside a
-    [`FormulaConstruct`](brmspy/types/formula_dsl.py).
+    [`FormulaConstruct`][brmspy.types.formula_dsl.FormulaConstruct].
 
     Parameters
     ----------
@@ -76,7 +76,7 @@ class FormulaPart:
     Notes
     -----
     This is a low-level type. Most users should construct these via the public
-    helper functions in [`brmspy.brms`](brmspy/brms/__init__.py).
+    helper functions in [`brmspy.brms`][brmspy.brms].
     """
 
     _fun: _FORMULA_FUNCTION_WHITELIST
@@ -173,7 +173,7 @@ class FormulaConstruct:
 
     `FormulaConstruct` stores a tree of nodes (`FormulaPart` and/or R objects)
     representing expressions combined with `+`. It is primarily created by
-    calling the public formula helpers exposed by [`brmspy.brms`](brmspy/brms/__init__.py).
+    calling the public formula helpers exposed by [`brmspy.brms`][brmspy.brms].
 
     Notes
     -----
@@ -182,8 +182,8 @@ class FormulaConstruct:
     - `a + b + c` becomes a single summand (one “group”)
     - `(a + b) + (a + b)` becomes two summands (two “groups”)
 
-    Use [`iter_summands()`](brmspy/types/formula_dsl.py) to iterate over these
-    groups in a deterministic way.
+    Use [`iter_summands()`][brmspy.types.formula_dsl.FormulaConstruct.iter_summands]
+    to iterate over these groups in a deterministic way.
     """
 
     _parts: list[Node]
@@ -300,15 +300,16 @@ class FormulaConstruct:
 
     # Make __iter__ return summands by default
     def __iter__(self) -> Iterator[Summand]:
-        """Alias for [`iter_summands()`](brmspy/types/formula_dsl.py)."""
+        """Alias for [`iter_summands()`][brmspy.types.formula_dsl.FormulaConstruct.iter_summands]."""
         return self.iter_summands()
 
     def iterate(self) -> Iterator[FormulaPart | ProxyListSexpVector]:
         """
         Iterate over all leaf nodes in left-to-right order.
 
-        This flattens the expression tree, unlike [`iter_summands()`](brmspy/types/formula_dsl.py),
-        which respects grouping.
+        This flattens the expression tree, unlike
+        [`iter_summands()`][brmspy.types.formula_dsl.FormulaConstruct.iter_summands], which
+        respects grouping.
 
         Returns
         -------

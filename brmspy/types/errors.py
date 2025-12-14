@@ -9,9 +9,9 @@ process and may attach a `remote_traceback` captured in the worker.
 
 See Also
 --------
-[`RModuleSession._decode_result()`](brmspy/_session/session.py)
+[`RModuleSession._decode_result()`][brmspy._session.session.RModuleSession._decode_result]
     Converts worker responses into Python return values or raises `RSessionError`.
-[`worker_main()`](brmspy/_session/worker/worker.py)
+[`worker_main()`][brmspy._session.worker.worker.worker_main]
     Worker loop that captures exceptions and sends structured error responses.
 """
 

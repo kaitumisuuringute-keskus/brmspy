@@ -18,8 +18,8 @@ class PriorSpec:
 
     This dataclass provides a typed interface to `brms::prior_string()` arguments,
     allowing Python developers to specify priors with IDE autocomplete and type
-    checking. Use the [`prior()`](brmspy/_brms_functions/prior.py) factory
-    function to create instances.
+    checking. Use the [`prior()`][brmspy.brms.prior] factory function to create
+    instances.
 
     Attributes
     ----------
@@ -50,7 +50,7 @@ class PriorSpec:
 
     Examples
     --------
-    Create prior specifications (prefer using [`prior()`](brmspy/_brms_functions/prior.py)):
+    Create prior specifications (prefer using [`prior()`][brmspy.brms.prior]):
 
     ```python
     from brmspy.types import PriorSpec

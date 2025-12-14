@@ -35,7 +35,7 @@ class Colors:
     BOLD = "\033[1m"
 
 
-# Custom formatter that adds the [brmspy][method_name] prefix with colors
+# Custom formatter that adds the `[brmspy][method_name]` prefix with colors
 class BrmspyFormatter(logging.Formatter):
     """
     Custom formatter that formats log messages as [brmspy][method_name] msg.
@@ -80,7 +80,7 @@ def get_logger() -> logging.Logger:
     Get or create the brmspy logger instance.
 
     Returns a configured logger with a custom formatter that outputs
-    messages in the format: [brmspy][method_name] msg here
+    messages in the format: `[brmspy][method_name] msg here`
 
     Returns
     -------

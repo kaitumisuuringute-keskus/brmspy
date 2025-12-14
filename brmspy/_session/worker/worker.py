@@ -4,7 +4,7 @@ Worker process entrypoint and request loop (internal).
 This module runs inside the spawned Python worker process and is responsible for:
 
 - connecting to the parent-owned `SharedMemoryManager`
-- initializing a safe embedded-R configuration (see [`_initialise_r_safe()`](brmspy/_session/worker/setup.py))
+- initializing a safe embedded-R configuration (see [`_initialise_r_safe()`][brmspy._session.worker.setup._initialise_r_safe])
 - decoding incoming IPC requests, executing a resolved target, and encoding results
 - converting rpy2 `Sexp` objects to lightweight wrappers via the Sexp cache
 

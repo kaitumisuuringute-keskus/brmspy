@@ -9,9 +9,9 @@ over the control pipe; the worker attaches to the same blocks by name.
 
 These types are intentionally lightweight and are used by:
 
-- [`brmspy._session.transport`](brmspy/_session/transport.py) (implementation of `ShmPool`)
-- [`brmspy._session.codec`](brmspy/_session/codec/builtin.py) (codecs that store arrays/frames in SHM)
-- IPC message shapes in [`brmspy.types.session`](brmspy/types/session.py)
+- [`brmspy._session.transport`][brmspy._session.transport] (implementation of `ShmPool`)
+- [`brmspy._session.codec.builtin`][brmspy._session.codec.builtin] (codecs that store arrays/frames in SHM)
+- IPC message shapes in [`brmspy.types.session`][brmspy.types.session]
 """
 
 from dataclasses import dataclass
@@ -77,8 +77,9 @@ class ShmPool:
     """
     Minimal interface for allocating and attaching shared-memory blocks.
 
-    The concrete implementation lives in [`brmspy._session.transport.ShmPool`](brmspy/_session/transport.py)
-    and tracks blocks so they can be closed on teardown.
+    The concrete implementation lives in
+    [`brmspy._session.transport.ShmPool`][brmspy._session.transport.ShmPool] and tracks
+    blocks so they can be closed on teardown.
     """
 
     def __init__(self, manager: SharedMemoryManager) -> None:

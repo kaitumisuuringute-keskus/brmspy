@@ -2,12 +2,12 @@
 Type aliases for R↔Python conversion functions.
 
 brmspy performs most conversion inside the worker process (where embedded R
-lives). Converters may optionally use shared memory ([`ShmPool`](brmspy/types/shm.py))
-to avoid extra copies when moving large numeric data across the main↔worker
-boundary.
+lives). Converters may optionally use shared memory
+([`ShmPool`][brmspy.types.shm.ShmPool]) to avoid extra copies when moving large
+numeric data across the main↔worker boundary.
 
 This module only defines type aliases used by converter registries and helper
-code under [`brmspy.helpers._rpy2`](brmspy/helpers/_rpy2/__init__.py).
+code under [`brmspy.helpers._rpy2`][brmspy.helpers._rpy2].
 
 Notes
 -----

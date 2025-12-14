@@ -5,9 +5,9 @@ Session-layer types used by the main↔worker IPC protocol.
 
 These are mostly structural types (TypedDict / dataclasses / Protocols) used by:
 
-- the proxy session in [`brmspy._session.session`](brmspy/_session/session.py)
-- the worker loop in [`brmspy._session.worker.worker`](brmspy/_session/worker/worker.py)
-- codecs in [`brmspy._session.codec`](brmspy/_session/codec/base.py)
+- the proxy session in [`brmspy._session.session`][brmspy._session.session]
+- the worker loop in [`brmspy._session.worker.worker`][brmspy._session.worker.worker]
+- codecs in [`brmspy._session.codec.base`][brmspy._session.codec.base]
 
 The key invariant is that the main process must not hold live rpy2/R objects.
 Instead, R objects are represented as lightweight handles (`SexpWrapper`) that
@@ -76,7 +76,7 @@ class Request(TypedDict):
     cmd : {"CALL", "SHUTDOWN", "PING", "_RUN_TEST_BY_NAME"}
         Command type.
     target : str
-        Worker target spec (see [`_resolve_module_target()`](brmspy/_session/worker/worker.py)).
+        Worker target spec (see [`_resolve_module_target()`][brmspy._session.worker.worker._resolve_module_target]).
     args, kwargs
         Encoded arguments.
     """

@@ -10,7 +10,7 @@ These codecs serialize values that cross the main↔worker boundary:
 - Small/irregular payloads fall back to pickling (still stored in SHM to avoid
   pipe size limits).
 
-All codecs follow the `Encoder` protocol from [`brmspy.types.session`](brmspy/types/session.py).
+All codecs follow the `Encoder` protocol from [`brmspy.types.session`][brmspy.types.session].
 """
 
 import pickle
@@ -424,8 +424,9 @@ class GenericDataClassCodec(Encoder):
     """
     Generic codec for dataclasses (internal).
 
-    Encodes each `init=True` field by delegating to a [`CodecRegistry`](brmspy/_session/codec/base.py).
-    Use `skip_fields` to exclude fields that must not cross the boundary.
+    Encodes each `init=True` field by delegating to a
+    [`CodecRegistry`][brmspy._session.codec.base.CodecRegistry]. Use `skip_fields` to exclude
+    fields that must not cross the boundary.
     """
 
     def __init__(

@@ -85,8 +85,6 @@ def brmsfamily(
         A character string indicating the type of thresholds (i.e. intercepts) used in an ordinal model. "flexible" provides the standard unstructured thresholds, "equidistant" restricts the distance between consecutive thresholds to the same value, and "sum_to_zero" ensures the thresholds sum to zero.
     refcat
         Optional name of the reference response category used in categorical, multinomial, dirichlet and logistic_normal models. If NULL (the default), the first category is used as the reference. If NA, all categories will be predicted, which requires strong priors or carefully specified predictor terms in order to lead to an identified model.
-    bhaz
-        Currently for experimental purposes only.
 
     """
     import rpy2.robjects as ro

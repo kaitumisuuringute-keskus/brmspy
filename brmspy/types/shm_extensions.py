@@ -8,11 +8,11 @@ the main process and the worker.
 
 See Also
 --------
-[`brmspy._session.codec.builtin.NumpyArrayCodec`](brmspy/_session/codec/builtin.py)
+[`brmspy._session.codec.builtin.NumpyArrayCodec`][brmspy._session.codec.builtin.NumpyArrayCodec]
     Encodes/decodes NumPy arrays into shared memory.
-[`brmspy._session.codec.builtin.PandasDFCodec`](brmspy/_session/codec/builtin.py)
+[`brmspy._session.codec.builtin.PandasDFCodec`][brmspy._session.codec.builtin.PandasDFCodec]
     Encodes/decodes DataFrames into shared memory.
-[`brmspy.types.shm`](brmspy/types/shm.py)
+[`brmspy.types.shm`][brmspy.types.shm]
     Base shared-memory block and pool types.
 """
 

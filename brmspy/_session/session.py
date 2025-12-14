@@ -452,7 +452,7 @@ class RModuleSession(ModuleType):
                 "kwargs": {},
             }
         )
-        if not self._conn.poll(10.0):
+        if not self._conn.poll(30.0):
             # worker never replied -> treat as startup failure,
             # clean up and raise
             self._teardown_worker()

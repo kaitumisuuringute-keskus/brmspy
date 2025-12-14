@@ -2,8 +2,8 @@
 Worker-side cache for rpy2 `Sexp` objects (internal).
 
 The main process must not hold live rpy2 objects. Instead, the worker replaces R
-objects with lightweight [`SexpWrapper`](brmspy/types/session.py) handles and stores
-the real `Sexp` in a local cache keyed by `rid`.
+objects with lightweight [`SexpWrapper`][brmspy.types.session.SexpWrapper] handles and
+stores the real `Sexp` in a local cache keyed by `rid`.
 
 This module also installs pickle reducers so that any accidental pickling of a `Sexp`
 turns into a wrapper rather than attempting to serialize the R object.
@@ -86,8 +86,8 @@ def _reduce_sexp(obj: Sexp) -> tuple[Callable[..., Any], tuple[Any, ...]]:
     """
     Pickle reducer for `Sexp` (worker-side).
 
-    Converts the `Sexp` into a cached [`SexpWrapper`](brmspy/types/session.py) so the
-    main process never receives a live rpy2 object.
+    Converts the `Sexp` into a cached [`SexpWrapper`][brmspy.types.session.SexpWrapper] so
+    the main process never receives a live rpy2 object.
     """
     wrapper = _cache_single(obj)
     return (SexpWrapper, (wrapper._rid, wrapper._repr))

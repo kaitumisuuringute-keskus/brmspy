@@ -1,9 +1,10 @@
 """
 Codec registry construction helpers (internal).
 
-The session layer uses a single default [`CodecRegistry`](brmspy/_session/codec/base.py)
-instance per process. The registry is ordered: the first codec that accepts a value
-wins, so the registration order is significant.
+The session layer uses a single default
+[`CodecRegistry`][brmspy._session.codec.base.CodecRegistry] instance per process. The
+registry is ordered: the first codec that accepts a value wins, so the registration
+order is significant.
 
 Important invariants:
 - SHM-backed codecs should be registered before pickle.
