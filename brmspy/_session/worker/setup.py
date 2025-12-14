@@ -1,5 +1,20 @@
+"""
+Worker startup helpers (internal).
+
+This module contains the worker-side initialization routines that must run inside
+the spawned worker process before any heavy brms/rpy2 work:
+
+- apply "safer embedded R" configuration (ABI mode, disabling unsafe fork parallelism)
+- optionally run R startup scripts (user-configured)
+- activate/deactivate a brmspy runtime and prepend the environment user library to
+  R `.libPaths()`.
+
+The main process should not import rpy2; all embedded-R initialization happens here.
+"""
+
 import os
 from typing import cast
+
 from brmspy._session.environment import get_environment_userlibs_dir
 from brmspy.types.session import EnvironmentConfig
 
@@ -7,6 +22,14 @@ __all__ = ["run_startup_scripts", "_check_r_setup", "_initialise_r_safe", "activ
 
 
 def run_startup_scripts(env_conf: EnvironmentConfig) -> None:
+    """
+    Execute configured R startup scripts in the worker.
+
+    Parameters
+    ----------
+    env_conf : brmspy.types.session.EnvironmentConfig
+        Environment configuration. If `startup_scripts` is empty/None, this is a no-op.
+    """
     if not env_conf.startup_scripts:
         return
     scripts: list[str] = env_conf.startup_scripts
@@ -18,6 +41,20 @@ def run_startup_scripts(env_conf: EnvironmentConfig) -> None:
 
 
 def _check_r_setup(verbose: bool = False) -> tuple[bool, list[str]]:
+    """
+    Run lightweight diagnostics to detect common embedded-R misconfiguration.
+
+    Parameters
+    ----------
+    verbose : bool, optional
+        If True, prints human-readable info/warnings.
+
+    Returns
+    -------
+    tuple[bool, list[str]]
+        `(ok, messages)` where `ok=False` indicates potential misconfiguration and
+        `messages` contains warning strings.
+    """
     import os
     import platform
     import shutil
@@ -154,7 +191,17 @@ def _initialise_r_safe() -> None:
 
 
 def activate(env_conf: EnvironmentConfig) -> None:
-    """only run in worker"""
+    """
+    Apply runtime + environment library configuration in the worker.
+
+    This may activate/deactivate a brmspy runtime (prebuilt bundle) and ensures the
+    per-environment user library is at the front of R `.libPaths()`.
+
+    Notes
+    -----
+    This is intentionally worker-only: it imports runtime helpers and mutates the
+    embedded R process state.
+    """
     from brmspy._runtime import _r_env, activate_runtime, deactivate_runtime, status
 
     _status = status()

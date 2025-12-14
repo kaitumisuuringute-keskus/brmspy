@@ -1,24 +1,31 @@
-# rpy2_session/worker.py
+"""
+Worker process entrypoint and request loop (internal).
+
+This module runs inside the spawned Python worker process and is responsible for:
+
+- connecting to the parent-owned `SharedMemoryManager`
+- initializing a safe embedded-R configuration (see [`_initialise_r_safe()`](brmspy/_session/worker/setup.py))
+- decoding incoming IPC requests, executing a resolved target, and encoding results
+- converting rpy2 `Sexp` objects to lightweight wrappers via the Sexp cache
+
+The main process should not import rpy2; all embedded-R work happens here.
+"""
 
 from __future__ import annotations
 
 import importlib
 import multiprocessing as mp
-
 from multiprocessing.connection import Connection
 from multiprocessing.managers import SharedMemoryManager
 from typing import Any, cast
+
 from rpy2.rinterface_lib.embedded import RRuntimeError
 
 from ...types.session import EnvironmentConfig
 from ..codec import get_default_registry
-from .setup import (
-    _initialise_r_safe,
-    activate,
-    run_startup_scripts,
-)
 from ..transport import ShmPool, attach_buffers
 from .logging import setup_worker_logging
+from .setup import _initialise_r_safe, activate, run_startup_scripts
 from .sexp_cache import cache_sexp, reattach_sexp
 
 ctx = mp.get_context("spawn")

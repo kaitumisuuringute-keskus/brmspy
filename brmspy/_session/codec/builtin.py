@@ -1,5 +1,18 @@
 from __future__ import annotations
 
+"""
+Built-in IPC codecs used by the session layer (internal).
+
+These codecs serialize values that cross the main↔worker boundary:
+
+- Large numeric payloads are stored in shared memory (SHM) and only `(name, size)`
+  references plus compact metadata are sent over the `Pipe`.
+- Small/irregular payloads fall back to pickling (still stored in SHM to avoid
+  pipe size limits).
+
+All codecs follow the `Encoder` protocol from [`brmspy.types.session`](brmspy/types/session.py).
+"""
+
 import pickle
 from dataclasses import fields as dc_fields
 from dataclasses import is_dataclass
@@ -21,6 +34,13 @@ ONE_MB = 1024 * 1024
 
 
 def array_order(a: np.ndarray) -> Literal["C", "F", "non-contiguous"]:
+    """
+    Determine how an array can be reconstructed from a raw buffer.
+
+    Returns `"C"` for C-contiguous arrays, `"F"` for Fortran-contiguous arrays,
+    otherwise `"non-contiguous"` (meaning: bytes were obtained by forcing
+    a contiguous copy during encoding).
+    """
     if a.flags["C_CONTIGUOUS"]:
         return "C"
     if a.flags["F_CONTIGUOUS"]:
@@ -29,6 +49,8 @@ def array_order(a: np.ndarray) -> Literal["C", "F", "non-contiguous"]:
 
 
 class NumpyArrayCodec:
+    """SHM-backed codec for [`numpy.ndarray`](https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html)."""
+
     def can_encode(self, obj: Any) -> bool:
         return isinstance(obj, np.ndarray)
 
@@ -80,6 +102,13 @@ class NumpyArrayCodec:
 
 
 class PandasDFCodec:
+    """
+    SHM-backed codec for numeric-only [`pandas.DataFrame`](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html).
+
+    Object-dtype columns are intentionally rejected to avoid surprising implicit
+    conversions; those cases fall back to pickle.
+    """
+
     def can_encode(self, obj: Any) -> bool:
         if not isinstance(obj, pd.DataFrame):
             return False
@@ -211,6 +240,13 @@ class PandasDFCodec:
 
 
 class PickleCodec:
+    """
+    Pickle fallback codec (internal).
+
+    Always encodes successfully, so it must be registered last. The pickled bytes
+    are still stored in SHM to keep pipe traffic small and bounded.
+    """
+
     def can_encode(self, obj: Any) -> bool:
         # Fallback – always True
         return True
@@ -386,13 +422,10 @@ class InferenceDataCodec(Encoder):
 
 class GenericDataClassCodec(Encoder):
     """
-    Generic codec that encodes/decodes dataclasses by delegating
-    each field to a registered codec in CodecRegistry.
+    Generic codec for dataclasses (internal).
 
-    - Walks dataclass fields automatically (no field_codecs mapping)
-    - Respects `init=False` fields (skips them)
-    - Optional skip_fields if you want to drop some fields entirely
-      (e.g. raw rpy2 objects you don't want to ship across processes).
+    Encodes each `init=True` field by delegating to a [`CodecRegistry`](brmspy/_session/codec/base.py).
+    Use `skip_fields` to exclude fields that must not cross the boundary.
     """
 
     def __init__(
