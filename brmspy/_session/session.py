@@ -799,34 +799,38 @@ class RModuleSession(ModuleType):
                         f"Nested brmspy contexts are not supported "
                         f"(active={session._active_ctx!r}, new={ctx_label!r})."
                     )
-                session._active_ctx = ctx_label
+                try:
+                    session._active_ctx = ctx_label
 
-                if self._environment_name and self._environment_config:
-                    session._active_ctx = None
-                    raise Exception(
-                        "Only provide one: environment name or environment config"
+                    if self._environment_name and self._environment_config:
+                        session._active_ctx = None
+                        raise Exception(
+                            "Only provide one: environment name or environment config"
+                        )
+
+                    if not self._environment_name and self._environment_config:
+                        overrides = EnvironmentConfig.from_obj(self._environment_config)
+                    elif self._environment_name:
+                        overrides = get_environment_config(self._environment_name)
+                    else:
+                        overrides = None
+
+                    old_conf = session._environment_conf
+                    new_conf = overrides if overrides else old_conf
+                    self._new_conf = new_conf
+
+                    # fresh worker with new_conf
+                    session.restart(environment_conf=new_conf, autoload=False)
+
+                    return ClassProxy(
+                        session=session,
+                        surface_class=surface_class,
+                        module_path=module_path,
+                        class_name=class_name,
                     )
-
-                if not self._environment_name and self._environment_config:
-                    overrides = EnvironmentConfig.from_obj(self._environment_config)
-                elif self._environment_name:
-                    overrides = get_environment_config(self._environment_name)
-                else:
-                    overrides = None
-
-                old_conf = session._environment_conf
-                new_conf = overrides if overrides else old_conf
-                self._new_conf = new_conf
-
-                # fresh worker with new_conf
-                session.restart(environment_conf=new_conf, autoload=False)
-
-                return ClassProxy(
-                    session=session,
-                    surface_class=surface_class,
-                    module_path=module_path,
-                    class_name=class_name,
-                )
+                except Exception as e:
+                    session._active_ctx = None
+                    raise e
 
             def __exit__(self, exc_type, exc, tb) -> None:
                 try:
