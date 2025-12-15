@@ -45,3 +45,7 @@ class RSessionError(RuntimeError):
         if self.remote_traceback:
             return f"{base}\n\nRemote traceback:\n{self.remote_traceback}\n\n"
         return base
+
+
+class RWorkerCrashedError(RuntimeError):
+    pass

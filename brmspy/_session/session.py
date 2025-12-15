@@ -33,8 +33,9 @@ from typing import Any
 
 from brmspy._session.environment import get_environment_config, get_environment_exists
 from brmspy._session.environment_parent import save, save_as_state
+from brmspy.helpers.log import get_logger, log_warning
 
-from ..types.errors import RSessionError
+from ..types.errors import RSessionError, RWorkerCrashedError
 from ..types.session import (
     EncodeResult,
     EnvironmentConfig,
@@ -507,6 +508,14 @@ class RModuleSession(ModuleType):
         except Exception:
             pass
 
+        # close the pipe connection in this process (best-effort)
+        try:
+            conn = getattr(self, "_conn", None)
+            if conn is not None:
+                conn.close()
+        except Exception:
+            pass
+
         # stop logging listener
         try:
             listener = getattr(self, "_log_listener", None)
@@ -642,22 +651,61 @@ class RModuleSession(ModuleType):
         if self._closed:
             raise RuntimeError("RModuleSession is closed")
 
-        if func_name.startswith("mod:"):
-            target = func_name
-        else:
-            target = f"mod:{self._module_path}.{func_name}"
+        try:
+            if func_name.startswith("mod:"):
+                target = func_name
+            else:
+                target = f"mod:{self._module_path}.{func_name}"
 
-        req_id = str(uuid.uuid4())
-        req: Request = {
-            "id": req_id,
-            "cmd": "CALL",
-            "target": target,
-            "args": [self._encode_arg(a) for a in args],
-            "kwargs": {k: self._encode_arg(v) for k, v in kwargs.items()},
-        }
-        self._conn.send(req)
-        resp = self._conn.recv()
-        return self._decode_result(resp)
+            req_id = str(uuid.uuid4())
+            req: Request = {
+                "id": req_id,
+                "cmd": "CALL",
+                "target": target,
+                "args": [self._encode_arg(a) for a in args],
+                "kwargs": {k: self._encode_arg(v) for k, v in kwargs.items()},
+            }
+            self._conn.send(req)
+            resp = self._conn.recv()
+            return self._decode_result(resp)
+        except (BrokenPipeError, ConnectionResetError, EOFError) as e:
+            self._recover(e)
+
+    def _recover(self, orig_exc: BaseException) -> None:
+        logger = get_logger()
+
+        logger.warning(
+            "R worker crashed; attempting to start a new session...",
+            exc_info=orig_exc,
+        )
+
+        try:
+            # Best-effort shutdown; don't let this kill the recovery path
+            try:
+                self.shutdown()
+            except Exception:
+                logger.debug(
+                    "Failed to cleanly shut down crashed worker",
+                    exc_info=True,
+                )
+
+            # Restart must succeed or we bail
+            self.restart(autoload=False)
+
+        except Exception as restart_exc:
+            # Recovery itself failed
+            logger.error(
+                "R worker crashed and automatic restart failed.",
+                exc_info=restart_exc,
+            )
+            raise RWorkerCrashedError(
+                "R worker crashed; failed to start new session."
+            ) from restart_exc
+
+        # Recovery succeeded, but the *call* that hit this still failed
+        raise RWorkerCrashedError(
+            "R worker crashed; started a fresh session. See __cause__ for details."
+        ) from orig_exc
 
     # ----------------- attribute proxying --------------
 
