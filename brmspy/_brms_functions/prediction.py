@@ -12,7 +12,7 @@ Executed inside the worker process that hosts the embedded R session.
 from collections.abc import Callable
 import arviz as az
 import typing
-from typing import Any, cast
+from typing import Any, Literal, cast, overload
 
 import numpy as np
 import pandas as pd
@@ -116,11 +116,23 @@ def observed_data(model: FitResult | ProxyListSexpVector) -> IDResult[IDObserved
     return IDResult(r=r, idata=idata)
 
 
+@overload
+def posterior_epred(
+    model: FitResult | ProxyListSexpVector, newdata: Literal[None] = None
+) -> IDResult[IDPosterior]: ...
+
+
+@overload
+def posterior_epred(
+    model: FitResult | ProxyListSexpVector, newdata: pd.DataFrame
+) -> IDResult[IDPredictions]: ...
+
+
 def posterior_epred(
     model: FitResult | ProxyListSexpVector,
     newdata: pd.DataFrame | None = None,
     **kwargs,
-) -> IDResult[IDPredictions | IDPosterior]:
+) -> IDResult:
     """
     Compute expected posterior predictions (noise-free).
 
@@ -192,11 +204,23 @@ def posterior_epred(
     return IDResult(r=cast(ProxyListSexpVector, r), idata=idata)
 
 
+@overload
+def posterior_predict(
+    model: FitResult | ProxyListSexpVector, newdata: Literal[None] = None, **kwargs
+) -> IDResult[IDPosteriorPredictive]: ...
+
+
+@overload
+def posterior_predict(
+    model: FitResult | ProxyListSexpVector, newdata: pd.DataFrame, **kwargs
+) -> IDResult[IDPredictions]: ...
+
+
 def posterior_predict(
     model: FitResult | ProxyListSexpVector,
     newdata: pd.DataFrame | None = None,
     **kwargs,
-) -> IDResult[IDPosteriorPredictive | IDPredictions]:
+) -> IDResult:
     """
     Draw from the posterior predictive distribution (includes observation noise).
 
@@ -273,11 +297,23 @@ def posterior_predict(
     return IDResult(r=cast(ProxyListSexpVector, r), idata=idata)
 
 
+@overload
+def posterior_linpred(
+    model: FitResult | ProxyListSexpVector, newdata: Literal[None] = None, **kwargs
+) -> IDResult[IDPosterior]: ...
+
+
+@overload
+def posterior_linpred(
+    model: FitResult | ProxyListSexpVector, newdata: pd.DataFrame, **kwargs
+) -> IDResult[IDPredictions]: ...
+
+
 def posterior_linpred(
     model: FitResult | ProxyListSexpVector,
     newdata: pd.DataFrame | None = None,
     **kwargs,
-) -> IDResult[IDPosterior | IDPredictions]:
+) -> IDResult:
     """
     Draw from the linear predictor.
 
@@ -360,11 +396,23 @@ def posterior_linpred(
     return IDResult(r=cast(ProxyListSexpVector, r), idata=idata)
 
 
+@overload
+def log_lik(
+    model: FitResult | ProxyListSexpVector, newdata: Literal[None] = None, **kwargs
+) -> IDResult[IDLogLikelihoodInsample]: ...
+
+
+@overload
+def log_lik(
+    model: FitResult | ProxyListSexpVector, newdata: pd.DataFrame, **kwargs
+) -> IDResult[IDLogLikelihoodOutsample]: ...
+
+
 def log_lik(
     model: FitResult | ProxyListSexpVector,
     newdata: pd.DataFrame | None = None,
     **kwargs,
-) -> IDResult[IDLogLikelihoodInsample | IDLogLikelihoodOutsample]:
+) -> IDResult:
     """
     Compute pointwise log-likelihood draws.
 
