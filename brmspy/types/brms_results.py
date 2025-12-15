@@ -256,6 +256,9 @@ class IDResult(Generic[T_idata], RListVectorExtension):
 
     idata: T_idata
 
+    def __repr__(self) -> str:
+        return repr(self.idata)
+
 
 FitResult = IDResult[IDBrm]
 

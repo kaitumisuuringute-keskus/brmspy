@@ -47,7 +47,7 @@ class TestPosteriorEpred:
 
         # Check InferenceData structure
         assert isinstance(epred_result.idata, az.InferenceData)
-        assert hasattr(epred_result.idata, "posterior")
+        assert epred_result.idata.predictions
         assert epred_result.idata.predictions_constant_data
 
         # Check data shape
@@ -118,8 +118,8 @@ class TestPosteriorPredict:
 
         # Check InferenceData structure
         assert isinstance(pred_result.idata, az.InferenceData)
-        assert hasattr(pred_result.idata, "posterior_predictive")
-        assert hasattr(pred_result.idata, "constant_data")
+        assert hasattr(pred_result.idata, "predictions")
+        assert hasattr(pred_result.idata, "predictions_constant_data")
 
         # Check data shape
         pred_data = pred_result.idata.predictions["y"]
@@ -360,7 +360,7 @@ class TestConversionHelpers:
 
         # Check structure
         assert hasattr(idata, "posterior")
-        assert "epred" in cast(Any, idata).posterior
+        assert "y_mean" in idata.posterior
 
 
 @pytest.mark.requires_brms
@@ -442,7 +442,7 @@ class TestPoissonPredictions:
         assert linpred.idata.predictions_constant_data
 
         # For Poisson: predictions should be integers
-        predict_vals = predict.idata.predictions["y"].values
+        predict_vals = predict.idata.predictions["count"].values
         # Check at least some values are non-zero integers
         assert np.any(predict_vals > 0)
         # Poisson predictions should be close to integers

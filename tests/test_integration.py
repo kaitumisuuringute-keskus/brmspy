@@ -703,8 +703,8 @@ class TestAdditionalFunctions:
 
         # Verify return type
         assert isinstance(
-            model, brms.FitResult
-        ), "fit(sample=False) should return FitResult"
+            model, brms.IDResult
+        ), "fit(sample=False) should return IDResult"
 
         # Verify R object exists
         assert (
@@ -740,8 +740,8 @@ class TestAdditionalFunctions:
 
             # Verify return type
             assert isinstance(
-                model, brms.FitResult
-            ), "fit(sample=False) should return FitResult"
+                model, brms.IDResult
+            ), "fit(sample=False) should return IDResult"
 
     @pytest.mark.slow
     def test_posterior_linpred_without_newdata(self, sample_dataframe):
@@ -773,8 +773,8 @@ class TestAdditionalFunctions:
 
         # Verify return type
         assert isinstance(
-            linpred, brms.PosteriorLinpredResult
-        ), "posterior_linpred() should return PosteriorLinpredResult"
+            linpred, brms.IDResult
+        ), "posterior_linpred() should return IDResult"
 
         # Verify idata exists
         assert isinstance(
@@ -813,9 +813,7 @@ class TestAdditionalFunctions:
         loglik = brms.log_lik(model)
 
         # Verify return type
-        assert isinstance(
-            loglik, brms.LogLikResult
-        ), "log_lik() should return LogLikResult"
+        assert isinstance(loglik, brms.IDResult), "log_lik() should return LogLikResult"
 
         # Verify idata exists
         assert isinstance(
