@@ -11,7 +11,7 @@ from typing import cast
 from rpy2.rinterface import ListSexpVector
 
 from brmspy.helpers._rpy2._conversion import kwargs_r
-from brmspy.types.brms_results import FitResult
+from brmspy.types.brms_results import FitResult, IDResult
 
 
 def brmsfamily(
@@ -130,7 +130,7 @@ def family(fit: FitResult | ListSexpVector, **kwargs) -> ListSexpVector:
     """
     import rpy2.robjects as ro
 
-    if isinstance(fit, FitResult):
+    if isinstance(fit, IDResult):
         r_fit = fit.r
     else:
         r_fit = fit
