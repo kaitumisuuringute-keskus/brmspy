@@ -1,3 +1,14 @@
+## 0.3.1
+
+*   **brm()**: Optional `return_idata: bool` argument. In case of large models, using false and only running methods you may need can be better for memory management (e.g brms.posterior_pred(fit))
+*   **posterior()**: Returns draws as idata.
+*   **observed_data()** Returns observations as idata
+*   **posterior_epred()**
+*   **posterior_predict()**
+*   **posterior_linpred()**
+*   **log_lik()**
+
+
 ## 0.3.0 - Process-Isolated R & Hot-Swappable Runtimes
 *25.12.14*
 

@@ -51,7 +51,10 @@ def _rmatrix_to_py_default(obj: "Matrix") -> pd.DataFrame | np.ndarray:
     if not rownames and not colnames:
         return np.array(obj)
 
-    return pd.DataFrame(data=np.array(obj), columns=colnames, index=rownames)
+    df = pd.DataFrame(data=np.array(obj), columns=colnames, index=rownames)
+    if "obs_id" in df.columns and not df["obs_id"].duplicated().any():
+        df.index = df["obs_id"]
+    return df
 
 
 def _rmatrix_to_py(
@@ -99,7 +102,7 @@ def _rmatrix_to_py(
     if not rownames and not colnames:
         return ShmArray.from_block(block=block, shape=(nrow, ncol), dtype=dtype)
 
-    return ShmDataFrameSimple.from_block(
+    df = ShmDataFrameSimple.from_block(
         block=block,
         nrows=nrow,
         ncols=ncol,
@@ -107,6 +110,11 @@ def _rmatrix_to_py(
         index=rownames,
         dtype=dtype,
     )
+
+    if "obs_id" in df.columns and not df["obs_id"].duplicated().any():
+        df.index = df["obs_id"]
+
+    return df
 
 
 # CONVERTERS
@@ -127,6 +135,9 @@ def _r2py_dataframe(obj: "DataFrame", shm: ShmPool | None = None) -> PyObject:
 def _py2r_dataframe(obj: pd.DataFrame) -> Sexp:
     from rpy2.robjects import pandas2ri
     from rpy2.robjects.conversion import localconverter
+
+    if "obs_id" not in obj.columns:
+        obj["obs_id"] = obj.index
 
     with localconverter(pandas2ri.converter) as cv:
         return cv.py2rpy(obj)

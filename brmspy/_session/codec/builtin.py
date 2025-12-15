@@ -116,9 +116,11 @@ class PandasDFCodec:
             return False
 
         if any(obj[c].dtype == "O" for c in obj.columns):
-            log_warning(
-                "pd.DataFrame contains Object type columns, falling back to pickle!"
-            )
+            total_size = obj.shape[0] * obj.shape[1]
+            if total_size > 10000:
+                log_warning(
+                    f"pd.DataFrame of shape {obj.shape} contains Object type columns, falling back to pickle!"
+                )
             return False
         return True
 
@@ -266,7 +268,7 @@ class PickleCodec:
         meta: dict[str, Any] = {"length": len(data)}
 
         size_bytes = len(data)
-        if size_bytes > ONE_MB:
+        if size_bytes > ONE_MB * 10:
             size_mb = size_bytes / ONE_MB
             log_warning(
                 f"PickleCodec encoding large object: type={type(obj)}, size={size_mb:,.2f} MB"
@@ -399,7 +401,7 @@ class InferenceDataCodec(Encoder):
                     assert block.shm.buf
                     buf = memoryview(block.shm.buf)
                     nbytes = int(cmeta["nbytes"])
-                    view = buf[:nbytes]
+                    view = buf[:nbytes].cast("B")
                     arr = np.frombuffer(view, dtype=np.dtype(cmeta["dtype"])).reshape(
                         cmeta["shape"]
                     )
@@ -416,7 +418,7 @@ class InferenceDataCodec(Encoder):
                 assert block.shm.buf
                 buf = memoryview(block.shm.buf)
                 nbytes = int(vmeta["nbytes"])
-                view = buf[:nbytes]
+                view = buf[:nbytes].cast("B")
                 arr = np.frombuffer(view, dtype=np.dtype(vmeta["dtype"])).reshape(
                     vmeta["shape"]
                 )

@@ -9,19 +9,19 @@ from brmspy.helpers.log import log_warning
 from brmspy._runtime._state import get_brms as _get_brms
 from brmspy.types.brms_results import (
     FitResult,
-    GenericResult,
-    LogLikResult,
+    IDResult,
     LooResult,
     LooCompareResult,
-    PosteriorEpredResult,
-    PosteriorLinpredResult,
-    PosteriorPredictResult,
+    IDPosterior,
+    IDPosteriorPredictive,
+    IDPredictions,
+    IDLogLikelihoodInsample,
+    IDLogLikelihoodOutsample,
+    IDObservedData,
+    IDConstantData,
+    IDPredictionsConstantData,
     RListVectorExtension,
-    IDLinpred,
-    IDEpred,
-    IDFit,
-    IDLogLik,
-    IDPredict,
+    IDBrm,
     PriorSpec,
 )
 from brmspy.types.formula_dsl import FormulaConstruct, FormulaPart
@@ -60,6 +60,8 @@ from brmspy._brms_functions.prediction import (
     posterior_linpred,
     posterior_predict,
     log_lik,
+    posterior,
+    observed_data,
 )
 from brmspy._brms_functions.stan import make_stancode
 from brmspy._brms_functions.families import (

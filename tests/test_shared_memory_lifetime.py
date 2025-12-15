@@ -12,7 +12,7 @@ class TestSharedMemoryLifetime:
 
         models = []
         for _ in range(2):
-            with brms.manage(environment_name="_test"):
+            with brms.manage(environment_name="_test") as ctx:
                 # Triggers a restart and SharedMemoryManager shutdown
                 pass
             model = brms.fit(
