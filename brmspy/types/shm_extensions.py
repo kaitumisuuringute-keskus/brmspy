@@ -17,12 +17,12 @@ See Also
 """
 
 import pickle
-from typing import Any, Union
+from typing import Any, TypedDict, Union
 
 import numpy as np
 import pandas as pd
 
-from brmspy.types.shm import ShmBlock, ShmBlockSpec
+from brmspy.types.shm import ShmBlock, ShmRef
 
 __all__ = ["ShmArray", "ShmDataFrameSimple", "ShmDataFrameColumns"]
 
@@ -33,7 +33,7 @@ class ShmArray(np.ndarray):
 
     Attributes
     ----------
-    block : ShmBlockSpec
+    block : ShmRef
         Reference to the shared-memory block backing the array data.
 
     Notes
@@ -43,7 +43,7 @@ class ShmArray(np.ndarray):
     behavior.
     """
 
-    block: ShmBlockSpec  # for type checkers
+    block: ShmRef  # for type checkers
 
     @classmethod
     def from_block(
@@ -83,9 +83,11 @@ class ShmArray(np.ndarray):
                 order=kwargs.get("order", "F"),
             )
             obj = base.view(ShmArray)
-            obj.block = ShmBlockSpec(
-                name=block.name, size=block.size, content_size=block.content_size
-            )
+            obj.block = {
+                "name": block.name,
+                "size": block.size,
+                "content_size": block.content_size,
+            }
         else:
             assert block.shm.buf
             view = memoryview(block.shm.buf)
@@ -103,11 +105,11 @@ class ShmDataFrameSimple(pd.DataFrame):
 
     Attributes
     ----------
-    block : ShmBlockSpec
+    block : ShmRef
         Reference to the shared-memory block backing the DataFrame's values.
     """
 
-    block: ShmBlockSpec
+    block: ShmRef
 
     @classmethod
     def from_block(
@@ -141,10 +143,20 @@ class ShmDataFrameSimple(pd.DataFrame):
         arr = ShmArray.from_block(shape=(ncols, nrows), dtype=_dtype, block=block)
 
         df = ShmDataFrameSimple(data=arr.T, index=index, columns=columns)
-        df.block = ShmBlockSpec(
-            name=block.name, size=block.size, content_size=block.content_size
-        )
+        df.block = {
+            "name": block.name,
+            "size": block.size,
+            "content_size": block.content_size,
+        }
         return df
+
+
+class PandasColumnMetadata(TypedDict):
+    name: str
+    np_dtype: str
+    pd_type: str
+    params: dict[str, Any]  # extra info per logical type
+    block: ShmRef
 
 
 class ShmDataFrameColumns(pd.DataFrame):
@@ -153,49 +165,8 @@ class ShmDataFrameColumns(pd.DataFrame):
 
     Attributes
     ----------
-    blocks_columns : dict[str, ShmBlockSpec]
-        Mapping from column name to its shared-memory block reference.
+    blocks_columns : dict[str, PandasColumnMetadata]
+        Mapping from column name to data required for its reconstruction
     """
 
-    blocks_columns: dict[str, ShmBlockSpec]
-
-    @classmethod
-    def from_blocks(
-        cls, arrays: dict[str, ShmBlock], dtypes: dict[str, str], index: list[Any]
-    ) -> "ShmDataFrameColumns":
-        """
-        Construct a DataFrame backed by one SHM block per column.
-
-        Parameters
-        ----------
-        arrays : dict[str, ShmBlock]
-            Mapping from column name to attached shared-memory block containing
-            that column's 1D values.
-        dtypes : dict[str, str]
-            Mapping from column name to dtype string.
-        index : list[Any]
-            Index labels.
-
-        Returns
-        -------
-        ShmDataFrameColumns
-        """
-        _data: dict[str, ShmArray] = {}
-
-        length = len(index)
-
-        for column, block in arrays.items():
-            dtype = np.dtype(dtypes[column])
-            arr = ShmArray(
-                shape=(length,),
-                dtype=dtype,
-                buffer=block.shm.buf,
-            )
-            arr.block = ShmBlockSpec(block.name, block.size, block.content_size)
-            _data[column] = arr
-
-        df = ShmDataFrameColumns(data=_data, index=index)
-        df.blocks_columns = {
-            k: ShmBlockSpec(v.name, v.size, v.content_size) for k, v in arrays.items()
-        }
-        return df
+    blocks_columns: dict[str, PandasColumnMetadata]

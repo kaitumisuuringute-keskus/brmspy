@@ -14,7 +14,7 @@ from dataclasses import is_dataclass
 from typing import Any
 
 from brmspy.types.session import Encoder, EncodeResult, PayloadRef
-from brmspy.types.shm import ShmBlock, ShmBlockSpec, ShmRef
+from brmspy.types.shm import ShmBlock, ShmRef
 
 
 def _noop(_blocks):

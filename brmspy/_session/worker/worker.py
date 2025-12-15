@@ -131,14 +131,7 @@ def worker_main(
                     result_payload: PayloadRef = {
                         "codec": enc.codec,
                         "meta": enc.meta,
-                        "buffers": [
-                            {
-                                "name": b.name,
-                                "size": b.size,
-                                "content_size": b.content_size,
-                            }
-                            for b in enc.buffers
-                        ],
+                        "buffers": enc.buffers,
                     }
 
                     conn.send(
@@ -176,14 +169,7 @@ def worker_main(
                                 "result": {
                                     "codec": enc.codec,
                                     "meta": enc.meta,
-                                    "buffers": [
-                                        {
-                                            "name": b.name,
-                                            "size": b.size,
-                                            "content_size": b.content_size,
-                                        }
-                                        for b in enc.buffers
-                                    ],
+                                    "buffers": enc.buffers,
                                 },
                                 "error": None,
                                 "traceback": None,

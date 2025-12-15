@@ -18,7 +18,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Literal, Protocol, TypedDict, runtime_checkable
 
-from brmspy.types.shm import ShmBlock, ShmBlockSpec, ShmRef
+from brmspy.types.shm import ShmBlock, ShmRef
 
 CommandType = Literal["CALL", "SHUTDOWN", "PING", "_RUN_TEST_BY_NAME"]
 
@@ -172,13 +172,13 @@ class EncodeResult:
         Codec identifier.
     meta : dict[str, Any]
         JSON-serializable metadata required for decoding.
-    buffers : list[ShmBlockSpec]
+    buffers : list[ShmRef]
         Shared-memory blocks backing the encoded payload.
     """
 
     codec: str
     meta: dict[str, Any]
-    buffers: list[ShmBlockSpec]
+    buffers: list[ShmRef]
 
 
 @runtime_checkable

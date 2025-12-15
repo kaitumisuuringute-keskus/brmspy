@@ -44,25 +44,7 @@ class ShmRef(TypedDict):
 
 
 @dataclass
-class ShmBlockSpec:
-    """
-    Lightweight shared-memory block description.
-
-    Parameters
-    ----------
-    name : str
-        Shared memory block name.
-    size : int
-        Allocated size in bytes.
-    """
-
-    name: str
-    size: int
-    content_size: int
-
-
-@dataclass
-class ShmBlock(ShmBlockSpec):
+class ShmBlock:
     """
     Attached shared-memory block (name/size + live `SharedMemory` handle).
 
@@ -72,6 +54,9 @@ class ShmBlock(ShmBlockSpec):
     needed. In brmspy this is managed by a `ShmPool` implementation.
     """
 
+    name: str
+    size: int
+    content_size: int
     shm: SharedMemory
 
 

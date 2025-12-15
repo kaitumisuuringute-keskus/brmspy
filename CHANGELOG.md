@@ -1,15 +1,30 @@
 ## 0.3.1
 
-*   **brm()**: Optional `return_idata: bool` argument. In case of large models, using false and only running methods you may need can be better for memory management (e.g brms.posterior_pred(fit)) (Issue #51)
-*   **posterior()**: Returns draws as idata. (Issue #51)
-*   **observed_data()** Returns observations as idata (Issue #51)
-*   **posterior_epred()** (Issue #51)
-*   **posterior_predict()** (Issue #51)
-*   **posterior_linpred()** (Issue #51)
-*   **log_lik()** (Issue #51)
+### Standardised idata
 
-* Numpy, Pandas and Arviz encoders cleanup. 
-* Numpy encoding/decoding fix for object type columns.
+All idata returned from brmspy functions is now standardised to be joinable with one another, keep DataFrame indexes correctly in obs_id and works uniformly for univariate and multivariate models.
+
+*   **brm()**: Optional `return_idata: bool` argument. In case of large models, using false and only running methods you may need can be better for memory management (e.g brms.posterior_pred(fit)). When `return_idata=True` the function now also includes `constant_data` (Issue #51)
+*   **posterior()**: Returns draws in `posterior` and `constant_data` as idata. (Issue #51)
+*   **observed_data()** Returns `observed_data` and `constant_data` as idata (Issue #51)
+*   **posterior_epred()** Now returns `predictions` and `predictions_constant_data` in case there is newdata and `posterior` and `constant_data` when no newdata. Target variables are now suffixed with `_mean`. (Issue #51) 
+*   **posterior_predict()** Now returns `predictions` and `predictions_constant_data` in case there is newdata and `posterior_predictive` and `constant_data` when no newdata. idata. (Issue #51)
+*   **posterior_linpred()** Now returns `predictions` and `predictions_constant_data` in case there is newdata and `posterior` and `constant_data` when no newdata. Target variables are now suffixed with `_linpred`. (Issue #51)
+*   **log_lik()** (Issue #51) Always returns `log_likelihood` and depending on `newdata=None` returns  `constant_data` or `predictions_constant_data`.
+*   Added `newdata` kwarg based overloads for static typechecking to automatically recognise the correct returned groups for idata
+
+This change allows composable architectures, where the user picks only the parts of idata they need for their analysis.
+
+### Bug fixes and enhancements
+
+*   **Worker crash recovery**: Added automatic recovery for R worker crashes
+    (segfaults, BrokenPipeError, ConnectionResetError). The worker is restarted
+    transparently and the call raises `RWorkerCrashedError`. The exception
+    includes a `recovered: bool` flag indicating whether a clean worker session
+    was successfully started, allowing pipelines to distinguish retryable
+    crashes (`recovered=True`) from hard failures (`recovered=False`).
+*   **Numpy encoding**: Numpy encoding is now standardised along Arviz, Pandas and Numpy encoders to properly handle object arrays. In case array type is string, the shm layer treats them as ShmArrays (memory-optimized). In case there are non-strings mixed in, the encoder always falls back to pickling. 
+
 
 
 ## 0.3.0 - Process-Isolated R & Hot-Swappable Runtimes
