@@ -9,6 +9,8 @@ import pandas as pd
 import os
 import tempfile
 
+from brmspy.types.brms_results import IDResult
+
 iter = 100
 warmup = 50
 
@@ -206,7 +208,7 @@ class TestReadRDSFit:
             loaded_model = brms.read_rds_fit(tmp_path)
 
             # Verify return type
-            assert isinstance(loaded_model, FitResult)
+            assert isinstance(loaded_model, IDResult)
 
             # Verify has both idata and r attributes
             assert hasattr(loaded_model, "idata")
@@ -402,7 +404,7 @@ class TestRoundTrip:
 
             assert predictions is not None
             assert hasattr(predictions, "idata")
-            assert predictions.idata.posterior_predictive is not None
+            assert predictions.idata.predictions is not None
         finally:
             if os.path.exists(tmp_path):
                 os.remove(tmp_path)
