@@ -38,22 +38,49 @@ def _cache_single(obj: Sexp) -> SexpWrapper:
     return SexpWrapper(_rid=obj.rid, _repr=_repr)
 
 
+def _extract_sexp(o: Any) -> Sexp | None:
+    # Fast path: already a low-level Sexp
+    if isinstance(o, Sexp):
+        return o
+
+    # robjects wrappers (Vector/Matrix/etc.) are not instances of Sexp,
+    # but usually expose the underlying Sexp via __sexp__ or _sexp.
+    sexp = getattr(o, "__sexp__", None)
+    if isinstance(sexp, Sexp):
+        return sexp
+
+    sexp = getattr(o, "_sexp", None)
+    if isinstance(sexp, Sexp):
+        return sexp
+
+    return None
+
+
 def cache_sexp(obj: Any) -> Any:
     """
-    Replace any `Sexp` instances inside `obj` with `SexpWrapper` handles.
+    Replace any embedded-R objects inside `obj` with `SexpWrapper` handles.
 
-    Supports plain `Sexp`, objects with an `.r` attribute, and `list`/`dict`
-    containers (recursively).
+    Supports:
+    - plain `rpy2.rinterface_lib.sexp.Sexp`
+    - rpy2.robjects wrappers (e.g. vectors/matrices), by extracting the underlying Sexp
+    - objects with an `.r` attribute
+    - list/dict containers (recursively)
+
+    This keeps the main process free of rpy2/embedded-R objects.
     """
-    if isinstance(obj, Sexp):
-        return _cache_single(obj)
-    elif hasattr(obj, "r") and isinstance(obj.r, Sexp):
-        obj.r = _cache_single(obj.r)
-        return obj
-    elif isinstance(obj, list):
+
+    sexp = _extract_sexp(obj)
+    if sexp is not None:
+        return _cache_single(sexp)
+
+    if hasattr(obj, "r"):
+        obj.r = cache_sexp(obj.r)
+
+    if isinstance(obj, list):
         return [cache_sexp(o) for o in obj]
-    elif isinstance(obj, dict):
+    if isinstance(obj, dict):
         return {k: cache_sexp(v) for k, v in obj.items()}
+
     return obj
 
 
@@ -68,11 +95,8 @@ def reattach_sexp(obj: Any) -> Any:
         return [reattach_sexp(v) for v in obj]
     elif isinstance(obj, dict):
         return {k: reattach_sexp(v) for k, v in obj.items()}
-    elif hasattr(obj, "r") and isinstance(obj.r, SexpWrapper):
-        if obj.r._rid in _SEXP_CACHE:
-            obj.r = _SEXP_CACHE[obj.r._rid]
-        else:
-            obj.r = None
+    elif hasattr(obj, "r"):
+        obj.r = reattach_sexp(obj.r)
     elif isinstance(obj, SexpWrapper):
         if obj._rid in _SEXP_CACHE:
             return _SEXP_CACHE[obj._rid]
