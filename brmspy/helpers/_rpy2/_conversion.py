@@ -585,7 +585,7 @@ def _brmsfit_get_constant_data(
 
     # Drop obs_id column if present; obs_id is handled as a coord
     if "obs_id" in df.columns:
-        df = df.set_index("obs_id")
+        df = df.set_index("obs_id", drop=True)
 
     keep_cols = [c for c in df.columns if c not in drop_cols]
 

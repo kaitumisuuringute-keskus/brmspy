@@ -16,7 +16,8 @@ See Also
     Base shared-memory block and pool types.
 """
 
-from typing import Any
+import pickle
+from typing import Any, Union
 
 import numpy as np
 import pandas as pd
@@ -47,7 +48,7 @@ class ShmArray(np.ndarray):
     @classmethod
     def from_block(
         cls, block: ShmBlock, shape: tuple[int, ...], dtype: np.dtype, **kwargs
-    ) -> "ShmArray":
+    ) -> Union["ShmArray", np.ndarray]:
         """
         Create an array view backed by an existing shared-memory block.
 
@@ -67,14 +68,32 @@ class ShmArray(np.ndarray):
         ShmArray
             Array view into the shared-memory buffer.
         """
-        base = np.ndarray(
-            shape=shape,
-            dtype=dtype,
-            buffer=block.shm.buf,
-            order="F",
-        )
-        obj = base.view(ShmArray)
-        obj.block = ShmBlockSpec(name=block.name, size=block.size)
+        is_object = dtype == "O"
+
+        if not is_object:
+            if block.shm.buf:
+                view = memoryview(block.shm.buf)
+                view = view[: block.content_size]
+            else:
+                view = None
+            base = np.ndarray(
+                shape=shape,
+                dtype=dtype,
+                buffer=view,
+                order=kwargs.get("order", "F"),
+            )
+            obj = base.view(ShmArray)
+            obj.block = ShmBlockSpec(
+                name=block.name, size=block.size, content_size=block.content_size
+            )
+        else:
+            assert block.shm.buf
+            view = memoryview(block.shm.buf)
+            view = view[: block.content_size]
+            payload = bytes(view)
+            obj = pickle.loads(payload)
+            assert isinstance(obj, np.ndarray)
+
         return obj
 
 
@@ -122,7 +141,9 @@ class ShmDataFrameSimple(pd.DataFrame):
         arr = ShmArray.from_block(shape=(ncols, nrows), dtype=_dtype, block=block)
 
         df = ShmDataFrameSimple(data=arr.T, index=index, columns=columns)
-        df.block = ShmBlockSpec(name=block.name, size=block.size)
+        df.block = ShmBlockSpec(
+            name=block.name, size=block.size, content_size=block.content_size
+        )
         return df
 
 
@@ -170,9 +191,11 @@ class ShmDataFrameColumns(pd.DataFrame):
                 dtype=dtype,
                 buffer=block.shm.buf,
             )
-            arr.block = ShmBlockSpec(block.name, block.size)
+            arr.block = ShmBlockSpec(block.name, block.size, block.content_size)
             _data[column] = arr
 
         df = ShmDataFrameColumns(data=_data, index=index)
-        df.blocks_columns = {k: ShmBlockSpec(v.name, v.size) for k, v in arrays.items()}
+        df.blocks_columns = {
+            k: ShmBlockSpec(v.name, v.size, v.content_size) for k, v in arrays.items()
+        }
         return df

@@ -13,6 +13,7 @@ These codecs serialize values that cross the main↔worker boundary:
 All codecs follow the `Encoder` protocol from [`brmspy.types.session`][brmspy.types.session].
 """
 
+from collections.abc import Callable
 import pickle
 from dataclasses import fields as dc_fields
 from dataclasses import is_dataclass
@@ -25,10 +26,10 @@ import xarray as xr
 
 from brmspy.helpers.log import log_warning
 from brmspy._session.codec.base import CodecRegistry
-from brmspy.types.session import EncodeResult, Encoder
+from brmspy.types.session import EncodeResult, Encoder, PayloadRef
 
 from ...types.shm_extensions import ShmArray, ShmDataFrameColumns, ShmDataFrameSimple
-from ...types.shm import ShmBlock, ShmBlockSpec
+from ...types.shm import ShmBlock, ShmBlockSpec, ShmRef
 
 ONE_MB = 1024 * 1024
 
@@ -48,21 +49,39 @@ def array_order(a: np.ndarray) -> Literal["C", "F", "non-contiguous"]:
     return "non-contiguous"
 
 
-class NumpyArrayCodec:
+class NumpyArrayCodec(Encoder):
     """SHM-backed codec for [`numpy.ndarray`](https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html)."""
 
-    def can_encode(self, obj: Any) -> bool:
-        return isinstance(obj, np.ndarray)
+    @classmethod
+    def is_string_object(cls, a: np.ndarray, sample: int = 1000):
+        if a.dtype != object:
+            return False
+        it = a.flat
+        for _ in range(min(sample, a.size)):
+            v = next(it, None)
+            if v is not None and not isinstance(v, str):
+                return False
+        return True
 
-    def encode(self, obj: Any, shm_pool: Any) -> EncodeResult:
-        if isinstance(obj, ShmArray):
-            arr = obj
-            nbytes = obj.block.size
-            block = obj.block
+    @classmethod
+    def to_shm(cls, obj: np.ndarray, shm_pool: Any) -> EncodeResult:
+        arr = np.asarray(obj)
+        is_object = arr.dtype == "O"
+        is_string = cls.is_string_object(obj)
+
+        if isinstance(arr, ShmArray):
+            arr = arr
+            nbytes = arr.block.content_size
+            block = arr.block
         else:
-            log_warning("np.ndarray not in SHM, storing!")
-            arr = np.asarray(obj)
-            data = arr.tobytes(order="C")
+            if not is_object:
+                data = arr.tobytes(order="C")
+            elif is_string:
+                arr = arr.astype("U")
+                data = arr.tobytes(order="C")
+            else:
+                data = pickle.dumps(arr, protocol=pickle.HIGHEST_PROTOCOL)
+
             nbytes = len(data)
 
             # Ask for exactly nbytes; OS may round up internally, that's fine.
@@ -73,37 +92,43 @@ class NumpyArrayCodec:
             "dtype": str(arr.dtype),
             "shape": list(arr.shape),
             "order": array_order(arr),
-            "nbytes": nbytes,  # <-- critical
         }
 
         return EncodeResult(
-            codec=type(self).__name__,
+            codec=cls.__name__,
             meta=meta,
-            buffers=[ShmBlockSpec(name=block.name, size=block.size)],
+            buffers=[
+                ShmBlockSpec(name=block.name, size=block.size, content_size=nbytes)
+            ],
         )
+
+    @classmethod
+    def from_shm(cls, ref: PayloadRef, block: ShmBlock) -> np.ndarray:
+        meta = ref["meta"]
+        dtype = np.dtype(meta["dtype"])
+        shape = tuple(meta["shape"])
+        order = meta["order"]
+
+        return ShmArray.from_block(block=block, shape=shape, dtype=dtype, order=order)
+
+    def can_encode(self, obj: Any) -> bool:
+        return isinstance(obj, np.ndarray)
+
+    def encode(self, obj: Any, shm_pool: Any) -> EncodeResult:
+        return NumpyArrayCodec.to_shm(obj, shm_pool)
 
     def decode(
         self,
-        meta: dict[str, Any],
-        buffers: list[ShmBlock],
-        buffer_specs: list[dict],
-        shm_pool: Any,
+        payload: PayloadRef,
+        get_buf: Callable[[ShmRef], tuple[ShmBlock, memoryview]],
+        *args,
     ) -> Any:
-        buf = buffers[0]
-        dtype = np.dtype(meta["dtype"])
-        shape = tuple(meta["shape"])
-        nbytes = int(meta["nbytes"])
-        order = meta["order"]
-        assert buf.shm.buf
-        memview = memoryview(buf.shm.buf)
+        buf, _ = get_buf(payload["buffers"][0])
 
-        # Only use the slice that actually holds array data
-        view = memview[:nbytes]
-        arr = np.ndarray(shape=shape, dtype=dtype, buffer=view, order=order)
-        return arr
+        return NumpyArrayCodec.from_shm(payload, buf)
 
 
-class PandasDFCodec:
+class PandasDFCodec(Encoder):
     """
     SHM-backed codec for numeric-only [`pandas.DataFrame`](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html).
 
@@ -141,7 +166,7 @@ class PandasDFCodec:
             meta["variant"] = "single"
             meta["dtype"] = str(obj.values.dtype)
             meta["order"] = array_order(obj.values)
-            spec = ShmBlockSpec(name=obj.block.name, size=obj.block.size)
+            spec = ShmBlockSpec(obj.block.name, obj.block.size, obj.block.content_size)
             buffers.append(spec)
         elif isinstance(obj, ShmDataFrameColumns):
             # per column buffers
@@ -149,7 +174,7 @@ class PandasDFCodec:
             meta["order"] = "F"
             for column in obj.columns:
                 block = obj.blocks_columns[column]
-                spec = ShmBlockSpec(name=block.name, size=block.size)
+                spec = ShmBlockSpec(block.name, block.size, block.content_size)
                 buffers.append(spec)
         else:
             # Fallback: put each column in its own SHM block
@@ -167,16 +192,12 @@ class PandasDFCodec:
                         "convert to numeric/categorical or add a dedicated object codec."
                     )
 
-                values = np.asarray(col.to_numpy(copy=False), order="C")
-                dtypes.append(str(values.dtype))
+                encoded = NumpyArrayCodec.to_shm(col.to_numpy(copy=False), shm_pool)
+                block = encoded.buffers[0]
 
-                data = values.tobytes(order="C")
-                nbytes = len(data)
+                spec = ShmBlockSpec(block.name, block.size, block.content_size)
 
-                block = shm_pool.alloc(nbytes)
-                block.shm.buf[:nbytes] = data
-
-                spec = ShmBlockSpec(name=block.name, size=nbytes)
+                dtypes.append(encoded.meta["dtype"])
                 buffers.append(spec)
 
             meta["dtypes"] = dtypes
@@ -185,18 +206,19 @@ class PandasDFCodec:
 
     def decode(
         self,
-        meta: dict[str, Any],
-        buffers: list[ShmBlock],
-        buffer_specs: list[dict],
-        shm_pool: Any,
+        payload: PayloadRef,
+        get_buf: Callable[[ShmRef], tuple[ShmBlock, memoryview]],
+        *args,
     ) -> Any:
+        meta = payload["meta"]
+        buffer_specs = payload["buffers"]
+
         if meta.get("variant") == "empty":
             return pd.DataFrame({})
-        elif meta.get("variant") == "single":
-            assert buffers[0].shm.buf
-            memview = memoryview(buffers[0].shm.buf)
-            buf = memview.cast("B")
+
+        if meta.get("variant") == "single":
             spec = buffer_specs[0]
+            buf, memview = get_buf(buffer_specs[0])
             dtype = np.dtype(meta["dtype"])
             nbytes = spec["size"]
             order = meta["order"]
@@ -206,11 +228,11 @@ class PandasDFCodec:
             shape = (len(index), len(columns))
 
             # Only use the slice that actually holds array data
-            view = buf[:nbytes]
+            view = memview[:nbytes]
             arr = np.ndarray(shape=shape, dtype=dtype, buffer=view, order=order)
 
             df = ShmDataFrameSimple(data=arr, index=index, columns=columns)
-            df.block = ShmBlockSpec(name=spec["name"], size=spec["size"])
+            df.block = ShmBlockSpec(spec["name"], spec["size"], spec["content_size"])
 
             return df
         elif meta.get("variant") == "columnar":
@@ -219,10 +241,10 @@ class PandasDFCodec:
             dtypes = meta["dtypes"]
             nrows = len(index)
 
-            if len(columns) != len(buffers) or len(columns) != len(dtypes):
+            if len(columns) != len(buffer_specs) or len(columns) != len(dtypes):
                 raise ValueError(
                     f"Columnar decode mismatch: "
-                    f"{len(columns)} columns, {len(buffers)} buffers, {len(dtypes)} dtypes"
+                    f"{len(columns)} columns, {len(buffer_specs)} buffers, {len(dtypes)} dtypes"
                 )
 
             data: dict[str, np.ndarray] = {}
@@ -230,15 +252,14 @@ class PandasDFCodec:
             for i, col_name in enumerate(columns):
                 dtype = np.dtype(dtypes[i])
                 spec = buffer_specs[i]
-                buf = buffers[i].shm.buf
-                assert buf
-                memview = memoryview(buf)
-                buf = memview.cast("B")
-                nbytes = spec["size"]
+                buf, view = get_buf(spec)
+                nbytes = spec["content_size"]
 
                 # 1D column
-                view = buf[:nbytes]
-                arr = np.ndarray(shape=(nrows,), dtype=dtype, buffer=view, order="C")
+                view = view[:nbytes]
+                arr = ShmArray.from_block(
+                    block=buf, shape=(nrows,), dtype=dtype, order="C"
+                )
                 data[col_name] = arr
 
             # You can swap this to ShmDataFrameColumns if you want that type
@@ -248,7 +269,7 @@ class PandasDFCodec:
             raise Exception(f"Unknown DataFrame variant {meta.get('variant')}")
 
 
-class PickleCodec:
+class PickleCodec(Encoder):
     """
     Pickle fallback codec (internal).
 
@@ -277,22 +298,20 @@ class PickleCodec:
         return EncodeResult(
             codec=type(self).__name__,
             meta=meta,
-            buffers=[ShmBlockSpec(name=block.name, size=block.size)],
+            buffers=[ShmBlockSpec(block.name, block.size, block.content_size)],
         )
 
     def decode(
         self,
-        meta: dict[str, Any],
-        buffers: list[ShmBlock],
-        buffer_specs: list[dict],
-        shm_pool: Any,
+        payload: PayloadRef,
+        get_buf: Callable[[ShmRef], tuple[ShmBlock, memoryview]],
+        *args,
     ) -> Any:
-        block = buffers[0]
-        assert block.shm.buf
-        buf = memoryview(block.shm.buf)
-        length = meta["length"]
-        payload = bytes(buf[:length])
-        return pickle.loads(payload)
+        specs = payload["buffers"]
+        block, buf = get_buf(specs[0])
+        length = block.content_size
+        b = bytes(buf[:length])
+        return pickle.loads(b)
 
 
 class InferenceDataCodec(Encoder):
@@ -324,7 +343,9 @@ class InferenceDataCodec(Encoder):
                     block.shm.buf[:nbytes] = data
 
                     buffer_idx = len(buffers)
-                    buffers.append(ShmBlockSpec(name=block.name, size=block.size))
+                    buffers.append(
+                        ShmBlockSpec(block.name, block.size, block.content_size)
+                    )
                     total_bytes += nbytes
 
                     g_meta["coords"][cname] = {
@@ -348,20 +369,19 @@ class InferenceDataCodec(Encoder):
             # DATA VARS: main heavy arrays
             for vname, da in ds.data_vars.items():
                 arr = np.asarray(da.data)
-                data = arr.tobytes(order="C")
-                nbytes = len(data)
-
-                block = shm_pool.alloc(nbytes)
-                block.shm.buf[:nbytes] = data
+                encoded = NumpyArrayCodec.to_shm(arr, shm_pool)
+                meta = encoded.meta
+                block = encoded.buffers[0]
+                nbytes = block.content_size
 
                 buffer_idx = len(buffers)
-                buffers.append(ShmBlockSpec(name=block.name, size=block.size))
+                buffers.append(ShmBlockSpec(block.name, block.size, block.content_size))
                 total_bytes += nbytes
 
                 g_meta["data_vars"][vname] = {
                     "buffer_idx": buffer_idx,
-                    "dtype": str(arr.dtype),
-                    "shape": list(arr.shape),
+                    "dtype": str(meta["dtype"]),
+                    "shape": list(meta["shape"]),
                     "dims": list(da.dims),
                     "nbytes": nbytes,
                 }
@@ -381,11 +401,12 @@ class InferenceDataCodec(Encoder):
 
     def decode(
         self,
-        meta: dict[str, Any],
-        buffers: list[ShmBlock],
-        buffer_specs: list[dict],
-        shm_pool: Any,
+        payload: PayloadRef,
+        get_buf: Callable[[ShmRef], tuple[ShmBlock, memoryview]],
+        *args,
     ) -> Any:
+        meta = payload["meta"]
+        specs = payload["buffers"]
         groups_meta = meta["groups"]
         groups: dict[str, xr.Dataset] = {}
 
@@ -397,13 +418,10 @@ class InferenceDataCodec(Encoder):
             for cname, cmeta in g_meta["coords"].items():
                 kind = cmeta["kind"]
                 if kind == "array":
-                    block = buffers[cmeta["buffer_idx"]]
-                    assert block.shm.buf
-                    buf = memoryview(block.shm.buf)
-                    nbytes = int(cmeta["nbytes"])
-                    view = buf[:nbytes].cast("B")
-                    arr = np.frombuffer(view, dtype=np.dtype(cmeta["dtype"])).reshape(
-                        cmeta["shape"]
+                    spec = specs[cmeta["buffer_idx"]]
+                    block, _ = get_buf(spec)
+                    arr = ShmArray.from_block(
+                        block, shape=cmeta["shape"], dtype=np.dtype(cmeta["dtype"])
                     )
                     coords[cname] = (tuple(cmeta["dims"]), arr)
                 elif kind == "pickle":
@@ -414,13 +432,10 @@ class InferenceDataCodec(Encoder):
 
             # Rebuild data_vars
             for vname, vmeta in g_meta["data_vars"].items():
-                block = buffers[vmeta["buffer_idx"]]
-                assert block.shm.buf
-                buf = memoryview(block.shm.buf)
-                nbytes = int(vmeta["nbytes"])
-                view = buf[:nbytes].cast("B")
-                arr = np.frombuffer(view, dtype=np.dtype(vmeta["dtype"])).reshape(
-                    vmeta["shape"]
+                spec = specs[vmeta["buffer_idx"]]
+                block, _ = get_buf(spec)
+                arr = ShmArray.from_block(
+                    block, vmeta["shape"], dtype=np.dtype(vmeta["dtype"])
                 )
                 data_vars[vname] = (tuple(vmeta["dims"]), arr)
 
@@ -508,27 +523,32 @@ class GenericDataClassCodec(Encoder):
 
     def decode(
         self,
-        meta: dict[str, Any],
-        buffers: list[ShmBlock],
-        buffer_specs: list[dict],
-        shm_pool: Any,
+        payload: PayloadRef,
+        get_buf: Callable[[ShmRef], tuple[ShmBlock, memoryview]],
+        *args,
     ) -> Any:
+        meta = payload["meta"]
         fields_meta: dict[str, Any] = meta["fields"]
         kwargs: dict[str, Any] = {}
+
+        assert len(args) > 0
+        pool = args[0]
+
+        specs = payload["buffers"]
 
         for field_name, fmeta in fields_meta.items():
             codec_name = fmeta["codec"]
             start = fmeta["start"]
             count = fmeta["count"]
 
+            subpayload: PayloadRef = {
+                "codec": codec_name,
+                "meta": fmeta["meta"],
+                "buffers": specs[start : start + count],
+            }
+
             # IMPORTANT: slice buffer_specs in the same way as buffers
-            value = self._registry.decode(
-                codec_name,
-                fmeta["meta"],
-                buffers[start : start + count],
-                buffer_specs[start : start + count],
-                shm_pool,
-            )
+            value = self._registry.decode(subpayload, pool)
             kwargs[field_name] = value
 
         return self._cls(**kwargs)

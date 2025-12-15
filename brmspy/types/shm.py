@@ -40,6 +40,7 @@ class ShmRef(TypedDict):
 
     name: str
     size: int
+    content_size: int
 
 
 @dataclass
@@ -57,6 +58,7 @@ class ShmBlockSpec:
 
     name: str
     size: int
+    content_size: int
 
 
 @dataclass
@@ -109,7 +111,7 @@ class ShmPool:
         """
         ...
 
-    def attach(self, name: str, size: int) -> ShmBlock:
+    def attach(self, name: str, size: int, content_size: int) -> ShmBlock:
         """
         Attach to an existing shared-memory block by name.
 

@@ -25,13 +25,13 @@ class ShmPool(_ShmPool):
 
     def alloc(self, size: int) -> ShmBlock:
         shm = self._manager.SharedMemory(size=size)
-        block = ShmBlock(name=shm.name, size=size, shm=shm)
+        block = ShmBlock(name=shm.name, size=size, shm=shm, content_size=size)
         self._blocks[block.name] = block
         return block
 
-    def attach(self, name: str, size: int) -> ShmBlock:
+    def attach(self, name: str, size: int, content_size: int) -> ShmBlock:
         shm = SharedMemory(name=name)
-        block = ShmBlock(name=name, size=size, shm=shm)
+        block = ShmBlock(name=name, size=size, shm=shm, content_size=content_size)
         self._blocks[name] = block
         return block
 
@@ -59,7 +59,7 @@ def attach_buffers(pool: ShmPool, refs: list[ShmRef]) -> list[ShmBlock]:
     """
     blocks: list[ShmBlock] = []
     for ref in refs:
-        block = pool.attach(ref["name"], ref["size"])
+        block = pool.attach(ref["name"], ref["size"], ref["content_size"])
         if block.shm.buf is None:
             raise Exception("block.smh.buf is None!")
         blocks.append(block)

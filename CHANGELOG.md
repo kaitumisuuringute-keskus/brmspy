@@ -1,12 +1,15 @@
 ## 0.3.1
 
-*   **brm()**: Optional `return_idata: bool` argument. In case of large models, using false and only running methods you may need can be better for memory management (e.g brms.posterior_pred(fit))
-*   **posterior()**: Returns draws as idata.
-*   **observed_data()** Returns observations as idata
-*   **posterior_epred()**
-*   **posterior_predict()**
-*   **posterior_linpred()**
-*   **log_lik()**
+*   **brm()**: Optional `return_idata: bool` argument. In case of large models, using false and only running methods you may need can be better for memory management (e.g brms.posterior_pred(fit)) (Issue #51)
+*   **posterior()**: Returns draws as idata. (Issue #51)
+*   **observed_data()** Returns observations as idata (Issue #51)
+*   **posterior_epred()** (Issue #51)
+*   **posterior_predict()** (Issue #51)
+*   **posterior_linpred()** (Issue #51)
+*   **log_lik()** (Issue #51)
+
+* Numpy, Pandas and Arviz encoders cleanup. 
+* Numpy encoding/decoding fix for object type columns.
 
 
 ## 0.3.0 - Process-Isolated R & Hot-Swappable Runtimes

@@ -14,6 +14,7 @@ Instead, R objects are represented as lightweight handles (`SexpWrapper`) that
 can be reattached inside the worker via its SEXP cache.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Literal, Protocol, TypedDict, runtime_checkable
 
@@ -192,8 +193,7 @@ class Encoder(Protocol):
 
     def decode(
         self,
-        meta: dict[str, Any],
-        buffers: list[ShmBlock],
-        buffer_specs: list[dict],
-        shm_pool: Any,
+        payload: PayloadRef,
+        get_buf: Callable[[ShmRef], tuple[ShmBlock, memoryview]],
+        *args: Any,
     ) -> Any: ...

@@ -35,7 +35,13 @@ from brmspy._session.environment import get_environment_config, get_environment_
 from brmspy._session.environment_parent import save, save_as_state
 
 from ..types.errors import RSessionError
-from ..types.session import EnvironmentConfig
+from ..types.session import (
+    EncodeResult,
+    EnvironmentConfig,
+    PayloadRef,
+    Request,
+    Response,
+)
 from .codec import get_default_registry
 from .transport import ShmPool, attach_buffers
 from brmspy._session.worker import worker_main
@@ -546,7 +552,7 @@ class RModuleSession(ModuleType):
 
     # ----------------- IPC helpers --------------------
 
-    def _encode_arg(self, obj: Any) -> dict[str, Any]:
+    def _encode_arg(self, obj: Any) -> PayloadRef:
         """
         Encode a single Python argument into an IPC payload dict.
 
@@ -568,10 +574,13 @@ class RModuleSession(ModuleType):
         return {
             "codec": enc.codec,
             "meta": enc.meta,
-            "buffers": [{"name": b.name, "size": b.size} for b in enc.buffers],
+            "buffers": [
+                {"name": b.name, "size": b.size, "content_size": b.content_size}
+                for b in enc.buffers
+            ],
         }
 
-    def _decode_result(self, resp: dict[str, Any]) -> Any:
+    def _decode_result(self, resp: Response) -> Any:
         """
         Decode a worker response into a Python value or raise.
 
@@ -596,12 +605,10 @@ class RModuleSession(ModuleType):
                 remote_traceback=resp.get("traceback"),
             )
         pres = resp["result"]
-        buffer_refs = pres["buffers"]
+        if not pres:
+            return None
         decoded = self._reg.decode(
-            pres["codec"],
-            pres["meta"],
-            attach_buffers(self._shm_pool, buffer_refs),
-            buffer_refs,
+            pres,
             shm_pool=self._shm_pool,
         )
         return decoded
@@ -641,7 +648,7 @@ class RModuleSession(ModuleType):
             target = f"mod:{self._module_path}.{func_name}"
 
         req_id = str(uuid.uuid4())
-        req = {
+        req: Request = {
             "id": req_id,
             "cmd": "CALL",
             "target": target,
@@ -978,9 +985,6 @@ class RModuleSession(ModuleType):
         pres = resp["result"]
 
         return self._reg.decode(
-            pres["codec"],
-            pres["meta"],
-            attach_buffers(self._shm_pool, pres["buffers"]),
-            pres["buffers"],
+            pres,
             shm_pool=self._shm_pool,
         )
