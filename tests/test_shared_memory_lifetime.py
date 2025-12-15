@@ -10,9 +10,16 @@ class TestSharedMemoryLifetime:
     def test_segfault_recover(self, sample_dataframe):
         from brmspy import brms
 
-        with pytest.raises(RWorkerCrashedError, match="started a fresh session"):
+        # Capture the exception object so we can inspect the flag
+        with pytest.raises(
+            RWorkerCrashedError, match="started a fresh session"
+        ) as excinfo:
             pid = brms.call("Sys.getpid")
             brms.call("tools::pskill", pid)
+
+        # Must be marked as a successful recovery
+        err = excinfo.value
+        assert err.recovered is True, "Crash should have been recoverable"
 
         model = brms.fit(
             formula="y ~ x1",
