@@ -21,7 +21,7 @@ class TestPosteriorEpred:
     """Test posterior_epred functionality."""
 
     @pytest.mark.slow
-    def test_epred_basic(self, sample_dataframe):
+    def test_epred_basic(self, sample_dataframe: pd.DataFrame):
         """Test basic posterior_epred on fitted model"""
         from brmspy import brms
         import arviz as az
@@ -48,9 +48,10 @@ class TestPosteriorEpred:
         # Check InferenceData structure
         assert isinstance(epred_result.idata, az.InferenceData)
         assert hasattr(epred_result.idata, "posterior")
+        assert epred_result.idata.predictions_constant_data
 
         # Check data shape
-        epred_data = epred_result.idata.posterior["epred"]
+        epred_data = epred_result.idata.predictions["y_mean"]
         assert (
             len(epred_data.dims) == 3
         ), "Should have 3 dimensions (chain, draw, obs_id)"
@@ -58,7 +59,7 @@ class TestPosteriorEpred:
         assert epred_data.sizes["obs_id"] == len(sample_dataframe)
 
     @pytest.mark.slow
-    def test_epred_newdata(self, sample_dataframe):
+    def test_epred_newdata(self, sample_dataframe: pd.DataFrame):
         """Test posterior_epred with new data"""
         from brmspy import brms
 
@@ -81,7 +82,8 @@ class TestPosteriorEpred:
         epred_result = brms.posterior_epred(model=model, newdata=newdata)
 
         # Check prediction shape matches newdata
-        epred_data = epred_result.idata.posterior["epred"]
+        epred_data = epred_result.idata.predictions["y_mean"]
+        assert epred_result.idata.predictions_constant_data
         assert epred_data.sizes["obs_id"] == len(newdata)
 
 
@@ -90,7 +92,7 @@ class TestPosteriorPredict:
     """Test posterior_predict functionality."""
 
     @pytest.mark.slow
-    def test_predict_basic(self, sample_dataframe):
+    def test_predict_basic(self, sample_dataframe: pd.DataFrame):
         """Test basic posterior_predict on fitted model"""
         from brmspy import brms
         import arviz as az
@@ -117,15 +119,16 @@ class TestPosteriorPredict:
         # Check InferenceData structure
         assert isinstance(pred_result.idata, az.InferenceData)
         assert hasattr(pred_result.idata, "posterior_predictive")
+        assert hasattr(pred_result.idata, "constant_data")
 
         # Check data shape
-        pred_data = pred_result.idata.posterior_predictive["y"]
+        pred_data = pred_result.idata.predictions["y"]
         assert len(pred_data.dims) == 3
         assert pred_data.sizes["chain"] == 2
         assert pred_data.sizes["obs_id"] == len(sample_dataframe)
 
     @pytest.mark.slow
-    def test_predict_without_newdata(self, sample_dataframe):
+    def test_predict_without_newdata(self, sample_dataframe: pd.DataFrame):
         """Test posterior_predict without providing newdata"""
         from brmspy import brms
 
@@ -147,6 +150,7 @@ class TestPosteriorPredict:
         # Should still work
         assert hasattr(pred_result, "idata")
         assert hasattr(pred_result.idata, "posterior_predictive")
+        assert hasattr(pred_result.idata, "constant_data")
 
 
 @pytest.mark.requires_brms
@@ -154,7 +158,7 @@ class TestPosteriorLinpred:
     """Test posterior_linpred functionality."""
 
     @pytest.mark.slow
-    def test_linpred_basic(self, sample_dataframe):
+    def test_linpred_basic(self, sample_dataframe: pd.DataFrame):
         """Test basic posterior_linpred on fitted model"""
         from brmspy import brms
         import arviz as az
@@ -181,9 +185,10 @@ class TestPosteriorLinpred:
         # Check InferenceData structure
         assert isinstance(linpred_result.idata, az.InferenceData)
         assert hasattr(linpred_result.idata, "predictions")
+        assert hasattr(linpred_result.idata, "predictions_constant_data")
 
         # Check data shape
-        linpred_data = linpred_result.idata.predictions["linpred"]
+        linpred_data = linpred_result.idata.predictions["y_linpred"]
         assert len(linpred_data.dims) == 3
         assert linpred_data.sizes["chain"] == 2
 
@@ -193,7 +198,7 @@ class TestLogLik:
     """Test log_lik functionality."""
 
     @pytest.mark.slow
-    def test_log_lik_basic(self, sample_dataframe):
+    def test_log_lik_basic(self, sample_dataframe: pd.DataFrame):
         """Test basic log_lik on fitted model"""
         from brmspy import brms
         import arviz as az
@@ -220,6 +225,7 @@ class TestLogLik:
         # Check InferenceData structure
         assert isinstance(ll_result.idata, az.InferenceData)
         assert hasattr(ll_result.idata, "log_likelihood")
+        assert hasattr(ll_result.idata, "predictions_constant_data")
 
 
 @pytest.mark.requires_brms
@@ -227,7 +233,7 @@ class TestBrmsfitToIdata:
     """Test brmsfit_to_idata comprehensive conversion."""
 
     @pytest.mark.slow
-    def test_complete_idata_conversion(self, sample_dataframe):
+    def test_complete_idata_conversion(self, sample_dataframe: pd.DataFrame):
         """Test that brmsfit_to_idata creates all groups"""
         from brmspy import brms
 
@@ -246,19 +252,18 @@ class TestBrmsfitToIdata:
         idata = model.idata
 
         # Check all expected groups are present
-        assert hasattr(idata, "posterior"), "Should have posterior group"
-        assert hasattr(
-            idata, "posterior_predictive"
-        ), "Should have posterior_predictive"
-        assert hasattr(idata, "log_likelihood"), "Should have log_likelihood"
-        assert hasattr(idata, "observed_data"), "Should have observed_data"
+        assert idata.posterior, "Should have posterior group"
+        assert idata.posterior_predictive, "Should have posterior_predictive"
+        assert idata.log_likelihood, "Should have log_likelihood"
+        assert idata.observed_data, "Should have observed_data"
+        assert idata.constant_data, "should have constant_data"
 
         # Check observed data
         assert "y" in idata.observed_data
         assert len(idata.observed_data["y"]) == len(sample_dataframe)
 
     @pytest.mark.slow
-    def test_posterior_predictive_shape(self, sample_dataframe):
+    def test_posterior_predictive_shape(self, sample_dataframe: pd.DataFrame):
         """Test posterior predictive has correct shape"""
         from brmspy import brms
 
@@ -290,7 +295,7 @@ class TestConversionHelpers:
     """Test helper conversion functions."""
 
     @pytest.mark.slow
-    def test_reshape_r_prediction_to_arviz(self, sample_dataframe):
+    def test_reshape_r_prediction_to_arviz(self, sample_dataframe: pd.DataFrame):
         """Test _reshape_r_prediction_to_arviz function"""
         from brmspy import brms
         import arviz as az
@@ -335,7 +340,7 @@ class TestConversionHelpers:
         assert list(dims) == ["chain", "draw", "obs_id"]
 
     @pytest.mark.slow
-    def test_epred_to_idata_helper(self, sample_dataframe):
+    def test_epred_to_idata_helper(self, sample_dataframe: pd.DataFrame):
         """Test brms_epred_to_idata helper function"""
         from brmspy import brms
 
@@ -363,7 +368,7 @@ class TestPredictionConsistency:
     """Test consistency between prediction methods."""
 
     @pytest.mark.slow
-    def test_epred_vs_predict_difference(self, sample_dataframe):
+    def test_epred_vs_predict_difference(self, sample_dataframe: pd.DataFrame):
         """
         Test that posterior_epred and posterior_predict give different results.
 
@@ -389,8 +394,8 @@ class TestPredictionConsistency:
         predict = brms.posterior_predict(model=model, newdata=sample_dataframe)
 
         # Extract values
-        epred_vals = epred.idata.posterior["epred"].values
-        predict_vals = predict.idata.posterior_predictive["y"].values
+        epred_vals = epred.idata.predictions["y_mean"].values
+        predict_vals = predict.idata.predictions["y"].values
 
         # Predictions should have higher variance (they include observation noise)
         epred_std = np.std(epred_vals)
@@ -407,7 +412,7 @@ class TestPoissonPredictions:
     """Test predictions work with non-Gaussian families."""
 
     @pytest.mark.slow
-    def test_poisson_predictions(self, poisson_data):
+    def test_poisson_predictions(self, poisson_data: pd.DataFrame):
         """Test prediction functions with Poisson family"""
         from brmspy import brms
 
@@ -429,12 +434,15 @@ class TestPoissonPredictions:
         linpred = brms.posterior_linpred(model=model, newdata=poisson_data)
 
         # Check they all have correct structure
-        assert hasattr(epred.idata, "posterior")
-        assert hasattr(predict.idata, "posterior_predictive")
-        assert hasattr(linpred.idata, "predictions")
+        assert epred.idata.predictions
+        assert epred.idata.predictions_constant_data
+        assert predict.idata.predictions
+        assert predict.idata.predictions_constant_data
+        assert linpred.idata.predictions
+        assert linpred.idata.predictions_constant_data
 
         # For Poisson: predictions should be integers
-        predict_vals = predict.idata.posterior_predictive["y"].values
+        predict_vals = predict.idata.predictions["y"].values
         # Check at least some values are non-zero integers
         assert np.any(predict_vals > 0)
         # Poisson predictions should be close to integers
