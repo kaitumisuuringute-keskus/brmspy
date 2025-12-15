@@ -177,7 +177,11 @@ def worker_main(
                                     "codec": enc.codec,
                                     "meta": enc.meta,
                                     "buffers": [
-                                        {"name": b.name, "size": b.size}
+                                        {
+                                            "name": b.name,
+                                            "size": b.size,
+                                            "content_size": b.content_size,
+                                        }
                                         for b in enc.buffers
                                     ],
                                 },
