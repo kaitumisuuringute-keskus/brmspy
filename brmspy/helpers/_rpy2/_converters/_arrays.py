@@ -1,10 +1,22 @@
+from collections import OrderedDict
 from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import pandas as pd
 
+from brmspy.helpers._rpy2._converters._vectors import (
+    _get_rvector_memview,
+    _get_rvector_types,
+    _r2py_vector,
+)
+from brmspy.helpers.log import log_warning
 from brmspy.types.shm import ShmPool
-from brmspy.types.shm_extensions import ShmArray, ShmDataFrameSimple
+from brmspy.types.shm_extensions import (
+    PandasColumnMetadata,
+    ShmArray,
+    ShmDataFrameColumns,
+    ShmDataFrameSimple,
+)
 
 from ....types.rpy2_converters import PyObject
 
@@ -15,19 +27,6 @@ from rpy2.rinterface import SexpVectorWithNumpyInterface
 from rpy2.rinterface_lib.sexp import NULL, Sexp, SexpVector
 
 # HELPERS
-
-
-def _get_vector_types(obj: Any) -> tuple[None | str, None | int]:
-    if not isinstance(obj, SexpVectorWithNumpyInterface):
-        return None, None
-
-    dtypestr = obj._NP_TYPESTR
-    itemsize = obj._R_SIZEOF_ELT
-
-    if not dtypestr or not itemsize:
-        return None, None
-
-    return dtypestr, itemsize
 
 
 def _rmatrix_info(obj: "Matrix") -> tuple[int, int, list[str] | None, list[str] | None]:
@@ -67,19 +66,15 @@ def _rmatrix_to_py(
     if shm is None:
         return np.array(obj)
 
-    dtypestr, itemsize = _get_vector_types(obj)
+    dtypestr, itemsize = _get_rvector_types(obj)
 
     if not dtypestr or not itemsize:
         return _rmatrix_to_py_default(obj)
 
     dtype = np.dtype(dtypestr)
 
-    assert isinstance(obj, SexpVectorWithNumpyInterface) and isinstance(
-        obj, SexpVector
-    )  # assert types, shouldnt error by itself
-    if hasattr(obj, "memoryview"):
-        src = cast(Any, obj).memoryview()
-    else:
+    rvecnp, src = _get_rvector_memview(obj)
+    if rvecnp is None or src is None:
         return _rmatrix_to_py_default(obj)
 
     nrow, ncol, rownames, colnames = _rmatrix_info(obj)
@@ -124,7 +119,7 @@ def _r2py_matrix(obj: "Matrix", shm: ShmPool | None = None) -> PyObject:
     return _rmatrix_to_py(obj=obj, shm=shm)
 
 
-def _r2py_dataframe(obj: "DataFrame", shm: ShmPool | None = None) -> PyObject:
+def _r2py_dataframe_fallback(obj: "DataFrame") -> PyObject:
     from rpy2.robjects import pandas2ri
     from rpy2.robjects.conversion import localconverter
 
@@ -132,12 +127,68 @@ def _r2py_dataframe(obj: "DataFrame", shm: ShmPool | None = None) -> PyObject:
         return cv.rpy2py(obj)
 
 
+def _r2py_dataframe(obj: "DataFrame", shm: ShmPool | None = None) -> PyObject:
+    if not shm:
+        return _r2py_dataframe_fallback(obj)
+
+    try:
+        from rpy2.robjects.pandas2ri import _flatten_dataframe
+
+        # convert straight into ShmDataframeColumns
+        colnames_lst = []
+        od = OrderedDict()
+        od_r = OrderedDict()
+        for i, col in enumerate(_flatten_dataframe(obj, colnames_lst)):
+            arr = _r2py_vector(col, shm)
+            od_r[i] = col
+            od[i] = arr
+
+        res = ShmDataFrameColumns(od)
+        res.columns = tuple(
+            ".".join(_) if isinstance(_, list) else _ for _ in colnames_lst
+        )
+        res.index = obj.rownames
+
+        cols_metadata: dict[str, PandasColumnMetadata] = {}
+        for idx, col in enumerate(res.columns):
+            arr = od[idx]
+            arr_r = od_r[idx]
+
+            if isinstance(arr, list):
+                arr = np.array(arr)
+                block, dtype, _, _ = ShmArray.to_shm(arr, shm)
+            elif isinstance(arr, ShmArray):
+                dtype = str(arr.dtype)
+                block = arr.block
+            else:
+                raise Exception(
+                    f"{col} is not a ShmArray, found {type(arr)} and R type {type(arr_r)}"
+                )
+
+            cols_metadata[col] = {
+                "name": col,
+                "np_dtype": dtype,
+                "pd_type": dtype,
+                "block": block,
+                "params": {},
+            }
+
+        res._blocks_columns = cols_metadata
+
+        return res
+    except Exception as e:
+        log_warning(
+            f"ShmDataFrameColumns conversion failed, falling back to default. Reason: {e}"
+        )
+        return _r2py_dataframe_fallback(obj)
+
+
 def _py2r_dataframe(obj: pd.DataFrame) -> Sexp:
     from rpy2.robjects import pandas2ri
     from rpy2.robjects.conversion import localconverter
 
-    if "obs_id" not in obj.columns:
-        obj["obs_id"] = obj.index
+    # if "obs_id" not in obj.columns:
+    #    obj = obj.reset_index(drop=False, names="obs_id")
 
     with localconverter(pandas2ri.converter) as cv:
         return cv.py2rpy(obj)

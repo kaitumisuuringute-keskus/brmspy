@@ -17,7 +17,7 @@ See Also
 """
 
 import pickle
-from typing import Any, TypedDict, Union
+from typing import Any, Literal, TypedDict, Union
 
 import numpy as np
 import pandas as pd
@@ -98,6 +98,72 @@ class ShmArray(np.ndarray):
 
         return obj
 
+    @classmethod
+    def array_order(cls, a: np.ndarray) -> Literal["C", "F", "non-contiguous"]:
+        """
+        Determine how an array can be reconstructed from a raw buffer.
+
+        Returns `"C"` for C-contiguous arrays, `"F"` for Fortran-contiguous arrays,
+        otherwise `"non-contiguous"` (meaning: bytes were obtained by forcing
+        a contiguous copy during encoding).
+        """
+        if a.flags["C_CONTIGUOUS"]:
+            return "C"
+        if a.flags["F_CONTIGUOUS"]:
+            return "F"
+        return "non-contiguous"
+
+    @classmethod
+    def is_string_object(cls, a: np.ndarray, sample: int = 1000):
+        if a.dtype != object:
+            return False
+        it = a.flat
+        for _ in range(min(sample, a.size)):
+            v = next(it, None)
+            if v is not None and not isinstance(v, str):
+                return False
+        return True
+
+    @classmethod
+    def to_shm(
+        cls, obj: np.ndarray | list, shm_pool: Any
+    ) -> tuple[ShmRef, str, list[int], str]:
+        arr = np.asarray(obj)
+        is_object = arr.dtype == "O"
+        is_string = cls.is_string_object(arr)
+
+        if isinstance(arr, ShmArray):
+            arr = arr
+            nbytes = arr.block["content_size"]
+            ref = arr.block
+
+        else:
+            if not is_object:
+                data = arr.tobytes(order="C")
+            elif is_string:
+                arr = arr.astype("U")
+                data = arr.tobytes(order="C")
+            else:
+                data = pickle.dumps(arr, protocol=pickle.HIGHEST_PROTOCOL)
+
+            nbytes = len(data)
+
+            # Ask for exactly nbytes; OS may round up internally, that's fine.
+            block = shm_pool.alloc(nbytes)
+            block.shm.buf[:nbytes] = data
+            ref = ShmRef(
+                name=block.name, size=block.size, content_size=block.content_size
+            )
+
+        ref, dtype, shape, order = (
+            ref,
+            str(arr.dtype),
+            list(arr.shape),
+            cls.array_order(arr),
+        )
+
+        return ref, dtype, shape, order
+
 
 class ShmDataFrameSimple(pd.DataFrame):
     """
@@ -165,8 +231,9 @@ class ShmDataFrameColumns(pd.DataFrame):
 
     Attributes
     ----------
-    blocks_columns : dict[str, PandasColumnMetadata]
+    _blocks_columns : dict[str, PandasColumnMetadata]
         Mapping from column name to data required for its reconstruction
     """
 
-    blocks_columns: dict[str, PandasColumnMetadata]
+    _metadata = ["_blocks_columns"]
+    _blocks_columns: dict[str, PandasColumnMetadata]

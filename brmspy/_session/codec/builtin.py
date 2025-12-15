@@ -39,75 +39,8 @@ from ...types.shm import ShmBlock, ShmRef
 ONE_MB = 1024 * 1024
 
 
-def array_order(a: np.ndarray) -> Literal["C", "F", "non-contiguous"]:
-    """
-    Determine how an array can be reconstructed from a raw buffer.
-
-    Returns `"C"` for C-contiguous arrays, `"F"` for Fortran-contiguous arrays,
-    otherwise `"non-contiguous"` (meaning: bytes were obtained by forcing
-    a contiguous copy during encoding).
-    """
-    if a.flags["C_CONTIGUOUS"]:
-        return "C"
-    if a.flags["F_CONTIGUOUS"]:
-        return "F"
-    return "non-contiguous"
-
-
 class NumpyArrayCodec(Encoder):
     """SHM-backed codec for [`numpy.ndarray`](https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html)."""
-
-    @classmethod
-    def is_string_object(cls, a: np.ndarray, sample: int = 1000):
-        if a.dtype != object:
-            return False
-        it = a.flat
-        for _ in range(min(sample, a.size)):
-            v = next(it, None)
-            if v is not None and not isinstance(v, str):
-                return False
-        return True
-
-    @classmethod
-    def to_shm(cls, obj: np.ndarray, shm_pool: Any) -> EncodeResult:
-        arr = np.asarray(obj)
-        is_object = arr.dtype == "O"
-        is_string = cls.is_string_object(obj)
-
-        if isinstance(arr, ShmArray):
-            arr = arr
-            nbytes = arr.block["content_size"]
-            ref = arr.block
-
-        else:
-            if not is_object:
-                data = arr.tobytes(order="C")
-            elif is_string:
-                arr = arr.astype("U")
-                data = arr.tobytes(order="C")
-            else:
-                data = pickle.dumps(arr, protocol=pickle.HIGHEST_PROTOCOL)
-
-            nbytes = len(data)
-
-            # Ask for exactly nbytes; OS may round up internally, that's fine.
-            block = shm_pool.alloc(nbytes)
-            block.shm.buf[:nbytes] = data
-            ref = ShmRef(
-                name=block.name, size=block.size, content_size=block.content_size
-            )
-
-        meta: dict[str, Any] = {
-            "dtype": str(arr.dtype),
-            "shape": list(arr.shape),
-            "order": array_order(arr),
-        }
-
-        return EncodeResult(
-            codec=cls.__name__,
-            meta=meta,
-            buffers=[ref],
-        )
 
     @classmethod
     def from_shm(cls, ref: PayloadRef, block: ShmBlock) -> np.ndarray:
@@ -122,7 +55,12 @@ class NumpyArrayCodec(Encoder):
         return isinstance(obj, np.ndarray)
 
     def encode(self, obj: Any, shm_pool: Any) -> EncodeResult:
-        return NumpyArrayCodec.to_shm(obj, shm_pool)
+        ref, dtype, shape, order = ShmArray.to_shm(obj, shm_pool)
+        return EncodeResult(
+            codec=type(self).__name__,
+            meta={"dtype": dtype, "shape": shape, "order": order},
+            buffers=[ref],
+        )
 
     def decode(
         self,
@@ -165,13 +103,13 @@ class PandasDFCodec(Encoder):
             # single dtype matrix
             meta["variant"] = "single"
             meta["dtype"] = str(obj.values.dtype)
-            meta["order"] = array_order(obj.values)
+            meta["order"] = ShmArray.array_order(obj.values)
             buffers.append(obj.block)
         elif isinstance(obj, ShmDataFrameColumns):
             # per column buffers
             meta["variant"] = "columnar"
             meta["order"] = "F"
-            meta["columns"] = obj.blocks_columns
+            meta["columns"] = obj._blocks_columns
         else:
             # Fallback: put each column in its own SHM block
             meta["variant"] = "columnar"
@@ -181,8 +119,9 @@ class PandasDFCodec(Encoder):
             for col_name in obj.columns:
                 col = obj[col_name]
 
-                encoded = NumpyArrayCodec.to_shm(col.to_numpy(copy=False), shm_pool)
-                block = encoded.buffers[0]
+                block, dtype, shape, order = ShmArray.to_shm(
+                    col.to_numpy(copy=False), shm_pool
+                )
 
                 spec = ShmRef(
                     name=block["name"],
@@ -192,7 +131,7 @@ class PandasDFCodec(Encoder):
                 columns[col_name] = {
                     "name": col_name,
                     "block": spec,
-                    "np_dtype": encoded.meta["dtype"],
+                    "np_dtype": dtype,
                     "pd_type": str(col.dtype),
                     "params": {},
                 }
@@ -256,7 +195,7 @@ class PandasDFCodec(Encoder):
                 data[col_name] = arr
 
             df = ShmDataFrameColumns(data=data, index=index)
-            df.blocks_columns = columns_metadata
+            df._blocks_columns = columns_metadata
             return df
         else:
             raise Exception(f"Unknown DataFrame variant {meta.get('variant')}")
@@ -370,9 +309,8 @@ class InferenceDataCodec(Encoder):
             # DATA VARS: main heavy arrays
             for vname, da in ds.data_vars.items():
                 arr = np.asarray(da.data)
-                encoded = NumpyArrayCodec.to_shm(arr, shm_pool)
-                meta = encoded.meta
-                spec = encoded.buffers[0]
+                spec, dtype, shape, order = ShmArray.to_shm(arr, shm_pool)
+                meta = {"dtype": dtype, "shape": shape, "order": order}
                 nbytes = spec["content_size"]
 
                 buffer_idx = len(buffers)
