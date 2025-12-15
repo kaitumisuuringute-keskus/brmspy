@@ -48,4 +48,55 @@ class RSessionError(RuntimeError):
 
 
 class RWorkerCrashedError(RuntimeError):
-    pass
+    """
+    Raised when the R worker process crashes during an operation.
+
+    Parameters
+    ----------
+    message : str
+        Human-readable description of the failure.
+    recovered : bool
+        Indicates whether a fresh worker session was successfully started.
+
+        * ``True``  – The crash occurred, but automatic recovery succeeded.
+                      The failed operation did *not* complete, but the worker
+                      is now in a clean state. Callers may safely retry.
+        * ``False`` – The crash occurred and automatic recovery failed.
+                      A usable worker session is not available. Callers should
+                      treat this as a hard failure and abort or escalate.
+    cause : BaseException, optional
+        The original exception that triggered the crash. Stored as ``__cause__``
+        for chained exception inspection.
+
+    Usage
+    -----
+    In user code or automated pipelines, you can distinguish between a
+    recoverable and unrecoverable crash:
+
+    ```python
+    try:
+        brms.brm(...)
+    except RWorkerCrashedError as err:
+        if err.recovered:
+            # Crash occurred, but a fresh worker is ready.
+            # Safe to retry the operation once.
+            brms.brm(...)
+        else:
+            # Worker could not be restarted.
+            # Treat this as a hard failure.
+            raise
+    ```
+
+    Notes
+    -----
+    All crashes automatically produce a new exception that wraps the original
+    failure using Python's exception chaining (``raise ... from cause``).
+    Inspect ``err.__cause__`` for the underlying system error.
+    """
+
+    def __init__(
+        self, message: str, *, recovered: bool, cause: BaseException | None = None
+    ):
+        super().__init__(message)
+        self.recovered = recovered
+        self.__cause__ = cause

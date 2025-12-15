@@ -699,12 +699,16 @@ class RModuleSession(ModuleType):
                 exc_info=restart_exc,
             )
             raise RWorkerCrashedError(
-                "R worker crashed; failed to start new session."
+                "R worker crashed; failed to start new session.",
+                recovered=False,
+                cause=restart_exc,
             ) from restart_exc
 
         # Recovery succeeded, but the *call* that hit this still failed
         raise RWorkerCrashedError(
-            "R worker crashed; started a fresh session. See __cause__ for details."
+            "R worker crashed; started a fresh session. See __cause__ for details.",
+            recovered=True,
+            cause=orig_exc,
         ) from orig_exc
 
     # ----------------- attribute proxying --------------
