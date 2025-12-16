@@ -193,9 +193,13 @@ class ShmArray(np.ndarray):
                 name=block.name, size=block.size, content_size=block.content_size
             )
 
+        arr_final = arr
+        if arr_modified is not None:
+            arr_final = arr_modified
+
         ref, dtype, shape, order = (
             ref,
-            str((arr_modified or arr).dtype),
+            str(arr_final.dtype),
             list(arr.shape),
             cls.array_order(arr),
         )
@@ -274,6 +278,13 @@ class ShmDataFrameColumns(pd.DataFrame):
     _metadata = ["_shm_metadata"]
     _shm_metadata: dict[str, ShmSeriesMetadata]
 
+    @property
+    def _constructor(self):
+        # We INTENTIONALLY do not return ShmSeriesMetadata
+        # whenever the dataframe is reindexed, slices, we want to get rid of all _shm_metadata,
+        # as otherwise we will have immediate problems with buffer alignment
+        return pd.DataFrame
+
     @classmethod
     def _create_col_metadata(
         cls, series: pd.Series, block: ShmRef, arr: np.ndarray | None = None, **params
@@ -345,7 +356,11 @@ class ShmDataFrameColumns(pd.DataFrame):
 
     @classmethod
     def _reconstruct_series(
-        cls, meta: ShmSeriesMetadata, block: ShmBlock, nrows: int
+        cls,
+        meta: ShmSeriesMetadata,
+        block: ShmBlock,
+        nrows: int,
+        index: list | None,
     ) -> pd.Series:
         col_name = meta["name"]
         col_name = str(col_name)
@@ -375,7 +390,7 @@ class ShmDataFrameColumns(pd.DataFrame):
             # If arr holds codes: build categorical from codes without copying codes.
             # Pandas uses -1 for missing.
             cat = pd.Categorical.from_codes(cast(Sequence[int], arr), dtype=cat_dtype)
-            return pd.Series(cat, name=col_name)
+            return pd.Series(cat, name=col_name, index=index)
 
         # 2) tz-aware datetimes (only if you ever allow it)
         # Expect arr to be int64 ns timestamps
@@ -386,13 +401,9 @@ class ShmDataFrameColumns(pd.DataFrame):
                 pass
             else:
                 dt = pd.to_datetime(arr, unit="ns", utc=True).tz_convert(tz)
-                return pd.Series(dt, name=col_name)
+                return pd.Series(dt, name=col_name, index=index)
 
-        return pd.Series(arr, name=col_name)
-
-    @property
-    def _constructor(self):
-        return ShmDataFrameColumns
+        return pd.Series(arr, name=col_name, index=index)
 
     def __setitem__(self, key, value):
         is_existing = key in self.columns

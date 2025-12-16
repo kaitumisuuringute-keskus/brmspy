@@ -83,7 +83,7 @@ class PandasDFCodec(Encoder):
 
         meta: dict[str, Any] = {
             "columns": list(obj.columns),
-            "index": list(obj.index),
+            "index": pickle.dumps(obj.index, protocol=pickle.HIGHEST_PROTOCOL),
             "variant": "single",
         }
         buffers: list[ShmRef] = []
@@ -133,10 +133,12 @@ class PandasDFCodec(Encoder):
         *args,
     ) -> Any:
         meta = payload["meta"]
-        buffer_specs = payload["buffers"]
-
         if meta.get("variant") == "empty":
             return pd.DataFrame({})
+
+        buffer_specs = payload["buffers"]
+
+        index = pickle.loads(meta["index"])
 
         if meta.get("variant") == "single":
             spec = buffer_specs[0]
@@ -146,7 +148,6 @@ class PandasDFCodec(Encoder):
             order = meta["order"]
 
             columns = meta["columns"]
-            index = meta["index"]
             shape = (len(index), len(columns))
 
             # Only use the slice that actually holds array data
@@ -159,7 +160,6 @@ class PandasDFCodec(Encoder):
             return df
         elif meta.get("variant") == "columnar":
             columns_metadata: dict[str, ShmSeriesMetadata] = meta["columns"]
-            index = meta["index"]
             nrows = len(index)
 
             columns = list(columns_metadata.keys())
@@ -171,11 +171,10 @@ class PandasDFCodec(Encoder):
                 spec = metadata["block"]
                 buf, view = get_buf(spec)
                 data[col_name] = ShmDataFrameColumns._reconstruct_series(
-                    metadata, buf, nrows
+                    metadata, buf, nrows, index
                 )
 
             df = ShmDataFrameColumns(data=data)
-            df.index = index
             df._set_shm_metadata(columns_metadata)
 
             return df
@@ -290,7 +289,8 @@ class InferenceDataCodec(Encoder):
 
             # DATA VARS: main heavy arrays
             for vname, da in ds.data_vars.items():
-                _, spec, dtype, shape, order = ShmArray.to_shm(da.data, shm_pool)
+                arr = np.asarray(da.data)
+                _, spec, dtype, shape, order = ShmArray.to_shm(arr, shm_pool)
                 meta = {"dtype": dtype, "shape": shape, "order": order}
                 nbytes = spec["content_size"]
 

@@ -193,9 +193,9 @@ def _py2r_dataframe(obj: pd.DataFrame) -> Sexp:
             # rpy2 wants string categories for factor conversion
             # it's stupid, but we will abide...
             if cats.inferred_type != "string":
-                log_warning(
-                    f"Column {c} has non-string categories, converting to string."
-                )
+                # log_warning(
+                #    f"Column {c} has non-string categories, converting to string."
+                # )
                 obj[c] = s.cat.rename_categories(cats.map(str))
 
     with localconverter(pandas2ri.converter) as cv:

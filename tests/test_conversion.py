@@ -1,28 +1,8 @@
+from decimal import Decimal
 import numpy as np
+import pandas as pd
 import pytest
-
-
-@pytest.mark.skip("No internals in main process")
-class TestDataConversion:
-    """Test data conversion utilities."""
-
-    @pytest.mark.worker
-    def test_convert_dataframe_to_r(self, sample_dataframe):
-        """Test DataFrame to R conversion"""
-        from brmspy.helpers._rpy2._conversion import py_to_r
-        from rpy2.robjects import DataFrame as RDataFrame
-
-        r_data = py_to_r(sample_dataframe)
-        assert isinstance(r_data, RDataFrame)
-
-    @pytest.mark.worker
-    def test_convert_dict_to_r(self, sample_dict):
-        """Test dict to R list conversion"""
-        from brmspy.helpers._rpy2._conversion import py_to_r
-        from rpy2.robjects import ListVector
-
-        r_data = py_to_r(sample_dict)
-        assert isinstance(r_data, ListVector)
+import datetime as dt
 
 
 class TestTypeCoercion:
@@ -215,3 +195,234 @@ class TestTypeCoercion:
 
         # Verify values are preserved
         assert np.array_equal(result["Y"], np.array([1, 2, 3, 4, 5]))
+
+
+def make_all_pandas_dtypes_df(n: int = 8) -> pd.DataFrame:
+    """
+    Build a DataFrame containing a broad set of pandas column dtypes:
+      - numpy scalar dtypes: bool, ints, uints, floats, complex
+      - pandas extension dtypes: nullable ints, nullable bool, nullable floats, strings
+      - categorical (string categories + int categories)
+      - datetime64[ns], datetime64[ns, tz], timedelta64[ns]
+      - period, interval
+      - sparse
+      - object (mixed python objects)
+    """
+    idx = pd.Index(range(n), name="idx")
+    df = pd.DataFrame(index=idx)
+
+    # --- numpy scalar dtypes ---
+    df["np_bool"] = pd.Series(
+        np.array([True, False] * (n // 2) + [True] * (n % 2), dtype=np.bool_), index=idx
+    )
+
+    df["np_int8"] = pd.Series(np.arange(n, dtype=np.int8), index=idx)
+    df["np_int16"] = pd.Series(np.arange(n, dtype=np.int16) - 3, index=idx)
+    df["np_int32"] = pd.Series(np.arange(n, dtype=np.int32) - 10, index=idx)
+    df["np_int64"] = pd.Series(np.arange(n, dtype=np.int64) - 100, index=idx)
+
+    df["np_uint8"] = pd.Series(np.arange(n, dtype=np.uint8), index=idx)
+    df["np_uint16"] = pd.Series(np.arange(n, dtype=np.uint16) + 1, index=idx)
+    df["np_uint32"] = pd.Series(np.arange(n, dtype=np.uint32) + 10, index=idx)
+    df["np_uint64"] = pd.Series(np.arange(n, dtype=np.uint64) + 100, index=idx)
+
+    df["np_float32"] = pd.Series((np.arange(n, dtype=np.float32) / 3.0), index=idx)
+    df["np_float64"] = pd.Series((np.arange(n, dtype=np.float64) / 7.0), index=idx)
+
+    df["np_complex64"] = pd.Series(
+        (np.arange(n, dtype=np.float32) + 1j * np.arange(n, dtype=np.float32)).astype(
+            np.complex64
+        ),
+        index=idx,
+    )
+    df["np_complex128"] = pd.Series(
+        (np.arange(n, dtype=np.float64) + 1j * np.arange(n, dtype=np.float64)).astype(
+            np.complex128
+        ),
+        index=idx,
+    )
+
+    # --- pandas nullable extension dtypes ---
+    df["pd_Int64"] = pd.Series(
+        [1, 2, pd.NA, 4, 5, pd.NA, 7, 8][:n], dtype="Int64", index=idx
+    )
+    df["pd_UInt64"] = pd.Series(
+        [1, 2, pd.NA, 4, 5, pd.NA, 7, 8][:n], dtype="UInt64", index=idx
+    )
+    df["pd_boolean"] = pd.Series(
+        [True, False, pd.NA, True, False, pd.NA, True, False][:n],
+        dtype="boolean",
+        index=idx,
+    )
+    df["pd_Float64"] = pd.Series(
+        [1.5, pd.NA, 3.25, 4.0, pd.NA, 6.0, 7.0, pd.NA][:n], dtype="Float64", index=idx
+    )
+
+    # string (python-backed)
+    df["pd_string"] = pd.Series(
+        ["a", None, "c", "d", None, "f", "g", "h"][:n], dtype="string", index=idx
+    )
+
+    # --- datetimes / timedeltas ---
+    df["np_datetime64ns"] = pd.Series(
+        pd.date_range("2024-01-01", periods=n, freq="D"), index=idx
+    )
+    df["np_timedelta64ns"] = pd.Series(
+        pd.to_timedelta(np.arange(n), unit="h"), index=idx
+    )
+
+    # tz-aware datetime (pick a non-UTC tz to catch tz dropping)
+    df["pd_datetime_tz"] = pd.Series(
+        pd.date_range("2024-01-01", periods=n, freq="D", tz="Europe/Tallinn"), index=idx
+    )
+
+    # --- categorical ---
+    # string categories (should roundtrip without rpy2 screaming)
+    df["cat_str"] = pd.Series(
+        pd.Categorical(
+            ["a", "b", "a", None, "c", "b", "c", None][:n],
+            categories=["a", "b", "c"],
+            ordered=False,
+        ),
+        index=idx,
+    )
+
+    # int categories (rpy2 factor conversion hates these; allowed to come back with string categories)
+    df["cat_int"] = pd.Series(
+        pd.Categorical(
+            [1, 2, 1, None, 2, 1, None, 2][:n], categories=[1, 2], ordered=True
+        ),
+        index=idx,
+    )
+
+    # --- period / interval ---
+    df["pd_period_M"] = pd.Series(
+        pd.period_range("2024-01", periods=n, freq="M"), index=idx
+    )
+
+    intervals = pd.IntervalIndex.from_breaks(
+        list(range(n + 1)), closed="left"
+    )  # interval[int64, left]
+    df["pd_interval"] = pd.Series(intervals[:n], index=idx)
+
+    # --- sparse ---
+    sparse_arr = pd.arrays.SparseArray(
+        [0, 1, 0, 2, 0, 3, 0, 4][:n], fill_value=0, dtype=np.int64
+    )
+    df["pd_sparse_int64"] = pd.Series(sparse_arr, index=idx)
+
+    # --- object (mixed python objects; should force your pickle/list-column path if you implement it) ---
+    df["obj_mixed"] = pd.Series(
+        [
+            {"k": 1},
+            (1, 2),
+            Decimal("1.25"),
+            dt.date(2024, 1, 1),
+            None,
+            b"bytes",
+            {"nested": {"x": 2}},
+            (3,),
+        ][:n],
+        dtype="object",
+        index=idx,
+    )
+
+    return df
+
+
+def _categories_are_strings(cat_dtype: pd.CategoricalDtype) -> bool:
+    # robust check: inferred_type is "string" for string categories
+    return getattr(cat_dtype.categories, "inferred_type", None) == "string"
+
+
+@pytest.mark.requires_brms
+class TestEncodingAndConversionRoundtrips:
+    def test_dataframe_empty(self):
+        from brmspy import brms
+
+        df = pd.DataFrame({})
+        dfr = brms.call("identity", df)
+        assert dfr.empty
+        assert len(dfr.columns) == 0
+        assert len(dfr.index) == 0
+
+    def test_dataframe_all_dtypes(self):
+        from brmspy import brms
+
+        df = make_all_pandas_dtypes_df()
+
+        out = brms.call("identity", df)
+
+        assert isinstance(
+            out, pd.DataFrame
+        ), f"Expected DataFrame back, got {type(out)!r}"
+        assert list(out.columns) == list(df.columns), "Columns changed during roundtrip"
+        assert len(out) == len(df), "Row count changed during roundtrip"
+
+        pd.testing.assert_index_equal(df.index, out.index)
+
+        failures: list[str] = []
+
+        for col in df.columns:
+            s0 = df[col]
+            s1 = out[col]
+
+            # ---- categorical special-case ----
+            if isinstance(s0.dtype, pd.CategoricalDtype):
+                if not isinstance(s1.dtype, pd.CategoricalDtype):
+                    failures.append(f"{col}: expected category, got {s1.dtype!r}")
+                    continue
+
+                d0 = s0.dtype
+                d1 = s1.dtype
+
+                if bool(d0.ordered) != bool(d1.ordered):
+                    failures.append(
+                        f"{col}: category ordered changed: {d0.ordered} -> {d1.ordered}"
+                    )
+
+                codes0 = s0.cat.codes.to_numpy()
+                codes1 = s1.cat.codes.to_numpy()
+                if not np.array_equal(codes0, codes1):
+                    failures.append(
+                        f"{col}: category codes changed: {codes0.tolist()} -> {codes1.tolist()}"
+                    )
+
+                # If original categories are strings, require exact categories equality.
+                # If original categories are non-strings (e.g., int), allow rpy2 workaround:
+                # categories may come back as strings but must match str(original_categories).
+                cats0 = list(d0.categories)
+                cats1 = list(d1.categories)
+
+                if _categories_are_strings(d0):
+                    if cats0 != cats1:
+                        failures.append(
+                            f"{col}: string categories changed: {cats0!r} -> {cats1!r}"
+                        )
+                else:
+                    want = [str(x) for x in cats0]
+                    got = [str(x) for x in cats1]
+                    if want != got:
+                        failures.append(
+                            f"{col}: non-string categories not preserved up to str(): {want!r} -> {got!r}"
+                        )
+
+                continue  # done with categorical
+
+            # ---- default path: strict dtype equality ----
+            if s0.dtype != s1.dtype:
+                failures.append(f"{col}: dtype changed: {s0.dtype!r} -> {s1.dtype!r}")
+                continue
+
+            # Value equality (strict)
+            try:
+                pd.testing.assert_series_equal(
+                    s0, s1, check_dtype=True, check_names=True
+                )
+            except AssertionError as e:
+                failures.append(f"{col}: values changed: {e}")
+
+        if failures:
+            raise AssertionError(
+                "Roundtrip identity dtype/value failures:\n- " + "\n- ".join(failures)
+            )
