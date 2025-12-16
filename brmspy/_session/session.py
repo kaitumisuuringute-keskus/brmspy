@@ -377,10 +377,6 @@ class RModuleSession(ModuleType):
         # copy attributes so IDEs / dir() see the module surface
         self.__dict__.update(module.__dict__)
 
-        from .._singleton._shm_singleton import _set_shm
-
-        _set_shm(self._shm_pool)
-
         # register for global cleanup at exit
         RModuleSession._instances.add(self)
         if not RModuleSession._atexit_registered:
@@ -444,6 +440,10 @@ class RModuleSession(ModuleType):
         self._mgr = mgr
         self._proc = proc
         self._shm_pool = ShmPool(mgr)
+        from .._singleton._shm_singleton import _set_shm
+
+        _set_shm(self._shm_pool)
+
         self._reg = get_default_registry()
         self._closed = False
 

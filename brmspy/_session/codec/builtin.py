@@ -29,7 +29,7 @@ from brmspy._session.codec.base import CodecRegistry
 from brmspy.types.session import EncodeResult, Encoder, PayloadRef
 
 from ...types.shm_extensions import (
-    PandasColumnMetadata,
+    ShmSeriesMetadata,
     ShmArray,
     ShmDataFrameColumns,
     ShmDataFrameSimple,
@@ -42,20 +42,11 @@ ONE_MB = 1024 * 1024
 class NumpyArrayCodec(Encoder):
     """SHM-backed codec for [`numpy.ndarray`](https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html)."""
 
-    @classmethod
-    def from_shm(cls, ref: PayloadRef, block: ShmBlock) -> np.ndarray:
-        meta = ref["meta"]
-        dtype = np.dtype(meta["dtype"])
-        shape = tuple(meta["shape"])
-        order = meta["order"]
-
-        return ShmArray.from_block(block=block, shape=shape, dtype=dtype, order=order)
-
     def can_encode(self, obj: Any) -> bool:
         return isinstance(obj, np.ndarray)
 
     def encode(self, obj: Any, shm_pool: Any) -> EncodeResult:
-        ref, dtype, shape, order = ShmArray.to_shm(obj, shm_pool)
+        _, ref, dtype, shape, order = ShmArray.to_shm(obj, shm_pool)
         return EncodeResult(
             codec=type(self).__name__,
             meta={"dtype": dtype, "shape": shape, "order": order},
@@ -70,7 +61,7 @@ class NumpyArrayCodec(Encoder):
     ) -> Any:
         buf, _ = get_buf(payload["buffers"][0])
 
-        return NumpyArrayCodec.from_shm(payload, buf)
+        return ShmArray.from_metadata(payload["meta"], buf)
 
 
 class PandasDFCodec(Encoder):
@@ -104,23 +95,23 @@ class PandasDFCodec(Encoder):
             meta["variant"] = "single"
             meta["dtype"] = str(obj.values.dtype)
             meta["order"] = ShmArray.array_order(obj.values)
-            buffers.append(obj.block)
+            buffers.append(obj._shm_metadata)
         elif isinstance(obj, ShmDataFrameColumns):
             # per column buffers
             meta["variant"] = "columnar"
             meta["order"] = "F"
-            meta["columns"] = obj._blocks_columns
+            meta["columns"] = obj._shm_metadata
         else:
             # Fallback: put each column in its own SHM block
             meta["variant"] = "columnar"
             meta["order"] = "C"
-            columns: dict[str, PandasColumnMetadata] = {}
+            columns: dict[str, ShmSeriesMetadata] = {}
 
             for col_name in obj.columns:
                 col = obj[col_name]
 
-                block, dtype, shape, order = ShmArray.to_shm(
-                    col.to_numpy(copy=False), shm_pool
+                arr_modified, block, dtype, shape, order = ShmArray.to_shm(
+                    col, shm_pool
                 )
 
                 spec = ShmRef(
@@ -128,13 +119,9 @@ class PandasDFCodec(Encoder):
                     size=block["size"],
                     content_size=block["content_size"],
                 )
-                columns[col_name] = {
-                    "name": col_name,
-                    "block": spec,
-                    "np_dtype": dtype,
-                    "pd_type": str(col.dtype),
-                    "params": {},
-                }
+                columns[col_name] = ShmDataFrameColumns._create_col_metadata(
+                    obj[col_name], spec, arr_modified
+                )
             meta["columns"] = columns
 
         return EncodeResult(codec=type(self).__name__, meta=meta, buffers=buffers)
@@ -167,35 +154,30 @@ class PandasDFCodec(Encoder):
             arr = np.ndarray(shape=shape, dtype=dtype, buffer=view, order=order)
 
             df = ShmDataFrameSimple(data=arr, index=index, columns=columns)
-            df.block = spec
+            df._set_shm_metadata(spec)
 
             return df
         elif meta.get("variant") == "columnar":
-            columns_metadata: dict[str, PandasColumnMetadata] = meta["columns"]
+            columns_metadata: dict[str, ShmSeriesMetadata] = meta["columns"]
             index = meta["index"]
             nrows = len(index)
 
             columns = list(columns_metadata.keys())
 
-            data: dict[str, np.ndarray] = {}
+            data: dict[str, pd.Series] = {}
 
             for i, col_name in enumerate(columns):
-                col_name = str(col_name)
                 metadata = columns_metadata[col_name]
-                dtype = np.dtype(metadata["np_dtype"])
                 spec = metadata["block"]
                 buf, view = get_buf(spec)
-                nbytes = spec["content_size"]
-
-                # 1D column
-                view = view[:nbytes]
-                arr = ShmArray.from_block(
-                    block=buf, shape=(nrows,), dtype=dtype, order="C"
+                data[col_name] = ShmDataFrameColumns._reconstruct_series(
+                    metadata, buf, nrows
                 )
-                data[col_name] = arr
 
-            df = ShmDataFrameColumns(data=data, index=index)
-            df._blocks_columns = columns_metadata
+            df = ShmDataFrameColumns(data=data)
+            df.index = index
+            df._set_shm_metadata(columns_metadata)
+
             return df
         else:
             raise Exception(f"Unknown DataFrame variant {meta.get('variant')}")
@@ -308,8 +290,7 @@ class InferenceDataCodec(Encoder):
 
             # DATA VARS: main heavy arrays
             for vname, da in ds.data_vars.items():
-                arr = np.asarray(da.data)
-                spec, dtype, shape, order = ShmArray.to_shm(arr, shm_pool)
+                _, spec, dtype, shape, order = ShmArray.to_shm(da.data, shm_pool)
                 meta = {"dtype": dtype, "shape": shape, "order": order}
                 nbytes = spec["content_size"]
 

@@ -12,7 +12,7 @@ from brmspy.helpers._rpy2._converters._vectors import (
 from brmspy.helpers.log import log_warning
 from brmspy.types.shm import ShmPool
 from brmspy.types.shm_extensions import (
-    PandasColumnMetadata,
+    ShmSeriesMetadata,
     ShmArray,
     ShmDataFrameColumns,
     ShmDataFrameSimple,
@@ -149,31 +149,27 @@ def _r2py_dataframe(obj: "DataFrame", shm: ShmPool | None = None) -> PyObject:
         )
         res.index = obj.rownames
 
-        cols_metadata: dict[str, PandasColumnMetadata] = {}
+        cols_metadata: dict[str, ShmSeriesMetadata] = {}
         for idx, col in enumerate(res.columns):
             arr = od[idx]
             arr_r = od_r[idx]
+            arr_modified = None
 
             if isinstance(arr, list):
                 arr = np.array(arr)
-                block, dtype, _, _ = ShmArray.to_shm(arr, shm)
+                arr_modified, block, dtype, _, _ = ShmArray.to_shm(arr, shm)
             elif isinstance(arr, ShmArray):
-                dtype = str(arr.dtype)
-                block = arr.block
+                block = arr._shm_metadata
             else:
                 raise Exception(
                     f"{col} is not a ShmArray, found {type(arr)} and R type {type(arr_r)}"
                 )
 
-            cols_metadata[col] = {
-                "name": col,
-                "np_dtype": dtype,
-                "pd_type": dtype,
-                "block": block,
-                "params": {},
-            }
+            cols_metadata[col] = ShmDataFrameColumns._create_col_metadata(
+                res[col], block, arr_modified
+            )
 
-        res._blocks_columns = cols_metadata
+        res._set_shm_metadata(cols_metadata)
 
         return res
     except Exception as e:
@@ -189,6 +185,18 @@ def _py2r_dataframe(obj: pd.DataFrame) -> Sexp:
 
     # if "obs_id" not in obj.columns:
     #    obj = obj.reset_index(drop=False, names="obs_id")
+
+    for c in obj.columns:
+        s = obj[c]
+        if isinstance(s.dtype, pd.CategoricalDtype):
+            cats = s.dtype.categories
+            # rpy2 wants string categories for factor conversion
+            # it's stupid, but we will abide...
+            if cats.inferred_type != "string":
+                log_warning(
+                    f"Column {c} has non-string categories, converting to string."
+                )
+                obj[c] = s.cat.rename_categories(cats.map(str))
 
     with localconverter(pandas2ri.converter) as cv:
         return cv.py2rpy(obj)
