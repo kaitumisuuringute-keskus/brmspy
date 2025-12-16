@@ -124,7 +124,8 @@ def _r2py_dataframe_fallback(obj: "DataFrame") -> PyObject:
     from rpy2.robjects.conversion import localconverter
 
     with localconverter(pandas2ri.converter) as cv:
-        return cv.rpy2py(obj)
+        df = cv.rpy2py(obj)
+    return _adjust_df_for_py(df)
 
 
 def _r2py_dataframe(obj: "DataFrame", shm: ShmPool | None = None) -> PyObject:
@@ -160,6 +161,8 @@ def _r2py_dataframe(obj: "DataFrame", shm: ShmPool | None = None) -> PyObject:
                 arr_modified, block, dtype, _, _ = ShmArray.to_shm(arr, shm)
             elif isinstance(arr, ShmArray):
                 block = arr._shm_metadata
+            elif isinstance(arr.dtype, pd.CategoricalDtype):
+                arr_modified, block, dtype, _, _ = ShmArray.to_shm(arr, shm)
             else:
                 raise Exception(
                     f"{col} is not a ShmArray, found {type(arr)} and R type {type(arr_r)}"
@@ -168,8 +171,8 @@ def _r2py_dataframe(obj: "DataFrame", shm: ShmPool | None = None) -> PyObject:
             cols_metadata[col] = ShmDataFrameColumns._create_col_metadata(
                 res[col], block, arr_modified
             )
-
         res._set_shm_metadata(cols_metadata)
+        res = _adjust_df_for_py(res)
 
         return res
     except Exception as e:
@@ -179,24 +182,40 @@ def _r2py_dataframe(obj: "DataFrame", shm: ShmPool | None = None) -> PyObject:
         return _r2py_dataframe_fallback(obj)
 
 
-def _py2r_dataframe(obj: pd.DataFrame) -> Sexp:
-    from rpy2.robjects import pandas2ri
-    from rpy2.robjects.conversion import localconverter
-
-    # if "obs_id" not in obj.columns:
-    #    obj = obj.reset_index(drop=False, names="obs_id")
+def _adjust_df_for_r(obj: pd.DataFrame) -> pd.DataFrame:
+    if "__obs_id__" not in obj.columns:
+        obj = obj.reset_index(drop=False, names="__obs_id__")
 
     for c in obj.columns:
         s = obj[c]
         if isinstance(s.dtype, pd.CategoricalDtype):
             cats = s.dtype.categories
-            # rpy2 wants string categories for factor conversion
-            # it's stupid, but we will abide...
+            # needs string categories for factor conversion
             if cats.inferred_type != "string":
                 # log_warning(
                 #    f"Column {c} has non-string categories, converting to string."
                 # )
                 obj[c] = s.cat.rename_categories(cats.map(str))
+
+        elif pd.api.types.is_integer_dtype(s.dtype) and s.dtype != np.int32:
+            obj[c] = obj[c].astype("int32")
+        elif pd.api.types.is_float_dtype(s.dtype) and s.dtype != np.float64:
+            obj[c] = obj[c].astype("float64")
+
+    return obj
+
+
+def _adjust_df_for_py(df: pd.DataFrame) -> pd.DataFrame:
+    if "__obs_id__" in df.columns:
+        df = df.set_index("__obs_id__", drop=True)
+    return df
+
+
+def _py2r_dataframe(obj: pd.DataFrame) -> Sexp:
+    from rpy2.robjects import pandas2ri
+    from rpy2.robjects.conversion import localconverter
+
+    obj = _adjust_df_for_r(obj)
 
     with localconverter(pandas2ri.converter) as cv:
         return cv.py2rpy(obj)

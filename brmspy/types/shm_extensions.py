@@ -371,6 +371,8 @@ class ShmDataFrameColumns(pd.DataFrame):
 
         arr = ShmArray.from_block(block=block, shape=(nrows,), dtype=dtype, order="C")
 
+        # print(meta)
+
         if pd_dtype == "category":
             cats = params.get("categories", None)
             ordered = bool(params.get("ordered", False))
@@ -392,7 +394,7 @@ class ShmDataFrameColumns(pd.DataFrame):
             cat = pd.Categorical.from_codes(cast(Sequence[int], arr), dtype=cat_dtype)
             return pd.Series(cat, name=col_name, index=index)
 
-        # 2) tz-aware datetimes (only if you ever allow it)
+        # 2) tz-aware datetimes
         # Expect arr to be int64 ns timestamps
         if pd_dtype.startswith("datetime64[ns,") or pd_dtype == "datetime64[ns, tz]":
             tz = params.get("tz")

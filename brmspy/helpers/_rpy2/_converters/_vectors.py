@@ -1,12 +1,13 @@
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Sequence, cast
 
+import pandas as pd
 from rpy2.rinterface_lib.sexp import NULL
 
 from brmspy.types.shm_extensions import ShmArray
 
 if TYPE_CHECKING:
-    from rpy2.robjects import ListVector, Vector
+    from rpy2.robjects import ListVector, Vector, FactorVector
 
 import numpy as np
 import rpy2.rinterface as rinterface
@@ -71,14 +72,28 @@ def _r2py_listvector(
 
 def _fallback_rvector_iter(obj):
     from rpy2.robjects.conversion import localconverter
-    from rpy2.robjects import default_converter
+    from rpy2.robjects import default_converter, FactorVector
 
     out = []
     with localconverter(default_converter) as cv:
         for el in obj:
             py = cv.rpy2py(el)
             out.append(py)
+    is_factor = isinstance(obj, FactorVector)
+    if is_factor:
+        return _to_pandas_factor(np.asarray(out), obj)
+
     return out
+
+
+def _to_pandas_factor(arr: Any, obj_r: "FactorVector"):
+    # codes = [x-1 if x > 0 else -1 for x in obj]
+    arr -= 1
+    arr = np.clip(arr, -1, 2**31)
+    res = pd.Categorical.from_codes(
+        arr, categories=list(obj_r.do_slot("levels")), ordered="ordered" in obj_r.rclass
+    )
+    return res
 
 
 def _r2py_vector(obj: "Vector", shm: ShmPool | None = None) -> PyObject:
@@ -95,6 +110,8 @@ def _r2py_vector(obj: "Vector", shm: ShmPool | None = None) -> PyObject:
         with localconverter(default_converter) as cv:
             py = cv.rpy2py(obj[0])
         return py
+
+    is_factor = isinstance(obj, ro.FactorVector)
 
     dtypestr, itemsize = _get_rvector_types(obj)
     rvecnp, src = _get_rvector_memview(obj)
@@ -119,7 +136,11 @@ def _r2py_vector(obj: "Vector", shm: ShmPool | None = None) -> PyObject:
     src_bytes = src.cast("B")
     block.shm.buf[:expected_bytes] = src_bytes
 
-    return ShmArray.from_block(block=block, shape=(N,), dtype=dtype)
+    arr = ShmArray.from_block(block=block, shape=(N,), dtype=dtype)
+    if is_factor:
+        return _to_pandas_factor(arr, obj)
+
+    return arr
 
 
 def _py2r_list(obj: list | tuple) -> Sexp:
