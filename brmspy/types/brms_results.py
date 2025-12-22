@@ -303,8 +303,8 @@ class SummaryResult(RListVectorExtension):
     thin: float
     has_rhat: bool
     fixed: pd.DataFrame
-    spec_pars: pd.DataFrame
-    cor_pars: pd.DataFrame
+    spec_pars: pd.DataFrame | None = None
+    cor_pars: pd.DataFrame | None = None
     rescor_pars: pd.DataFrame | None = None
     ngrps: dict[str, int] | None = None
     autocor: dict | None = None

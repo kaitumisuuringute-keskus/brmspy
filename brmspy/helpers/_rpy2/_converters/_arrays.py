@@ -153,7 +153,7 @@ def _r2py_dataframe_fallback(obj: "DataFrame") -> PyObject:
 
                 col_r = obj.rx2(name)
                 if isinstance(col_r, ro.FactorVector):
-                    cat = _r2py_vector(col_r, shm=None)
+                    cat = _r2py_vector(col_r, shm=None, allow_scalar=False)
                     df[col_name] = pd.Series(
                         cast(np.ndarray, cat), index=df.index, name=col_name, copy=False
                     )
@@ -171,12 +171,16 @@ def _r2py_dataframe(obj: "DataFrame", shm: ShmPool | None = None) -> PyObject:
     try:
         from rpy2.robjects.pandas2ri import _flatten_dataframe
 
+        rownames = list(obj.rownames)
+        if len(rownames) == 0:
+            return pd.DataFrame({})
+
         # convert straight into ShmDataframeColumns
         colnames_lst = []
         od = OrderedDict()
         od_r = OrderedDict()
         for i, col in enumerate(_flatten_dataframe(obj, colnames_lst)):
-            arr = _r2py_vector(col, shm)
+            arr = _r2py_vector(col, shm, allow_scalar=False)
             od_r[i] = col
             od[i] = arr
 
@@ -184,33 +188,16 @@ def _r2py_dataframe(obj: "DataFrame", shm: ShmPool | None = None) -> PyObject:
         res.columns = tuple(
             ".".join(_) if isinstance(_, list) else _ for _ in colnames_lst
         )
-        res.index = obj.rownames
+        res.index = rownames
+        res._set_shm_metadata({})
 
-        cols_metadata: dict[str, ShmSeriesMetadata] = {}
-        for idx, col in enumerate(res.columns):
-            arr = od[idx]
-            arr_r = od_r[idx]
-            arr_modified = None
+        if res.empty:
+            return res
 
-            if isinstance(arr, list):
-                arr = np.array(arr)
-                arr_modified, block, dtype, _, _ = ShmArray.to_shm(arr, shm)
-            elif isinstance(arr, ShmArray):
-                block = arr._shm_metadata
-            elif isinstance(arr.dtype, pd.CategoricalDtype):
-                # IMPORTANT: `arr` is a `pd.Categorical` here. `np.asarray(arr)` yields the
-                # category *values* (often strings), not the integer codes. Store the codes
-                # by passing the Series into `to_shm()`.
-                arr_modified, block, dtype, _, _ = ShmArray.to_shm(res[col], shm)
-            else:
-                raise Exception(
-                    f"{col} is not a ShmArray, found {type(arr)} and R type {type(arr_r)}"
-                )
-
-            cols_metadata[col] = ShmDataFrameColumns._create_col_metadata(
-                res[col], block, arr_modified
-            )
-        res._set_shm_metadata(cols_metadata)
+        for col in res.columns:
+            # Trigger SHM put.
+            # ShmDataFrameColumns has _on events that trigger on col update.
+            res[col] = res[col]
         res = _adjust_df_for_py(res)
 
         return res

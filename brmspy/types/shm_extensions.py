@@ -93,7 +93,7 @@ class ShmArray(np.ndarray):
         ShmArray
             Array view into the shared-memory buffer.
         """
-        is_object = dtype == "O"
+        is_object = np.dtype(dtype) == np.dtype("O")
 
         if not is_object:
             if block.shm.buf:
@@ -140,7 +140,7 @@ class ShmArray(np.ndarray):
 
     @classmethod
     def is_string_object(cls, a: np.ndarray, sample: int = 1000):
-        if a.dtype != object:
+        if np.dtype(a.dtype) != np.dtype("O"):
             return False
         it = a.flat
         for _ in range(min(sample, a.size)):
@@ -163,11 +163,10 @@ class ShmArray(np.ndarray):
         else:
             arr = obj
 
-        is_object = arr.dtype == "O"
+        is_object = np.dtype(arr.dtype) == np.dtype("O")
         is_string = cls.is_string_object(arr)
 
         arr_modified = None
-
         if isinstance(arr, ShmArray):
             arr = arr
             nbytes = arr._shm_metadata["content_size"]
@@ -188,17 +187,11 @@ class ShmArray(np.ndarray):
             # Ask for exactly nbytes; OS may round up internally, that's fine.
             block = shm_pool.alloc(nbytes)
             block.shm.buf[:nbytes] = data
-            ref = ShmRef(
-                name=block.name, size=block.size, content_size=block.content_size
-            )
-
-        arr_final = arr
-        if arr_modified is not None:
-            arr_final = arr_modified
+            ref = ShmRef(name=block.name, size=block.size, content_size=nbytes)
 
         ref, dtype, shape, order = (
             ref,
-            str(arr_final.dtype),
+            str(arr.dtype),
             list(arr.shape),
             cls.array_order(arr),
         )
@@ -300,9 +293,12 @@ class ShmDataFrameColumns(pd.DataFrame):
             # IMPORTANT: store integer codes, not values
             # -1 means missing
             array = series.cat.codes.to_numpy(copy=False)
+        elif arr is not None:
+            assert isinstance(arr, np.ndarray)
+            array = arr
         else:
             # for numeric-only SHM: require a real numpy array output here
-            array = series.to_numpy(copy=False) if arr is None else arr
+            array = series.to_numpy(copy=False)
 
         # Optional param dtypes you mentioned (only if you support them)
         if isinstance(pd_dtype, pd.PeriodDtype):
@@ -319,6 +315,14 @@ class ShmDataFrameColumns(pd.DataFrame):
             "block": block,
             "params": params,
         }
+
+        if np.dtype(meta["np_dtype"]) == np.dtype("O"):
+            # Sanity check. If this goes wrong, it will be frustrating to debug
+            if ShmArray.is_string_object(array, sample=25):
+                raise Exception(
+                    f"{series.name} column is string, but stored as object!"
+                )
+
         return meta
 
     def _set_col_raw(self, col: str, value) -> None:
@@ -341,12 +345,13 @@ class ShmDataFrameColumns(pd.DataFrame):
             pass
         elif isinstance(vals, np.ndarray):
             arr_modified, ref, dtype, shape, order = ShmArray.to_shm(df[col], shm_pool)
+
             if arr_modified is not None:
                 # Only needed for string-object normalization; for numeric/codes it's None
                 df._set_col_raw(
                     col, pd.Series(arr_modified, index=df.index, name=col, copy=False)
                 )
-            df._shm_metadata[col] = cls._create_col_metadata(df[col], ref)
+            df._shm_metadata[col] = cls._create_col_metadata(df[col], ref, arr_modified)
             return
         else:
             print(

@@ -25,7 +25,7 @@ class ShmPool(_ShmPool):
 
     def alloc(self, size: int) -> ShmBlock:
         shm = self._manager.SharedMemory(size=size)
-        block = ShmBlock(name=shm.name, size=size, shm=shm, content_size=size)
+        block = ShmBlock(name=shm.name, size=shm.size, shm=shm, content_size=size)
         self._blocks[block.name] = block
         return block
 

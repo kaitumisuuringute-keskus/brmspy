@@ -108,20 +108,23 @@ def _to_pandas_factor(arr: Any, obj_r: "FactorVector"):
     return res
 
 
-def _r2py_vector(obj: "Vector", shm: ShmPool | None = None) -> PyObject:
+def _r2py_vector(
+    obj: "Vector", shm: ShmPool | None = None, allow_scalar: bool | None = True
+) -> PyObject:
     import rpy2.robjects as ro
     from rpy2.robjects import default_converter
     from rpy2.robjects.conversion import localconverter
 
     assert not isinstance(obj, ro.ListVector)
 
-    obj_any = cast(Any, obj)
-    # length 1 → scalar
-    if obj_any.__len__ and len(obj_any) == 1:
-        # Try default R→Python conversion
-        with localconverter(default_converter) as cv:
-            py = cv.rpy2py(obj[0])
-        return py
+    if allow_scalar:
+        obj_any = cast(Any, obj)
+        # length 1 → scalar
+        if obj_any.__len__ and len(obj_any) == 1:
+            # Try default R→Python conversion
+            with localconverter(default_converter) as cv:
+                py = cv.rpy2py(obj[0])
+            return py
 
     is_factor = isinstance(obj, ro.FactorVector)
 

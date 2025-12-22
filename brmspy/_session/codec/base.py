@@ -21,19 +21,6 @@ def _noop(_blocks):
     pass
 
 
-def _attach_shm_lifetime(obj: Any, shms: list[ShmBlock]) -> None:
-    """Keep SHM blocks alive as long as `obj` is alive."""
-    if not shms:
-        return
-    if obj is None or isinstance(obj, (bool, str, int, float)):
-        return
-
-    try:
-        weakref.finalize(obj, _noop, tuple(shms))
-    except:
-        return
-
-
 class CodecRegistry:
     """Ordered registry of encoders used for IPC serialization."""
 
@@ -127,9 +114,22 @@ class CodecRegistry:
             # Only use the slice that actually holds array data
             view = memview[: ref["content_size"]]
 
-            return buf, view
+            return buf, view.cast("B")
 
         value = self._by_codec[codec].decode(payload, get_buf, shm_pool)
-        _attach_shm_lifetime(value, buffers)
+        self._attach_shm_lifetime(value, buffers)
 
         return value
+
+    @classmethod
+    def _attach_shm_lifetime(cls, obj: Any, shms: list[ShmBlock]) -> None:
+        """Keep SHM blocks alive as long as `obj` is alive."""
+        if not shms:
+            return
+        if obj is None or isinstance(obj, (bool, str, int, float)):
+            return
+
+        try:
+            weakref.finalize(obj, _noop, tuple(shms))
+        except:
+            return
