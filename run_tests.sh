@@ -20,6 +20,28 @@ fi
 TESTS="tests/"
 RCFILE=".coveragerc"
 
+(
+  # desired target (will be capped by kernel / runner)
+  TARGET_NOFILE=500000
+
+  # get current hard limit (empty if unsupported)
+  HARD="$(ulimit -Hn 2>/dev/null || true)"
+
+  # if hard limit exists, try to raise it
+  if [[ -n "${HARD}" ]]; then
+    # attempt to raise hard first (may fail silently)
+    ulimit -Hn "${TARGET_NOFILE}" >/dev/null 2>&1 || true
+
+    # re-read hard (in case it changed or was capped)
+    HARD="$(ulimit -Hn 2>/dev/null || true)"
+
+    # set soft to whatever hard ended up being
+    if [[ -n "${HARD}" ]]; then
+      ulimit -Sn "${HARD}" >/dev/null 2>&1 || true
+    fi
+  fi
+) || true
+
 # 1) Run tests, collect coverage but DO NOT print report from pytest
 "${PYTEST_CMD[@]}" "$TESTS" -v \
   --cov=brmspy \
