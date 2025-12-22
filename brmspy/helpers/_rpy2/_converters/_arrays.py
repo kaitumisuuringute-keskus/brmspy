@@ -195,8 +195,9 @@ def _r2py_dataframe(obj: "DataFrame", shm: ShmPool | None = None) -> PyObject:
             return res
 
         for col in res.columns:
-            # Trigger SHM put.
-            # ShmDataFrameColumns has _on events that trigger on col update.
+            # Side-effect: ShmDataFrameColumns overrides __setitem__/events;
+            # assigning the same Series forces the "put column to SHM" path
+            # DO NOT REMOVE!
             res[col] = res[col]
         res = _adjust_df_for_py(res)
 
