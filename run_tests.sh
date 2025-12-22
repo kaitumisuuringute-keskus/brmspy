@@ -17,7 +17,7 @@ else
   IMPORTLINTER_CMD=(lint-imports)
 fi
 
-TESTS="tests/test_conversion.py"
+TESTS="tests/"
 RCFILE=".coveragerc"
 
 # 1) Run tests, collect coverage but DO NOT print report from pytest
