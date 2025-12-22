@@ -127,7 +127,7 @@ class CodecRegistry:
             # Only use the slice that actually holds array data
             view = memview[: ref["content_size"]]
 
-            return buf, view.cast("B")
+            return buf, view
 
         value = self._by_codec[codec].decode(payload, get_buf, shm_pool)
         _attach_shm_lifetime(value, buffers)

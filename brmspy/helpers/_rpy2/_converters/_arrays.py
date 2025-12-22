@@ -162,7 +162,10 @@ def _r2py_dataframe(obj: "DataFrame", shm: ShmPool | None = None) -> PyObject:
             elif isinstance(arr, ShmArray):
                 block = arr._shm_metadata
             elif isinstance(arr.dtype, pd.CategoricalDtype):
-                arr_modified, block, dtype, _, _ = ShmArray.to_shm(arr, shm)
+                # IMPORTANT: `arr` is a `pd.Categorical` here. `np.asarray(arr)` yields the
+                # category *values* (often strings), not the integer codes. Store the codes
+                # by passing the Series into `to_shm()`.
+                arr_modified, block, dtype, _, _ = ShmArray.to_shm(res[col], shm)
             else:
                 raise Exception(
                     f"{col} is not a ShmArray, found {type(arr)} and R type {type(arr_r)}"

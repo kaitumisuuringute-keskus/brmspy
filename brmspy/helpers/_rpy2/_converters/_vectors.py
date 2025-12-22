@@ -74,22 +74,26 @@ def _fallback_rvector_iter(obj):
     from rpy2.robjects.conversion import localconverter
     from rpy2.robjects import default_converter, FactorVector
 
+    is_factor = isinstance(obj, FactorVector)
+    if is_factor:
+        return _to_pandas_factor(np.array(obj), obj)
+
     out = []
     with localconverter(default_converter) as cv:
         for el in obj:
             py = cv.rpy2py(el)
             out.append(py)
-    is_factor = isinstance(obj, FactorVector)
-    if is_factor:
-        return _to_pandas_factor(np.asarray(out), obj)
 
     return out
 
 
 def _to_pandas_factor(arr: Any, obj_r: "FactorVector"):
     # codes = [x-1 if x > 0 else -1 for x in obj]
+    if not isinstance(arr, np.ndarray):
+        arr = np.asarray(arr)
     arr -= 1
-    arr = np.clip(arr, -1, 2**31)
+    # arr = np.clip(arr, -1, 2**31)
+    print("_to_pandas_factor", arr, "dtype", arr.dtype)
     res = pd.Categorical.from_codes(
         arr, categories=list(obj_r.do_slot("levels")), ordered="ordered" in obj_r.rclass
     )

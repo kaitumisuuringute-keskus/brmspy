@@ -16,6 +16,7 @@ See Also
     Base shared-memory block and pool types.
 """
 
+import json
 import pickle
 from typing import Any, Hashable, Literal, Sequence, TypedDict, Union, cast
 from numpy.typing import ArrayLike
@@ -161,8 +162,10 @@ class ShmArray(np.ndarray):
                 arr = obj.cat.codes.to_numpy(copy=False)
             else:
                 arr = obj.to_numpy(copy=False)
-        else:
+        elif not isinstance(obj, np.ndarray):
             arr = np.asarray(obj)
+        else:
+            arr = obj
 
         is_object = arr.dtype == "O"
         is_string = cls.is_string_object(arr)
@@ -313,13 +316,18 @@ class ShmDataFrameColumns(pd.DataFrame):
             params["subtype"] = np.dtype(pd_dtype.subtype).str
             params["closed"] = str(pd_dtype.closed)  # type: ignore[attr-defined]
 
-        return {
+        meta: ShmSeriesMetadata = {
             "name": series.name,
-            "np_dtype": np.dtype(array.dtype).str,
+            "np_dtype": str(array.dtype),
             "pd_dtype": str(pd_dtype.name),
             "block": block,
             "params": params,
         }
+        if series.name == "Trt":
+            print("array", array.shape, array.dtype)
+            print("array", array)
+            print("create_col_meta Trt", json.dumps(meta, indent=2))
+        return meta
 
     def _set_col_raw(self, col: str, value) -> None:
         # bypass our __setitem__
@@ -391,6 +399,7 @@ class ShmDataFrameColumns(pd.DataFrame):
             # arr should hold integer codes
             # If arr holds codes: build categorical from codes without copying codes.
             # Pandas uses -1 for missing.
+            print("arr", arr.dtype, arr)
             cat = pd.Categorical.from_codes(cast(Sequence[int], arr), dtype=cat_dtype)
             return pd.Series(cat, name=col_name, index=index)
 

@@ -1,4 +1,5 @@
 from __future__ import annotations
+import json
 
 """
 Built-in IPC codecs used by the session layer (internal).
