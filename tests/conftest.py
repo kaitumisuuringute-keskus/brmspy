@@ -40,7 +40,7 @@ def _force_brmspy_cleanup_between_tests():
         if getattr(brms, "_is_rsession", True):
             try:
                 # Restart between tests to force-close worker-side `/psm_*` SHM FDs.
-                cast(Any, brms).restart(empty_shm=True)
+                cast(Any, brms).restart()
             except Exception:
                 pass
     except Exception:

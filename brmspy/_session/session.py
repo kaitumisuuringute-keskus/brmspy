@@ -1,4 +1,5 @@
 from __future__ import annotations
+import gc
 
 """
 Main↔worker session and proxy module machinery.
@@ -67,7 +68,6 @@ _INTERNAL_ATTRS = {
     "add_contextmanager",
     "restart",
     "shutdown",
-    "_force_empty_shm_pool",
     "environment_exists",
     "environment_activate",
     "_run_test_by_name",
@@ -825,28 +825,6 @@ class RModuleSession(ModuleType):
         """Shut down the worker and related resources."""
         self._teardown_worker()
 
-    def _force_empty_shm_pool(self) -> None:
-        """
-        Don't call outside of restart()
-
-        Force-close all SHM handles tracked by this session in *this* process.
-
-        This is intended for test/CI stabilization (e.g. macOS low FD limits),
-        and is best-effort (all errors suppressed).
-
-        Notes
-        -----
-        - This only affects SHM handles tracked by the parent-side pool.
-        - It does NOT guarantee cleanup of worker-side SHM attaches while the worker is alive.
-          For a full reset, call `shutdown()` (or `restart()`), which tears down the worker.
-        """
-        try:
-            pool = getattr(self, "_shm_pool", None)
-            if pool is not None:
-                pool.close_all()
-        except Exception:
-            pass
-
     def __del__(self) -> None:
         """Best-effort cleanup on GC; errors are suppressed."""
         try:
@@ -973,7 +951,7 @@ class RModuleSession(ModuleType):
         self,
         environment_conf: dict[str, Any] | EnvironmentConfig | None = None,
         autoload: bool = True,
-        empty_shm: bool = False,
+        # empty_shm: bool = False,
     ) -> None:
         """
         Restart the worker process and SHM manager.
@@ -996,8 +974,10 @@ class RModuleSession(ModuleType):
         # Tear down existing worker (if any)
         self._teardown_worker()
 
-        if empty_shm:
-            self._force_empty_shm_pool()
+        gc.collect()
+
+        # if empty_shm:
+        #    self._force_empty_shm_pool()
 
         # Optional: clear wrappers if you want a fully "fresh" view.
         # They are safe to reuse, but clearing them forces re-resolution.
@@ -1005,6 +985,8 @@ class RModuleSession(ModuleType):
 
         # Start a fresh worker with current env conf
         self._setup_worker(autoload=autoload)
+
+        gc.collect()
 
     def environment_exists(self, name: str) -> bool:
         """
