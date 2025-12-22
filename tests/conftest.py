@@ -46,11 +46,6 @@ def _force_brmspy_cleanup_between_tests():
     except Exception:
         pass
 
-    # Encourage timely finalizers/GC for objects holding SHM-backed views.
-    import gc
-
-    gc.collect()
-
 
 @pytest.fixture
 def sample_dataframe():
