@@ -4,7 +4,7 @@ Pytest configuration and shared fixtures for brmspy tests
 
 import inspect
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 from unittest.mock import MagicMock
 import pytest
 import sys
@@ -16,6 +16,40 @@ import numpy as np
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 os.environ["BRMSPY_TEST"] = "1"
+
+
+@pytest.fixture(autouse=True)
+def _force_brmspy_cleanup_between_tests():
+    """
+    Forcefully clean up brmspy worker + SHM between tests.
+
+    Rationale (macOS CI):
+    - POSIX shared memory attaches (`/psm_*`) consume file descriptors.
+    - If SHM blocks accumulate across tests, the process can hit `[Errno 24] Too many open files`.
+    - This fixture ensures each test ends with a full worker teardown, releasing SHM FDs.
+    """
+    yield
+
+    # Never run cleanup logic inside the worker process itself.
+    if os.environ.get("BRMSPY_WORKER") == "1":
+        return
+
+    try:
+        from brmspy import brms
+
+        if getattr(brms, "_is_rsession", True):
+            try:
+                # Restart between tests to force-close worker-side `/psm_*` SHM FDs.
+                cast(Any, brms).restart(empty_shm=True)
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    # Encourage timely finalizers/GC for objects holding SHM-backed views.
+    import gc
+
+    gc.collect()
 
 
 @pytest.fixture
