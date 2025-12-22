@@ -430,12 +430,21 @@ class RModuleSession(ModuleType):
         else:
             env_overrides["BRMSPY_AUTOLOAD"] = "0"
 
-        proc = spawn_worker(
-            target=worker_main,
-            args=(child_conn, mgr_address, mgr_authkey, self._environment_conf),
-            env_overrides=env_overrides,
-            log_queue=self._log_queue,
-        )
+        # Spawn worker. Important: close our local copy of the child's end of the Pipe
+        # after the process starts, otherwise each restart leaks file descriptors.
+        proc = None
+        try:
+            proc = spawn_worker(
+                target=worker_main,
+                args=(child_conn, mgr_address, mgr_authkey, self._environment_conf),
+                env_overrides=env_overrides,
+                log_queue=self._log_queue,
+            )
+        finally:
+            try:
+                child_conn.close()
+            except Exception:
+                pass
 
         self._mgr = mgr
         self._proc = proc
@@ -521,6 +530,33 @@ class RModuleSession(ModuleType):
             listener = getattr(self, "_log_listener", None)
             if listener is not None:
                 listener.stop()
+        except Exception:
+            pass
+
+        # close the log queue to release its pipe FDs (important on macOS low ulimit)
+        try:
+            q = getattr(self, "_log_queue", None)
+            if q is not None:
+                try:
+                    q.close()
+                except Exception:
+                    pass
+                # Avoid potential hangs waiting for queue feeder threads in teardown paths.
+                try:
+                    q.cancel_join_thread()
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+        # close any SHM blocks we have attached/allocated in this process
+        try:
+            pool = getattr(self, "_shm_pool", None)
+            if pool is not None:
+                pool.close_all()
+            from .._singleton._shm_singleton import _set_shm
+
+            _set_shm(None)
         except Exception:
             pass
 
