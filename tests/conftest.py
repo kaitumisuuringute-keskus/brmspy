@@ -19,37 +19,6 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 os.environ["BRMSPY_TEST"] = "1"
 
 
-@pytest.fixture(autouse=True, scope="module")
-def _force_brmspy_cleanup_between_tests():
-    """
-    Forcefully clean up brmspy worker + SHM between tests.
-
-    Rationale (macOS CI):
-    - POSIX shared memory attaches (`/psm_*`) consume file descriptors.
-    - If SHM blocks accumulate across tests, the process can hit `[Errno 24] Too many open files`.
-    - This fixture ensures each test ends with a full worker teardown, releasing SHM FDs.
-    """
-    yield
-
-    # Never run cleanup logic inside the worker process itself.
-    if os.environ.get("BRMSPY_WORKER") == "1":
-        return
-
-    gc.collect()
-
-    try:
-        from brmspy import brms
-
-        if getattr(brms, "_is_rsession", True):
-            try:
-                # Restart between tests to force-close worker-side `/psm_*` SHM FDs.
-                cast(Any, brms).restart()
-            except Exception:
-                pass
-    except Exception:
-        pass
-
-
 @pytest.fixture
 def sample_dataframe():
     """
@@ -208,9 +177,8 @@ def worker_runner():
 
     def run_remote(module, cls, func):
         from brmspy import brms
-        from brmspy._session.session import RModuleSession
 
-        session = cast(RModuleSession, brms)
+        session = cast(Any, brms)
         return session._run_test_by_name(module, cls, func)
 
     return run_remote
@@ -309,3 +277,32 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(skip_requires_rdeps)
         if rdeps_allowed and "rdeps" not in item.keywords:
             item.add_marker(skip_only_using_rdeps)
+
+
+@pytest.fixture(autouse=True, scope="module")
+def _force_brmspy_cleanup_between_tests():
+    """
+    Forcefully clean up brmspy worker + SHM between modules.
+
+    Rationale (macOS CI):
+    - POSIX shared memory attaches (`/psm_*`) consume file descriptors.
+    - If SHM blocks accumulate across tests, the process can hit `[Errno 24] Too many open files`.
+    """
+    yield
+
+    if os.environ.get("BRMSPY_WORKER") == "1":
+        return
+
+    gc.collect()
+
+    try:
+        from brmspy import brms
+
+        if getattr(brms, "_is_rsession", True):
+            try:
+                # Restart between tests to force-close worker-side `/psm_*` SHM FDs.
+                cast(Any, brms).restart(autoload=True)
+            except Exception:
+                pass
+    except Exception:
+        pass
