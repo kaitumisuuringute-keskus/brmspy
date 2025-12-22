@@ -51,7 +51,9 @@ def _rmatrix_to_py_default(obj: "Matrix") -> pd.DataFrame | np.ndarray:
         return np.array(obj)
 
     df = pd.DataFrame(data=np.array(obj), columns=colnames, index=rownames)
-    if "obs_id" in df.columns and not df["obs_id"].duplicated().any():
+    if "_obs_id_" in df.columns and not df["_obs_id_"].duplicated().any():
+        df.index = df["_obs_id_"]
+    elif "obs_id" in df.columns and not df["obs_id"].duplicated().any():
         df.index = df["obs_id"]
     return df
 
@@ -106,7 +108,9 @@ def _rmatrix_to_py(
         dtype=dtype,
     )
 
-    if "obs_id" in df.columns and not df["obs_id"].duplicated().any():
+    if "_obs_id_" in df.columns and not df["_obs_id_"].duplicated().any():
+        df.index = df["_obs_id_"]
+    elif "obs_id" in df.columns and not df["obs_id"].duplicated().any():
         df.index = df["obs_id"]
 
     return df
@@ -218,8 +222,8 @@ def _r2py_dataframe(obj: "DataFrame", shm: ShmPool | None = None) -> PyObject:
 
 
 def _adjust_df_for_r(obj: pd.DataFrame) -> pd.DataFrame:
-    if "__obs_id__" not in obj.columns:
-        obj = obj.reset_index(drop=False, names="__obs_id__")
+    if "_obs_id_" not in obj.columns:
+        obj = obj.reset_index(drop=False, names="_obs_id_")
 
     for c in obj.columns:
         s = obj[c]
@@ -241,8 +245,8 @@ def _adjust_df_for_r(obj: pd.DataFrame) -> pd.DataFrame:
 
 
 def _adjust_df_for_py(df: pd.DataFrame) -> pd.DataFrame:
-    if "__obs_id__" in df.columns:
-        df = df.set_index("__obs_id__", drop=True)
+    if "_obs_id_" in df.columns:
+        df = df.set_index("_obs_id_", drop=True)
     return df
 
 

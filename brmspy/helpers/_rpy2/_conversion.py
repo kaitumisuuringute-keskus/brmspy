@@ -287,7 +287,7 @@ def _get_obs_id_from_r_data(r_data, n_obs: int):
     Decide obs_id for in-sample data from brmsfit$data.
 
     Priority:
-    1. `obs_id` column if present and unique.
+    1. `_obs_id_` column if present and unique.
     2. rownames if present and unique.
     3. fallback: np.arange(n_obs).
     """
@@ -298,7 +298,16 @@ def _get_obs_id_from_r_data(r_data, n_obs: int):
     colnames = list(cast(ro.ListVector, fun_colnames(r_data)))
 
     # 1) explicit obs_id column
-    if "obs_id" in colnames:
+    if "_obs_id_" in colnames:
+        obs_col = np.asarray(r_data.rx2("_obs_id_"))
+        if _is_unique(obs_col):
+            return obs_col
+        else:
+            log_warning(
+                "Column '_obs_id_' in brmsfit$data is not unique; "
+                "falling back to rownames or sequential indices."
+            )
+    elif "obs_id" in colnames:
         obs_col = np.asarray(r_data.rx2("obs_id"))
         if _is_unique(obs_col):
             return obs_col
@@ -330,7 +339,16 @@ def _get_obs_id_from_newdata(newdata: pd.DataFrame, n_obs: int):
     1. `obs_id` column if present and unique.
     2. newdata.index (with warning if not unique).
     """
-    if "obs_id" in newdata.columns:
+    if "_obs_id_" in newdata.columns:
+        obs_col = newdata["_obs_id_"].to_numpy()
+        if _is_unique(obs_col):
+            return obs_col
+        else:
+            log_warning(
+                "Column '_obs_id_' in newdata is not unique; "
+                "falling back to DataFrame index."
+            )
+    elif "obs_id" in newdata.columns:
         obs_col = newdata["obs_id"].to_numpy()
         if _is_unique(obs_col):
             return obs_col
@@ -584,8 +602,8 @@ def _brmsfit_get_constant_data(
     drop_cols: set[str] = set(resp_names or [])
 
     # Drop obs_id column if present; obs_id is handled as a coord
-    if "obs_id" in df.columns:
-        df = df.set_index("obs_id", drop=True)
+    if "_obs_id_" in df.columns:
+        df = df.set_index("_obs_id_", drop=True)
 
     keep_cols = [c for c in df.columns if c not in drop_cols]
 
