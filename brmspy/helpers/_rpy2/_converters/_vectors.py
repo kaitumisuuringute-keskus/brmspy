@@ -88,14 +88,22 @@ def _fallback_rvector_iter(obj):
 
 
 def _to_pandas_factor(arr: Any, obj_r: "FactorVector"):
-    # codes = [x-1 if x > 0 else -1 for x in obj]
+    # R factors are 1-based integer codes with missing values represented as NA_INTEGER
+    # (a negative sentinel). pandas expects 0-based codes with -1 for missing.
     if not isinstance(arr, np.ndarray):
         arr = np.asarray(arr)
-    arr -= 1
-    # arr = np.clip(arr, -1, 2**31)
-    print("_to_pandas_factor", arr, "dtype", arr.dtype)
+
+    # Avoid int32 overflow on NA_INTEGER when shifting codes:
+    # only positive values are valid factor codes.
+    valid = arr > 0
+    arr = arr.astype(np.int32, copy=False)
+    arr[~valid] = -1
+    arr[valid] -= 1
+
     res = pd.Categorical.from_codes(
-        arr, categories=list(obj_r.do_slot("levels")), ordered="ordered" in obj_r.rclass
+        arr,
+        categories=list(obj_r.do_slot("levels")),
+        ordered="ordered" in obj_r.rclass,
     )
     return res
 
