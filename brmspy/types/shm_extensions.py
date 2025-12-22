@@ -19,13 +19,9 @@ See Also
 import json
 import pickle
 from typing import Any, Hashable, Literal, Sequence, TypedDict, Union, cast
-from numpy.typing import ArrayLike
 
 import numpy as np
 import pandas as pd
-from zmq import DraftFDWarning
-
-from brmspy.helpers.log import log_warning
 from brmspy.types.shm import ShmBlock, ShmRef
 
 __all__ = ["ShmArray", "ShmDataFrameSimple", "ShmDataFrameColumns"]
@@ -353,7 +349,7 @@ class ShmDataFrameColumns(pd.DataFrame):
             df._shm_metadata[col] = cls._create_col_metadata(df[col], ref)
             return
         else:
-            log_warning(
+            print(
                 f"Failed to update shm metadata for column '{col}' dtype {vals.dtype}"
             )
             return
