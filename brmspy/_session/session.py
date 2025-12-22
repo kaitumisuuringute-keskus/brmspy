@@ -974,8 +974,6 @@ class RModuleSession(ModuleType):
         # Tear down existing worker (if any)
         self._teardown_worker()
 
-        gc.collect()
-
         # if empty_shm:
         #    self._force_empty_shm_pool()
 
