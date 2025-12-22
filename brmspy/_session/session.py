@@ -67,7 +67,7 @@ _INTERNAL_ATTRS = {
     "add_contextmanager",
     "restart",
     "shutdown",
-    "force_empty_shm_pool",
+    "_force_empty_shm_pool",
     "environment_exists",
     "environment_activate",
     "_run_test_by_name",
