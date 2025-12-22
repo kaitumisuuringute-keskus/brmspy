@@ -1,4 +1,8 @@
 ## 0.3.1
+*25.12.22*
+
+This release standardizes the `InferenceData` structure across all prediction methods, ensuring consistent dimensions (`chain`, `draw`, `obs_id`) and variable naming conventions. It also improves shared-memory transport for Pandas DataFrames, enabling high-fidelity roundtripping of Categoricals and mixed types between R and Python.
+
 
 ### Standardised idata
 
@@ -15,15 +19,22 @@ All idata returned from brmspy functions is now standardised to be joinable with
 
 This change allows composable architectures, where the user picks only the parts of idata they need for their analysis.
 
+### Pandas & R Type Conversion
+
+*   **Columnar SHM Transport**: Improved `ShmDataFrameColumns` to transport DataFrames with mixed types via shared memory. Numeric and categorical columns now move between processes with zero-copy overhead, while complex object columns fall back to pickling individually.
+*   **Categorical Fidelity**: R factors now correctly roundtrip to `pandas.CategoricalDtype`, preserving categories, integer codes, and ordered status across the main-worker boundary. (issue #52)
+*   **Broad Dtype Support**: Enhanced converters to robustly handle pandas nullable integers (`Int64`), nullable floats, strings during R conversion.
+
+
 ### Bug fixes and enhancements
 
-*   **Worker crash recovery**: Added automatic recovery for R worker crashes
+*   **Worker crash recovery** (Issue #50): Added automatic recovery for R worker crashes
     (segfaults, BrokenPipeError, ConnectionResetError). The worker is restarted
     transparently and the call raises `RWorkerCrashedError`. The exception
     includes a `recovered: bool` flag indicating whether a clean worker session
     was successfully started, allowing pipelines to distinguish retryable
     crashes (`recovered=True`) from hard failures (`recovered=False`).
-*   **Numpy encoding**: Numpy encoding is now standardised along Arviz, Pandas and Numpy encoders to properly handle object arrays. In case array type is string, the shm layer treats them as ShmArrays (memory-optimized). In case there are non-strings mixed in, the encoder always falls back to pickling. 
+*   **Numpy Encoding**: Standardised encoding for object arrays. String arrays are now optimized as `ShmArray`; mixed object arrays gracefully fall back to pickling.
 
 
 
