@@ -325,7 +325,7 @@ def _get_obs_id_from_r_data(r_data, n_obs: int):
     # 3) fallback: 0-based integer index
     log_warning(
         "Unable to find a unique obs_id in brmsfit$data "
-        "(no unique 'obs_id' column or rownames). "
+        "(no unique '_obs_id_'/'obs_id' column or rownames). "
         "Using sequential indices 0..N-1."
     )
     return np.arange(n_obs, dtype=np.int64)

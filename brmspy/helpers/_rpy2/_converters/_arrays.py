@@ -223,7 +223,10 @@ def _r2py_dataframe(obj: "DataFrame", shm: ShmPool | None = None) -> PyObject:
 
 def _adjust_df_for_r(obj: pd.DataFrame) -> pd.DataFrame:
     if "_obs_id_" not in obj.columns:
-        obj = obj.reset_index(drop=False, names="_obs_id_")
+        if obj.index.nlevels == 1:
+            obj["_obs_id_"] = obj.index
+        else:
+            obj = obj.assign(_obs_id_=range(len(obj)))
 
     for c in obj.columns:
         s = obj[c]
