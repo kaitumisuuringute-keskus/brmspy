@@ -251,6 +251,12 @@ jobs:
         run: |
           mkdir -p coverage
 
+      - name: Raise open files limit (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          ulimit -n 500000 || true
+          ulimit -n
+
       - name: Test with pytest
         shell: bash
         env:
