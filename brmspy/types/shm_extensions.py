@@ -323,10 +323,6 @@ class ShmDataFrameColumns(pd.DataFrame):
             "block": block,
             "params": params,
         }
-        if series.name == "Trt":
-            print("array", array.shape, array.dtype)
-            print("array", array)
-            print("create_col_meta Trt", json.dumps(meta, indent=2))
         return meta
 
     def _set_col_raw(self, col: str, value) -> None:
@@ -379,8 +375,6 @@ class ShmDataFrameColumns(pd.DataFrame):
 
         arr = ShmArray.from_block(block=block, shape=(nrows,), dtype=dtype, order="C")
 
-        # print(meta)
-
         if pd_dtype == "category":
             cats = params.get("categories", None)
             ordered = bool(params.get("ordered", False))
@@ -399,7 +393,6 @@ class ShmDataFrameColumns(pd.DataFrame):
             # arr should hold integer codes
             # If arr holds codes: build categorical from codes without copying codes.
             # Pandas uses -1 for missing.
-            print("arr", arr.dtype, arr)
             cat = pd.Categorical.from_codes(cast(Sequence[int], arr), dtype=cat_dtype)
             return pd.Series(cat, name=col_name, index=index)
 

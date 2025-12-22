@@ -413,7 +413,7 @@ class TestEncodingAndConversionRoundtrips:
             # ---- categorical special-case ----
             if isinstance(s0.dtype, pd.CategoricalDtype):
                 if not isinstance(s1.dtype, pd.CategoricalDtype):
-                    failures.append(f"{col}: expected category, got {s1.dtype!r}")
+                    failures.append(f"{col}: expected category, got {s1.dtype!r} {s1}")
                     continue
 
                 d0 = s0.dtype

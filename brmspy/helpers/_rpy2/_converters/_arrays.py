@@ -120,11 +120,43 @@ def _r2py_matrix(obj: "Matrix", shm: ShmPool | None = None) -> PyObject:
 
 
 def _r2py_dataframe_fallback(obj: "DataFrame") -> PyObject:
+    """
+    Fallback conversion for R data.frame -> pandas.DataFrame.
+
+    Notes
+    -----
+    In some environments, rpy2/pandas2ri may convert R factors to their underlying
+    integer codes instead of `pandas.Categorical`. Since brmspy relies on factors
+    roundtripping as categoricals (and we have custom factor handling in
+    [`_r2py_vector()`][brmspy.helpers._rpy2._converters._vectors._r2py_vector]),
+    we patch factor columns explicitly here.
+    """
+    import rpy2.robjects as ro
     from rpy2.robjects import pandas2ri
     from rpy2.robjects.conversion import localconverter
 
     with localconverter(pandas2ri.converter) as cv:
         df = cv.rpy2py(obj)
+
+    # Ensure factor columns come back as pandas categoricals.
+    # (Otherwise they can appear as int32 codes with NA_INTEGER sentinel values.)
+    try:
+        if obj.names is not NULL:
+            for name in list(obj.names):
+                col_name = str(name)
+                if col_name not in df.columns:
+                    continue
+
+                col_r = obj.rx2(name)
+                if isinstance(col_r, ro.FactorVector):
+                    cat = _r2py_vector(col_r, shm=None)
+                    df[col_name] = pd.Series(
+                        cast(np.ndarray, cat), index=df.index, name=col_name, copy=False
+                    )
+    except Exception:
+        # Best-effort: never let fallback conversion fail due to factor patching.
+        pass
+
     return _adjust_df_for_py(df)
 
 
