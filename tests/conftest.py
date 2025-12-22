@@ -2,6 +2,7 @@
 Pytest configuration and shared fixtures for brmspy tests
 """
 
+import gc
 import inspect
 from pathlib import Path
 from typing import Any, cast
@@ -18,7 +19,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 os.environ["BRMSPY_TEST"] = "1"
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True, scope="module")
 def _force_brmspy_cleanup_between_tests():
     """
     Forcefully clean up brmspy worker + SHM between tests.
@@ -33,6 +34,8 @@ def _force_brmspy_cleanup_between_tests():
     # Never run cleanup logic inside the worker process itself.
     if os.environ.get("BRMSPY_WORKER") == "1":
         return
+
+    gc.collect()
 
     try:
         from brmspy import brms
@@ -202,12 +205,12 @@ def no_robjects_bomb():
 @pytest.fixture(scope="session")
 def worker_runner():
     """Returns a function that runs a test fn inside the worker."""
-    from brmspy import brms
-    from brmspy._session.session import RModuleSession
-
-    session = cast(RModuleSession, brms)
 
     def run_remote(module, cls, func):
+        from brmspy import brms
+        from brmspy._session.session import RModuleSession
+
+        session = cast(RModuleSession, brms)
         return session._run_test_by_name(module, cls, func)
 
     return run_remote
