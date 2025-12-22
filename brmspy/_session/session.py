@@ -977,14 +977,10 @@ class RModuleSession(ModuleType):
         # if empty_shm:
         #    self._force_empty_shm_pool()
 
-        # Optional: clear wrappers if you want a fully "fresh" view.
-        # They are safe to reuse, but clearing them forces re-resolution.
         self._func_cache.clear()
 
         # Start a fresh worker with current env conf
         self._setup_worker(autoload=autoload)
-
-        gc.collect()
 
     def environment_exists(self, name: str) -> bool:
         """
