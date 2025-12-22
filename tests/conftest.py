@@ -150,6 +150,8 @@ def no_robjects_bomb():
         yield
         return
 
+    _force_brmspy_cleanup()
+
     mp = pytest.MonkeyPatch()
 
     # Module-level import: `import rpy2.robjects as ro`
@@ -279,8 +281,7 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(skip_only_using_rdeps)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def _force_brmspy_cleanup_between_tests():
+def _force_brmspy_cleanup():
     """
     Forcefully clean up brmspy worker + SHM between modules.
 
@@ -288,7 +289,6 @@ def _force_brmspy_cleanup_between_tests():
     - POSIX shared memory attaches (`/psm_*`) consume file descriptors.
     - If SHM blocks accumulate across tests, the process can hit `[Errno 24] Too many open files`.
     """
-    yield
 
     if os.environ.get("BRMSPY_WORKER") == "1":
         return
@@ -304,5 +304,12 @@ def _force_brmspy_cleanup_between_tests():
                 cast(Any, brms).restart(autoload=True)
             except Exception:
                 pass
+            finally:
+                cast(Any, brms).restart(autoload=True)
+                pass
     except Exception:
         pass
+
+    gc.collect()
+
+    yield

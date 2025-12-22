@@ -372,6 +372,8 @@ class RModuleSession(ModuleType):
         # Disallow nested tooling contexts (manage/_build/etc)
         self._active_ctx: str | None = None
 
+        self._closed = True
+
         # start SHM manager + worker
         self._setup_worker()
 
@@ -1046,6 +1048,8 @@ class RModuleSession(ModuleType):
         """
         if os.getenv("BRMSPY_TEST") != "1":
             raise RuntimeError("BRMSPY_TEST=1 required for worker test execution")
+        if self._closed:
+            raise RuntimeError("Connection not open! Cant run test.")
 
         req_id = str(uuid.uuid4())
         self._conn.send(
