@@ -1,5 +1,5 @@
 ## 0.3.1 - Standardized and modular InferenceData, improved memory management
-*25.12.22*
+*25.12.23*
 
 This release standardizes the `InferenceData` structure across all prediction methods, ensuring consistent dimensions (`chain`, `draw`, `obs_id`) and variable naming conventions. It also improves shared-memory transport for Pandas DataFrames, enabling high-fidelity roundtripping of Categoricals and mixed types between R and Python.
 
