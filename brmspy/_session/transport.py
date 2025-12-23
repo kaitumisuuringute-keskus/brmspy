@@ -24,7 +24,7 @@ class ShmPool(_ShmPool):
         self._blocks: dict[str, ShmBlock] = {}
 
     def alloc(self, size: int, temporary: bool = False) -> ShmBlock:
-        print(f"alloc {"temp" if temporary else ''}")
+        print(f"alloc {'temp' if temporary else ''}")
         shm = self._manager.SharedMemory(size=size)
         block = ShmBlock(
             name=shm.name,
