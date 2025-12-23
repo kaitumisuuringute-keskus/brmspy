@@ -17,7 +17,21 @@ from brmspy.types.shm import ShmPool as _ShmPool
 
 
 class ShmPool(_ShmPool):
-    """Concrete shared-memory pool implementation that tracks attached blocks."""
+    """
+    Concrete shared-memory pool implementation that temporarily tracks attached blocks.
+
+    _blocks dict keeps references to shm buffers TEMPORARILY and is cleaned up
+    before each 'responding to main' or 'sending new message to worker'. This
+    allows the in-between processing of shm buffers to rely on the buffers not
+    being garbage collected.
+
+    After reconstructing an object from a shm buffer, it's the CodecRegistrys role
+    to take over the reference by initiating a weakref between the reconstructed
+    object and buffer (or skipping if the object is temporary).
+
+    This helps ensure that a minimal amount of shm buffers are actively mapped
+    and garbage collection can remove file descriptors no longer needed.
+    """
 
     def __init__(self, manager: SharedMemoryManager) -> None:
         self._manager = manager
