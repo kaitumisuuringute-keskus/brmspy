@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import pandas as pd
@@ -12,7 +12,6 @@ from brmspy.helpers._rpy2._converters._vectors import (
 from brmspy.helpers.log import log_warning
 from brmspy.types.shm import ShmPool
 from brmspy.types.shm_extensions import (
-    ShmSeriesMetadata,
     ShmArray,
     ShmDataFrameColumns,
     ShmDataFrameSimple,
@@ -23,8 +22,7 @@ from ....types.rpy2_converters import PyObject
 if TYPE_CHECKING:
     from rpy2.robjects import DataFrame, Matrix
 
-from rpy2.rinterface import SexpVectorWithNumpyInterface
-from rpy2.rinterface_lib.sexp import NULL, Sexp, SexpVector
+from rpy2.rinterface_lib.sexp import NULL, Sexp
 
 # HELPERS
 

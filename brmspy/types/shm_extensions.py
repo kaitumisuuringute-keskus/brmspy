@@ -164,8 +164,6 @@ class ShmArray(np.ndarray):
 
         arr_modified = None
         if isinstance(arr, ShmArray):
-            arr = arr
-            nbytes = arr._shm_metadata["content_size"]
             ref = arr._shm_metadata
 
         else:
@@ -365,7 +363,6 @@ class ShmDataFrameColumns(pd.DataFrame):
         col_name = str(col_name)
         dtype = np.dtype(meta["np_dtype"])
         pd_dtype = meta["pd_dtype"]
-        spec = meta["block"]
         params = meta["params"]
 
         arr = ShmArray.from_block(block=block, shape=(nrows,), dtype=dtype, order="C")

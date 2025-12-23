@@ -986,9 +986,6 @@ class RModuleSession(ModuleType):
         # Tear down existing worker (if any)
         self._teardown_worker()
 
-        # if empty_shm:
-        #    self._force_empty_shm_pool()
-
         self._func_cache.clear()
 
         # Start a fresh worker with current env conf

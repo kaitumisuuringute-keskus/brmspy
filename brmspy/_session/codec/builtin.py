@@ -198,14 +198,6 @@ class PickleCodec(Encoder):
             )
 
         data = pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
-        if len(data) == 0:
-            if obj is None:
-                return EncodeResult(
-                    codec=type(self).__name__,
-                    meta={},
-                    buffers=[],
-                )
-
         block = shm_pool.alloc(len(data), temporary=True)
         block.shm.buf[: len(data)] = data
 
@@ -238,7 +230,6 @@ class PickleCodec(Encoder):
         with get_buf(specs[0]) as (block, buf):
             length = block.content_size
             b = bytes(buf[:length])
-            # b = payload["meta"]["data"].encode("latin-1")
             return pickle.loads(b)
 
 

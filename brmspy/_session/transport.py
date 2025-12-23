@@ -76,34 +76,8 @@ class ShmPool(_ShmPool):
                 b.shm.close()
             return
 
-        # Keep this code temporarily
         for key in list(self._blocks.keys()):
             b = self._blocks[key]
             if b.temporary:
                 b.shm.close()
             del self._blocks[key]
-
-
-def attach_buffers(pool: ShmPool, refs: list[ShmRef]) -> list[ShmBlock]:
-    """
-    Attach to a list of SHM blocks and return their `memoryview`s.
-
-    Parameters
-    ----------
-    pool : ShmPool
-        Pool used for attaching blocks by name.
-    refs : list[brmspy.types.session.ShmRef]
-        List of `(name, size)` references.
-
-    Returns
-    -------
-    list[memoryview]
-        Views over each shared-memory buffer.
-    """
-    blocks: list[ShmBlock] = []
-    for ref in refs:
-        block = pool.attach(ref)
-        if block.shm.buf is None:
-            raise Exception("block.smh.buf is None!")
-        blocks.append(block)
-    return blocks

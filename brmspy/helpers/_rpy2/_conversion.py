@@ -1,11 +1,10 @@
 import re
 from collections.abc import Callable
-from typing import Any, Literal, cast
+from typing import Literal, cast
 
 import arviz as az
 import numpy as np
 import pandas as pd
-import xarray as xr
 
 from brmspy.helpers._rpy2._converters import (
     py_to_r,
