@@ -23,22 +23,55 @@ class ShmPool(_ShmPool):
         self._manager = manager
         self._blocks: dict[str, ShmBlock] = {}
 
-    def alloc(self, size: int) -> ShmBlock:
+    def alloc(self, size: int, temporary: bool = False) -> ShmBlock:
+        # print(f"alloc {"temp" if temporary else ''}")
         shm = self._manager.SharedMemory(size=size)
-        block = ShmBlock(name=shm.name, size=shm.size, shm=shm, content_size=size)
-        self._blocks[block.name] = block
+        block = ShmBlock(
+            name=shm.name,
+            size=shm.size,
+            shm=shm,
+            content_size=size,
+            temporary=temporary,
+        )
+        if not temporary:
+            self._blocks[block.name] = block
         return block
 
-    def attach(self, name: str, size: int, content_size: int) -> ShmBlock:
-        shm = SharedMemory(name=name)
-        block = ShmBlock(name=name, size=size, shm=shm, content_size=content_size)
-        self._blocks[name] = block
+    def attach(self, ref: ShmRef) -> ShmBlock:
+        if ref["name"] in self._blocks:
+            return self._blocks[ref["name"]]
+        shm = SharedMemory(name=ref["name"])
+        block = ShmBlock(
+            name=ref["name"],
+            size=ref["size"],
+            shm=shm,
+            content_size=ref["content_size"],
+            temporary=ref["temporary"],
+        )
+        if not ref["temporary"]:
+            self._blocks[ref["name"]] = block
         return block
 
     def close_all(self) -> None:
         for block in self._blocks.values():
             block.shm.close()
         self._blocks.clear()
+
+    def gc(self, name: str | None = None):
+        if name is not None:
+            b = self._blocks.pop(name, None)
+            if b is not None:
+                b.shm.close()
+            return
+
+        return
+
+        # Keep this code temporarily
+        for key in list(self._blocks.keys()):
+            b = self._blocks[key]
+            if b.temporary:
+                b.shm.close()
+                del self._blocks[key]
 
 
 def attach_buffers(pool: ShmPool, refs: list[ShmRef]) -> list[ShmBlock]:
@@ -59,7 +92,7 @@ def attach_buffers(pool: ShmPool, refs: list[ShmRef]) -> list[ShmBlock]:
     """
     blocks: list[ShmBlock] = []
     for ref in refs:
-        block = pool.attach(ref["name"], ref["size"], ref["content_size"])
+        block = pool.attach(ref)
         if block.shm.buf is None:
             raise Exception("block.smh.buf is None!")
         blocks.append(block)

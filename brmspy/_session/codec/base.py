@@ -1,4 +1,5 @@
 from __future__ import annotations
+from contextlib import contextmanager
 import weakref
 
 
@@ -11,7 +12,7 @@ and return small metadata + SHM references for IPC transport.
 """
 
 from dataclasses import is_dataclass
-from typing import Any
+from typing import Any, Iterator
 
 from brmspy.types.session import Encoder, EncodeResult, PayloadRef
 from brmspy.types.shm import ShmBlock, ShmRef
@@ -106,15 +107,29 @@ class CodecRegistry:
 
         buffers = []
 
-        def get_buf(ref: ShmRef) -> tuple[ShmBlock, memoryview]:
-            buf = shm_pool.attach(ref["name"], ref["size"], ref["content_size"])
-            buffers.append(buf)
-
+        @contextmanager
+        def get_buf(ref: ShmRef) -> Iterator[tuple[ShmBlock, memoryview]]:
+            buf = shm_pool.attach(ref)
             memview = memoryview(buf.shm.buf)
-            # Only use the slice that actually holds array data
-            view = memview[: ref["content_size"]]
+            view = memview[: ref["content_size"]].cast("B")
 
-            return buf, view.cast("B")
+            try:
+                if not ref["temporary"]:
+                    # non-temporary buffers are associated with columns / objects
+                    buffers.append(buf)
+
+                yield buf, view
+
+            finally:
+                # deterministic cleanup for temporary buffers
+                if ref["temporary"]:
+                    # IMPORTANT: release view before closing shm
+                    try:
+                        view.release()
+                        memview.release()
+                        shm_pool.gc(ref["name"])
+                    except:
+                        pass
 
         value = self._by_codec[codec].decode(payload, get_buf, shm_pool)
         self._attach_shm_lifetime(value, buffers)

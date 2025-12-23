@@ -108,11 +108,7 @@ class ShmArray(np.ndarray):
                 order=kwargs.get("order", "F"),
             )
             obj = base.view(ShmArray)
-            obj._shm_metadata = {
-                "name": block.name,
-                "size": block.size,
-                "content_size": block.content_size,
-            }
+            obj._shm_metadata = block.to_ref()
         else:
             assert block.shm.buf
             view = memoryview(block.shm.buf)
@@ -173,6 +169,7 @@ class ShmArray(np.ndarray):
             ref = arr._shm_metadata
 
         else:
+            temporary = False
             if not is_object:
                 data = arr.tobytes(order="C")
             elif is_string:
@@ -181,13 +178,14 @@ class ShmArray(np.ndarray):
                 data = arr.tobytes(order="C")
             else:
                 data = pickle.dumps(arr, protocol=pickle.HIGHEST_PROTOCOL)
+                temporary = True
 
             nbytes = len(data)
 
             # Ask for exactly nbytes; OS may round up internally, that's fine.
-            block = shm_pool.alloc(nbytes)
+            block = shm_pool.alloc(nbytes, temporary=temporary)
             block.shm.buf[:nbytes] = data
-            ref = ShmRef(name=block.name, size=block.size, content_size=nbytes)
+            ref = block.to_ref()
 
         ref, dtype, shape, order = (
             ref,
@@ -244,13 +242,7 @@ class ShmDataFrameSimple(pd.DataFrame):
         arr = ShmArray.from_block(shape=(ncols, nrows), dtype=_dtype, block=block)
 
         df = ShmDataFrameSimple(data=arr.T, index=index, columns=columns)
-        df._set_shm_metadata(
-            {
-                "name": block.name,
-                "size": block.size,
-                "content_size": block.content_size,
-            }
-        )
+        df._set_shm_metadata(block.to_ref())
         return df
 
     def _set_shm_metadata(self, meta: ShmRef):
@@ -344,6 +336,8 @@ class ShmDataFrameColumns(pd.DataFrame):
         ):
             pass
         elif isinstance(vals, np.ndarray):
+            if col in df._shm_metadata:
+                del df._shm_metadata[col]
             arr_modified, ref, dtype, shape, order = ShmArray.to_shm(df[col], shm_pool)
 
             if arr_modified is not None:

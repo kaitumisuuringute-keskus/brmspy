@@ -706,6 +706,12 @@ class RModuleSession(ModuleType):
             return self._decode_result(resp)
         except (BrokenPipeError, ConnectionResetError, EOFError) as e:
             self._recover(e)
+        finally:
+            try:
+                if self._shm_pool:
+                    self._shm_pool.gc()
+            except:
+                pass
 
     def _recover(self, orig_exc: BaseException) -> None:
         logger = get_logger()

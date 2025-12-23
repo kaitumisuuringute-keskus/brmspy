@@ -1,4 +1,5 @@
 from __future__ import annotations
+from contextlib import _GeneratorContextManager
 
 """
 Session-layer types used by the main↔worker IPC protocol.
@@ -181,6 +182,9 @@ class EncodeResult:
     buffers: list[ShmRef]
 
 
+GetBufContext = _GeneratorContextManager[tuple[ShmBlock, memoryview], None, None]
+
+
 @runtime_checkable
 class Encoder(Protocol):
     """
@@ -194,6 +198,6 @@ class Encoder(Protocol):
     def decode(
         self,
         payload: PayloadRef,
-        get_buf: Callable[[ShmRef], tuple[ShmBlock, memoryview]],
+        get_buf: Callable[[ShmRef], GetBufContext],
         *args: Any,
     ) -> Any: ...

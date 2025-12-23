@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+
 """
 Shared-memory helper types used by the session transport.
 
@@ -30,6 +31,10 @@ class ShmRef(TypedDict):
         Shared memory block name (as assigned by `SharedMemoryManager`).
     size : int
         Allocated block size in bytes.
+    content_size : int
+        Actual used size
+    temporary : bool
+        Whether this buffer can be GC-d immediately after use or should it be attached to object its constructed into.
 
     Notes
     -----
@@ -41,6 +46,7 @@ class ShmRef(TypedDict):
     name: str
     size: int
     content_size: int
+    temporary: bool
 
 
 @dataclass
@@ -58,6 +64,15 @@ class ShmBlock:
     size: int
     content_size: int
     shm: SharedMemory
+    temporary: bool
+
+    def to_ref(self) -> ShmRef:
+        return {
+            "name": self.name,
+            "size": self.size,
+            "content_size": self.content_size,
+            "temporary": self.temporary,
+        }
 
 
 class ShmPool:
@@ -80,7 +95,7 @@ class ShmPool:
         """
         ...
 
-    def alloc(self, size: int) -> ShmBlock:
+    def alloc(self, size: int, temporary: bool = False) -> ShmBlock:
         """
         Allocate a new shared-memory block.
 
@@ -96,16 +111,9 @@ class ShmPool:
         """
         ...
 
-    def attach(self, name: str, size: int, content_size: int) -> ShmBlock:
+    def attach(self, ref: ShmRef) -> ShmBlock:
         """
         Attach to an existing shared-memory block by name.
-
-        Parameters
-        ----------
-        name : str
-            Shared memory block name.
-        size : int
-            Allocated block size in bytes.
 
         Returns
         -------
@@ -123,3 +131,5 @@ class ShmPool:
         None
         """
         ...
+
+    def gc(self, name: str | None) -> None: ...

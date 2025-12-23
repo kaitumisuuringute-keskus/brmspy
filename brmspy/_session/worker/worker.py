@@ -86,6 +86,8 @@ def worker_main(
             cmd = req["cmd"]
             req_id = req["id"]
 
+            shm_pool.gc()
+
             try:
                 if cmd == "SHUTDOWN":
                     conn.send(
