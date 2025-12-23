@@ -11,7 +11,7 @@ R session).
 """
 
 from collections.abc import Callable, Sequence
-from typing import Any, cast
+from typing import Any, Literal, cast, overload
 
 import pandas as pd
 from rpy2.rinterface import ListSexpVector
@@ -22,22 +22,49 @@ from brmspy.types.session import SexpWrapper
 
 from ..helpers._rpy2._conversion import brmsfit_to_idata, kwargs_r, py_to_r
 from ..helpers._rpy2._priors import _build_priors
-from ..types.brms_results import FitResult, IDFit, PriorSpec, ProxyListSexpVector
+from ..types.brms_results import FitResult, IDBrm, PriorSpec, ProxyListSexpVector
 from ..types.formula_dsl import FormulaConstruct
 from .formula import _execute_formula, bf
 
-_formula_fn = bf
+
+@overload
+def brm(
+    formula: FormulaConstruct | ProxyListSexpVector | str,
+    data: dict | pd.DataFrame,
+    priors: Sequence[PriorSpec] | None = ...,
+    family: str | ListSexpVector | None = ...,
+    sample_prior: str = ...,
+    sample: bool = ...,
+    backend: str = ...,
+    formula_args: dict | None = ...,
+    cores: int | None = ...,
+    *,
+    return_idata: Literal[True] = True,
+    **brm_args: Any,
+) -> FitResult: ...
 
 
-_WARNING_CORES = (
-    "`cores <= 1` can be unstable in embedded R sessions and may crash the worker "
-    "process. Prefer `cores >= 2`."
-)
+# when omitted or True → FitResult
 
 
-def _warn_cores(cores: int | None):
-    if cores is None or cores <= 1:
-        log_warning(_WARNING_CORES)
+@overload
+def brm(
+    formula: FormulaConstruct | ProxyListSexpVector | str,
+    data: dict | pd.DataFrame,
+    priors: Sequence[PriorSpec] | None = ...,
+    family: str | ListSexpVector | None = ...,
+    sample_prior: str = ...,
+    sample: bool = ...,
+    backend: str = ...,
+    formula_args: dict | None = ...,
+    cores: int | None = ...,
+    *,
+    return_idata: Literal[False],
+    **brm_args: Any,
+) -> ProxyListSexpVector: ...
+
+
+# when explicitly False → raw R fit
 
 
 def brm(
@@ -50,8 +77,10 @@ def brm(
     backend: str = "cmdstanr",
     formula_args: dict | None = None,
     cores: int | None = 2,
+    *,
+    return_idata: bool = True,
     **brm_args,
-) -> FitResult:
+) -> FitResult | ProxyListSexpVector:
     """
     Fit a Bayesian regression model with brms.
 
@@ -80,6 +109,10 @@ def brm(
         Reserved for future use. Currently ignored.
     cores : int or None, default=2
         Number of cores for brms/cmdstanr.
+    return_idata : bool, default True
+        When working with large datasets, you might not want the full idata.
+        when False, you get the R object proxy which can be forwarded to posterior_epred
+        or other functions
     **brm_args
         Additional keyword arguments passed to R ``brms::brm()`` (e.g. ``chains``,
         ``iter``, ``warmup``, ``seed``).
@@ -137,6 +170,9 @@ def brm(
     # if they are, the library is calling brm() from main directly without remote call
     assert not isinstance(formula, SexpWrapper)
     assert formula is not None
+    if formula_args and isinstance(formula, str):
+        formula = bf(formula, **formula_args)
+
     formula_obj = _execute_formula(formula)
 
     # Convert data to R format
@@ -177,8 +213,11 @@ def brm(
     log("Fit done!")
 
     # Handle return type conversion
+    if not return_idata:
+        return fit
+
     if not sample:
-        return FitResult(idata=IDFit(), r=fit)
+        return FitResult(idata=IDBrm(), r=fit)
 
     idata = brmsfit_to_idata(fit)
     return FitResult(idata=idata, r=fit)

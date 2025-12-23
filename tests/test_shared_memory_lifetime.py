@@ -1,8 +1,38 @@
 import pytest
 
+from brmspy.types.errors import RWorkerCrashedError
+
 
 @pytest.mark.requires_brms
 class TestSharedMemoryLifetime:
+
+    @pytest.mark.slow
+    def test_segfault_recover(self, sample_dataframe):
+        from brmspy import brms
+
+        # Capture the exception object so we can inspect the flag
+        with pytest.raises(
+            RWorkerCrashedError, match="started a fresh session"
+        ) as excinfo:
+            pid = brms.call("Sys.getpid")
+            brms.call("tools::pskill", pid)
+
+        # Must be marked as a successful recovery
+        err = excinfo.value
+        assert err.recovered is True, "Crash should have been recoverable"
+
+        model = brms.fit(
+            formula="y ~ x1",
+            data=sample_dataframe,
+            family="gaussian",
+            iter=100,
+            warmup=50,
+            chains=2,
+            silent=2,
+            refresh=0,
+        )
+
+        assert model.idata
 
     @pytest.mark.slow
     def test_shared_memory_usable_after_restart(self, sample_dataframe):
@@ -12,7 +42,7 @@ class TestSharedMemoryLifetime:
 
         models = []
         for _ in range(2):
-            with brms.manage(environment_name="_test"):
+            with brms.manage(environment_name="_test") as ctx:
                 # Triggers a restart and SharedMemoryManager shutdown
                 pass
             model = brms.fit(

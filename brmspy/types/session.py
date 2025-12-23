@@ -1,4 +1,5 @@
 from __future__ import annotations
+from contextlib import _GeneratorContextManager
 
 """
 Session-layer types used by the main↔worker IPC protocol.
@@ -14,10 +15,11 @@ Instead, R objects are represented as lightweight handles (`SexpWrapper`) that
 can be reattached inside the worker via its SEXP cache.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Literal, Protocol, TypedDict, runtime_checkable
 
-from brmspy.types.shm import ShmBlock, ShmBlockSpec, ShmRef
+from brmspy.types.shm import ShmBlock, ShmRef
 
 CommandType = Literal["CALL", "SHUTDOWN", "PING", "_RUN_TEST_BY_NAME"]
 
@@ -171,13 +173,16 @@ class EncodeResult:
         Codec identifier.
     meta : dict[str, Any]
         JSON-serializable metadata required for decoding.
-    buffers : list[ShmBlockSpec]
+    buffers : list[ShmRef]
         Shared-memory blocks backing the encoded payload.
     """
 
     codec: str
     meta: dict[str, Any]
-    buffers: list[ShmBlockSpec]
+    buffers: list[ShmRef]
+
+
+GetBufContext = _GeneratorContextManager[tuple[ShmBlock, memoryview], None, None]
 
 
 @runtime_checkable
@@ -192,8 +197,7 @@ class Encoder(Protocol):
 
     def decode(
         self,
-        meta: dict[str, Any],
-        buffers: list[ShmBlock],
-        buffer_specs: list[dict],
-        shm_pool: Any,
+        payload: PayloadRef,
+        get_buf: Callable[[ShmRef], GetBufContext],
+        *args: Any,
     ) -> Any: ...

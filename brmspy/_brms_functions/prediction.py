@@ -9,34 +9,130 @@ Notes
 Executed inside the worker process that hosts the embedded R session.
 """
 
+from collections.abc import Callable
+import arviz as az
 import typing
+from typing import Any, Literal, cast, overload
 
+import numpy as np
 import pandas as pd
 
 from ..helpers._rpy2._conversion import (
-    brms_epred_to_idata,
-    brms_linpred_to_idata,
-    brms_log_lik_to_idata,
-    brms_predict_to_idata,
+    _arviz_add_constant_data,
+    _brmsfit_get_constant_data,
+    _brmsfit_get_dims_and_coords,
+    _brmsfit_get_observed_data,
+    _brmsfit_get_posterior,
+    _brmsfit_get_predict_generic,
+    _brmsfit_get_response_names,
+    _idata_add_resp_names_suffix,
     kwargs_r,
     py_to_r,
 )
 from ..types.brms_results import (
     FitResult,
-    IDEpred,
-    IDLinpred,
-    IDLogLik,
-    IDPredict,
-    LogLikResult,
-    PosteriorEpredResult,
-    PosteriorLinpredResult,
-    PosteriorPredictResult,
+    IDLogLikelihoodInsample,
+    IDLogLikelihoodOutsample,
+    IDObservedData,
+    IDPosteriorPredictive,
+    IDPredictions,
+    IDResult,
+    IDPosterior,
+    ProxyListSexpVector,
 )
 
 
+def posterior(
+    model: FitResult | ProxyListSexpVector, **kwargs
+) -> IDResult[IDPosterior]:
+    """
+    Return posterior draws as idata.
+
+    Wrapper around R ``posterior::as_draws_df()``.
+
+    Parameters
+    ----------
+    model : FitResult
+        Fitted model.
+    **kwargs
+        Forwarded to ``posterior::as_draws_df()``. e.g inc_warmup, regex, variable
+
+    Returns
+    -------
+    PosteriorEpredResult
+        Result containing `idata` (ArviZ `InferenceData`) and an underlying R handle.
+
+    Examples
+    --------
+    ```python
+    from brmspy import brms
+
+    fit = brms.brm("y ~ x", data=df, chains=4)
+    ep = brms.posterior(fit)
+
+    ep.idata.posterior
+    ```
+    """
+    model_r = py_to_r(model)
+    kwargs = kwargs_r(kwargs)
+
+    resp_names = _brmsfit_get_response_names(model_r)
+    dims, coords = _brmsfit_get_dims_and_coords(model_r, resp_names=resp_names)
+
+    result, r = _brmsfit_get_posterior(model_r, **kwargs)
+    idata = az.from_dict(posterior=result, dims=dims, coords=coords)
+
+    # Add constant data
+    constant_data_dict = _brmsfit_get_constant_data(
+        model_r, newdata=None, resp_names=resp_names
+    )
+    _arviz_add_constant_data(
+        idata, constant_data_dict, "constant_data", obs_id=coords["obs_id"]
+    )
+
+    return IDResult(r=cast(ProxyListSexpVector, r), idata=cast(IDPosterior, idata))
+
+
+def observed_data(model: FitResult | ProxyListSexpVector) -> IDResult[IDObservedData]:
+    import rpy2.robjects as ro
+
+    model_r = py_to_r(model)
+
+    resp_names = _brmsfit_get_response_names(model_r)
+    dims, coords = _brmsfit_get_dims_and_coords(model_r, resp_names=resp_names)
+
+    result = _brmsfit_get_observed_data(model_r, resp_names=resp_names)
+    r = cast(Any, ro.NULL)
+
+    idata = az.from_dict(observed_data=result, coords=coords, dims=dims)
+    idata = cast(IDObservedData, idata)
+
+    # Add constant data
+    constant_data_dict = _brmsfit_get_constant_data(
+        model_r, newdata=None, resp_names=resp_names
+    )
+    _arviz_add_constant_data(idata, constant_data_dict, "constant_data")
+
+    return IDResult(r=r, idata=idata)
+
+
+@overload
 def posterior_epred(
-    model: FitResult, newdata: pd.DataFrame | None = None, **kwargs
-) -> PosteriorEpredResult:
+    model: FitResult | ProxyListSexpVector, newdata: Literal[None] = None
+) -> IDResult[IDPosterior]: ...
+
+
+@overload
+def posterior_epred(
+    model: FitResult | ProxyListSexpVector, newdata: pd.DataFrame
+) -> IDResult[IDPredictions]: ...
+
+
+def posterior_epred(
+    model: FitResult | ProxyListSexpVector,
+    newdata: pd.DataFrame | None = None,
+    **kwargs,
+) -> IDResult:
     """
     Compute expected posterior predictions (noise-free).
 
@@ -69,29 +165,62 @@ def posterior_epred(
     fit = brms.brm("y ~ x", data=df, chains=4)
     ep = brms.posterior_epred(fit)
 
-    ep.idata.predictions
+    ep.idata.posterior
     ```
     """
-    import rpy2.robjects as ro
-
-    m = model.r
+    model_r = py_to_r(model)
     data_r = py_to_r(newdata)
     kwargs = kwargs_r(kwargs)
 
-    # Get R function explicitly
-    r_posterior_epred = typing.cast(typing.Callable, ro.r("brms::posterior_epred"))
+    resp_names = _brmsfit_get_response_names(model_r)
+    dims, coords = _brmsfit_get_dims_and_coords(
+        model_r, resp_names=resp_names, newdata=newdata
+    )
 
-    # Call with proper argument names (object instead of model)
-    r = r_posterior_epred(m, newdata=data_r, **kwargs)
-    idata = brms_epred_to_idata(r, model.r, newdata=newdata)
-    idata = typing.cast(IDEpred, idata)
+    result, r = _brmsfit_get_predict_generic(
+        model_r,
+        newdata=data_r,
+        function="brms::posterior_epred",
+        resp_names=resp_names,
+        **kwargs,
+    )
 
-    return PosteriorEpredResult(r=r, idata=idata)
+    if newdata is None:
+        idata = az.from_dict(posterior=result, coords=coords, dims=dims)
+        idata = cast(IDPosterior, idata)
+    else:
+        idata = az.from_dict(predictions=result, coords=coords, dims=dims)
+        idata = cast(IDPredictions, idata)
+
+    _idata_add_resp_names_suffix(idata, "_mean", resp_names)
+
+    # Add constant data
+    constant_data_dict = _brmsfit_get_constant_data(
+        model_r, newdata=newdata, resp_names=resp_names
+    )
+    group_name = "constant_data" if newdata is None else "predictions_constant_data"
+    _arviz_add_constant_data(idata, constant_data_dict, group_name)
+
+    return IDResult(r=cast(ProxyListSexpVector, r), idata=idata)
+
+
+@overload
+def posterior_predict(
+    model: FitResult | ProxyListSexpVector, newdata: Literal[None] = None, **kwargs
+) -> IDResult[IDPosteriorPredictive]: ...
+
+
+@overload
+def posterior_predict(
+    model: FitResult | ProxyListSexpVector, newdata: pd.DataFrame, **kwargs
+) -> IDResult[IDPredictions]: ...
 
 
 def posterior_predict(
-    model: FitResult, newdata: pd.DataFrame | None = None, **kwargs
-) -> PosteriorPredictResult:
+    model: FitResult | ProxyListSexpVector,
+    newdata: pd.DataFrame | None = None,
+    **kwargs,
+) -> IDResult:
     """
     Draw from the posterior predictive distribution (includes observation noise).
 
@@ -126,31 +255,65 @@ def posterior_predict(
     pp.idata.posterior_predictive
     ```
     """
-    import rpy2.robjects as ro
-
-    m = model.r
-
+    model_r = py_to_r(model)
     data_r = py_to_r(newdata)
     kwargs = kwargs_r(kwargs)
 
-    # Get R function explicitly
-    r_posterior_predict = typing.cast(typing.Callable, ro.r("brms::posterior_predict"))
+    resp_names = _brmsfit_get_response_names(model_r)
+    dims, coords = _brmsfit_get_dims_and_coords(
+        model_r, resp_names=resp_names, newdata=newdata
+    )
 
-    # Call with proper arguments
-    if newdata is not None:
-        r = r_posterior_predict(m, newdata=data_r, **kwargs)
+    result, r = _brmsfit_get_predict_generic(
+        model_r,
+        newdata=data_r,
+        function="brms::posterior_predict",
+        resp_names=resp_names,
+        **kwargs,
+    )
+
+    if newdata is None:
+        idata = az.from_dict(
+            posterior_predictive=result,
+            dims=dims,
+            coords=coords,
+        )
+        idata = cast(IDPosteriorPredictive, idata)
     else:
-        r = r_posterior_predict(m, **kwargs)
+        idata = az.from_dict(
+            predictions=result,
+            dims=dims,
+            coords=coords,
+        )
+        idata = cast(IDPredictions, idata)
 
-    idata = brms_predict_to_idata(r, model.r, newdata=newdata)
-    idata = typing.cast(IDPredict, idata)
+    # Add constant data
+    constant_data_dict = _brmsfit_get_constant_data(
+        model_r, newdata=newdata, resp_names=resp_names
+    )
+    group_name = "constant_data" if newdata is None else "predictions_constant_data"
+    _arviz_add_constant_data(idata, constant_data_dict, group_name)
 
-    return PosteriorPredictResult(r=r, idata=idata)
+    return IDResult(r=cast(ProxyListSexpVector, r), idata=idata)
+
+
+@overload
+def posterior_linpred(
+    model: FitResult | ProxyListSexpVector, newdata: Literal[None] = None, **kwargs
+) -> IDResult[IDPosterior]: ...
+
+
+@overload
+def posterior_linpred(
+    model: FitResult | ProxyListSexpVector, newdata: pd.DataFrame, **kwargs
+) -> IDResult[IDPredictions]: ...
 
 
 def posterior_linpred(
-    model: FitResult, newdata: pd.DataFrame | None = None, **kwargs
-) -> PosteriorLinpredResult:
+    model: FitResult | ProxyListSexpVector,
+    newdata: pd.DataFrame | None = None,
+    **kwargs,
+) -> IDResult:
     """
     Draw from the linear predictor.
 
@@ -189,29 +352,67 @@ def posterior_linpred(
     """
     import rpy2.robjects as ro
 
-    m = model.r
-
+    model_r = py_to_r(model)
     data_r = py_to_r(newdata)
     kwargs = kwargs_r(kwargs)
 
-    # Get R function explicitly
-    r_posterior_linpred = typing.cast(typing.Callable, ro.r("brms::posterior_linpred"))
+    resp_names = _brmsfit_get_response_names(model_r)
+    dims, coords = _brmsfit_get_dims_and_coords(
+        model_r, resp_names=resp_names, newdata=newdata
+    )
 
-    # Call with proper arguments
-    if newdata is not None:
-        r = r_posterior_linpred(m, newdata=data_r, **kwargs)
+    result, r = _brmsfit_get_predict_generic(
+        model_r,
+        newdata=data_r,
+        function="brms::posterior_linpred",
+        resp_names=resp_names,
+        **kwargs,
+    )
+
+    if newdata is None:
+        idata = az.from_dict(
+            posterior=result,
+            dims=dims,
+            coords=coords,
+        )
+        idata = cast(IDPosterior, idata)
     else:
-        r = r_posterior_linpred(m, **kwargs)
+        idata = az.from_dict(
+            predictions=result,
+            dims=dims,
+            coords=coords,
+        )
+        idata = cast(IDPredictions, idata)
 
-    idata = brms_linpred_to_idata(r, model.r, newdata=newdata)
-    idata = typing.cast(IDLinpred, idata)
+    _idata_add_resp_names_suffix(idata, "_linpred", resp_names)
 
-    return PosteriorLinpredResult(r=r, idata=idata)
+    # Add constant data
+    constant_data_dict = _brmsfit_get_constant_data(
+        model_r, newdata=newdata, resp_names=resp_names
+    )
+    group_name = "constant_data" if newdata is None else "predictions_constant_data"
+    _arviz_add_constant_data(idata, constant_data_dict, group_name)
+
+    return IDResult(r=cast(ProxyListSexpVector, r), idata=idata)
+
+
+@overload
+def log_lik(
+    model: FitResult | ProxyListSexpVector, newdata: Literal[None] = None, **kwargs
+) -> IDResult[IDLogLikelihoodInsample]: ...
+
+
+@overload
+def log_lik(
+    model: FitResult | ProxyListSexpVector, newdata: pd.DataFrame, **kwargs
+) -> IDResult[IDLogLikelihoodOutsample]: ...
 
 
 def log_lik(
-    model: FitResult, newdata: pd.DataFrame | None = None, **kwargs
-) -> LogLikResult:
+    model: FitResult | ProxyListSexpVector,
+    newdata: pd.DataFrame | None = None,
+    **kwargs,
+) -> IDResult:
     """
     Compute pointwise log-likelihood draws.
 
@@ -249,21 +450,34 @@ def log_lik(
     """
     import rpy2.robjects as ro
 
-    m = model.r
-
+    model_r = py_to_r(model)
     data_r = py_to_r(newdata)
     kwargs = kwargs_r(kwargs)
 
-    # Get R function explicitly
-    r_log_lik = typing.cast(typing.Callable, ro.r("brms::log_lik"))
+    resp_names = _brmsfit_get_response_names(model_r)
+    dims, coords = _brmsfit_get_dims_and_coords(
+        model_r, resp_names=resp_names, newdata=newdata
+    )
 
-    # Call with proper arguments
-    if newdata is not None:
-        r = r_log_lik(m, newdata=data_r, **kwargs)
+    result, r = _brmsfit_get_predict_generic(
+        model_r,
+        newdata=data_r,
+        function="brms::log_lik",
+        resp_names=resp_names,
+        **kwargs,
+    )
+    if newdata is None:
+        idata = az.from_dict(log_likelihood=result, dims=dims, coords=coords)
+        idata = cast(IDLogLikelihoodInsample, idata)
     else:
-        r = r_log_lik(m, **kwargs)
+        idata = az.from_dict(log_likelihood=result, dims=dims, coords=coords)
+        idata = cast(IDLogLikelihoodOutsample, idata)
 
-    idata = brms_log_lik_to_idata(r, model.r, newdata=newdata)
-    idata = typing.cast(IDLogLik, idata)
+    # Add constant data
+    constant_data_dict = _brmsfit_get_constant_data(
+        model_r, newdata=newdata, resp_names=resp_names
+    )
+    group_name = "constant_data" if newdata is None else "predictions_constant_data"
+    _arviz_add_constant_data(idata, constant_data_dict, group_name)
 
-    return LogLikResult(r=r, idata=idata)
+    return IDResult(r=cast(ProxyListSexpVector, r), idata=idata)

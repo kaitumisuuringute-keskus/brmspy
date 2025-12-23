@@ -1,7 +1,7 @@
 """Result types for brmspy functions."""
 
 from dataclasses import dataclass
-from typing import Any, Protocol, Union, runtime_checkable
+from typing import Any, Generic, Protocol, TypeVar, Union, runtime_checkable
 
 import arviz as az
 import pandas as pd
@@ -123,7 +123,55 @@ class PriorSpec:
 # -----------------------------------------------------
 
 
-class IDFit(az.InferenceData):
+class IDConstantData(az.InferenceData):
+    """Typed .constant_data extension to idata"""
+
+    constant_data: xr.Dataset
+
+
+class IDPredictionsConstantData(az.InferenceData):
+    """Typed .predictions_constant_data extension to idata"""
+
+    predictions_constant_data: xr.Dataset
+
+
+class IDObservedData(IDConstantData):
+    """Typed .posterior extension to idata"""
+
+    observed_data: xr.Dataset
+
+
+class IDPosterior(IDConstantData):
+    """Typed .posterior extension to idata"""
+
+    posterior: xr.Dataset
+
+
+class IDPosteriorPredictive(IDConstantData):
+    """Typed .posterior_predictive extension to idata"""
+
+    posterior_predictive: xr.Dataset
+
+
+class IDPredictions(IDPredictionsConstantData):
+    """Typed .predictions extension to idata"""
+
+    predictions: xr.Dataset
+
+
+class IDLogLikelihoodInsample(IDConstantData):
+    """Typed .log_likelihood extension to idata"""
+
+    log_likelihood: xr.Dataset
+
+
+class IDLogLikelihoodOutsample(IDPredictionsConstantData):
+    """Typed .log_likelihood extension to idata"""
+
+    log_likelihood: xr.Dataset
+
+
+class IDBrm(IDConstantData):
     """
     Typed `arviz.InferenceData` for fitted brms models.
 
@@ -171,83 +219,6 @@ class IDFit(az.InferenceData):
     dims: xr.Dataset
 
 
-class IDEpred(az.InferenceData):
-    """
-    Typed InferenceData for posterior_epred results.
-
-    Contains expected values E[Y|X] without observation noise.
-
-    Attributes
-    ----------
-    posterior : xr.Dataset
-        Expected value samples (no observation noise)
-
-    See Also
-    --------
-    brmspy.brms.posterior_epred : Creates IDEpred objects
-    """
-
-    posterior: xr.Dataset
-
-
-class IDPredict(az.InferenceData):
-    """
-    Typed InferenceData for posterior_predict results.
-
-    Contains posterior predictive samples with observation noise.
-
-    Attributes
-    ----------
-    posterior_predictive : xr.Dataset
-        Posterior predictive samples (includes observation noise)
-
-    See Also
-    --------
-    brmspy.brms.posterior_predict : Creates IDPredict objects
-    """
-
-    posterior_predictive: xr.Dataset
-
-
-class IDLinpred(az.InferenceData):
-    """
-    Typed InferenceData for posterior_linpred results.
-
-    Contains linear predictor values (before applying link function).
-
-    Attributes
-    ----------
-    predictions : xr.Dataset
-        Linear predictor samples
-
-    See Also
-    --------
-    brmspy.brms.posterior_linpred : Creates IDLinpred objects
-    """
-
-    predictions: xr.Dataset
-
-
-class IDLogLik(az.InferenceData):
-    """
-    Typed InferenceData for log_lik results.
-
-    Contains log-likelihood values for model comparison.
-
-    Attributes
-    ----------
-    log_likelihood : xr.Dataset
-        Log-likelihood values for each observation
-
-    See Also
-    --------
-    brmspy.brms.log_lik : Creates IDLogLik objects
-    arviz.loo : LOO-CV using log-likelihood
-    """
-
-    log_likelihood: xr.Dataset
-
-
 # ---------------------
 # Function return types
 # ---------------------
@@ -268,8 +239,11 @@ class RListVectorExtension:
     r: ProxyListSexpVector
 
 
+T_idata = TypeVar("T_idata")
+
+
 @dataclass
-class GenericResult(RListVectorExtension):
+class IDResult(Generic[T_idata], RListVectorExtension):
     """Generic result container with arviz and R objects.
 
     Attributes
@@ -280,122 +254,13 @@ class GenericResult(RListVectorExtension):
         R object from brms
     """
 
-    idata: az.InferenceData
+    idata: T_idata
+
+    def __repr__(self) -> str:
+        return repr(self.idata)
 
 
-@dataclass
-class FitResult(RListVectorExtension):
-    """Result from fit() function.
-
-    Attributes
-    ----------
-    idata : arviz.InferenceData
-        arviz InferenceData with posterior, posterior_predictive,
-        log_likelihood, and observed_data groups
-    r : robjects.ListVector
-        brmsfit R object from brms::brm()
-    """
-
-    idata: IDFit
-
-
-@dataclass
-class PosteriorEpredResult(RListVectorExtension):
-    """Result from posterior_epred() function.
-
-    Attributes
-    ----------
-    idata : arviz.InferenceData
-        arviz InferenceData with expected values in 'posterior' group
-    r : robjects.ListVector
-        R matrix from brms::posterior_epred()
-    """
-
-    idata: IDEpred
-
-
-@dataclass
-class PosteriorPredictResult(RListVectorExtension):
-    """Result from posterior_predict() function.
-
-    Attributes
-    ----------
-    idata : arviz.InferenceData
-        arviz InferenceData with predictions in 'posterior_predictive' group
-    r : robjects.ListVector
-        R matrix from brms::posterior_predict()
-    """
-
-    idata: IDPredict
-
-
-@dataclass
-class LogLikResult(RListVectorExtension):
-    """
-    Result from log_lik() function.
-
-    Attributes
-    ----------
-    idata : IDLogLik
-        arviz InferenceData with log-likelihood values
-    r : robjects.ListVector
-        R matrix from brms::log_lik()
-
-    See Also
-    --------
-    brmspy.brms.log_lik : Creates LogLikResult objects
-
-    Examples
-    --------
-
-    ```python
-    from brmspy import brms
-    import arviz as az
-
-    model = brms.fit("y ~ x", data=df, chains=4)
-    loglik = brms.log_lik(model)
-
-    # Use for model comparison
-    loo = az.loo(model.idata)
-    print(loo)
-    ```
-
-    """
-
-    idata: IDLogLik
-
-
-@dataclass
-class PosteriorLinpredResult(RListVectorExtension):
-    """
-    Result from posterior_linpred() function.
-
-    Attributes
-    ----------
-    idata : IDLinpred
-        arviz InferenceData with linear predictor values
-    r : robjects.ListVector
-        R matrix from brms::posterior_linpred()
-
-    See Also
-    --------
-    brmspy.brms.posterior_linpred : Creates PosteriorLinpredResult objects
-
-    Examples
-    --------
-
-    ```python
-    from brmspy import brms
-
-    model = brms.fit("count ~ age", data=df, family="poisson", chains=4)
-    linpred = brms.posterior_linpred(model)
-
-    # Linear predictor on log scale (for Poisson)
-    print(linpred.idata.predictions)
-    ```
-    """
-
-    idata: IDLinpred
+FitResult = IDResult[IDBrm]
 
 
 @dataclass
@@ -438,8 +303,8 @@ class SummaryResult(RListVectorExtension):
     thin: float
     has_rhat: bool
     fixed: pd.DataFrame
-    spec_pars: pd.DataFrame
-    cor_pars: pd.DataFrame
+    spec_pars: pd.DataFrame | None = None
+    cor_pars: pd.DataFrame | None = None
     rescor_pars: pd.DataFrame | None = None
     ngrps: dict[str, int] | None = None
     autocor: dict | None = None

@@ -148,3 +148,5 @@ uv.lock
 coverage.json
 temp_docs
 trace
+
+epilepsy_fixed_effects.rds

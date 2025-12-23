@@ -1,4 +1,5 @@
 from __future__ import annotations
+import gc
 
 """
 Main↔worker session and proxy module machinery.
@@ -33,11 +34,18 @@ from typing import Any
 
 from brmspy._session.environment import get_environment_config, get_environment_exists
 from brmspy._session.environment_parent import save, save_as_state
+from brmspy.helpers.log import get_logger, log_warning
 
-from ..types.errors import RSessionError
-from ..types.session import EnvironmentConfig
+from ..types.errors import RSessionError, RWorkerCrashedError
+from ..types.session import (
+    EncodeResult,
+    EnvironmentConfig,
+    PayloadRef,
+    Request,
+    Response,
+)
 from .codec import get_default_registry
-from .transport import ShmPool, attach_buffers
+from .transport import ShmPool
 from brmspy._session.worker import worker_main
 
 ctx = mp.get_context("spawn")
@@ -364,15 +372,13 @@ class RModuleSession(ModuleType):
         # Disallow nested tooling contexts (manage/_build/etc)
         self._active_ctx: str | None = None
 
+        self._closed = True
+
         # start SHM manager + worker
         self._setup_worker()
 
         # copy attributes so IDEs / dir() see the module surface
         self.__dict__.update(module.__dict__)
-
-        from .._singleton._shm_singleton import _set_shm
-
-        _set_shm(self._shm_pool)
 
         # register for global cleanup at exit
         RModuleSession._instances.add(self)
@@ -427,16 +433,29 @@ class RModuleSession(ModuleType):
         else:
             env_overrides["BRMSPY_AUTOLOAD"] = "0"
 
-        proc = spawn_worker(
-            target=worker_main,
-            args=(child_conn, mgr_address, mgr_authkey, self._environment_conf),
-            env_overrides=env_overrides,
-            log_queue=self._log_queue,
-        )
+        # Spawn worker. Important: close our local copy of the child's end of the Pipe
+        # after the process starts, otherwise each restart leaks file descriptors.
+        proc = None
+        try:
+            proc = spawn_worker(
+                target=worker_main,
+                args=(child_conn, mgr_address, mgr_authkey, self._environment_conf),
+                env_overrides=env_overrides,
+                log_queue=self._log_queue,
+            )
+        finally:
+            try:
+                child_conn.close()
+            except Exception:
+                pass
 
         self._mgr = mgr
         self._proc = proc
         self._shm_pool = ShmPool(mgr)
+        from .._singleton._shm_singleton import _set_shm
+
+        _set_shm(self._shm_pool)
+
         self._reg = get_default_registry()
         self._closed = False
 
@@ -501,11 +520,46 @@ class RModuleSession(ModuleType):
         except Exception:
             pass
 
+        # close the pipe connection in this process (best-effort)
+        try:
+            conn = getattr(self, "_conn", None)
+            if conn is not None:
+                conn.close()
+        except Exception:
+            pass
+
         # stop logging listener
         try:
             listener = getattr(self, "_log_listener", None)
             if listener is not None:
                 listener.stop()
+        except Exception:
+            pass
+
+        # close the log queue to release its pipe FDs (important on macOS low ulimit)
+        try:
+            q = getattr(self, "_log_queue", None)
+            if q is not None:
+                try:
+                    q.close()
+                except Exception:
+                    pass
+                # Avoid potential hangs waiting for queue feeder threads in teardown paths.
+                try:
+                    q.cancel_join_thread()
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+        # close any SHM blocks we have attached/allocated in this process
+        try:
+            pool = getattr(self, "_shm_pool", None)
+            if pool is not None:
+                pool.close_all()
+            from .._singleton._shm_singleton import _set_shm
+
+            _set_shm(None)
         except Exception:
             pass
 
@@ -546,7 +600,7 @@ class RModuleSession(ModuleType):
 
     # ----------------- IPC helpers --------------------
 
-    def _encode_arg(self, obj: Any) -> dict[str, Any]:
+    def _encode_arg(self, obj: Any) -> PayloadRef:
         """
         Encode a single Python argument into an IPC payload dict.
 
@@ -568,10 +622,10 @@ class RModuleSession(ModuleType):
         return {
             "codec": enc.codec,
             "meta": enc.meta,
-            "buffers": [{"name": b.name, "size": b.size} for b in enc.buffers],
+            "buffers": enc.buffers,
         }
 
-    def _decode_result(self, resp: dict[str, Any]) -> Any:
+    def _decode_result(self, resp: Response) -> Any:
         """
         Decode a worker response into a Python value or raise.
 
@@ -596,12 +650,10 @@ class RModuleSession(ModuleType):
                 remote_traceback=resp.get("traceback"),
             )
         pres = resp["result"]
-        buffer_refs = pres["buffers"]
+        if not pres:
+            return None
         decoded = self._reg.decode(
-            pres["codec"],
-            pres["meta"],
-            attach_buffers(self._shm_pool, buffer_refs),
-            buffer_refs,
+            pres,
             shm_pool=self._shm_pool,
         )
         return decoded
@@ -635,22 +687,75 @@ class RModuleSession(ModuleType):
         if self._closed:
             raise RuntimeError("RModuleSession is closed")
 
-        if func_name.startswith("mod:"):
-            target = func_name
-        else:
-            target = f"mod:{self._module_path}.{func_name}"
+        try:
+            if func_name.startswith("mod:"):
+                target = func_name
+            else:
+                target = f"mod:{self._module_path}.{func_name}"
 
-        req_id = str(uuid.uuid4())
-        req = {
-            "id": req_id,
-            "cmd": "CALL",
-            "target": target,
-            "args": [self._encode_arg(a) for a in args],
-            "kwargs": {k: self._encode_arg(v) for k, v in kwargs.items()},
-        }
-        self._conn.send(req)
-        resp = self._conn.recv()
-        return self._decode_result(resp)
+            req_id = str(uuid.uuid4())
+            req: Request = {
+                "id": req_id,
+                "cmd": "CALL",
+                "target": target,
+                "args": [self._encode_arg(a) for a in args],
+                "kwargs": {k: self._encode_arg(v) for k, v in kwargs.items()},
+            }
+            self._conn.send(req)
+            resp = self._conn.recv()
+            decoded = self._decode_result(resp)
+
+            try:
+                # MUST be run after and never before decoding!
+                if self._shm_pool:
+                    self._shm_pool.gc()
+            except:
+                pass
+
+            return decoded
+
+        except (BrokenPipeError, ConnectionResetError, EOFError) as e:
+            self._recover(e)
+
+    def _recover(self, orig_exc: BaseException) -> None:
+        logger = get_logger()
+
+        logger.warning(
+            "R worker crashed; attempting to start a new session...",
+            exc_info=orig_exc,
+        )
+
+        try:
+            # Best-effort shutdown; don't let this kill the recovery path
+            try:
+                self.shutdown()
+            except Exception:
+                logger.debug(
+                    "Failed to cleanly shut down crashed worker",
+                    exc_info=True,
+                )
+
+            # Restart must succeed or we bail
+            self.restart(autoload=False)
+
+        except Exception as restart_exc:
+            # Recovery itself failed
+            logger.error(
+                "R worker crashed and automatic restart failed.",
+                exc_info=restart_exc,
+            )
+            raise RWorkerCrashedError(
+                "R worker crashed; failed to start new session.",
+                recovered=False,
+                cause=restart_exc,
+            ) from restart_exc
+
+        # Recovery succeeded, but the *call* that hit this still failed
+        raise RWorkerCrashedError(
+            "R worker crashed; started a fresh session. See __cause__ for details.",
+            recovered=True,
+            cause=orig_exc,
+        ) from orig_exc
 
     # ----------------- attribute proxying --------------
 
@@ -858,6 +963,7 @@ class RModuleSession(ModuleType):
         self,
         environment_conf: dict[str, Any] | EnvironmentConfig | None = None,
         autoload: bool = True,
+        # empty_shm: bool = False,
     ) -> None:
         """
         Restart the worker process and SHM manager.
@@ -880,8 +986,6 @@ class RModuleSession(ModuleType):
         # Tear down existing worker (if any)
         self._teardown_worker()
 
-        # Optional: clear wrappers if you want a fully "fresh" view.
-        # They are safe to reuse, but clearing them forces re-resolution.
         self._func_cache.clear()
 
         # Start a fresh worker with current env conf
@@ -951,6 +1055,8 @@ class RModuleSession(ModuleType):
         """
         if os.getenv("BRMSPY_TEST") != "1":
             raise RuntimeError("BRMSPY_TEST=1 required for worker test execution")
+        if self._closed:
+            raise RuntimeError("Connection not open! Cant run test.")
 
         req_id = str(uuid.uuid4())
         self._conn.send(
@@ -978,9 +1084,6 @@ class RModuleSession(ModuleType):
         pres = resp["result"]
 
         return self._reg.decode(
-            pres["codec"],
-            pres["meta"],
-            attach_buffers(self._shm_pool, pres["buffers"]),
-            pres["buffers"],
+            pres,
             shm_pool=self._shm_pool,
         )

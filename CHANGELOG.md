@@ -1,3 +1,44 @@
+## 0.3.1 - Standardized and modular InferenceData, improved memory management
+*25.12.23*
+
+This release standardizes the `InferenceData` structure across all prediction methods, ensuring consistent dimensions (`chain`, `draw`, `obs_id`) and variable naming conventions. It also improves shared-memory transport for Pandas DataFrames, enabling high-fidelity roundtripping of Categoricals and mixed types between R and Python.
+
+
+### Standardised idata
+
+All idata returned from brmspy functions is now standardised to be joinable with one another, keep DataFrame indexes correctly in obs_id and works uniformly for univariate and multivariate models.
+
+*   **brm()**: Optional `return_idata: bool` argument. In case of large models, using false and only running methods you may need can be better for memory management (e.g brms.posterior_pred(fit)). When `return_idata=True` the function now also includes `constant_data` (Issue #51)
+*   **posterior()**: Returns draws in `posterior` and `constant_data` as idata. (Issue #51)
+*   **observed_data()** Returns `observed_data` and `constant_data` as idata (Issue #51)
+*   **posterior_epred()** Now returns `predictions` and `predictions_constant_data` in case there is newdata and `posterior` and `constant_data` when no newdata. Target variables are now suffixed with `_mean`. (Issue #51) 
+*   **posterior_predict()** Now returns `predictions` and `predictions_constant_data` in case there is newdata and `posterior_predictive` and `constant_data` when no newdata. idata. (Issue #51)
+*   **posterior_linpred()** Now returns `predictions` and `predictions_constant_data` in case there is newdata and `posterior` and `constant_data` when no newdata. Target variables are now suffixed with `_linpred`. (Issue #51)
+*   **log_lik()** (Issue #51) Always returns `log_likelihood` and depending on `newdata=None` returns  `constant_data` or `predictions_constant_data`.
+*   Added `newdata` kwarg based overloads for static typechecking to automatically recognise the correct returned groups for idata
+
+This change allows composable architectures, where the user picks only the parts of idata they need for their analysis.
+
+### Pandas & R Type Conversion
+
+*   **Columnar SHM Transport**: Improved `ShmDataFrameColumns` to transport DataFrames with mixed types via shared memory. Numeric and categorical columns now move between processes with zero-copy overhead, while complex object columns fall back to pickling individually.
+*   **Categorical Fidelity**: R factors now correctly roundtrip to `pandas.CategoricalDtype`, preserving categories, integer codes, and ordered status across the main-worker boundary. (issue #52)
+*   **Broad Dtype Support**: Enhanced converters to robustly handle pandas nullable integers (`Int64`), nullable floats, strings during R conversion.
+
+
+### Bug fixes and enhancements
+
+*   **Worker crash recovery** (Issue #50): Added automatic recovery for R worker crashes
+    (segfaults, BrokenPipeError, ConnectionResetError). The worker is restarted
+    transparently and the call raises `RWorkerCrashedError`. The exception
+    includes a `recovered: bool` flag indicating whether a clean worker session
+    was successfully started, allowing pipelines to distinguish retryable
+    crashes (`recovered=True`) from hard failures (`recovered=False`).
+*   **Numpy Encoding**: Standardised encoding for object arrays. String arrays are now optimized as `ShmArray`; mixed object arrays gracefully fall back to pickling.
+*   **Improved SHM memory management**: Introduced explicit temporary buffers that are cleaned up immediately after use, while non-temporary buffers are now tracked by ShmPool only until the next main <-> worker exchange; buffer lifetime is then transferred to CodecRegistry, which ties shared-memory mappings to reconstructed objects via weakrefs, minimizing the number of active mappings and allowing timely resource release once those objects are garbage-collected.
+
+
+
 ## 0.3.0 - Process-Isolated R & Hot-Swappable Runtimes
 *25.12.14*
 

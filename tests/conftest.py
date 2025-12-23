@@ -2,9 +2,10 @@
 Pytest configuration and shared fixtures for brmspy tests
 """
 
+import gc
 import inspect
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 from unittest.mock import MagicMock
 import pytest
 import sys
@@ -149,6 +150,8 @@ def no_robjects_bomb():
         yield
         return
 
+    _force_brmspy_cleanup()
+
     mp = pytest.MonkeyPatch()
 
     # Module-level import: `import rpy2.robjects as ro`
@@ -173,12 +176,11 @@ def no_robjects_bomb():
 @pytest.fixture(scope="session")
 def worker_runner():
     """Returns a function that runs a test fn inside the worker."""
-    from brmspy import brms
-    from brmspy._session.session import RModuleSession
-
-    session = cast(RModuleSession, brms)
 
     def run_remote(module, cls, func):
+        from brmspy import brms
+
+        session = cast(Any, brms)
         return session._run_test_by_name(module, cls, func)
 
     return run_remote
@@ -277,3 +279,34 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(skip_requires_rdeps)
         if rdeps_allowed and "rdeps" not in item.keywords:
             item.add_marker(skip_only_using_rdeps)
+
+
+def _force_brmspy_cleanup():
+    """
+    Forcefully clean up brmspy worker + SHM between modules.
+
+    Rationale (macOS CI):
+    - POSIX shared memory attaches (`/psm_*`) consume file descriptors.
+    - If SHM blocks accumulate across tests, the process can hit `[Errno 24] Too many open files`.
+    """
+
+    if os.environ.get("BRMSPY_WORKER") == "1":
+        return
+
+    gc.collect()
+
+    try:
+        from brmspy import brms
+
+        if getattr(brms, "_is_rsession", True):
+            try:
+                # Restart between tests to force-close worker-side `/psm_*` SHM FDs.
+                cast(Any, brms).restart(autoload=True)
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    gc.collect()
+
+    yield

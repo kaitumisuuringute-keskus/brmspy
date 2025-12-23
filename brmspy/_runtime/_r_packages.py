@@ -97,7 +97,6 @@ def install_package(
     cores = multiprocessing.cpu_count()
 
     lib_path_py = [get_lib_paths()[0]]
-    print("lib path is", lib_path_py)
     lib_path = ro.StrVector(lib_path_py)
 
     already_installed = is_package_installed(name, lib_loc=lib_path_py[0])

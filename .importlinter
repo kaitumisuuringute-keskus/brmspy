@@ -80,6 +80,7 @@ type = acyclic_siblings
 ancestors = brmspy
 ignore_imports =
     brmspy._singleton._brms -> brmspy.brms
+    brmspy.types.shm_extensions -> brmspy._singleton._shm_singleton
 
 
 [importlinter:contract: layering]
@@ -92,8 +93,8 @@ layers =
     brmspy._runtime
     brmspy._brms_functions
     brmspy.helpers._rpy2
-    brmspy.helpers.log
     brmspy.types
+    brmspy.helpers.log
     
 ignore_imports =
     brmspy._singleton._brms -> brmspy.brms

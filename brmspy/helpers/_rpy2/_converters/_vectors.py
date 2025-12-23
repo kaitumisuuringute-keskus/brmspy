@@ -1,16 +1,51 @@
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Sequence, cast
 
+import pandas as pd
 from rpy2.rinterface_lib.sexp import NULL
 
+from brmspy.types.shm_extensions import ShmArray
+
 if TYPE_CHECKING:
-    from rpy2.robjects import ListVector, Vector
+    from rpy2.robjects import ListVector, Vector, FactorVector
 
 import numpy as np
-from rpy2.rinterface_lib.sexp import Sexp
+import rpy2.rinterface as rinterface
 
 from brmspy.types.rpy2_converters import PyObject
 from brmspy.types.shm import ShmPool
+
+from rpy2.rinterface_lib.sexp import Sexp, StrSexpVector, RTYPES, SexpVector
+from rpy2.rinterface import SexpVectorWithNumpyInterface
+
+
+def _get_rvector_types(obj: Any) -> tuple[None | str, None | int]:
+    if not isinstance(obj, SexpVectorWithNumpyInterface):
+        return None, None
+
+    dtypestr = obj._NP_TYPESTR
+    itemsize = obj._R_SIZEOF_ELT
+
+    if not dtypestr or not itemsize:
+        return None, None
+
+    return dtypestr, itemsize
+
+
+def _get_rvector_memview(
+    obj: Any,
+) -> tuple[SexpVectorWithNumpyInterface | None, memoryview | None]:
+    try:
+        assert isinstance(obj, SexpVectorWithNumpyInterface) and isinstance(
+            obj, SexpVector
+        )  # assert types, shouldnt error by itself
+        if hasattr(obj, "memoryview"):
+            src = cast(Any, obj).memoryview()
+            return obj, src
+        else:
+            return None, None
+    except:
+        return None, None
 
 
 def _r2py_listvector(
@@ -35,28 +70,94 @@ def _r2py_listvector(
     return [r_to_py(el) for el in obj]
 
 
-def _r2py_vector(obj: "Vector", shm: ShmPool | None = None) -> PyObject:
+def _fallback_rvector_iter(obj):
+    from rpy2.robjects.conversion import localconverter
+    from rpy2.robjects import default_converter, FactorVector
+
+    is_factor = isinstance(obj, FactorVector)
+    if is_factor:
+        return _to_pandas_factor(np.array(obj), obj)
+
+    out = []
+    with localconverter(default_converter) as cv:
+        for el in obj:
+            py = cv.rpy2py(el)
+            out.append(py)
+
+    return out
+
+
+def _to_pandas_factor(arr: Any, obj_r: "FactorVector"):
+    import rpy2.robjects as ro
+
+    # R factors are 1-based integer codes with missing values represented as NA_INTEGER
+    # (a negative sentinel). pandas expects 0-based codes with -1 for missing.
+    if not isinstance(arr, np.ndarray):
+        arr = np.asarray(arr)
+
+    # Avoid int32 overflow on NA_INTEGER when shifting codes:
+    # only positive values are valid factor codes.
+    valid = arr > 0
+    arr = arr.astype(np.int32, copy=False)
+    arr[~valid] = -1
+    arr[valid] -= 1
+
+    res = pd.Categorical.from_codes(
+        arr,
+        categories=cast(pd.Index, list(cast(ro.ListVector, obj_r.do_slot("levels")))),
+        ordered="ordered" in obj_r.rclass,
+    )
+    return res
+
+
+def _r2py_vector(
+    obj: "Vector", shm: ShmPool | None = None, allow_scalar: bool | None = True
+) -> PyObject:
     import rpy2.robjects as ro
     from rpy2.robjects import default_converter
     from rpy2.robjects.conversion import localconverter
 
     assert not isinstance(obj, ro.ListVector)
 
-    obj_any = cast(Any, obj)
-    # length 1 → scalar
-    if obj_any.__len__ and len(obj_any) == 1:
-        # Try default R→Python conversion
-        with localconverter(default_converter) as cv:
-            py = cv.rpy2py(obj[0])
-        return py
+    if allow_scalar:
+        obj_any = cast(Any, obj)
+        # length 1 → scalar
+        if obj_any.__len__ and len(obj_any) == 1:
+            # Try default R→Python conversion
+            with localconverter(default_converter) as cv:
+                py = cv.rpy2py(obj[0])
+            return py
 
-    # length >1 → list of scalars
-    out = []
-    for el in obj:
-        with localconverter(default_converter) as cv:
-            py = cv.rpy2py(el)
-        out.append(py)
-    return out
+    is_factor = isinstance(obj, ro.FactorVector)
+
+    dtypestr, itemsize = _get_rvector_types(obj)
+    rvecnp, src = _get_rvector_memview(obj)
+
+    # fallback
+    if not dtypestr or not itemsize or not shm or not rvecnp or not src:
+        return _fallback_rvector_iter(obj)
+
+    # numpy convertible
+    N = len(rvecnp)
+    expected_bytes = itemsize * N
+    dtype = np.dtype(dtypestr)
+
+    if src.nbytes != expected_bytes:
+        raise RuntimeError(f"R vector bytes={src.nbytes}, expected={expected_bytes}")
+
+    # Allocate shm once
+    block = shm.alloc(expected_bytes)
+    assert block.shm.buf
+
+    # Single bulk copy: R → shm, no intermediate ndarray
+    src_bytes = src.cast("B")
+    block.shm.buf[:expected_bytes] = src_bytes
+
+    arr = ShmArray.from_block(block=block, shape=(N,), dtype=dtype)
+    if is_factor:
+        return _to_pandas_factor(arr, obj)
+
+    return arr
 
 
 def _py2r_list(obj: list | tuple) -> Sexp:

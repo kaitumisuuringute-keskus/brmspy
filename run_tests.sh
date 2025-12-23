@@ -20,6 +20,33 @@ fi
 TESTS="tests/"
 RCFILE=".coveragerc"
 
+# ---- best-effort raise nofile (soft + hard), never fail ----
+(
+  TARGET_NOFILE=500000
+
+  # Read current hard limit (empty if unsupported)
+  HARD="$(ulimit -Hn 2>/dev/null || true)"
+
+  if [[ -n "${HARD}" ]]; then
+    # Try to raise hard limit first (may be capped or denied)
+    ulimit -Hn "${TARGET_NOFILE}" >/dev/null 2>&1 || true
+
+    # Re-read hard limit (actual value after attempt)
+    HARD="$(ulimit -Hn 2>/dev/null || true)"
+
+    # Set soft limit to whatever hard ended up being
+    if [[ -n "${HARD}" ]]; then
+      ulimit -Sn "${HARD}" >/dev/null 2>&1 || true
+    fi
+  fi
+
+  # Final state log (always best-effort)
+  SOFT="$(ulimit -Sn 2>/dev/null || echo '?')"
+  HARD="$(ulimit -Hn 2>/dev/null || echo '?')"
+  echo "[nofile] soft=${SOFT} hard=${HARD}"
+) || true
+# -----------------------------------------------------------
+
 # 1) Run tests, collect coverage but DO NOT print report from pytest
 "${PYTEST_CMD[@]}" "$TESTS" -v \
   --cov=brmspy \

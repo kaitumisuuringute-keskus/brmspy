@@ -21,9 +21,9 @@ from typing import Any, cast
 
 from rpy2.rinterface_lib.embedded import RRuntimeError
 
-from ...types.session import EnvironmentConfig
+from ...types.session import EnvironmentConfig, PayloadRef
 from ..codec import get_default_registry
-from ..transport import ShmPool, attach_buffers
+from ..transport import ShmPool
 from .logging import setup_worker_logging
 from .setup import _initialise_r_safe, activate, run_startup_scripts
 from .sexp_cache import cache_sexp, reattach_sexp
@@ -86,6 +86,8 @@ def worker_main(
             cmd = req["cmd"]
             req_id = req["id"]
 
+            shm_pool.gc()
+
             try:
                 if cmd == "SHUTDOWN":
                     conn.send(
@@ -113,24 +115,9 @@ def worker_main(
 
                 elif cmd == "CALL":
                     # decode Python args
-                    args = [
-                        reg.decode(
-                            p["codec"],
-                            p["meta"],
-                            attach_buffers(shm_pool, p["buffers"]),
-                            p["buffers"],
-                            shm_pool=shm_pool,
-                        )
-                        for p in req["args"]
-                    ]
+                    args = [reg.decode(p, shm_pool=shm_pool) for p in req["args"]]
                     kwargs = {
-                        k: reg.decode(
-                            p["codec"],
-                            p["meta"],
-                            attach_buffers(shm_pool, p["buffers"]),
-                            p["buffers"],
-                            shm_pool=shm_pool,
-                        )
+                        k: reg.decode(p, shm_pool=shm_pool)
                         for k, p in req["kwargs"].items()
                     }
                     args: list[Any] = reattach_sexp(args)
@@ -143,12 +130,10 @@ def worker_main(
 
                     # encode result
                     enc = reg.encode(out, shm_pool)
-                    result_payload = {
+                    result_payload: PayloadRef = {
                         "codec": enc.codec,
                         "meta": enc.meta,
-                        "buffers": [
-                            {"name": b.name, "size": b.size} for b in enc.buffers
-                        ],
+                        "buffers": enc.buffers,
                     }
 
                     conn.send(
@@ -186,10 +171,7 @@ def worker_main(
                                 "result": {
                                     "codec": enc.codec,
                                     "meta": enc.meta,
-                                    "buffers": [
-                                        {"name": b.name, "size": b.size}
-                                        for b in enc.buffers
-                                    ],
+                                    "buffers": enc.buffers,
                                 },
                                 "error": None,
                                 "traceback": None,
