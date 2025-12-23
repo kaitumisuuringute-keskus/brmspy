@@ -128,6 +128,7 @@ class CodecRegistry:
                         view.release()
                         memview.release()
                         shm_pool.gc(ref["name"])
+                        buf.shm.close()
                     except:
                         pass
 
