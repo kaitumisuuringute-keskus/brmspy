@@ -688,12 +688,6 @@ class RModuleSession(ModuleType):
             raise RuntimeError("RModuleSession is closed")
 
         try:
-            if self._shm_pool:
-                self._shm_pool.gc()
-        except:
-            pass
-
-        try:
             if func_name.startswith("mod:"):
                 target = func_name
             else:
@@ -709,7 +703,17 @@ class RModuleSession(ModuleType):
             }
             self._conn.send(req)
             resp = self._conn.recv()
-            return self._decode_result(resp)
+            decoded = self._decode_result(resp)
+
+            try:
+                # MUST be run after and never before decoding!
+                if self._shm_pool:
+                    self._shm_pool.gc()
+            except:
+                pass
+
+            return decoded
+
         except (BrokenPipeError, ConnectionResetError, EOFError) as e:
             self._recover(e)
 
