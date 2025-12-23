@@ -304,9 +304,6 @@ def _force_brmspy_cleanup():
                 cast(Any, brms).restart(autoload=True)
             except Exception:
                 pass
-            finally:
-                cast(Any, brms).restart(autoload=True)
-                pass
     except Exception:
         pass
 
