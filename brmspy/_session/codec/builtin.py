@@ -190,7 +190,22 @@ class PickleCodec(Encoder):
         return True
 
     def encode(self, obj: Any, shm_pool: Any) -> EncodeResult:
+        if obj is None:
+            return EncodeResult(
+                codec=type(self).__name__,
+                meta={},
+                buffers=[],
+            )
+
         data = pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
+        if len(data) == 0:
+            if obj is None:
+                return EncodeResult(
+                    codec=type(self).__name__,
+                    meta={},
+                    buffers=[],
+                )
+
         block = shm_pool.alloc(len(data), temporary=True)
         block.shm.buf[: len(data)] = data
 
@@ -217,6 +232,9 @@ class PickleCodec(Encoder):
         *args,
     ) -> Any:
         specs = payload["buffers"]
+        if len(specs) == 0:
+            return None
+
         with get_buf(specs[0]) as (block, buf):
             length = block.content_size
             b = bytes(buf[:length])

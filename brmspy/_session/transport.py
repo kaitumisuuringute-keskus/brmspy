@@ -47,8 +47,7 @@ class ShmPool(_ShmPool):
             content_size=size,
             temporary=temporary,
         )
-        if not temporary:
-            self._blocks[block.name] = block
+        self._blocks[block.name] = block
         return block
 
     def attach(self, ref: ShmRef) -> ShmBlock:
@@ -62,8 +61,7 @@ class ShmPool(_ShmPool):
             content_size=ref["content_size"],
             temporary=ref["temporary"],
         )
-        if not ref["temporary"]:
-            self._blocks[ref["name"]] = block
+        self._blocks[ref["name"]] = block
         return block
 
     def close_all(self) -> None:
