@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.618322db.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
       
         
         <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -5624,27 +5624,27 @@ the <code>class_</code> -&gt; <code>class</code> parameter name conversion.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>brmspy/types/brms_results.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-258">258</a></span>
-<span class="normal"><a href="#__codelineno-0-259">259</a></span>
-<span class="normal"><a href="#__codelineno-0-260">260</a></span>
-<span class="normal"><a href="#__codelineno-0-261">261</a></span>
-<span class="normal"><a href="#__codelineno-0-262">262</a></span>
-<span class="normal"><a href="#__codelineno-0-263">263</a></span>
-<span class="normal"><a href="#__codelineno-0-264">264</a></span>
-<span class="normal"><a href="#__codelineno-0-265">265</a></span>
-<span class="normal"><a href="#__codelineno-0-266">266</a></span>
-<span class="normal"><a href="#__codelineno-0-267">267</a></span>
-<span class="normal"><a href="#__codelineno-0-268">268</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-258" name="__codelineno-0-258"></a><span class="nd">@dataclass</span>
-<a id="__codelineno-0-259" name="__codelineno-0-259"></a><span class="k">class</span><span class="w"> </span><span class="nc">RListVectorExtension</span><span class="p">:</span>
-<a id="__codelineno-0-260" name="__codelineno-0-260"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Generic result container with R objects.</span>
-<a id="__codelineno-0-261" name="__codelineno-0-261"></a>
-<a id="__codelineno-0-262" name="__codelineno-0-262"></a><span class="sd">    Attributes</span>
-<a id="__codelineno-0-263" name="__codelineno-0-263"></a><span class="sd">    ----------</span>
-<a id="__codelineno-0-264" name="__codelineno-0-264"></a><span class="sd">    r : robjects.ListVector</span>
-<a id="__codelineno-0-265" name="__codelineno-0-265"></a><span class="sd">        R object from brms</span>
-<a id="__codelineno-0-266" name="__codelineno-0-266"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-267" name="__codelineno-0-267"></a>
-<a id="__codelineno-0-268" name="__codelineno-0-268"></a>    <span class="n">r</span><span class="p">:</span> <span class="n">ProxyListSexpVector</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-229">229</a></span>
+<span class="normal"><a href="#__codelineno-0-230">230</a></span>
+<span class="normal"><a href="#__codelineno-0-231">231</a></span>
+<span class="normal"><a href="#__codelineno-0-232">232</a></span>
+<span class="normal"><a href="#__codelineno-0-233">233</a></span>
+<span class="normal"><a href="#__codelineno-0-234">234</a></span>
+<span class="normal"><a href="#__codelineno-0-235">235</a></span>
+<span class="normal"><a href="#__codelineno-0-236">236</a></span>
+<span class="normal"><a href="#__codelineno-0-237">237</a></span>
+<span class="normal"><a href="#__codelineno-0-238">238</a></span>
+<span class="normal"><a href="#__codelineno-0-239">239</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-229" name="__codelineno-0-229"></a><span class="nd">@dataclass</span>
+<a id="__codelineno-0-230" name="__codelineno-0-230"></a><span class="k">class</span><span class="w"> </span><span class="nc">RListVectorExtension</span><span class="p">:</span>
+<a id="__codelineno-0-231" name="__codelineno-0-231"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Generic result container with R objects.</span>
+<a id="__codelineno-0-232" name="__codelineno-0-232"></a>
+<a id="__codelineno-0-233" name="__codelineno-0-233"></a><span class="sd">    Attributes</span>
+<a id="__codelineno-0-234" name="__codelineno-0-234"></a><span class="sd">    ----------</span>
+<a id="__codelineno-0-235" name="__codelineno-0-235"></a><span class="sd">    r : robjects.ListVector</span>
+<a id="__codelineno-0-236" name="__codelineno-0-236"></a><span class="sd">        R object from brms</span>
+<a id="__codelineno-0-237" name="__codelineno-0-237"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-238" name="__codelineno-0-238"></a>
+<a id="__codelineno-0-239" name="__codelineno-0-239"></a>    <span class="n">r</span><span class="p">:</span> <span class="n">ProxyListSexpVector</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -7084,109 +7084,109 @@ brmspy.brms.fit : Uses this to prepare user kwargs for R</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>brmspy/helpers/_rpy2/_conversion.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-858">858</a></span>
-<span class="normal"><a href="#__codelineno-0-859">859</a></span>
-<span class="normal"><a href="#__codelineno-0-860">860</a></span>
-<span class="normal"><a href="#__codelineno-0-861">861</a></span>
-<span class="normal"><a href="#__codelineno-0-862">862</a></span>
-<span class="normal"><a href="#__codelineno-0-863">863</a></span>
-<span class="normal"><a href="#__codelineno-0-864">864</a></span>
-<span class="normal"><a href="#__codelineno-0-865">865</a></span>
-<span class="normal"><a href="#__codelineno-0-866">866</a></span>
-<span class="normal"><a href="#__codelineno-0-867">867</a></span>
-<span class="normal"><a href="#__codelineno-0-868">868</a></span>
-<span class="normal"><a href="#__codelineno-0-869">869</a></span>
-<span class="normal"><a href="#__codelineno-0-870">870</a></span>
-<span class="normal"><a href="#__codelineno-0-871">871</a></span>
-<span class="normal"><a href="#__codelineno-0-872">872</a></span>
-<span class="normal"><a href="#__codelineno-0-873">873</a></span>
-<span class="normal"><a href="#__codelineno-0-874">874</a></span>
-<span class="normal"><a href="#__codelineno-0-875">875</a></span>
-<span class="normal"><a href="#__codelineno-0-876">876</a></span>
-<span class="normal"><a href="#__codelineno-0-877">877</a></span>
-<span class="normal"><a href="#__codelineno-0-878">878</a></span>
-<span class="normal"><a href="#__codelineno-0-879">879</a></span>
-<span class="normal"><a href="#__codelineno-0-880">880</a></span>
-<span class="normal"><a href="#__codelineno-0-881">881</a></span>
-<span class="normal"><a href="#__codelineno-0-882">882</a></span>
-<span class="normal"><a href="#__codelineno-0-883">883</a></span>
-<span class="normal"><a href="#__codelineno-0-884">884</a></span>
-<span class="normal"><a href="#__codelineno-0-885">885</a></span>
-<span class="normal"><a href="#__codelineno-0-886">886</a></span>
-<span class="normal"><a href="#__codelineno-0-887">887</a></span>
-<span class="normal"><a href="#__codelineno-0-888">888</a></span>
-<span class="normal"><a href="#__codelineno-0-889">889</a></span>
-<span class="normal"><a href="#__codelineno-0-890">890</a></span>
-<span class="normal"><a href="#__codelineno-0-891">891</a></span>
-<span class="normal"><a href="#__codelineno-0-892">892</a></span>
-<span class="normal"><a href="#__codelineno-0-893">893</a></span>
-<span class="normal"><a href="#__codelineno-0-894">894</a></span>
-<span class="normal"><a href="#__codelineno-0-895">895</a></span>
-<span class="normal"><a href="#__codelineno-0-896">896</a></span>
-<span class="normal"><a href="#__codelineno-0-897">897</a></span>
-<span class="normal"><a href="#__codelineno-0-898">898</a></span>
-<span class="normal"><a href="#__codelineno-0-899">899</a></span>
-<span class="normal"><a href="#__codelineno-0-900">900</a></span>
-<span class="normal"><a href="#__codelineno-0-901">901</a></span>
-<span class="normal"><a href="#__codelineno-0-902">902</a></span>
-<span class="normal"><a href="#__codelineno-0-903">903</a></span>
-<span class="normal"><a href="#__codelineno-0-904">904</a></span>
-<span class="normal"><a href="#__codelineno-0-905">905</a></span>
-<span class="normal"><a href="#__codelineno-0-906">906</a></span>
-<span class="normal"><a href="#__codelineno-0-907">907</a></span>
-<span class="normal"><a href="#__codelineno-0-908">908</a></span>
-<span class="normal"><a href="#__codelineno-0-909">909</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-858" name="__codelineno-0-858"></a><span class="k">def</span><span class="w"> </span><span class="nf">kwargs_r</span><span class="p">(</span><span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<a id="__codelineno-0-859" name="__codelineno-0-859"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<a id="__codelineno-0-860" name="__codelineno-0-860"></a><span class="sd">    Convert Python keyword arguments to R-compatible format.</span>
-<a id="__codelineno-0-861" name="__codelineno-0-861"></a>
-<a id="__codelineno-0-862" name="__codelineno-0-862"></a><span class="sd">    Convenience function that applies py_to_r() to all values in a</span>
-<a id="__codelineno-0-863" name="__codelineno-0-863"></a><span class="sd">    keyword arguments dictionary, preparing them for R function calls.</span>
-<a id="__codelineno-0-864" name="__codelineno-0-864"></a>
-<a id="__codelineno-0-865" name="__codelineno-0-865"></a><span class="sd">    Parameters</span>
-<a id="__codelineno-0-866" name="__codelineno-0-866"></a><span class="sd">    ----------</span>
-<a id="__codelineno-0-867" name="__codelineno-0-867"></a><span class="sd">    kwargs : dict or None</span>
-<a id="__codelineno-0-868" name="__codelineno-0-868"></a><span class="sd">        Dictionary of keyword arguments where values may be Python objects</span>
-<a id="__codelineno-0-869" name="__codelineno-0-869"></a><span class="sd">        (dicts, lists, DataFrames, arrays, etc.)</span>
-<a id="__codelineno-0-870" name="__codelineno-0-870"></a>
-<a id="__codelineno-0-871" name="__codelineno-0-871"></a><span class="sd">    Returns</span>
-<a id="__codelineno-0-872" name="__codelineno-0-872"></a><span class="sd">    -------</span>
-<a id="__codelineno-0-873" name="__codelineno-0-873"></a><span class="sd">    dict</span>
-<a id="__codelineno-0-874" name="__codelineno-0-874"></a><span class="sd">        Dictionary with same keys but R-compatible values, or empty dict if None</span>
-<a id="__codelineno-0-875" name="__codelineno-0-875"></a>
-<a id="__codelineno-0-876" name="__codelineno-0-876"></a><span class="sd">    Notes</span>
-<a id="__codelineno-0-877" name="__codelineno-0-877"></a><span class="sd">    -----</span>
-<a id="__codelineno-0-878" name="__codelineno-0-878"></a><span class="sd">    This is a thin wrapper around `py_to_r()` that operates on dictionaries.</span>
-<a id="__codelineno-0-879" name="__codelineno-0-879"></a><span class="sd">    It&#39;s commonly used to prepare keyword arguments for R function calls via rpy2.</span>
-<a id="__codelineno-0-880" name="__codelineno-0-880"></a>
-<a id="__codelineno-0-881" name="__codelineno-0-881"></a><span class="sd">    Examples</span>
-<a id="__codelineno-0-882" name="__codelineno-0-882"></a><span class="sd">    --------</span>
-<a id="__codelineno-0-883" name="__codelineno-0-883"></a>
-<a id="__codelineno-0-884" name="__codelineno-0-884"></a><span class="sd">    ```python</span>
-<a id="__codelineno-0-885" name="__codelineno-0-885"></a><span class="sd">    from brmspy.helpers.conversion import kwargs_r</span>
-<a id="__codelineno-0-886" name="__codelineno-0-886"></a><span class="sd">    import pandas as pd</span>
-<a id="__codelineno-0-887" name="__codelineno-0-887"></a><span class="sd">    import numpy as np</span>
-<a id="__codelineno-0-888" name="__codelineno-0-888"></a>
-<a id="__codelineno-0-889" name="__codelineno-0-889"></a><span class="sd">    # Prepare kwargs for R function</span>
-<a id="__codelineno-0-890" name="__codelineno-0-890"></a><span class="sd">    py_kwargs = {</span>
-<a id="__codelineno-0-891" name="__codelineno-0-891"></a><span class="sd">        &#39;data&#39;: pd.DataFrame({&#39;y&#39;: [1, 2], &#39;x&#39;: [1, 2]}),</span>
-<a id="__codelineno-0-892" name="__codelineno-0-892"></a><span class="sd">        &#39;prior&#39;: {&#39;b&#39;: [0, 1]},</span>
-<a id="__codelineno-0-893" name="__codelineno-0-893"></a><span class="sd">        &#39;chains&#39;: 4,</span>
-<a id="__codelineno-0-894" name="__codelineno-0-894"></a><span class="sd">        &#39;iter&#39;: 2000</span>
-<a id="__codelineno-0-895" name="__codelineno-0-895"></a><span class="sd">    }</span>
-<a id="__codelineno-0-896" name="__codelineno-0-896"></a>
-<a id="__codelineno-0-897" name="__codelineno-0-897"></a><span class="sd">    r_kwargs = kwargs_r(py_kwargs)</span>
-<a id="__codelineno-0-898" name="__codelineno-0-898"></a><span class="sd">    # All values converted to R objects</span>
-<a id="__codelineno-0-899" name="__codelineno-0-899"></a><span class="sd">    # Can now call: r_function(**r_kwargs)</span>
-<a id="__codelineno-0-900" name="__codelineno-0-900"></a><span class="sd">    ```</span>
-<a id="__codelineno-0-901" name="__codelineno-0-901"></a>
-<a id="__codelineno-0-902" name="__codelineno-0-902"></a><span class="sd">    See Also</span>
-<a id="__codelineno-0-903" name="__codelineno-0-903"></a><span class="sd">    --------</span>
-<a id="__codelineno-0-904" name="__codelineno-0-904"></a><span class="sd">    py_to_r : Underlying conversion function for individual values</span>
-<a id="__codelineno-0-905" name="__codelineno-0-905"></a><span class="sd">    brmspy.brms.fit : Uses this to prepare user kwargs for R</span>
-<a id="__codelineno-0-906" name="__codelineno-0-906"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-907" name="__codelineno-0-907"></a>    <span class="k">if</span> <span class="n">kwargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-908" name="__codelineno-0-908"></a>        <span class="k">return</span> <span class="p">{}</span>
-<a id="__codelineno-0-909" name="__codelineno-0-909"></a>    <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">py_to_r</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-725">725</a></span>
+<span class="normal"><a href="#__codelineno-0-726">726</a></span>
+<span class="normal"><a href="#__codelineno-0-727">727</a></span>
+<span class="normal"><a href="#__codelineno-0-728">728</a></span>
+<span class="normal"><a href="#__codelineno-0-729">729</a></span>
+<span class="normal"><a href="#__codelineno-0-730">730</a></span>
+<span class="normal"><a href="#__codelineno-0-731">731</a></span>
+<span class="normal"><a href="#__codelineno-0-732">732</a></span>
+<span class="normal"><a href="#__codelineno-0-733">733</a></span>
+<span class="normal"><a href="#__codelineno-0-734">734</a></span>
+<span class="normal"><a href="#__codelineno-0-735">735</a></span>
+<span class="normal"><a href="#__codelineno-0-736">736</a></span>
+<span class="normal"><a href="#__codelineno-0-737">737</a></span>
+<span class="normal"><a href="#__codelineno-0-738">738</a></span>
+<span class="normal"><a href="#__codelineno-0-739">739</a></span>
+<span class="normal"><a href="#__codelineno-0-740">740</a></span>
+<span class="normal"><a href="#__codelineno-0-741">741</a></span>
+<span class="normal"><a href="#__codelineno-0-742">742</a></span>
+<span class="normal"><a href="#__codelineno-0-743">743</a></span>
+<span class="normal"><a href="#__codelineno-0-744">744</a></span>
+<span class="normal"><a href="#__codelineno-0-745">745</a></span>
+<span class="normal"><a href="#__codelineno-0-746">746</a></span>
+<span class="normal"><a href="#__codelineno-0-747">747</a></span>
+<span class="normal"><a href="#__codelineno-0-748">748</a></span>
+<span class="normal"><a href="#__codelineno-0-749">749</a></span>
+<span class="normal"><a href="#__codelineno-0-750">750</a></span>
+<span class="normal"><a href="#__codelineno-0-751">751</a></span>
+<span class="normal"><a href="#__codelineno-0-752">752</a></span>
+<span class="normal"><a href="#__codelineno-0-753">753</a></span>
+<span class="normal"><a href="#__codelineno-0-754">754</a></span>
+<span class="normal"><a href="#__codelineno-0-755">755</a></span>
+<span class="normal"><a href="#__codelineno-0-756">756</a></span>
+<span class="normal"><a href="#__codelineno-0-757">757</a></span>
+<span class="normal"><a href="#__codelineno-0-758">758</a></span>
+<span class="normal"><a href="#__codelineno-0-759">759</a></span>
+<span class="normal"><a href="#__codelineno-0-760">760</a></span>
+<span class="normal"><a href="#__codelineno-0-761">761</a></span>
+<span class="normal"><a href="#__codelineno-0-762">762</a></span>
+<span class="normal"><a href="#__codelineno-0-763">763</a></span>
+<span class="normal"><a href="#__codelineno-0-764">764</a></span>
+<span class="normal"><a href="#__codelineno-0-765">765</a></span>
+<span class="normal"><a href="#__codelineno-0-766">766</a></span>
+<span class="normal"><a href="#__codelineno-0-767">767</a></span>
+<span class="normal"><a href="#__codelineno-0-768">768</a></span>
+<span class="normal"><a href="#__codelineno-0-769">769</a></span>
+<span class="normal"><a href="#__codelineno-0-770">770</a></span>
+<span class="normal"><a href="#__codelineno-0-771">771</a></span>
+<span class="normal"><a href="#__codelineno-0-772">772</a></span>
+<span class="normal"><a href="#__codelineno-0-773">773</a></span>
+<span class="normal"><a href="#__codelineno-0-774">774</a></span>
+<span class="normal"><a href="#__codelineno-0-775">775</a></span>
+<span class="normal"><a href="#__codelineno-0-776">776</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-725" name="__codelineno-0-725"></a><span class="k">def</span><span class="w"> </span><span class="nf">kwargs_r</span><span class="p">(</span><span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<a id="__codelineno-0-726" name="__codelineno-0-726"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-727" name="__codelineno-0-727"></a><span class="sd">    Convert Python keyword arguments to R-compatible format.</span>
+<a id="__codelineno-0-728" name="__codelineno-0-728"></a>
+<a id="__codelineno-0-729" name="__codelineno-0-729"></a><span class="sd">    Convenience function that applies py_to_r() to all values in a</span>
+<a id="__codelineno-0-730" name="__codelineno-0-730"></a><span class="sd">    keyword arguments dictionary, preparing them for R function calls.</span>
+<a id="__codelineno-0-731" name="__codelineno-0-731"></a>
+<a id="__codelineno-0-732" name="__codelineno-0-732"></a><span class="sd">    Parameters</span>
+<a id="__codelineno-0-733" name="__codelineno-0-733"></a><span class="sd">    ----------</span>
+<a id="__codelineno-0-734" name="__codelineno-0-734"></a><span class="sd">    kwargs : dict or None</span>
+<a id="__codelineno-0-735" name="__codelineno-0-735"></a><span class="sd">        Dictionary of keyword arguments where values may be Python objects</span>
+<a id="__codelineno-0-736" name="__codelineno-0-736"></a><span class="sd">        (dicts, lists, DataFrames, arrays, etc.)</span>
+<a id="__codelineno-0-737" name="__codelineno-0-737"></a>
+<a id="__codelineno-0-738" name="__codelineno-0-738"></a><span class="sd">    Returns</span>
+<a id="__codelineno-0-739" name="__codelineno-0-739"></a><span class="sd">    -------</span>
+<a id="__codelineno-0-740" name="__codelineno-0-740"></a><span class="sd">    dict</span>
+<a id="__codelineno-0-741" name="__codelineno-0-741"></a><span class="sd">        Dictionary with same keys but R-compatible values, or empty dict if None</span>
+<a id="__codelineno-0-742" name="__codelineno-0-742"></a>
+<a id="__codelineno-0-743" name="__codelineno-0-743"></a><span class="sd">    Notes</span>
+<a id="__codelineno-0-744" name="__codelineno-0-744"></a><span class="sd">    -----</span>
+<a id="__codelineno-0-745" name="__codelineno-0-745"></a><span class="sd">    This is a thin wrapper around `py_to_r()` that operates on dictionaries.</span>
+<a id="__codelineno-0-746" name="__codelineno-0-746"></a><span class="sd">    It&#39;s commonly used to prepare keyword arguments for R function calls via rpy2.</span>
+<a id="__codelineno-0-747" name="__codelineno-0-747"></a>
+<a id="__codelineno-0-748" name="__codelineno-0-748"></a><span class="sd">    Examples</span>
+<a id="__codelineno-0-749" name="__codelineno-0-749"></a><span class="sd">    --------</span>
+<a id="__codelineno-0-750" name="__codelineno-0-750"></a>
+<a id="__codelineno-0-751" name="__codelineno-0-751"></a><span class="sd">    ```python</span>
+<a id="__codelineno-0-752" name="__codelineno-0-752"></a><span class="sd">    from brmspy.helpers.conversion import kwargs_r</span>
+<a id="__codelineno-0-753" name="__codelineno-0-753"></a><span class="sd">    import pandas as pd</span>
+<a id="__codelineno-0-754" name="__codelineno-0-754"></a><span class="sd">    import numpy as np</span>
+<a id="__codelineno-0-755" name="__codelineno-0-755"></a>
+<a id="__codelineno-0-756" name="__codelineno-0-756"></a><span class="sd">    # Prepare kwargs for R function</span>
+<a id="__codelineno-0-757" name="__codelineno-0-757"></a><span class="sd">    py_kwargs = {</span>
+<a id="__codelineno-0-758" name="__codelineno-0-758"></a><span class="sd">        &#39;data&#39;: pd.DataFrame({&#39;y&#39;: [1, 2], &#39;x&#39;: [1, 2]}),</span>
+<a id="__codelineno-0-759" name="__codelineno-0-759"></a><span class="sd">        &#39;prior&#39;: {&#39;b&#39;: [0, 1]},</span>
+<a id="__codelineno-0-760" name="__codelineno-0-760"></a><span class="sd">        &#39;chains&#39;: 4,</span>
+<a id="__codelineno-0-761" name="__codelineno-0-761"></a><span class="sd">        &#39;iter&#39;: 2000</span>
+<a id="__codelineno-0-762" name="__codelineno-0-762"></a><span class="sd">    }</span>
+<a id="__codelineno-0-763" name="__codelineno-0-763"></a>
+<a id="__codelineno-0-764" name="__codelineno-0-764"></a><span class="sd">    r_kwargs = kwargs_r(py_kwargs)</span>
+<a id="__codelineno-0-765" name="__codelineno-0-765"></a><span class="sd">    # All values converted to R objects</span>
+<a id="__codelineno-0-766" name="__codelineno-0-766"></a><span class="sd">    # Can now call: r_function(**r_kwargs)</span>
+<a id="__codelineno-0-767" name="__codelineno-0-767"></a><span class="sd">    ```</span>
+<a id="__codelineno-0-768" name="__codelineno-0-768"></a>
+<a id="__codelineno-0-769" name="__codelineno-0-769"></a><span class="sd">    See Also</span>
+<a id="__codelineno-0-770" name="__codelineno-0-770"></a><span class="sd">    --------</span>
+<a id="__codelineno-0-771" name="__codelineno-0-771"></a><span class="sd">    py_to_r : Underlying conversion function for individual values</span>
+<a id="__codelineno-0-772" name="__codelineno-0-772"></a><span class="sd">    brmspy.brms.fit : Uses this to prepare user kwargs for R</span>
+<a id="__codelineno-0-773" name="__codelineno-0-773"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-774" name="__codelineno-0-774"></a>    <span class="k">if</span> <span class="n">kwargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-775" name="__codelineno-0-775"></a>        <span class="k">return</span> <span class="p">{}</span>
+<a id="__codelineno-0-776" name="__codelineno-0-776"></a>    <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">py_to_r</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -9001,10 +9001,10 @@ brms::default_prior : <a href="https://paulbuerkner.com/brms/reference/default_p
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
         <script src="../../../static/plausible.js"></script>
       

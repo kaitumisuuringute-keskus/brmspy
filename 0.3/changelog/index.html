@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.618322db.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -82,7 +82,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#030-process-isolated-r-hot-swappable-runtimes" class="md-skip">
+        <a href="#031-standardized-and-modular-inferencedata-improved-memory-management" class="md-skip">
           Skip to content
         </a>
       
@@ -3586,6 +3586,56 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#031-standardized-and-modular-inferencedata-improved-memory-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.3.1 - Standardized and modular InferenceData, improved memory management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.3.1 - Standardized and modular InferenceData, improved memory management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#standardised-idata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Standardised idata
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pandas-r-type-conversion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pandas &amp; R Type Conversion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes-and-enhancements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug fixes and enhancements
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#030-process-isolated-r-hot-swappable-runtimes" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4184,6 +4234,56 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#031-standardized-and-modular-inferencedata-improved-memory-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.3.1 - Standardized and modular InferenceData, improved memory management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.3.1 - Standardized and modular InferenceData, improved memory management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#standardised-idata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Standardised idata
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pandas-r-type-conversion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pandas &amp; R Type Conversion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes-and-enhancements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug fixes and enhancements
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#030-process-isolated-r-hot-swappable-runtimes" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4771,6 +4871,39 @@
 
   <h1>Changelog</h1>
 
+<h2 id="031-standardized-and-modular-inferencedata-improved-memory-management">0.3.1 - Standardized and modular InferenceData, improved memory management<a class="headerlink" href="#031-standardized-and-modular-inferencedata-improved-memory-management" title="Permanent link">&para;</a></h2>
+<p><em>25.12.23</em></p>
+<p>This release standardizes the <code>InferenceData</code> structure across all prediction methods, ensuring consistent dimensions (<code>chain</code>, <code>draw</code>, <code>obs_id</code>) and variable naming conventions. It also improves shared-memory transport for Pandas DataFrames, enabling high-fidelity roundtripping of Categoricals and mixed types between R and Python.</p>
+<h3 id="standardised-idata">Standardised idata<a class="headerlink" href="#standardised-idata" title="Permanent link">&para;</a></h3>
+<p>All idata returned from brmspy functions is now standardised to be joinable with one another, keep DataFrame indexes correctly in obs_id and works uniformly for univariate and multivariate models.</p>
+<ul>
+<li><strong>brm()</strong>: Optional <code>return_idata: bool</code> argument. In case of large models, using false and only running methods you may need can be better for memory management (e.g brms.posterior_pred(fit)). When <code>return_idata=True</code> the function now also includes <code>constant_data</code> (Issue #51)</li>
+<li><strong>posterior()</strong>: Returns draws in <code>posterior</code> and <code>constant_data</code> as idata. (Issue #51)</li>
+<li><strong>observed_data()</strong> Returns <code>observed_data</code> and <code>constant_data</code> as idata (Issue #51)</li>
+<li><strong>posterior_epred()</strong> Now returns <code>predictions</code> and <code>predictions_constant_data</code> in case there is newdata and <code>posterior</code> and <code>constant_data</code> when no newdata. Target variables are now suffixed with <code>_mean</code>. (Issue #51) </li>
+<li><strong>posterior_predict()</strong> Now returns <code>predictions</code> and <code>predictions_constant_data</code> in case there is newdata and <code>posterior_predictive</code> and <code>constant_data</code> when no newdata. idata. (Issue #51)</li>
+<li><strong>posterior_linpred()</strong> Now returns <code>predictions</code> and <code>predictions_constant_data</code> in case there is newdata and <code>posterior</code> and <code>constant_data</code> when no newdata. Target variables are now suffixed with <code>_linpred</code>. (Issue #51)</li>
+<li><strong>log_lik()</strong> (Issue #51) Always returns <code>log_likelihood</code> and depending on <code>newdata=None</code> returns  <code>constant_data</code> or <code>predictions_constant_data</code>.</li>
+<li>Added <code>newdata</code> kwarg based overloads for static typechecking to automatically recognise the correct returned groups for idata</li>
+</ul>
+<p>This change allows composable architectures, where the user picks only the parts of idata they need for their analysis.</p>
+<h3 id="pandas-r-type-conversion">Pandas &amp; R Type Conversion<a class="headerlink" href="#pandas-r-type-conversion" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Columnar SHM Transport</strong>: Improved <code>ShmDataFrameColumns</code> to transport DataFrames with mixed types via shared memory. Numeric and categorical columns now move between processes with zero-copy overhead, while complex object columns fall back to pickling individually.</li>
+<li><strong>Categorical Fidelity</strong>: R factors now correctly roundtrip to <code>pandas.CategoricalDtype</code>, preserving categories, integer codes, and ordered status across the main-worker boundary. (issue #52)</li>
+<li><strong>Broad Dtype Support</strong>: Enhanced converters to robustly handle pandas nullable integers (<code>Int64</code>), nullable floats, strings during R conversion.</li>
+</ul>
+<h3 id="bug-fixes-and-enhancements">Bug fixes and enhancements<a class="headerlink" href="#bug-fixes-and-enhancements" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Worker crash recovery</strong> (Issue #50): Added automatic recovery for R worker crashes
+    (segfaults, BrokenPipeError, ConnectionResetError). The worker is restarted
+    transparently and the call raises <code>RWorkerCrashedError</code>. The exception
+    includes a <code>recovered: bool</code> flag indicating whether a clean worker session
+    was successfully started, allowing pipelines to distinguish retryable
+    crashes (<code>recovered=True</code>) from hard failures (<code>recovered=False</code>).</li>
+<li><strong>Numpy Encoding</strong>: Standardised encoding for object arrays. String arrays are now optimized as <code>ShmArray</code>; mixed object arrays gracefully fall back to pickling.</li>
+<li><strong>Improved SHM memory management</strong>: Introduced explicit temporary buffers that are cleaned up immediately after use, while non-temporary buffers are now tracked by ShmPool only until the next main &lt;-&gt; worker exchange; buffer lifetime is then transferred to CodecRegistry, which ties shared-memory mappings to reconstructed objects via weakrefs, minimizing the number of active mappings and allowing timely resource release once those objects are garbage-collected.</li>
+</ul>
 <h2 id="030-process-isolated-r-hot-swappable-runtimes">0.3.0 - Process-Isolated R &amp; Hot-Swappable Runtimes<a class="headerlink" href="#030-process-isolated-r-hot-swappable-runtimes" title="Permanent link">&para;</a></h2>
 <p><em>25.12.14</em></p>
 <p>This release introduces a redesigned main–worker–R architecture to address stability issues caused by embedding R directly in the Python process. In real-world use, unpredictable failures, ranging from R segfaults to rpy2 crashes, could take down the entire Python runtime, invalidate IDE sessions, and make test behavior OS-dependent. The old single-process model also made R state effectively immutable after import, limited runtime switching, and required brittle workarounds for package management and CI isolation. These issues were not fixable at the level of defensive coding alone.</p>
@@ -5064,10 +5197,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
       
         <script src="../static/plausible.js"></script>
       

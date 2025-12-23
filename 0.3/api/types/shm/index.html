@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.618322db.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
       
         
         <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -1296,6 +1296,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#brmspy.types.shm_extensions.ShmArray.array_order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        array_order
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1360,40 +1371,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="ShmDataFrameColumns">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#brmspy.types.shm_extensions.ShmDataFrameColumns-functions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Functions
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Functions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#brmspy.types.shm_extensions.ShmDataFrameColumns.from_blocks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        from_blocks
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
         
       </ul>
@@ -1429,17 +1406,6 @@
     <span class="md-ellipsis">
       
         ShmRef
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#brmspy.types.shm.ShmBlockSpec" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ShmBlockSpec
       
     </span>
   </a>
@@ -3988,6 +3954,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#brmspy.types.shm_extensions.ShmArray.array_order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        array_order
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4052,40 +4029,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="ShmDataFrameColumns">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#brmspy.types.shm_extensions.ShmDataFrameColumns-functions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Functions
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Functions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#brmspy.types.shm_extensions.ShmDataFrameColumns.from_blocks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        from_blocks
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
         
       </ul>
@@ -4121,17 +4064,6 @@
     <span class="md-ellipsis">
       
         ShmRef
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#brmspy.types.shm.ShmBlockSpec" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ShmBlockSpec
       
     </span>
   </a>
@@ -4327,18 +4259,9 @@ the main process and the worker.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code><a class="autorefs autorefs-internal" title="block
-
-  
-      instance-attribute
-   (brmspy.types.shm_extensions.ShmArray.block)" href="../../../internals/_session/codec/builtin/#brmspy._session.codec.builtin.ShmArray.block">block</a></code></td>
+            <td><code><span title="brmspy.types.shm_extensions.ShmArray.block">block</span></code></td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="ShmBlockSpec
-
-
-  
-      dataclass
-   (brmspy.types.shm.ShmBlockSpec)" href="#brmspy.types.shm.ShmBlockSpec">ShmBlockSpec</a></code>
+                  <code><a class="autorefs autorefs-internal" title="ShmRef (brmspy.types.shm.ShmRef)" href="#brmspy.types.shm.ShmRef">ShmRef</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -4505,6 +4428,31 @@ behavior.</p>
 
 </div>
 
+<div class="doc doc-object doc-function">
+
+
+<h5 id="brmspy.types.shm_extensions.ShmArray.array_order" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">array_order</span><span class="p">(</span><span class="n">a</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#brmspy.types.shm_extensions.ShmArray.array_order" class="headerlink" title="Permanent link">&para;</a></h5>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Determine how an array can be reconstructed from a raw buffer.</p>
+<p>Returns <code>"C"</code> for C-contiguous arrays, <code>"F"</code> for Fortran-contiguous arrays,
+otherwise <code>"non-contiguous"</code> (meaning: bytes were obtained by forcing
+a contiguous copy during encoding).</p>
+
+
+    </div>
+
+</div>
+
 
 
   </div>
@@ -4544,18 +4492,9 @@ behavior.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code><a class="autorefs autorefs-internal" title="block
-
-  
-      instance-attribute
-   (brmspy.types.shm_extensions.ShmDataFrameSimple.block)" href="../../../internals/_session/codec/builtin/#brmspy._session.codec.builtin.ShmDataFrameSimple.block">block</a></code></td>
+            <td><code><span title="brmspy.types.shm_extensions.ShmDataFrameSimple.block">block</span></code></td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="ShmBlockSpec
-
-
-  
-      dataclass
-   (brmspy.types.shm.ShmBlockSpec)" href="#brmspy.types.shm.ShmBlockSpec">ShmBlockSpec</a></code>
+                  <code><a class="autorefs autorefs-internal" title="ShmRef (brmspy.types.shm.ShmRef)" href="#brmspy.types.shm.ShmRef">ShmRef</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -4787,22 +4726,13 @@ behavior.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code><a class="autorefs autorefs-internal" title="blocks_columns
-
-  
-      instance-attribute
-   (brmspy.types.shm_extensions.ShmDataFrameColumns.blocks_columns)" href="../../../internals/_session/codec/builtin/#brmspy._session.codec.builtin.ShmDataFrameColumns.blocks_columns">blocks_columns</a></code></td>
+            <td><code><span title="brmspy.types.shm_extensions.ShmDataFrameColumns._blocks_columns">_blocks_columns</span></code></td>
             <td>
-                  <code><span title="dict">dict</span>[<span title="str">str</span>, <a class="autorefs autorefs-internal" title="ShmBlockSpec
-
-
-  
-      dataclass
-   (brmspy.types.shm.ShmBlockSpec)" href="#brmspy.types.shm.ShmBlockSpec">ShmBlockSpec</a>]</code>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="PandasColumnMetadata">PandasColumnMetadata</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Mapping from column name to its shared-memory block reference.</p>
+                <p>Mapping from column name to data required for its reconstruction</p>
               </div>
             </td>
           </tr>
@@ -4828,121 +4758,7 @@ behavior.</p>
 
 
 
-<h4 id="brmspy.types.shm_extensions.ShmDataFrameColumns-functions">Functions<a href="#brmspy.types.shm_extensions.ShmDataFrameColumns-functions" class="headerlink" title="Permanent link">&para;</a></h4>
 
-<div class="doc doc-object doc-function">
-
-
-<h5 id="brmspy.types.shm_extensions.ShmDataFrameColumns.from_blocks" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">from_blocks</span><span class="p">(</span><span class="n">arrays</span><span class="p">,</span> <span class="n">dtypes</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span></code>
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
-  </span>
-
-<a href="#brmspy.types.shm_extensions.ShmDataFrameColumns.from_blocks" class="headerlink" title="Permanent link">&para;</a></h5>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Construct a DataFrame backed by one SHM block per column.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>arrays</code>
-            </td>
-            <td>
-                  <code><span title="dict">dict</span>[<span title="str">str</span>, <a class="autorefs autorefs-internal" title="ShmBlock
-
-
-  
-      dataclass
-   (brmspy.types.shm.ShmBlock)" href="#brmspy.types.shm.ShmBlock">ShmBlock</a>]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Mapping from column name to attached shared-memory block containing
-that column's 1D values.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>dtypes</code>
-            </td>
-            <td>
-                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="str">str</span>]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Mapping from column name to dtype string.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>index</code>
-            </td>
-            <td>
-                  <code><span title="list">list</span>[<span title="typing.Any">Any</span>]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Index labels.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><a class="autorefs autorefs-internal" title="ShmDataFrameColumns (brmspy.types.shm_extensions.ShmDataFrameColumns)" href="#brmspy.types.shm_extensions.ShmDataFrameColumns">ShmDataFrameColumns</a></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    </div>
-
-</div>
 
 
 
@@ -5047,6 +4863,36 @@ that column's 1D values.</p>
               </div>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="content_size
+
+  
+      instance-attribute
+   (brmspy.types.shm.ShmRef.content_size)" href="../../../internals/_session/transport/#brmspy._session.transport.ShmRef.content_size">content_size</a></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Actual used size</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="temporary
+
+  
+      instance-attribute
+   (brmspy.types.shm.ShmRef.temporary)" href="../../../internals/_session/transport/#brmspy._session.transport.ShmRef.temporary">temporary</a></code></td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether this buffer can be GC-d immediately after use or should it be attached to object its constructed into.</p>
+              </div>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -5057,103 +4903,6 @@ that column's 1D values.</p>
 codec metadata must include the logical <code>nbytes</code>/length so that decoders can
 slice the buffer appropriately.</p>
 </details>
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h3 id="brmspy.types.shm.ShmBlockSpec" class="doc doc-heading">
-            <code>ShmBlockSpec</code>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
-  </span>
-
-<a href="#brmspy.types.shm.ShmBlockSpec" class="headerlink" title="Permanent link">&para;</a></h3>
-
-
-    <div class="doc doc-contents ">
-
-
-
-        <p>Lightweight shared-memory block description.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>name</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Shared memory block name.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>size</code>
-            </td>
-            <td>
-                  <code><span title="int">int</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Allocated size in bytes.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
 
 
 
@@ -5199,13 +4948,6 @@ slice the buffer appropriately.</p>
 
 
     <div class="doc doc-contents ">
-            <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="ShmBlockSpec
-
-
-  
-      dataclass
-   (brmspy.types.shm.ShmBlockSpec)" href="#brmspy.types.shm.ShmBlockSpec">ShmBlockSpec</a></code></p>
 
 
 
@@ -5340,7 +5082,7 @@ blocks so they can be closed on teardown.</p>
 
 
 <h5 id="brmspy.types.shm.ShmPool.alloc" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">alloc</span><span class="p">(</span><span class="n">size</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">alloc</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">temporary</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 <a href="#brmspy.types.shm.ShmPool.alloc" class="headerlink" title="Permanent link">&para;</a></h5>
 
@@ -5417,7 +5159,7 @@ blocks so they can be closed on teardown.</p>
 
 
 <h5 id="brmspy.types.shm.ShmPool.attach" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">attach</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">attach</span><span class="p">(</span><span class="n">ref</span><span class="p">)</span></code>
 
 <a href="#brmspy.types.shm.ShmPool.attach" class="headerlink" title="Permanent link">&para;</a></h5>
 
@@ -5425,53 +5167,6 @@ blocks so they can be closed on teardown.</p>
     <div class="doc doc-contents ">
 
         <p>Attach to an existing shared-memory block by name.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>name</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Shared memory block name.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>size</code>
-            </td>
-            <td>
-                  <code><span title="int">int</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Allocated block size in bytes.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-      </tbody>
-    </table>
 
 
     <p><span class="doc-section-title">Returns:</span></p>
@@ -5618,10 +5313,10 @@ blocks so they can be closed on teardown.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
         <script src="../../../static/plausible.js"></script>
       
