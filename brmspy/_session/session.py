@@ -45,7 +45,7 @@ from ..types.session import (
     Response,
 )
 from .codec import get_default_registry
-from .transport import ShmPool, attach_buffers
+from .transport import ShmPool
 from brmspy._session.worker import worker_main
 
 ctx = mp.get_context("spawn")
@@ -688,6 +688,12 @@ class RModuleSession(ModuleType):
             raise RuntimeError("RModuleSession is closed")
 
         try:
+            if self._shm_pool:
+                self._shm_pool.gc()
+        except:
+            pass
+
+        try:
             if func_name.startswith("mod:"):
                 target = func_name
             else:
@@ -706,12 +712,6 @@ class RModuleSession(ModuleType):
             return self._decode_result(resp)
         except (BrokenPipeError, ConnectionResetError, EOFError) as e:
             self._recover(e)
-        finally:
-            try:
-                if self._shm_pool:
-                    self._shm_pool.gc()
-            except:
-                pass
 
     def _recover(self, orig_exc: BaseException) -> None:
         logger = get_logger()

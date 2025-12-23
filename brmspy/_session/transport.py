@@ -24,7 +24,7 @@ class ShmPool(_ShmPool):
         self._blocks: dict[str, ShmBlock] = {}
 
     def alloc(self, size: int, temporary: bool = False) -> ShmBlock:
-        # print(f"alloc {"temp" if temporary else ''}")
+        print(f"alloc {"temp" if temporary else ''}")
         shm = self._manager.SharedMemory(size=size)
         block = ShmBlock(
             name=shm.name,
@@ -64,14 +64,12 @@ class ShmPool(_ShmPool):
                 b.shm.close()
             return
 
-        return
-
         # Keep this code temporarily
         for key in list(self._blocks.keys()):
             b = self._blocks[key]
             if b.temporary:
                 b.shm.close()
-                del self._blocks[key]
+            del self._blocks[key]
 
 
 def attach_buffers(pool: ShmPool, refs: list[ShmRef]) -> list[ShmBlock]:

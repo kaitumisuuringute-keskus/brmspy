@@ -35,6 +35,7 @@ This change allows composable architectures, where the user picks only the parts
     was successfully started, allowing pipelines to distinguish retryable
     crashes (`recovered=True`) from hard failures (`recovered=False`).
 *   **Numpy Encoding**: Standardised encoding for object arrays. String arrays are now optimized as `ShmArray`; mixed object arrays gracefully fall back to pickling.
+*   **Improved SHM memory management**: SHMPool now allows for temporary buffers that are immediately cleaned up after use and don't linger around. Tracking of non-temporary buffers has been improved too.
 
 
 

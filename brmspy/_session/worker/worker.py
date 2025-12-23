@@ -23,7 +23,7 @@ from rpy2.rinterface_lib.embedded import RRuntimeError
 
 from ...types.session import EnvironmentConfig, PayloadRef
 from ..codec import get_default_registry
-from ..transport import ShmPool, attach_buffers
+from ..transport import ShmPool
 from .logging import setup_worker_logging
 from .setup import _initialise_r_safe, activate, run_startup_scripts
 from .sexp_cache import cache_sexp, reattach_sexp
