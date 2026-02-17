@@ -1,3 +1,21 @@
+## 0.3.2 - SHM slab allocator for wide-data workloads
+*25.02.17*
+
+When encoding objects with many sub-arrays — such as an `InferenceData` from a large MaxDiff model or a DataFrame with hundreds of columns — the codec layer allocated a **separate SharedMemory block for every array**. Each block consumes one POSIX file descriptor, and real-world workloads (500+ columns, repeated fit/predict cycles) quickly exhausted the macOS default limit of fds, crashing with `OSError: [Errno 24] Too many open files`. (Issue #57)
+
+### Slab allocator
+
+*   **`ShmPool.open_slab()` / `seal_slab()`**: New arena-style allocator that pre-allocates a single large SharedMemory block and bump-allocates sub-regions from it with 64-byte (cache-line) alignment. When the slab fills, a new one is opened automatically.
+*   **`InferenceDataCodec.encode`**: Now estimates total byte size across all groups, opens one slab, and encodes all coordinates and data variables into it. A 300-array InferenceData now uses 1–2 fds instead of 300.
+*   **`PandasDFCodec.encode`** (fallback columnar path): Same slab wrapping for DataFrames encoded column-by-column.
+*   **Offset-aware transport**: `ShmRef` and `ShmBlock` gain an `offset` field so multiple sub-allocations can share one named SHM segment. The decode path (`get_buf`, `ShmArray.from_block`) slices at the correct offset, fully transparent to codec consumers.
+*   **Backward compatible**: `offset` defaults to `0`; existing ShmRefs without the field work unchanged.
+
+### Testing
+
+*   Added stress test with **2 500 columns × 4 iterations** of fit/summary/predict to verify fd stability under extreme pressure.
+
+
 ## 0.3.1 - Standardized and modular InferenceData, improved memory management
 *25.12.23*
 

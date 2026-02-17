@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "brmspy"
-version = "0.3.1"
+version = "0.3.2"
 description = "Python-first access to R's brms with proper parameter names, ArviZ support, and cmdstanr performance"
 readme = "README.md"
 requires-python = ">=3.10,<3.15"

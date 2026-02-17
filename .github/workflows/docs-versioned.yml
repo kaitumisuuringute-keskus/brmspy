@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       build_ref:
-        description: "Branch/tag/SHA to build (e.g. master, release-0.3.1, feature/foo, 1a2b3c4)"
+        description: "Branch/tag/SHA to build (e.g. master, release-0.3.2, feature/foo, 1a2b3c4)"
         required: false
         default: ""
 
