@@ -79,7 +79,7 @@ RTOOLS_FALLBACK_URLS = {
     "42": "https://cran.r-project.org/bin/windows/Rtools/rtools42/files/rtools42-5355-5357.exe",
     "43": "https://cran.r-project.org/bin/windows/Rtools/rtools43/files/rtools43-5976-5975.exe",
     "44": "https://cran.r-project.org/bin/windows/Rtools/rtools44/files/rtools44-6459-6401.exe",
-    "45": "https://cran.r-project.org/bin/windows/Rtools/rtools45/files/rtools45-6691-6492.exe",
+    "45": "https://cran.r-project.org/bin/windows/Rtools/rtools45/files/rtools45-6768-6492.exe",
 }
 
 RTOOLS_BASE = "https://cran.r-project.org/bin/windows/Rtools"
@@ -109,8 +109,8 @@ def _discover_rtools_installer(
         return None
 
     # Match things like:
-    #   rtools45-6691-6492.exe
-    #   rtools45-aarch64-6691-6492.exe
+    #   rtools45-6768-6492.exe
+    #   rtools45-aarch64-6768-6492.exe
     pattern = rf'href="(rtools{re.escape(rtools_version)}-[^"]+\.exe)"'
     matches = re.findall(pattern, html)
     if not matches:

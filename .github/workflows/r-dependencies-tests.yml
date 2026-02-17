@@ -70,7 +70,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: rtools-cache
-          key: rtools45-6691-6492
+          key: rtools45-6768-6492
 
       - name: Download Rtools 4.5 installer
         if: runner.os == 'Windows' && steps.cache-rtools.outputs.cache-hit != 'true'
@@ -78,14 +78,14 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path "$env:GITHUB_WORKSPACE\rtools-cache" | Out-Null
           Invoke-WebRequest `
-            -Uri "https://cran.r-project.org/bin/windows/Rtools/rtools45/files/rtools45-6691-6492.exe" `
-            -OutFile "$env:GITHUB_WORKSPACE\rtools-cache\rtools45-6691-6492.exe"
+            -Uri "https://cran.r-project.org/bin/windows/Rtools/rtools45/files/rtools45-6768-6492.exe" `
+            -OutFile "$env:GITHUB_WORKSPACE\rtools-cache\rtools45-6768-6492.exe"
 
       - name: Export RTOOLS_INSTALLER_EXE env var
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $installer = "$env:GITHUB_WORKSPACE\rtools-cache\rtools45-6691-6492.exe"
+          $installer = "$env:GITHUB_WORKSPACE\rtools-cache\rtools45-6768-6492.exe"
           if (-not (Test-Path $installer)) {
             Write-Error "Rtools installer not found at $installer"
           }

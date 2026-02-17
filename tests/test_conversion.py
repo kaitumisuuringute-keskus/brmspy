@@ -403,7 +403,7 @@ class TestEncodingAndConversionRoundtrips:
 
             # Columns that rpy2/pandas2ri cannot faithfully roundtrip (they fall back to
             # string/object conversion). We only assert that the column comes back and
-            # has an object dtype, but we don't require value/dtype identity.
+            # has an object or string dtype, but we don't require value/dtype identity.
             if col in {
                 "pd_boolean",
                 "pd_string",
@@ -411,9 +411,11 @@ class TestEncodingAndConversionRoundtrips:
                 "pd_interval",
                 "obj_mixed",
             }:
-                if not pd.api.types.is_object_dtype(s1.dtype):
+                # Newer pandas may return StringDtype instead of object for string columns
+                ok = pd.api.types.is_object_dtype(s1.dtype) or pd.api.types.is_string_dtype(s1.dtype)
+                if not ok:
                     failures.append(
-                        f"{col}: expected object dtype after R roundtrip, got {s1.dtype!r}"
+                        f"{col}: expected object/string dtype after R roundtrip, got {s1.dtype!r}"
                     )
                 continue
 
@@ -461,15 +463,24 @@ class TestEncodingAndConversionRoundtrips:
 
             try:
                 check_dtype = True
-                if pd.api.types.is_integer_dtype(
-                    s0.dtype
-                ) and pd.api.types.is_extension_array_dtype(s0.dtype):
-                    # Nullable int
+                is_nullable_ext = pd.api.types.is_extension_array_dtype(s0.dtype) and (
+                    pd.api.types.is_integer_dtype(s0.dtype)
+                    or pd.api.types.is_float_dtype(s0.dtype)
+                )
+                if is_nullable_ext:
+                    # Nullable int/float (pd.Int64, pd.Float64, etc.) — R roundtrips
+                    # these as numpy float64, so pd.NA becomes NaN.  Normalize both
+                    # sides to numpy float64 for the value comparison.
                     check_dtype = False
                     if s1.dtype != np.float64 and s1.dtype != np.int32:
                         failures.append(
                             f"{col}: {s0.dtype}: dtype changed to {s1.dtype}"
                         )
+                    # Convert nullable extension array to numpy so pd.NA == NaN
+                    s0 = s0.to_numpy(dtype="float64", na_value=np.nan)
+                    s1 = s1.to_numpy(dtype="float64", na_value=np.nan)
+                    s0 = pd.Series(s0, name=col)
+                    s1 = pd.Series(s1, name=col)
                 else:
                     if s1.dtype in acceptable_conversions:
                         check_dtype = False

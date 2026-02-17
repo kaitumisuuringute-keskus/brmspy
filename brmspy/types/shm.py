@@ -35,6 +35,8 @@ class ShmRef(TypedDict):
         Actual used size
     temporary : bool
         Whether this buffer can be GC-d immediately after use or should it be attached to object its constructed into.
+    offset : int
+        Byte offset within the SHM block (for slab sub-allocations).
 
     Notes
     -----
@@ -47,6 +49,7 @@ class ShmRef(TypedDict):
     size: int
     content_size: int
     temporary: bool
+    offset: int
 
 
 @dataclass
@@ -65,6 +68,7 @@ class ShmBlock:
     content_size: int
     shm: SharedMemory
     temporary: bool
+    offset: int = 0
 
     def to_ref(self) -> ShmRef:
         return {
@@ -72,6 +76,7 @@ class ShmBlock:
             "size": self.size,
             "content_size": self.content_size,
             "temporary": self.temporary,
+            "offset": self.offset,
         }
 
 

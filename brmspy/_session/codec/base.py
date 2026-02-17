@@ -19,6 +19,15 @@ from brmspy.types.shm import ShmBlock, ShmRef
 
 
 def _noop(_blocks):
+    """prevent GC of shm blocks while the parent object is alive.
+
+    On the main process, decoded numpy arrays reference shared-memory
+    mappings.  SharedMemory.close() invalidates both the fd AND the mmap,
+    so we must NOT close here — the weakref.finalize mechanism only needs
+    to prevent premature collection of the ShmBlock objects.
+
+    The worker does its own cleanup via ShmPool.close_all().
+    """
     pass
 
 
@@ -110,8 +119,9 @@ class CodecRegistry:
         @contextmanager
         def get_buf(ref: ShmRef) -> Iterator[tuple[ShmBlock, memoryview]]:
             buf = shm_pool.attach(ref)
+            offset = ref.get("offset", 0)
             memview = memoryview(buf.shm.buf)
-            view = memview[: ref["content_size"]].cast("B")
+            view = memview[offset : offset + ref["content_size"]].cast("B")
 
             try:
                 if not ref["temporary"]:
@@ -147,5 +157,13 @@ class CodecRegistry:
 
         try:
             weakref.finalize(obj, _noop, tuple(shms))
-        except:
+        except TypeError:
+            # Object doesn't support weak references (e.g. list, tuple, dict).
+            # SHM blocks will be cleaned up by ShmPool.gc()/close_all() instead.
+            return
+        except Exception as exc:
+            import logging
+            logging.getLogger(__name__).warning(
+                "Failed to attach SHM lifetime to %s: %s", type(obj).__name__, exc
+            )
             return
