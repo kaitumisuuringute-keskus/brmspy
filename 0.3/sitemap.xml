@@ -2,306 +2,306 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/changelog/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/api/brms/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/api/diagnostics-arviz/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/api/manage/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/api/brms_functions/brm/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/api/brms_functions/diagnostics/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/api/brms_functions/families/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/api/brms_functions/formula/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/api/brms_functions/generic/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/api/brms_functions/io/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/api/brms_functions/prediction/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/api/brms_functions/prior/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/api/brms_functions/stan/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/api/types/brms_results/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/api/types/errors/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/api/types/formula_dsl/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/api/types/rpy2_converters/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/api/types/runtime/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/api/types/session/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/api/types/shm/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/development/development/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/examples/brmspy-estimating-multivariate-models/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/examples/brmspy-google-colab/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/examples/brmspy-vi-sampling/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/examples/quickstart/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_brms_functions/brm/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_brms_functions/diagnostics/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_brms_functions/families/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_brms_functions/formula/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_brms_functions/generic/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_brms_functions/io/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_brms_functions/prediction/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_brms_functions/prior/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_brms_functions/stan/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_build/_metadata/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_build/_pack/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_build/_stage/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_runtime/_activation/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_runtime/_config/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_runtime/_download/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_runtime/_github/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_runtime/_install/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_runtime/_manifest/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_runtime/_platform/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_runtime/_r_env/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_runtime/_r_packages/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_runtime/_rtools/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_runtime/_state/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_runtime/_storage/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_session/environment/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_session/environment_parent/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_session/session/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_session/transport/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_session/codec/base/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_session/codec/builtin/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_session/codec/dataclass/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_session/codec/registry/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_session/worker/logging/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_session/worker/setup/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_session/worker/sexp_cache/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_session/worker/worker/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_singleton/_brms/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/_singleton/_shm_singleton/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/brms/_brms_module/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/brms/_build_module/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/brms/_manage_module/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/helpers/_rpy2/_conversion/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/helpers/_rpy2/_priors/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/helpers/_rpy2/_robject_iter/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/helpers/_rpy2/_converters/_arrays/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/helpers/_rpy2/_converters/_dispatch/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/helpers/_rpy2/_converters/_formula/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/helpers/_rpy2/_converters/_generic/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/helpers/_rpy2/_converters/_registry/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
     <url>
          <loc>https://kaitumisuuringute-keskus.github.io/brmspy/0.3/internals/helpers/_rpy2/_converters/_vectors/</loc>
-         <lastmod>2025-12-23</lastmod>
+         <lastmod>2026-02-17</lastmod>
     </url>
 </urlset>

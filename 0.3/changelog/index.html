@@ -82,7 +82,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#031-standardized-and-modular-inferencedata-improved-memory-management" class="md-skip">
+        <a href="#032-shm-slab-allocator-for-wide-data-workloads" class="md-skip">
           Skip to content
         </a>
       
@@ -3586,6 +3586,45 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#032-shm-slab-allocator-for-wide-data-workloads" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.3.2 - SHM slab allocator for wide-data workloads
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.3.2 - SHM slab allocator for wide-data workloads">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#slab-allocator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Slab allocator
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#031-standardized-and-modular-inferencedata-improved-memory-management" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3836,7 +3875,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#testing" class="md-nav__link">
+  <a href="#testing_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Testing
@@ -4136,7 +4175,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#testing_1" class="md-nav__link">
+  <a href="#testing_2" class="md-nav__link">
     <span class="md-ellipsis">
       
         Testing
@@ -4234,6 +4273,45 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#032-shm-slab-allocator-for-wide-data-workloads" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.3.2 - SHM slab allocator for wide-data workloads
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0.3.2 - SHM slab allocator for wide-data workloads">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#slab-allocator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Slab allocator
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#031-standardized-and-modular-inferencedata-improved-memory-management" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4484,7 +4562,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#testing" class="md-nav__link">
+  <a href="#testing_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Testing
@@ -4784,7 +4862,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#testing_1" class="md-nav__link">
+  <a href="#testing_2" class="md-nav__link">
     <span class="md-ellipsis">
       
         Testing
@@ -4871,6 +4949,21 @@
 
   <h1>Changelog</h1>
 
+<h2 id="032-shm-slab-allocator-for-wide-data-workloads">0.3.2 - SHM slab allocator for wide-data workloads<a class="headerlink" href="#032-shm-slab-allocator-for-wide-data-workloads" title="Permanent link">&para;</a></h2>
+<p><em>25.02.17</em></p>
+<p>When encoding objects with many sub-arrays — such as an <code>InferenceData</code> from a large MaxDiff model or a DataFrame with hundreds of columns — the codec layer allocated a <strong>separate SharedMemory block for every array</strong>. Each block consumes one POSIX file descriptor, and real-world workloads (500+ columns, repeated fit/predict cycles) quickly exhausted the macOS default limit of fds, crashing with <code>OSError: [Errno 24] Too many open files</code>. (Issue #57)</p>
+<h3 id="slab-allocator">Slab allocator<a class="headerlink" href="#slab-allocator" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>ShmPool.open_slab()</code> / <code>seal_slab()</code></strong>: New arena-style allocator that pre-allocates a single large SharedMemory block and bump-allocates sub-regions from it with 64-byte (cache-line) alignment. When the slab fills, a new one is opened automatically.</li>
+<li><strong><code>InferenceDataCodec.encode</code></strong>: Now estimates total byte size across all groups, opens one slab, and encodes all coordinates and data variables into it. A 300-array InferenceData now uses 1–2 fds instead of 300.</li>
+<li><strong><code>PandasDFCodec.encode</code></strong> (fallback columnar path): Same slab wrapping for DataFrames encoded column-by-column.</li>
+<li><strong>Offset-aware transport</strong>: <code>ShmRef</code> and <code>ShmBlock</code> gain an <code>offset</code> field so multiple sub-allocations can share one named SHM segment. The decode path (<code>get_buf</code>, <code>ShmArray.from_block</code>) slices at the correct offset, fully transparent to codec consumers.</li>
+<li><strong>Backward compatible</strong>: <code>offset</code> defaults to <code>0</code>; existing ShmRefs without the field work unchanged.</li>
+</ul>
+<h3 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Added stress test with <strong>2 500 columns × 4 iterations</strong> of fit/summary/predict to verify fd stability under extreme pressure.</li>
+</ul>
 <h2 id="031-standardized-and-modular-inferencedata-improved-memory-management">0.3.1 - Standardized and modular InferenceData, improved memory management<a class="headerlink" href="#031-standardized-and-modular-inferencedata-improved-memory-management" title="Permanent link">&para;</a></h2>
 <p><em>25.12.23</em></p>
 <p>This release standardizes the <code>InferenceData</code> structure across all prediction methods, ensuring consistent dimensions (<code>chain</code>, <code>draw</code>, <code>obs_id</code>) and variable naming conventions. It also improves shared-memory transport for Pandas DataFrames, enabling high-fidelity roundtripping of Categoricals and mixed types between R and Python.</p>
@@ -5010,7 +5103,7 @@
 <li><strong><code>call()</code></strong>: Universal wrapper for calling any brms or R function by name with automatic type conversion.</li>
 <li><strong><code>sanitised_name()</code></strong>: Helper to convert Python-style names to valid R identifiers.</li>
 </ul>
-<h3 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h3>
+<h3 id="testing_1">Testing<a class="headerlink" href="#testing_1" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Added 14 tests covering all new diagnostics functions.</li>
 <li>Optimized test iterations (<code>iter=100, warmup=50</code>) for faster CI.</li>
@@ -5119,7 +5212,7 @@
 <li>Repeated model fits now faster due to eliminated R namespace reloads.</li>
 <li>Reduced memory churn by removing redundant converter/namespace setup.</li>
 </ul>
-<h3 id="testing_1">Testing<a class="headerlink" href="#testing_1" title="Permanent link">&para;</a></h3>
+<h3 id="testing_2">Testing<a class="headerlink" href="#testing_2" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Added <code>test_fit_tqdm_segfault()</code> regression test.</li>
 </ul>
