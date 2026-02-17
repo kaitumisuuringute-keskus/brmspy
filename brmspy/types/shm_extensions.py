@@ -98,7 +98,7 @@ class ShmArray(np.ndarray):
         if not is_object:
             if block.shm.buf:
                 view = memoryview(block.shm.buf)
-                view = view[: block.content_size]
+                view = view[block.offset : block.offset + block.content_size]
             else:
                 view = None
             base = np.ndarray(
@@ -112,7 +112,7 @@ class ShmArray(np.ndarray):
         else:
             assert block.shm.buf
             view = memoryview(block.shm.buf)
-            view = view[: block.content_size]
+            view = view[block.offset : block.offset + block.content_size]
             payload = bytes(view)
             obj = pickle.loads(payload)
             assert isinstance(obj, np.ndarray)
@@ -182,7 +182,7 @@ class ShmArray(np.ndarray):
 
             # Ask for exactly nbytes; OS may round up internally, that's fine.
             block = shm_pool.alloc(nbytes, temporary=temporary)
-            block.shm.buf[:nbytes] = data
+            block.shm.buf[block.offset : block.offset + nbytes] = data
             ref = block.to_ref()
 
         ref, dtype, shape, order = (

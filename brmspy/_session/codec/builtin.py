@@ -108,14 +108,22 @@ class PandasDFCodec(Encoder):
             meta["order"] = "C"
             columns: dict[str, ShmSeriesMetadata] = {}
 
-            for col_name in obj.columns:
-                col = obj[col_name]
+            # Estimate total bytes for slab pre-allocation
+            estimated = sum(obj[c].nbytes for c in obj.columns)
+            if estimated > 0:
+                shm_pool.open_slab(estimated)
+            try:
+                for col_name in obj.columns:
+                    col = obj[col_name]
 
-                arr_modified, spec, dtype, shape, order = ShmArray.to_shm(col, shm_pool)
+                    arr_modified, spec, dtype, shape, order = ShmArray.to_shm(col, shm_pool)
 
-                columns[col_name] = ShmDataFrameColumns._create_col_metadata(
-                    obj[col_name], spec, arr_modified
-                )
+                    columns[col_name] = ShmDataFrameColumns._create_col_metadata(
+                        obj[col_name], spec, arr_modified
+                    )
+            finally:
+                if estimated > 0:
+                    shm_pool.seal_slab()
             meta["columns"] = columns
 
         return EncodeResult(codec=type(self).__name__, meta=meta, buffers=buffers)
@@ -244,65 +252,84 @@ class InferenceDataCodec(Encoder):
         groups_meta: dict[str, Any] = {}
         total_bytes = 0
 
-        # Walk each group: posterior, posterior_predictive, etc.
+        # -- Pass 1: estimate total SHM bytes needed -----------------------
+        estimated = 0
         for group_name in obj.groups():
             ds: xr.Dataset = getattr(obj, group_name)
-            g_meta: dict[str, Any] = {
-                "data_vars": {},
-                "coords": {},
-            }
-
-            # COORDS: generally smaller, but can be arrays.
-            for cname, coord in ds.coords.items():
+            for coord in ds.coords.values():
                 values = np.asarray(coord.values)
-                if values.dtype.kind in "iufb":  # numeric-ish
-                    data = values.tobytes(order="C")
-                    nbytes = len(data)
-                    block = shm_pool.alloc(nbytes)
-                    block.shm.buf[:nbytes] = data
+                if values.dtype.kind in "iufb":
+                    estimated += values.nbytes
+            for da in ds.data_vars.values():
+                estimated += np.asarray(da.data).nbytes
 
-                    buffer_idx = len(buffers)
-                    buffers.append(block.to_ref())
-                    total_bytes += nbytes
+        # -- Open slab (all allocs below go into one SHM block) -----------
+        if estimated > 0:
+            shm_pool.open_slab(estimated)
 
-                    g_meta["coords"][cname] = {
-                        "kind": "array",
-                        "buffer_idx": buffer_idx,
-                        "dtype": str(values.dtype),
-                        "shape": list(values.shape),
-                        "dims": list(coord.dims),
-                        "nbytes": nbytes,
-                    }
-                else:
-                    # Non-numeric / object coords: keep them small & pickle in meta.
-                    g_meta["coords"][cname] = {
-                        "kind": "pickle",
-                        "dims": list(coord.dims),
-                        "payload": pickle.dumps(
-                            coord.values, protocol=pickle.HIGHEST_PROTOCOL
-                        ),
-                    }
-
-            # DATA VARS: main heavy arrays
-            for vname, da in ds.data_vars.items():
-                arr = np.asarray(da.data)
-                _, spec, dtype, shape, order = ShmArray.to_shm(arr, shm_pool)
-                meta = {"dtype": dtype, "shape": shape, "order": order}
-                nbytes = spec["content_size"]
-
-                buffer_idx = len(buffers)
-                buffers.append(spec)
-                total_bytes += nbytes
-
-                g_meta["data_vars"][vname] = {
-                    "buffer_idx": buffer_idx,
-                    "dtype": str(meta["dtype"]),
-                    "shape": list(meta["shape"]),
-                    "dims": list(da.dims),
-                    "nbytes": nbytes,
+        try:
+            # Walk each group: posterior, posterior_predictive, etc.
+            for group_name in obj.groups():
+                ds: xr.Dataset = getattr(obj, group_name)
+                g_meta: dict[str, Any] = {
+                    "data_vars": {},
+                    "coords": {},
                 }
 
-            groups_meta[group_name] = g_meta
+                # COORDS: generally smaller, but can be arrays.
+                for cname, coord in ds.coords.items():
+                    values = np.asarray(coord.values)
+                    if values.dtype.kind in "iufb":  # numeric-ish
+                        data = values.tobytes(order="C")
+                        nbytes = len(data)
+                        block = shm_pool.alloc(nbytes)
+                        block.shm.buf[block.offset : block.offset + nbytes] = data
+
+                        buffer_idx = len(buffers)
+                        buffers.append(block.to_ref())
+                        total_bytes += nbytes
+
+                        g_meta["coords"][cname] = {
+                            "kind": "array",
+                            "buffer_idx": buffer_idx,
+                            "dtype": str(values.dtype),
+                            "shape": list(values.shape),
+                            "dims": list(coord.dims),
+                            "nbytes": nbytes,
+                        }
+                    else:
+                        # Non-numeric / object coords: keep them small & pickle in meta.
+                        g_meta["coords"][cname] = {
+                            "kind": "pickle",
+                            "dims": list(coord.dims),
+                            "payload": pickle.dumps(
+                                coord.values, protocol=pickle.HIGHEST_PROTOCOL
+                            ),
+                        }
+
+                # DATA VARS: main heavy arrays
+                for vname, da in ds.data_vars.items():
+                    arr = np.asarray(da.data)
+                    _, spec, dtype, shape, order = ShmArray.to_shm(arr, shm_pool)
+                    meta = {"dtype": dtype, "shape": shape, "order": order}
+                    nbytes = spec["content_size"]
+
+                    buffer_idx = len(buffers)
+                    buffers.append(spec)
+                    total_bytes += nbytes
+
+                    g_meta["data_vars"][vname] = {
+                        "buffer_idx": buffer_idx,
+                        "dtype": str(meta["dtype"]),
+                        "shape": list(meta["shape"]),
+                        "dims": list(da.dims),
+                        "nbytes": nbytes,
+                    }
+
+                groups_meta[group_name] = g_meta
+        finally:
+            if estimated > 0:
+                shm_pool.seal_slab()
 
         meta: dict[str, Any] = {
             "groups": groups_meta,
