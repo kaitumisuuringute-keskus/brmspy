@@ -30,12 +30,11 @@ from brmspy._session.session import _INTERNAL_ATTRS, RModuleSession
 # -------------------------------------------------------------------
 if TYPE_CHECKING:
     # For type checkers / IDE only – can point to the real brms module
+    from contextlib import AbstractContextManager
+
     import brmspy.brms._brms_module as _brms_module
     from brmspy.brms._brms_module import *
     from brmspy.brms._brms_module import _runtime
-
-    from contextlib import AbstractContextManager
-
     from brmspy.brms._build_module import BuildModule
     from brmspy.brms._manage_module import ManageModule
     from brmspy.types.session import EnvironmentConfig
@@ -83,7 +82,167 @@ if os.environ.get("BRMSPY_WORKER") != "1":
     _module_path = "brmspy.brms"
     _sess = RModuleSession(module=_brms_module, module_path=_module_path)
 
-    # 5) Attach context-managed surfaces (dynamic attributes)
+    # 5) Intercept backend="nutpie" in the main process.
+    # Capture the original proxy wrapper now, before we overwrite "brm" in
+    # _func_cache — the non-nutpie fallback path must call this, not _sess.brm
+    # (which would resolve to _brm_main_process and recurse infinitely).
+    _brm_proxy = _sess.brm
+
+    #    make_stancode / make_standata are called through the proxy (worker),
+    #    then nutpie compiles and samples right here so that its progress bar
+    #    and Jupyter widgets work correctly.
+    def _brm_nutpie_main(
+        formula,
+        data,
+        priors=None,
+        family="gaussian",
+        sample_prior="no",
+        formula_args=None,
+        cores=None,
+        nutpie_config=None,
+        brm_args=None,
+    ):
+        try:
+            import nutpie
+        except ImportError as exc:
+            raise ImportError(
+                "nutpie is not installed.  Install it with:\n\n"
+                '    pip install "nutpie[stan]"\n\n'
+                "or via conda:\n\n"
+                "    conda install -c conda-forge nutpie"
+            ) from exc
+
+        from typing import cast
+
+        import pandas as pd
+
+        from brmspy.types.brms_results import FitResult, IDBrm, NutpieConfig
+
+        if nutpie_config is None:
+            nutpie_config = NutpieConfig()
+
+        # Normalise formula_args into the formula string before shipping to worker
+        if formula_args and isinstance(formula, str):
+            # bf() must run in the worker; pass formula_args as part of the
+            # make_stancode / make_standata calls instead
+            pass
+
+        data_df = pd.DataFrame(data) if isinstance(data, dict) else data
+        family_str = family if isinstance(family, str) else "gaussian"
+
+        # Step 1 + 2 – run in worker via proxy
+        stan_code = _sess.make_stancode(
+            formula=formula,
+            data=data_df,
+            priors=priors,
+            family=family_str,
+            sample_prior=sample_prior,
+            formula_args=formula_args,
+        )
+        stan_data = _sess.make_standata(
+            formula=formula,
+            data=data_df,
+            priors=priors,
+            family=family_str,
+            sample_prior=sample_prior,
+            formula_args=formula_args,
+            coerce_types=True,
+        )
+
+        # Step 3 – compile (main process)
+        compiled = nutpie.compile_stan_model(code=stan_code)
+
+        # Step 4 – attach data (main process)
+        compiled = compiled.with_data(**stan_data)
+
+        # Step 5 – sample (main process, progress bar works here)
+        sample_kwargs = nutpie_config.to_sample_kwargs()
+
+        # Map common brm()/Stan arguments onto nutpie as fallbacks:
+        # only applied when the NutpieConfig field was left as None (i.e. not
+        # explicitly configured by the user via nutpie_config).
+        if brm_args:
+            # chains= is a first-class brm() arg, but also in brm_args if passed
+            # as a kwarg; NutpieConfig.chains has a non-None default (6) so we
+            # only override when the user passed chains= explicitly to brm().
+            if "chains" in brm_args:
+                sample_kwargs["chains"] = brm_args["chains"]
+
+            # seed= maps directly
+            if "seed" in brm_args and nutpie_config.seed is None:
+                sample_kwargs["seed"] = brm_args["seed"]
+
+            # warmup= maps to tune=
+            if "warmup" in brm_args and nutpie_config.tune is None:
+                sample_kwargs["tune"] = brm_args["warmup"]
+
+            # iter= in brms means total draws including warmup; nutpie's draws=
+            # means post-warmup draws, so: draws = iter - warmup.
+            if "iter" in brm_args and nutpie_config.draws is None:
+                warmup = brm_args.get("warmup", sample_kwargs.get("tune", 300))
+                sample_kwargs["draws"] = brm_args["iter"] - warmup
+
+        if cores is not None:
+            sample_kwargs["cores"] = cores
+        trace = nutpie.sample(compiled, **sample_kwargs)
+
+        return FitResult(idata=cast(IDBrm, trace), r=None)
+
+    def _brm_main_process(
+        formula,
+        data,
+        priors=None,
+        family="gaussian",
+        sample_prior="no",
+        sample=True,
+        backend="cmdstanr",
+        formula_args=None,
+        cores=2,
+        nutpie_config=None,
+        *,
+        return_idata=True,
+        **brm_args,
+    ):
+        if backend == "nutpie":
+            return _brm_nutpie_main(
+                formula=formula,
+                data=data,
+                priors=priors,
+                family=family,
+                sample_prior=sample_prior,
+                formula_args=formula_args,
+                cores=cores,
+                nutpie_config=nutpie_config,
+                brm_args=brm_args,
+            )
+        # All other backends go through the worker as normal
+        return _brm_proxy(
+            formula=formula,
+            data=data,
+            priors=priors,
+            family=family,
+            sample_prior=sample_prior,
+            sample=sample,
+            backend=backend,
+            formula_args=formula_args,
+            cores=cores,
+            return_idata=return_idata,
+            **brm_args,
+        )
+
+    # Copy metadata from the worker-side brm for IDE/doc purposes
+    _brm_main_process.__doc__ = _brms_module.brm.__doc__
+    _brm_main_process.__name__ = "brm"
+    _brm_main_process.__wrapped__ = _brms_module.brm  # type: ignore[attr-defined]
+
+    # Register directly in _func_cache so __getattribute__ finds it at step 2
+    # (before it falls through to the module and creates a proxy wrapper that
+    # would send nutpie_config to the worker).
+    func_cache = ModuleType.__getattribute__(_sess, "_func_cache")
+    func_cache["brm"] = _brm_main_process
+    func_cache["fit"] = _brm_main_process
+
+    # 6) Attach context-managed surfaces (dynamic attributes)
     setattr(
         _sess,
         "manage",
@@ -240,6 +399,7 @@ __all__ = [
     "PriorSpec",
     # stan
     "make_stancode",
+    "make_standata",
     # misc private
     "_runtime",
     "status",

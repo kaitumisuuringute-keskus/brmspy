@@ -229,6 +229,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install pytest pytest-cov pytest-xdist arviz tqdm
           python -m pip install -e ".[dev]"
+          python -m pip install "nutpie[stan]"
 
       - name: Fix paths for rpy2 ABI mode
         if: runner.os != 'Windows'

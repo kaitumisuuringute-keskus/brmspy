@@ -4,14 +4,15 @@ Pytest configuration and shared fixtures for brmspy tests
 
 import gc
 import inspect
+import os
+import sys
 from pathlib import Path
 from typing import Any, cast
 from unittest.mock import MagicMock
-import pytest
-import sys
-import os
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+import pytest
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -96,6 +97,10 @@ def pytest_configure(config):
     )
     config.addinivalue_line(
         "markers", "worker: run this test inside the brms worker process"
+    )
+    config.addinivalue_line(
+        "markers",
+        "nutpie: marks tests that require nutpie to be installed (skipped otherwise).",
     )
 
 
@@ -247,11 +252,22 @@ def pytest_collection_modifyitems(config, items):
         reason="rdeps test. only runs within githubs rdeps test workflow.'"
     )
     skip_only_using_rdeps = pytest.mark.skip(reason="Running in rdeps-only mode!'")
+    skip_requires_nutpie = pytest.mark.skip(
+        reason='nutpie not installed - install with: pip install "nutpie[stan]"'
+    )
 
     user_mark_expr = config.getoption("-m") or ""
     rdeps_allowed = (
         "rdeps" in user_mark_expr and os.getenv("BRMSPY_DESTRUCTIVE_RDEPS_TESTS") == "1"
     )
+
+    nutpie_available = False
+    try:
+        import nutpie  # noqa: F401
+
+        nutpie_available = True
+    except ImportError:
+        pass
 
     # Try to check if brms is available
     brms_is_available = False
@@ -279,6 +295,12 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(skip_requires_rdeps)
         if rdeps_allowed and "rdeps" not in item.keywords:
             item.add_marker(skip_only_using_rdeps)
+        if not nutpie_available and "nutpie" in item.keywords:
+            item.add_marker(skip_requires_nutpie)
+        # Exclude nutpie tests when running in rdeps-only mode, since that
+        # workflow doesn't install nutpie.
+        if rdeps_allowed and "nutpie" in item.keywords:
+            item.add_marker(skip_requires_nutpie)
 
 
 def _force_brmspy_cleanup():
