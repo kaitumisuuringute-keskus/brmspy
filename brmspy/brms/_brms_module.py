@@ -63,7 +63,8 @@ from brmspy._brms_functions.prediction import (
     posterior,
     observed_data,
 )
-from brmspy._brms_functions.stan import make_stancode
+from brmspy._brms_functions.stan import make_stancode, make_standata
+from brmspy.types.brms_results import NutpieConfig
 from brmspy._brms_functions.families import (
     brmsfamily,
     family,

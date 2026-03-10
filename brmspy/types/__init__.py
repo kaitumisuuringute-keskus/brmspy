@@ -24,3 +24,7 @@ in Python results are represented as lightweight handles (see
 [`SexpWrapper`][brmspy.types.session.SexpWrapper]) and can only be used by passing
 them back into brmspy calls while the same worker process is alive.
 """
+
+from brmspy.types.brms_results import NutpieConfig
+
+__all__ = ["NutpieConfig"]

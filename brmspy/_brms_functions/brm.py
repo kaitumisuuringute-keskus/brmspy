@@ -112,7 +112,7 @@ def brm(
     return_idata : bool, default True
         When working with large datasets, you might not want the full idata.
         when False, you get the R object proxy which can be forwarded to posterior_epred
-        or other functions
+        or other functions.
     **brm_args
         Additional keyword arguments passed to R ``brms::brm()`` (e.g. ``chains``,
         ``iter``, ``warmup``, ``seed``).
