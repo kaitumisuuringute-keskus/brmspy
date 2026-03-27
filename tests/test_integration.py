@@ -122,7 +122,7 @@ class TestSimpleModelFitting:
 
         # Check return type - now returns arviz InferenceData by default
         import arviz as az
-from brmspy.helpers.arviz_compat import get_group_dataset
+        from brmspy.helpers.arviz_compat import get_group_dataset
         from brmspy.helpers.arviz_compat import is_inference_data
 
         assert is_inference_data(model.idata)
@@ -150,7 +150,7 @@ from brmspy.helpers.arviz_compat import get_group_dataset
 
         # Check return type - now returns arviz InferenceData by default
         import arviz as az
-from brmspy.helpers.arviz_compat import get_group_dataset
+        from brmspy.helpers.arviz_compat import get_group_dataset
         from brmspy.helpers.arviz_compat import is_inference_data
 
         assert is_inference_data(model.idata)
@@ -187,7 +187,7 @@ class TestModelWithRandomEffects:
 
         # Check return type - now returns arviz InferenceData by default
         import arviz as az
-from brmspy.helpers.arviz_compat import get_group_dataset
+        from brmspy.helpers.arviz_compat import get_group_dataset
         from brmspy.helpers.arviz_compat import is_inference_data
 
         assert is_inference_data(model.idata)
@@ -219,7 +219,7 @@ class TestArVizIntegration:
 
         try:
             import arviz as az
-from brmspy.helpers.arviz_compat import get_group_dataset
+        from brmspy.helpers.arviz_compat import get_group_dataset
         from brmspy.helpers.arviz_compat import is_inference_data
         except ImportError:
             pytest.skip("arviz not installed")
@@ -289,7 +289,7 @@ class TestRealWorldExample:
 
         # Check it worked - now returns arviz InferenceData by default
         import arviz as az
-from brmspy.helpers.arviz_compat import get_group_dataset
+        from brmspy.helpers.arviz_compat import get_group_dataset
         from brmspy.helpers.arviz_compat import is_inference_data
 
         assert is_inference_data(model.idata)
@@ -441,7 +441,7 @@ class TestFormulaFunction:
         from brmspy import brms
         from brmspy.types.formula_dsl import FormulaConstruct
         import arviz as az
-from brmspy.helpers.arviz_compat import get_group_dataset
+        from brmspy.helpers.arviz_compat import get_group_dataset
         from brmspy.helpers.arviz_compat import is_inference_data
 
         # Load epilepsy dataset
@@ -522,7 +522,7 @@ class TestPriorFunction:
         from brmspy.brms import prior
         from brmspy.types.brms_results import PriorSpec
         import arviz as az
-from brmspy.helpers.arviz_compat import get_group_dataset
+        from brmspy.helpers.arviz_compat import get_group_dataset
         from brmspy.helpers.arviz_compat import is_inference_data
 
         # Create prior specifications using prior() function
@@ -592,7 +592,7 @@ from brmspy.helpers.arviz_compat import get_group_dataset
         from brmspy.brms import prior
         from brmspy.types.brms_results import PriorSpec
         import arviz as az
-from brmspy.helpers.arviz_compat import get_group_dataset
+        from brmspy.helpers.arviz_compat import get_group_dataset
         from brmspy.helpers.arviz_compat import is_inference_data
 
         # Load epilepsy dataset (has patient grouping variable)
@@ -773,7 +773,7 @@ class TestAdditionalFunctions:
         """
         from brmspy import brms
         import arviz as az
-from brmspy.helpers.arviz_compat import get_group_dataset
+        from brmspy.helpers.arviz_compat import get_group_dataset
         from brmspy.helpers.arviz_compat import is_inference_data
 
         # Fit a simple model
@@ -816,7 +816,7 @@ from brmspy.helpers.arviz_compat import get_group_dataset
         """
         from brmspy import brms
         import arviz as az
-from brmspy.helpers.arviz_compat import get_group_dataset
+        from brmspy.helpers.arviz_compat import get_group_dataset
         from brmspy.helpers.arviz_compat import is_inference_data
 
         # Fit a simple model
