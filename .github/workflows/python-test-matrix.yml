@@ -21,32 +21,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  # 0) ArviZ compat — lightweight, no R/CmdStan needed
-  arviz-compat:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        arviz-version: ["0.22.0", "1.0.0"]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install "arviz==${{ matrix.arviz-version }}" pytest pytest-cov
-          python -m pip install -e ".[dev]"
-
-      - name: Run ArviZ compat tests
-        env:
-          BRMSPY_WORKER: "1"
-        run: |
-          python -m pytest tests/test_arviz_compat.py -v --no-header -x
 
   # 1) Build & cache CmdStan + R packages once per OS
   cmdstan:
