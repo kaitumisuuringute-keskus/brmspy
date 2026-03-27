@@ -13,7 +13,7 @@ To drop < 1.0 support in the future, delete the ``else`` branches and simplify.
 
 from __future__ import annotations
 
-from typing import Any, Union
+from typing import Any
 
 import arviz as az
 import xarray as xr
@@ -50,7 +50,29 @@ def from_dict(**kwargs: Any) -> InferenceDataLike:  # type: ignore[return]
     Wraps ``az.from_dict`` — returns ``InferenceData`` on < 1.0 and
     ``DataTree`` on ≥ 1.0.
     """
-    return az.from_dict(**kwargs)
+    if not ARVIZ_V1:
+        return az.from_dict(**kwargs)
+
+    # In ArviZ >= 1.0, from_dict no longer takes groups as top-level kwargs.
+    # Instead, we pass `data` which is a dict of dicts.
+    data = {}
+    other_kwargs = {}
+    known_groups = {
+        "posterior", "posterior_predictive", "log_likelihood", "prior",
+        "prior_predictive", "sample_stats", "sample_stats_prior",
+        "observed_data", "constant_data", "predictions", "predictions_constant_data",
+        "warmup_posterior", "warmup_posterior_predictive", "warmup_predictions",
+        "warmup_log_likelihood", "warmup_sample_stats"
+    }
+
+    for k, v in kwargs.items():
+        if v is not None:
+            if k in known_groups:
+                data[k] = v
+            else:
+                other_kwargs[k] = v
+
+    return az.from_dict(data, **other_kwargs)
 
 
 def get_groups(obj: InferenceDataLike) -> list[str]:
