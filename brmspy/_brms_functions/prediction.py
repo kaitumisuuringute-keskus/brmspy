@@ -446,12 +446,12 @@ def log_lik(
     --------
     ```python
     from brmspy import brms
-    import arviz as az
+    from arviz_stats import loo
 
     fit = brms.brm("y ~ x", data=df, chains=4)
     ll = brms.log_lik(fit)
 
-    az.loo(ll.idata)
+    loo(ll.idata)
     ```
     """
     import rpy2.robjects as ro
