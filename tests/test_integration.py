@@ -219,8 +219,8 @@ class TestArVizIntegration:
 
         try:
             import arviz as az
-        from brmspy.helpers.arviz_compat import get_group_dataset
-        from brmspy.helpers.arviz_compat import is_inference_data
+            from brmspy.helpers.arviz_compat import get_group_dataset
+            from brmspy.helpers.arviz_compat import is_inference_data
         except ImportError:
             pytest.skip("arviz not installed")
 
