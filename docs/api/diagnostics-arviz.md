@@ -289,7 +289,7 @@ brmspy preserves brms parameter naming conventions:
 
 ### Multivariate Models
 
-When working with multivariate models, remember to specify the `var_name` parameter in ArviZ functions that operate on response variables (e.g., `az.loo()`, `az.waic()`, `az.plot_ppc()`).
+When working with multivariate models, remember to specify the `var_names` parameter in ArviZ functions that operate on response variables (e.g., `loo()`, `plot_ppc_dist()`).
 
 ### Performance
 

@@ -200,7 +200,7 @@ All arguments and return values are passed through a codec registry (see `brmspy
 Default codec priority is:
 
 1. NumPy arrays (SHM-backed)
-2. ArviZ `InferenceData` (stores underlying arrays in SHM; reconstructs datasets in-place)
+2. ArviZ `DataTree` / `InferenceData` (stores underlying arrays in SHM; reconstructs datasets in-place)
 3. pandas DataFrames (numeric-only; object dtype columns fall back to pickle)
 4. Dataclasses (encodes fields recursively via the registry)
 5. Pickle fallback (always available, but discouraged for large payloads)

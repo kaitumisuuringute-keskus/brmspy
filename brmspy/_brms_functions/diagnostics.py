@@ -9,31 +9,32 @@ ArviZ Integration
 -----------------
 brmspy models work directly with ArviZ functions without conversion:
 
-- **Summary & Convergence**: `az.summary()`, `az.rhat()`, `az.ess()`
-- **Visualization**: `az.plot_trace()`, `az.plot_posterior()`, `az.plot_pair()`
-- **Model Comparison**: `az.loo()`, `az.waic()`, `az.compare()`
-- **Predictive Checks**: `az.plot_ppc()`
+- **Summary & Convergence**: `arviz_stats.summary()`, `rhat()`, `ess()`
+- **Visualization**: `arviz_plots.plot_trace()`, `plot_dist()`, `plot_pair()`
+- **Model Comparison**: `arviz_stats.loo()`, `compare()`
+- **Predictive Checks**: `arviz_plots.plot_ppc_dist()`
 
-**For multivariate models**, use the `var_name` parameter in ArviZ functions
-to specify which response variable to analyze (e.g., `az.loo(model.idata, var_name="y1")`).
+**For multivariate models**, use the `var_names` parameter in ArviZ functions
+to specify which response variable to analyze (e.g., `loo(model.idata, var_names=["y1"])`).
 
 Quick Example
 -------------
 ```python
 import brmspy
-import arviz as az
+from arviz_stats import summary, loo
+from arviz_plots import plot_trace, plot_ppc_dist
 
 # Fit model
 model = brmspy.fit("count ~ zAge + (1|patient)", data=data, family="poisson")
 
 # Diagnostics
-print(az.summary(model.idata))  # Parameter estimates with Rhat, ESS
-az.plot_trace(model.idata)       # MCMC trace plots
-az.plot_ppc(model.idata)         # Posterior predictive check
+print(summary(model.idata))  # Parameter estimates with Rhat, ESS
+plot_trace(model.idata)       # MCMC trace plots
+plot_ppc_dist(model.idata)    # Posterior predictive check
 
 # Model comparison
-loo = az.loo(model.idata)
-print(loo)
+loo_res = loo(model.idata)
+print(loo_res)
 ```
 
 See Also
