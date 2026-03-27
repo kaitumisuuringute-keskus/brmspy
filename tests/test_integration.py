@@ -469,8 +469,8 @@ class TestFormulaFunction:
         )
 
         # Verify model fitted successfully
-        assert isinstance(
-            model.idata, az.InferenceData
+        assert is_inference_data(
+            model.idata
         ), "fit() with FormulaResult should return InferenceData"
 
         # Check parameters exist
@@ -564,8 +564,8 @@ class TestPriorFunction:
         )
 
         # Verify model fitted successfully with custom priors
-        assert isinstance(
-            model.idata, az.InferenceData
+        assert is_inference_data(
+            model.idata
         ), "fit() with prior() specifications should return InferenceData"
 
         # Check parameters exist
@@ -634,8 +634,8 @@ class TestPriorFunction:
         )
 
         # Verify model fitted successfully
-        assert isinstance(
-            model.idata, az.InferenceData
+        assert is_inference_data(
+            model.idata
         ), "fit() with group priors should return InferenceData"
 
         # Check that both fixed and random effects parameters exist
@@ -798,8 +798,8 @@ class TestAdditionalFunctions:
         ), "posterior_linpred() should return IDResult"
 
         # Verify idata exists
-        assert isinstance(
-            linpred.idata, az.InferenceData
+        assert is_inference_data(
+            linpred.idata
         ), "posterior_linpred() should return InferenceData"
 
         # Verify R object exists
@@ -839,8 +839,8 @@ class TestAdditionalFunctions:
         assert isinstance(loglik, brms.IDResult), "log_lik() should return LogLikResult"
 
         # Verify idata exists
-        assert isinstance(
-            loglik.idata, az.InferenceData
+        assert is_inference_data(
+            loglik.idata
         ), "log_lik() should return InferenceData"
 
         # Verify R object exists

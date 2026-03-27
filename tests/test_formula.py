@@ -64,8 +64,8 @@ class TestFormulaFamilyIntegration:
         )
 
         # Verify model fitted successfully
-        assert isinstance(
-            model.idata, az.InferenceData
+        assert is_inference_data(
+            model.idata
         ), "Model should return InferenceData"
 
         # Check parameters exist
@@ -110,8 +110,8 @@ class TestFormulaFamilyIntegration:
         )
 
         # Verify model fitted
-        assert isinstance(
-            model.idata, az.InferenceData
+        assert is_inference_data(
+            model.idata
         ), "Model should return InferenceData"
 
         # Check parameters
@@ -160,8 +160,8 @@ class TestFormulaFamilyIntegration:
         )
 
         # Verify model fitted
-        assert isinstance(
-            model.idata, az.InferenceData
+        assert is_inference_data(
+            model.idata
         ), "Model should return InferenceData"
 
         # Check parameters
@@ -220,8 +220,8 @@ class TestFormulaFamilyIntegration:
         )
 
         # Verify model fitted
-        assert isinstance(
-            model.idata, az.InferenceData
+        assert is_inference_data(
+            model.idata
         ), "Model should return InferenceData"
 
         # Check that non-linear parameters exist
@@ -270,8 +270,8 @@ class TestFormulaFamilyIntegration:
         )
 
         # Verify model fitted
-        assert isinstance(
-            model.idata, az.InferenceData
+        assert is_inference_data(
+            model.idata
         ), "Model should return InferenceData"
 
         # Check parameters
@@ -323,8 +323,8 @@ class TestFormulaFamilyIntegration:
         )
 
         # Verify model fitted
-        assert isinstance(
-            model.idata, az.InferenceData
+        assert is_inference_data(
+            model.idata
         ), "Model should return InferenceData"
 
         # Check parameters
@@ -375,8 +375,8 @@ class TestFormulaFamilyIntegration:
         )
 
         # Verify model fitted
-        assert isinstance(
-            model.idata, az.InferenceData
+        assert is_inference_data(
+            model.idata
         ), "Model should return InferenceData"
 
         # Check parameters from both responses
@@ -442,8 +442,8 @@ class TestFormulaFamilyIntegration:
         )
 
         # Verify model fitted
-        assert isinstance(
-            model.idata, az.InferenceData
+        assert is_inference_data(
+            model.idata
         ), "Model should return InferenceData"
 
         # Check parameters
@@ -495,8 +495,8 @@ class TestFormulaFamilyIntegration:
         )
 
         # Verify model fitted
-        assert isinstance(
-            model.idata, az.InferenceData
+        assert is_inference_data(
+            model.idata
         ), "Model should return InferenceData"
 
         # Check parameters
@@ -540,8 +540,8 @@ class TestFormulaFamilyIntegration:
         )
 
         # Verify model fitted
-        assert isinstance(
-            model.idata, az.InferenceData
+        assert is_inference_data(
+            model.idata
         ), "Model should return InferenceData"
 
         # Check parameters
