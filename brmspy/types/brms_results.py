@@ -3,11 +3,11 @@
 from dataclasses import dataclass
 from typing import Any, Generic, Protocol, TypeVar, Union, runtime_checkable
 
-import arviz as az
 import pandas as pd
 import xarray as xr
 from rpy2.rinterface import ListSexpVector
 
+from brmspy.helpers.arviz_compat import InferenceDataBase
 from brmspy.types.session import SexpWrapper
 
 
@@ -123,13 +123,13 @@ class PriorSpec:
 # -----------------------------------------------------
 
 
-class IDConstantData(az.InferenceData):
+class IDConstantData(InferenceDataBase):  # type: ignore[misc]
     """Typed .constant_data extension to idata"""
 
     constant_data: xr.Dataset
 
 
-class IDPredictionsConstantData(az.InferenceData):
+class IDPredictionsConstantData(InferenceDataBase):  # type: ignore[misc]
     """Typed .predictions_constant_data extension to idata"""
 
     predictions_constant_data: xr.Dataset
@@ -173,10 +173,11 @@ class IDLogLikelihoodOutsample(IDPredictionsConstantData):
 
 class IDBrm(IDConstantData):
     """
-    Typed `arviz.InferenceData` for fitted brms models.
+    Typed inference data for fitted brms models.
 
-    Extends `arviz.InferenceData` with type hints for IDE autocomplete. In brmspy,
-    the fitted model result typically exposes an `.idata` attribute of this type.
+    Extends the installed ArviZ data type (``InferenceData`` on ArviZ < 1.0,
+    ``DataTree`` on ArviZ ≥ 1.0) with type hints for IDE autocomplete.
+    In brmspy, the fitted model result exposes an ``.idata`` attribute of this type.
 
     Attributes
     ----------
@@ -188,15 +189,10 @@ class IDBrm(IDConstantData):
         Log-likelihood values for each observation.
     observed_data : xr.Dataset
         Original observed response data.
-    coords : dict
-        Coordinate mappings for dimensions (inherited from `arviz.InferenceData`).
-    dims : dict
-        Dimension specifications for variables (inherited from `arviz.InferenceData`).
 
     See Also
     --------
-    brmspy.brms.brm : Creates fitted model results (alias: `brmspy.brms.fit`).
-    arviz.InferenceData : Base class documentation.
+    brmspy.brms.brm : Creates fitted model results (alias: ``brmspy.brms.fit``).
 
     Examples
     --------

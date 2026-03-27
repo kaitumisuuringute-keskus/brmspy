@@ -1,5 +1,9 @@
+## 0.4.0 - Arviz 1.0 support, Prediction functions fixes
+
+
+
 ## 0.3.2 - SHM slab allocator for wide-data workloads
-*25.02.17*
+*26.02.17*
 
 When encoding objects with many sub-arrays — such as an `InferenceData` from a large MaxDiff model or a DataFrame with hundreds of columns — the codec layer allocated a **separate SharedMemory block for every array**. Each block consumes one POSIX file descriptor, and real-world workloads (500+ columns, repeated fit/predict cycles) quickly exhausted the macOS default limit of fds, crashing with `OSError: [Errno 24] Too many open files`. (Issue #57)
 
