@@ -112,6 +112,7 @@ jobs:
             mike deploy \
               --branch gh-pages \
               --push \
+              --update-aliases \
               --alias-type=redirect \
               -t "$FULL" \
               "$MM" stable
