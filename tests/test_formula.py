@@ -44,6 +44,7 @@ class TestFormulaFamilyIntegration:
         from brmspy.brms import bf, lf
         from brmspy.brms import student
         import arviz as az
+        from brmspy.helpers.arviz_compat import is_inference_data
 
         # Load epilepsy dataset
         epilepsy = brms.get_brms_data("epilepsy")
@@ -89,6 +90,7 @@ class TestFormulaFamilyIntegration:
         from brmspy.brms import bf, lf
         from brmspy.brms import skew_normal
         import arviz as az
+        from brmspy.helpers.arviz_compat import is_inference_data
 
         # Load epilepsy dataset
         epilepsy = brms.get_brms_data("epilepsy")
@@ -134,6 +136,7 @@ class TestFormulaFamilyIntegration:
         from brmspy.brms import bf, lf
         from brmspy.brms import zero_inflated_poisson
         import arviz as az
+        from brmspy.helpers.arviz_compat import is_inference_data
 
         # Load epilepsy dataset
         epilepsy = brms.get_brms_data("epilepsy")
@@ -185,6 +188,7 @@ class TestFormulaFamilyIntegration:
         from brmspy.brms import bf, lf, set_nl
         from brmspy.brms import gaussian
         import arviz as az
+        from brmspy.helpers.arviz_compat import is_inference_data
 
         # Create synthetic data matching the brms docs example
         # Pattern: y ~ a * inv_logit(x * b) where a, b are functions of z
@@ -242,6 +246,7 @@ class TestFormulaFamilyIntegration:
         from brmspy.brms import bf, acformula
         from brmspy.brms import gaussian
         import arviz as az
+        from brmspy.helpers.arviz_compat import is_inference_data
 
         # Load epilepsy dataset (has time structure per patient)
         epilepsy = brms.get_brms_data("epilepsy")
@@ -290,6 +295,7 @@ class TestFormulaFamilyIntegration:
         from brmspy.brms import bf, set_mecor
         from brmspy.brms import gaussian
         import arviz as az
+        from brmspy.helpers.arviz_compat import is_inference_data
 
         # Create synthetic data with measurement error
         np.random.seed(42)
@@ -342,6 +348,7 @@ class TestFormulaFamilyIntegration:
         from brmspy.brms import bf, lf, set_rescor
         from brmspy.brms import poisson, gaussian
         import arviz as az
+        from brmspy.helpers.arviz_compat import is_inference_data
 
         # Load epilepsy dataset
         epilepsy = brms.get_brms_data("epilepsy")
@@ -402,6 +409,7 @@ class TestFormulaFamilyIntegration:
         from brmspy.brms import bf, lf
         from brmspy.brms import hurdle_gamma
         import arviz as az
+        from brmspy.helpers.arviz_compat import is_inference_data
 
         # Create synthetic hurdle data (zeros + positive continuous)
         np.random.seed(42)
@@ -459,6 +467,7 @@ class TestFormulaFamilyIntegration:
         from brmspy.brms import bf
         from brmspy.brms import cumulative
         import arviz as az
+        from brmspy.helpers.arviz_compat import is_inference_data
 
         # Create synthetic ordinal data
         np.random.seed(42)
@@ -511,6 +520,7 @@ class TestFormulaFamilyIntegration:
         from brmspy.brms import bf
         from brmspy.brms import poisson
         import arviz as az
+        from brmspy.helpers.arviz_compat import is_inference_data
 
         # Load epilepsy dataset
         epilepsy = brms.get_brms_data("epilepsy")

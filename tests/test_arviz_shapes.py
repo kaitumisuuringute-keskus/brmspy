@@ -15,6 +15,7 @@ If implementation drifts from the spec, these tests should fail.
 from __future__ import annotations
 
 import arviz as az
+from brmspy.helpers.arviz_compat import is_inference_data
 import numpy as np
 import pandas as pd
 import pytest

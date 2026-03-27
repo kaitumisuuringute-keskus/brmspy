@@ -33,6 +33,7 @@ class TestPredictionBehavior:
         """
         from brmspy import brms
         import arviz as az
+        from brmspy.helpers.arviz_compat import is_inference_data
 
         model = brms.fit(
             formula="y ~ x1",
@@ -46,7 +47,7 @@ class TestPredictionBehavior:
             refresh=0,
         )
 
-        assert isinstance(model.idata, az.InferenceData)
+        assert is_inference_data(model.idata)
 
         # Basic smoke calls (structure is asserted in the ArviZ shape suite)
         assert brms.posterior_epred(model, newdata=sample_dataframe).idata is not None
