@@ -111,14 +111,14 @@ Basic Bayesian regression with ArviZ diagnostics:
 
 ```python
 from brmspy import brms
-import arviz as az
+from arviz_stats import summary
 
 # Fit Poisson model with random effects
 epilepsy = brms.get_brms_data("epilepsy")
 model = brms.brm("count ~ zAge + (1|patient)", data=epilepsy, family="poisson")
 
 # Proper parameter names automatically!
-print(az.summary(model.idata))
+print(summary(model.idata))
 #                  mean     sd  hdi_3%  hdi_97%  ...  r_hat
 # b_Intercept     1.234  0.123   1.012    1.456  ...   1.00
 # b_zAge          0.567  0.089   0.398    0.732  ...   1.00
@@ -137,7 +137,8 @@ Model multiple responses simultaneously with seamless ArviZ integration:
 ```python
 from brmspy import brms
 from brmspy.brms import bf, set_rescor
-import arviz as az
+from arviz_stats import loo
+from arviz_plots import plot_ppc_dist
 
 # Fit multivariate model
 mv = brms.brm(
@@ -147,9 +148,9 @@ mv = brms.brm(
 )
 
 # ArviZ just works!
-az.loo(mv.idata, var_name="tarsus")
-az.loo(mv.idata, var_name="back")
-az.plot_ppc(mv.idata, var_names=["tarsus"])
+loo(mv.idata, var_names=["tarsus"])
+loo(mv.idata, var_names=["back"])
+plot_ppc_dist(mv.idata, var_names=["tarsus"])
 ```
 
 </td>
@@ -201,20 +202,21 @@ Full model checking in ~10 lines:
 
 ```python
 from brmspy import brms
-import arviz as az
+from arviz_stats import rhat, ess, compare
+from arviz_plots import plot_ppc_dist
 
 model = brms.brm("count ~ zAge * Trt + (1|patient)", data=epilepsy, family="poisson")
 
 # Check convergence
-assert az.rhat(model.idata).max() < 1.01, "Convergence issues!"
-assert az.ess(model.idata).min() > 400, "Low effective sample size!"
+assert rhat(model.idata).to_array().values.max() < 1.01, "Convergence issues!"
+assert ess(model.idata).to_array().values.min() > 400, "Low effective sample size!"
 
 # Posterior predictive check
-az.plot_ppc(model.idata, num_pp_samples=100)
+plot_ppc_dist(model.idata, num_samples=100)
 
 # Model comparison
 model2 = brms.brm("count ~ zAge + Trt + (1|patient)", data=epilepsy, family="poisson")
-comparison = az.compare({"interaction": model.idata, "additive": model2.idata})
+comparison = compare({"interaction": model.idata, "additive": model2.idata})
 print(comparison)
 #              rank  loo    p_loo  d_loo  weight
 # interaction     0 -456.2   12.3    0.0    0.89
@@ -265,6 +267,7 @@ model = brms.brm(
 **Predictions:**
 ```python
 import pandas as pd
+from arviz_plots import plot_dist
 
 new_data = pd.DataFrame({"zAge": [-1, 0, 1], "patient": [999, 999, 999]})
 
@@ -275,7 +278,7 @@ epred = brms.posterior_epred(model, newdata=new_data)
 ypred = brms.posterior_predict(model, newdata=new_data)
 
 # Access as InferenceData for ArviZ
-az.plot_violin(epred.idata)
+plot_dist(epred.idata)
 ```
 
 ### 6. Maximalist Example: Kitchen Sink
