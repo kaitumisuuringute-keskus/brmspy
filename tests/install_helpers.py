@@ -19,8 +19,9 @@ def _fit_minimal_model(brms):
 
     # Check it worked - now returns arviz InferenceData by default
     import arviz as az
+    from brmspy.helpers.arviz_compat import is_inference_data
 
-    assert isinstance(model.idata, az.InferenceData)
+    assert is_inference_data(model.idata)
 
     # Check key parameters exist
     param_names = list(cast(Any, model.idata).posterior.data_vars)

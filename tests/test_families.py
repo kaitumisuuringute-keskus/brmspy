@@ -153,6 +153,7 @@ class TestFamilyIntegration:
         from brmspy import brms
         from brmspy.brms import gaussian
         import arviz as az
+        from brmspy.helpers.arviz_compat import is_inference_data
 
         # Create family object
         family_obj = gaussian()
@@ -170,13 +171,14 @@ class TestFamilyIntegration:
             refresh=0,
         )
 
-        assert isinstance(model.idata, az.InferenceData)
+        assert is_inference_data(model.idata)
 
     def test_poisson_family_with_fit(self, poisson_data):
         """Test using poisson() family with fit()"""
         from brmspy import brms
         from brmspy.brms import poisson
         import arviz as az
+        from brmspy.helpers.arviz_compat import is_inference_data
 
         # Create family object
         family_obj = poisson()
@@ -193,7 +195,7 @@ class TestFamilyIntegration:
             refresh=0,
         )
 
-        assert isinstance(model.idata, az.InferenceData)
+        assert is_inference_data(model.idata)
 
         # Verify it's a count model
         param_names = list(model.idata.posterior.data_vars)
@@ -204,6 +206,7 @@ class TestFamilyIntegration:
         from brmspy import brms
         from brmspy.brms import student
         import arviz as az
+        from brmspy.helpers.arviz_compat import is_inference_data
         from brmspy.types.session import SexpWrapper
 
         # Create student family object
@@ -222,7 +225,7 @@ class TestFamilyIntegration:
             refresh=0,
         )
 
-        assert isinstance(model.idata, az.InferenceData)
+        assert is_inference_data(model.idata)
 
         # Student-t should have nu (degrees of freedom) parameter
         param_names = list(model.idata.posterior.data_vars)

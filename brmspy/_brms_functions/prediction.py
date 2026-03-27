@@ -10,7 +10,7 @@ Executed inside the worker process that hosts the embedded R session.
 """
 
 from collections.abc import Callable
-import arviz as az
+from brmspy.helpers.arviz_compat import from_dict as az_from_dict
 import typing
 from typing import Any, Literal, cast, overload
 
@@ -80,7 +80,7 @@ def posterior(
     dims, coords = _brmsfit_get_dims_and_coords(model_r, resp_names=resp_names)
 
     result, r = _brmsfit_get_posterior(model_r, **kwargs)
-    idata = az.from_dict(posterior=result, dims=dims, coords=coords)
+    idata = az_from_dict(posterior=result, dims=dims, coords=coords)
 
     # Add constant data
     constant_data_dict = _brmsfit_get_constant_data(
@@ -104,7 +104,7 @@ def observed_data(model: FitResult | ProxyListSexpVector) -> IDResult[IDObserved
     result = _brmsfit_get_observed_data(model_r, resp_names=resp_names)
     r = cast(Any, ro.NULL)
 
-    idata = az.from_dict(observed_data=result, coords=coords, dims=dims)
+    idata = az_from_dict(observed_data=result, coords=coords, dims=dims)
     idata = cast(IDObservedData, idata)
 
     # Add constant data
@@ -186,10 +186,10 @@ def posterior_epred(
     )
 
     if newdata is None:
-        idata = az.from_dict(posterior=result, coords=coords, dims=dims)
+        idata = az_from_dict(posterior=result, coords=coords, dims=dims)
         idata = cast(IDPosterior, idata)
     else:
-        idata = az.from_dict(predictions=result, coords=coords, dims=dims)
+        idata = az_from_dict(predictions=result, coords=coords, dims=dims)
         idata = cast(IDPredictions, idata)
 
     _idata_add_resp_names_suffix(idata, "_mean", resp_names)
@@ -199,7 +199,9 @@ def posterior_epred(
         model_r, newdata=newdata, resp_names=resp_names
     )
     group_name = "constant_data" if newdata is None else "predictions_constant_data"
-    _arviz_add_constant_data(idata, constant_data_dict, group_name)
+    _arviz_add_constant_data(
+        idata, constant_data_dict, group_name, obs_id=coords.get("obs_id")
+    )
 
     return IDResult(r=cast(ProxyListSexpVector, r), idata=idata)
 
@@ -273,14 +275,14 @@ def posterior_predict(
     )
 
     if newdata is None:
-        idata = az.from_dict(
+        idata = az_from_dict(
             posterior_predictive=result,
             dims=dims,
             coords=coords,
         )
         idata = cast(IDPosteriorPredictive, idata)
     else:
-        idata = az.from_dict(
+        idata = az_from_dict(
             predictions=result,
             dims=dims,
             coords=coords,
@@ -292,7 +294,9 @@ def posterior_predict(
         model_r, newdata=newdata, resp_names=resp_names
     )
     group_name = "constant_data" if newdata is None else "predictions_constant_data"
-    _arviz_add_constant_data(idata, constant_data_dict, group_name)
+    _arviz_add_constant_data(
+        idata, constant_data_dict, group_name, obs_id=coords.get("obs_id")
+    )
 
     return IDResult(r=cast(ProxyListSexpVector, r), idata=idata)
 
@@ -370,14 +374,14 @@ def posterior_linpred(
     )
 
     if newdata is None:
-        idata = az.from_dict(
+        idata = az_from_dict(
             posterior=result,
             dims=dims,
             coords=coords,
         )
         idata = cast(IDPosterior, idata)
     else:
-        idata = az.from_dict(
+        idata = az_from_dict(
             predictions=result,
             dims=dims,
             coords=coords,
@@ -391,7 +395,9 @@ def posterior_linpred(
         model_r, newdata=newdata, resp_names=resp_names
     )
     group_name = "constant_data" if newdata is None else "predictions_constant_data"
-    _arviz_add_constant_data(idata, constant_data_dict, group_name)
+    _arviz_add_constant_data(
+        idata, constant_data_dict, group_name, obs_id=coords.get("obs_id")
+    )
 
     return IDResult(r=cast(ProxyListSexpVector, r), idata=idata)
 
@@ -440,12 +446,12 @@ def log_lik(
     --------
     ```python
     from brmspy import brms
-    import arviz as az
+    from arviz_stats import loo
 
     fit = brms.brm("y ~ x", data=df, chains=4)
     ll = brms.log_lik(fit)
 
-    az.loo(ll.idata)
+    loo(ll.idata)
     ```
     """
     import rpy2.robjects as ro
@@ -466,11 +472,16 @@ def log_lik(
         resp_names=resp_names,
         **kwargs,
     )
+
+    if not result:
+        from brmspy.types.errors import RSessionError
+        raise RSessionError("brms::log_lik failed. Ensure newdata contains the response column(s).")
+
     if newdata is None:
-        idata = az.from_dict(log_likelihood=result, dims=dims, coords=coords)
+        idata = az_from_dict(log_likelihood=result, dims=dims, coords=coords)
         idata = cast(IDLogLikelihoodInsample, idata)
     else:
-        idata = az.from_dict(log_likelihood=result, dims=dims, coords=coords)
+        idata = az_from_dict(log_likelihood=result, dims=dims, coords=coords)
         idata = cast(IDLogLikelihoodOutsample, idata)
 
     # Add constant data
@@ -478,6 +489,8 @@ def log_lik(
         model_r, newdata=newdata, resp_names=resp_names
     )
     group_name = "constant_data" if newdata is None else "predictions_constant_data"
-    _arviz_add_constant_data(idata, constant_data_dict, group_name)
+    _arviz_add_constant_data(
+        idata, constant_data_dict, group_name, obs_id=coords.get("obs_id")
+    )
 
     return IDResult(r=cast(ProxyListSexpVector, r), idata=idata)

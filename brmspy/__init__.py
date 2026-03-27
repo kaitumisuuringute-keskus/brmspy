@@ -44,7 +44,8 @@ Basic Bayesian regression workflow:
 
 ```python
     from brmspy import brms
-    import arviz as az
+    from arviz_stats import summary
+    from arviz_plots import plot_trace
 
     # Load example data
     epilepsy = brms.get_brms_data("epilepsy")
@@ -59,8 +60,8 @@ Basic Bayesian regression workflow:
     )
 
     # Analyze results with ArviZ
-    az.summary(model.idata)
-    az.plot_trace(model.idata)
+    summary(model.idata)
+    plot_trace(model.idata)
 ```
 
 Using custom priors:
@@ -83,8 +84,9 @@ Making predictions:
 
 ```
 # Posterior predictive (with observation noise)
+from arviz_plots import plot_ppc_dist
 preds = brms.posterior_predict(model, newdata=new_data)
-az.plot_ppc(preds.idata)
+plot_ppc_dist(preds.idata)
 
 # Expected values (without noise)
 epred = brms.posterior_epred(model, newdata=new_data)
@@ -97,16 +99,18 @@ Model comparison and diagnostics:
 
 ```python
 # Model comparison with LOO-CV
-import arviz as az
-loo = az.loo(model.idata)
-print(loo)
+from arviz_stats import loo, rhat, ess
+from arviz_plots import plot_ppc_dist
+
+loo_res = loo(model.idata)
+print(loo_res)
 
 # Convergence diagnostics
-az.rhat(model.idata)
-az.ess(model.idata)
+rhat(model.idata)
+ess(model.idata)
 
 # Posterior predictive checks
-az.plot_ppc(model.idata)
+plot_ppc_dist(model.idata)
 ```
 
 See Also
@@ -134,7 +138,8 @@ Complete workflow with model diagnostics:
 
 ```python
     from brmspy import brms, prior
-    import arviz as az
+    from arviz_stats import summary, rhat
+    from arviz_plots import plot_trace, plot_dist
     import pandas as pd
 
     # Load data
@@ -159,12 +164,12 @@ Complete workflow with model diagnostics:
     )
 
     # Check convergence
-    print(az.summary(model.idata, var_names=["b"]))
-    assert all(az.rhat(model.idata) < 1.01)
+    print(summary(model.idata, var_names=["b"]))
+    assert all(rhat(model.idata).to_array().values < 1.01)
 
     # Visualize results
-    az.plot_trace(model.idata, var_names=["b", "sd"])
-    az.plot_posterior(model.idata, var_names=["b"])
+    plot_trace(model.idata, var_names=["b", "sd"])
+    plot_dist(model.idata, var_names=["b"])
 
     # Make predictions
     new_patients = pd.DataFrame({
@@ -178,7 +183,7 @@ Complete workflow with model diagnostics:
 ```
 """
 
-__version__ = "0.3.2"
+__version__ = "0.4.0"
 __author__ = "Remi Sebastian Kits, Adam Haber"
 __license__ = "Apache-2.0"
 

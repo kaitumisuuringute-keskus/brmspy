@@ -5,7 +5,7 @@ These tests check end-to-end functionality:
 - brms installation
 - Data loading from brms
 - Model fitting with simple examples
-- CmdStanPy integration
+- CmdStanR integration
 
 Mark with: @pytest.mark.requires_brms
 These will be automatically skipped if brms is not installed.
@@ -93,8 +93,10 @@ class TestSimpleModelFitting:
 
         # Check return type - now returns arviz InferenceData by default
         import arviz as az
+        from brmspy.helpers.arviz_compat import get_group_dataset
+        from brmspy.helpers.arviz_compat import is_inference_data
 
-        assert isinstance(model.idata, az.InferenceData)
+        assert is_inference_data(model.idata)
 
         # Check we can get parameter names
         param_names = list(model.idata.posterior.data_vars)
@@ -120,8 +122,10 @@ class TestSimpleModelFitting:
 
         # Check return type - now returns arviz InferenceData by default
         import arviz as az
+        from brmspy.helpers.arviz_compat import get_group_dataset
+        from brmspy.helpers.arviz_compat import is_inference_data
 
-        assert isinstance(model.idata, az.InferenceData)
+        assert is_inference_data(model.idata)
 
         # Check we can get summary
         summary = az.summary(model.idata)
@@ -146,8 +150,10 @@ class TestSimpleModelFitting:
 
         # Check return type - now returns arviz InferenceData by default
         import arviz as az
+        from brmspy.helpers.arviz_compat import get_group_dataset
+        from brmspy.helpers.arviz_compat import is_inference_data
 
-        assert isinstance(model.idata, az.InferenceData)
+        assert is_inference_data(model.idata)
 
         # Check we can get summary
         summary = az.summary(model.idata)
@@ -181,8 +187,10 @@ class TestModelWithRandomEffects:
 
         # Check return type - now returns arviz InferenceData by default
         import arviz as az
+        from brmspy.helpers.arviz_compat import get_group_dataset
+        from brmspy.helpers.arviz_compat import is_inference_data
 
-        assert isinstance(model.idata, az.InferenceData)
+        assert is_inference_data(model.idata)
 
         # Check that random effects parameters exist
         param_names = list(model.idata.posterior.data_vars)
@@ -211,11 +219,13 @@ class TestArVizIntegration:
 
         try:
             import arviz as az
+            from brmspy.helpers.arviz_compat import get_group_dataset
+            from brmspy.helpers.arviz_compat import is_inference_data
         except ImportError:
             pytest.skip("arviz not installed")
 
         # Model is already InferenceData, no conversion needed
-        assert isinstance(model.idata, az.InferenceData)
+        assert is_inference_data(model.idata)
 
         # Check it has posterior
         assert hasattr(model.idata, "posterior")
@@ -279,8 +289,10 @@ class TestRealWorldExample:
 
         # Check it worked - now returns arviz InferenceData by default
         import arviz as az
+        from brmspy.helpers.arviz_compat import get_group_dataset
+        from brmspy.helpers.arviz_compat import is_inference_data
 
-        assert isinstance(model.idata, az.InferenceData)
+        assert is_inference_data(model.idata)
 
         # Check key parameters exist
         param_names = list(model.idata.posterior.data_vars)
@@ -288,7 +300,8 @@ class TestRealWorldExample:
         assert any("b_zBase" in p for p in param_names)
 
         # Check some basic convergence (Rhat close to 1)
-        summary = az.summary(model.idata)
+        # We pass round_to="none" because ArviZ 1.0.0 otherwise formats summaries as strings for display.
+        summary = az.summary(model.idata, round_to="none")
         if "r_hat" in summary.columns:
             max_rhat = summary["r_hat"].max()
             # Warn if convergence is poor, but don't fail
@@ -317,6 +330,7 @@ class TestNaNRegression:
         Fix: Renumber draws within each chain before pivoting
         """
         from brmspy import brms
+        from brmspy.helpers.arviz_compat import get_group_dataset
 
         # Create simple test data
         np.random.seed(42)
@@ -335,7 +349,7 @@ class TestNaNRegression:
 
         # Check that r has no NaNs (via posterior package)
 
-        df = result.idata.posterior.to_dataframe()
+        df = get_group_dataset(result.idata, "posterior").to_dataframe()
         print(df.head().to_string())
 
         # Verify no NaNs in original draws from R
@@ -429,6 +443,8 @@ class TestFormulaFunction:
         from brmspy import brms
         from brmspy.types.formula_dsl import FormulaConstruct
         import arviz as az
+        from brmspy.helpers.arviz_compat import get_group_dataset
+        from brmspy.helpers.arviz_compat import is_inference_data
 
         # Load epilepsy dataset
         epilepsy = brms.get_brms_data("epilepsy")
@@ -454,8 +470,8 @@ class TestFormulaFunction:
         )
 
         # Verify model fitted successfully
-        assert isinstance(
-            model.idata, az.InferenceData
+        assert is_inference_data(
+            model.idata
         ), "fit() with FormulaResult should return InferenceData"
 
         # Check parameters exist
@@ -508,6 +524,8 @@ class TestPriorFunction:
         from brmspy.brms import prior
         from brmspy.types.brms_results import PriorSpec
         import arviz as az
+        from brmspy.helpers.arviz_compat import get_group_dataset
+        from brmspy.helpers.arviz_compat import is_inference_data
 
         # Create prior specifications using prior() function
         prior_intercept = prior("student_t(3, 0, 2.5)", class_="Intercept")
@@ -547,8 +565,8 @@ class TestPriorFunction:
         )
 
         # Verify model fitted successfully with custom priors
-        assert isinstance(
-            model.idata, az.InferenceData
+        assert is_inference_data(
+            model.idata
         ), "fit() with prior() specifications should return InferenceData"
 
         # Check parameters exist
@@ -576,6 +594,8 @@ class TestPriorFunction:
         from brmspy.brms import prior
         from brmspy.types.brms_results import PriorSpec
         import arviz as az
+        from brmspy.helpers.arviz_compat import get_group_dataset
+        from brmspy.helpers.arviz_compat import is_inference_data
 
         # Load epilepsy dataset (has patient grouping variable)
         epilepsy = brms.get_brms_data("epilepsy")
@@ -615,8 +635,8 @@ class TestPriorFunction:
         )
 
         # Verify model fitted successfully
-        assert isinstance(
-            model.idata, az.InferenceData
+        assert is_inference_data(
+            model.idata
         ), "fit() with group priors should return InferenceData"
 
         # Check that both fixed and random effects parameters exist
@@ -755,6 +775,8 @@ class TestAdditionalFunctions:
         """
         from brmspy import brms
         import arviz as az
+        from brmspy.helpers.arviz_compat import get_group_dataset
+        from brmspy.helpers.arviz_compat import is_inference_data
 
         # Fit a simple model
         model = brms.fit(
@@ -777,8 +799,8 @@ class TestAdditionalFunctions:
         ), "posterior_linpred() should return IDResult"
 
         # Verify idata exists
-        assert isinstance(
-            linpred.idata, az.InferenceData
+        assert is_inference_data(
+            linpred.idata
         ), "posterior_linpred() should return InferenceData"
 
         # Verify R object exists
@@ -796,6 +818,8 @@ class TestAdditionalFunctions:
         """
         from brmspy import brms
         import arviz as az
+        from brmspy.helpers.arviz_compat import get_group_dataset
+        from brmspy.helpers.arviz_compat import is_inference_data
 
         # Fit a simple model
         model = brms.fit(
@@ -816,8 +840,8 @@ class TestAdditionalFunctions:
         assert isinstance(loglik, brms.IDResult), "log_lik() should return LogLikResult"
 
         # Verify idata exists
-        assert isinstance(
-            loglik.idata, az.InferenceData
+        assert is_inference_data(
+            loglik.idata
         ), "log_lik() should return InferenceData"
 
         # Verify R object exists

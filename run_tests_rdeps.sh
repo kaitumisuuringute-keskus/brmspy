@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# run_main_tests.sh
+# Disable uv syncing so we can test against whatever is currently installed in the venv
+export UV_NO_SYNC=1
+
 # Run pytest with coverage collection only, then combine and report.
 
 # Decide runner: uv if available, else python -m

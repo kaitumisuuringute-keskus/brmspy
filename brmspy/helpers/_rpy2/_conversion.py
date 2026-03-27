@@ -2,13 +2,19 @@ import re
 from collections.abc import Callable
 from typing import Literal, cast
 
-import arviz as az
 import numpy as np
 import pandas as pd
 
 from brmspy.helpers._rpy2._converters import (
     py_to_r,
     r_to_py,
+)
+from brmspy.helpers.arviz_compat import (
+    from_dict as az_from_dict,
+    get_groups as az_get_groups,
+    get_group_dataset as az_get_group_dataset,
+    set_group_dataset as az_set_group_dataset,
+    extend as az_extend,
 )
 from brmspy.helpers.log import log_warning
 from brmspy.types.brms_results import IDBrm
@@ -615,11 +621,11 @@ def _brmsfit_get_constant_data(
 
 
 def _arviz_add_constant_data(
-    idata: az.InferenceData,
+    idata,
     constant_data_dict: dict[str, np.ndarray],
     group_name: Literal["constant_data", "predictions_constant_data"] = "constant_data",
     obs_id: None | list[str] | np.ndarray = None,
-) -> az.InferenceData:
+):
     """
     Add a non-draw group (constant_data or predictions_constant_data) to an idata.
 
@@ -631,8 +637,8 @@ def _arviz_add_constant_data(
 
     # ---- 1) Extract obs_id coords from any existing group ----
     if obs_id is None:
-        for group in idata.groups():
-            ds = idata[group]
+        for group in az_get_groups(idata):
+            ds = az_get_group_dataset(idata, group)
             if ds is not None and "obs_id" in ds.coords:
                 obs_id = ds.coords["obs_id"].values
                 break
@@ -649,22 +655,22 @@ def _arviz_add_constant_data(
 
     # ---- 3) Build a small InferenceData and extend ----
     if group_name == "constant_data":
-        const_idata = az.from_dict(
+        const_idata = az_from_dict(
             constant_data=constant_data_dict, coords=const_coords, dims=const_dims
         )
     else:
-        const_idata = az.from_dict(
+        const_idata = az_from_dict(
             predictions_constant_data=constant_data_dict,
             coords=const_coords,
             dims=const_dims,
         )
 
-    idata.extend(const_idata)
+    az_extend(idata, const_idata)
     return idata
 
 
 def _idata_add_resp_names_suffix(
-    idata: az.InferenceData,
+    idata,
     suffix: str,
     resp_names: list[str],
 ) -> None:
@@ -677,8 +683,8 @@ def _idata_add_resp_names_suffix(
     if not suffix or not resp_names:
         return
 
-    for group in idata.groups():
-        ds = getattr(idata, group, None)
+    for group in az_get_groups(idata):
+        ds = az_get_group_dataset(idata, group)
         if ds is None:
             continue
 
@@ -688,7 +694,7 @@ def _idata_add_resp_names_suffix(
 
         if rename_map:
             ds = ds.rename(rename_map)
-            setattr(idata, group, ds)
+            az_set_group_dataset(idata, group, ds)
 
 
 def brmsfit_to_idata(brmsfit_obj, model_data=None) -> IDBrm:
@@ -709,7 +715,7 @@ def brmsfit_to_idata(brmsfit_obj, model_data=None) -> IDBrm:
         if name not in dims:
             dims[name] = ["obs_id"]
 
-    idata = az.from_dict(
+    idata = az_from_dict(
         posterior=posterior_dict,
         posterior_predictive=post_pred_dict or None,
         log_likelihood=log_lik_dict or None,

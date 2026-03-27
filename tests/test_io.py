@@ -186,6 +186,7 @@ class TestReadRDSFit:
         from brmspy import brms
         from brmspy.types.brms_results import FitResult
         import arviz as az
+        from brmspy.helpers.arviz_compat import is_inference_data
 
         # Fit and save a model
         model = brms.fit(
@@ -215,7 +216,7 @@ class TestReadRDSFit:
             assert hasattr(loaded_model, "r")
 
             # Verify idata is InferenceData
-            assert isinstance(loaded_model.idata, az.InferenceData)
+            assert is_inference_data(loaded_model.idata)
 
             # Verify idata has expected groups
             assert hasattr(loaded_model.idata, "posterior")
@@ -227,6 +228,7 @@ class TestReadRDSFit:
         """Test that read_rds_fit() preserves model data correctly"""
         from brmspy import brms
         import arviz as az
+        from brmspy.helpers.arviz_compat import is_inference_data
 
         # Fit model
         original_model = brms.fit(
@@ -298,6 +300,7 @@ class TestRoundTrip:
         """Test complete save and load cycle with simple model"""
         from brmspy import brms
         import arviz as az
+        from brmspy.helpers.arviz_compat import is_inference_data
 
         # Fit original model
         original_model = brms.fit(

@@ -1,5 +1,27 @@
+## 0.4.0 - ArviZ 1.0 support, Prediction functions fixes
+*26.03.27*
+
+> **CRITICAL UPDATE: It is strongly recommended to upgrade to `0.4.0`.** The previous version (`<0.4.0`) contained a data-flattening formatting bug in all prediction functions (`posterior_predict`, `posterior_epred`, etc.) that corrupted the grouped output. These functions are now successfully fixed and protected by new data-validity tests to guarantee such data transpositions will not happen in the future.
+
+### ArviZ 1.0 Compatibility
+
+ArviZ 1.0 replaces `arviz.InferenceData` with `xarray.DataTree`. brmspy now supports both ArviZ < 1.0 and >= 1.0 seamlessly: (Issue #56)
+
+*   **Version-aware compat layer** (`brmspy.helpers.arviz_compat`): Centralises all ArviZ version-dependent behaviour. The rest of the codebase never imports `arviz` directly — making future removal of < 1.0 support a single-file change.
+*   **Dynamic type hierarchy**: `IDBrm`, `IDPosterior`, and other typed result classes automatically subclass `InferenceData` on ArviZ < 1.0 and `DataTree` on >= 1.0. IDE autocomplete and `isinstance()` checks work correctly for whichever version is installed.
+*   **Native return types**: `model.idata` returns the type that ArviZ expects — `InferenceData` on < 1.0, `DataTree` on >= 1.0 — so `arviz_stats.summary(model.idata)` works out of the box in both versions.
+*   **CI matrix**: Added ArviZ version matrix testing (`0.23.4` and `1.0.0`) to the full `build-test` integration suite on Ubuntu Python 3.12, ensuring end-to-end functionality across versions.
+*   **Documentation Refactor**: All tutorial notebooks, module docstrings, and API guides have been updated to demonstrate the decoupled ArviZ 1.0 architecture (using `arviz_stats` and `arviz_plots`).
+
+### Prediction function fixes
+
+*   **Fixed prediction data corruption** (Issue #58): All prediction wrappers (`posterior_epred`, `posterior_predict`, `posterior_linpred`, `log_lik`) returned nearly constant predictions that averaged out all group differentiation. Root cause: `ShmArray.from_block()` defaulted to Fortran memory order (`order='F'`) while `to_shm()` always serialized as C-order (`tobytes(order='C')`). The mismatch caused 3D `(chain, draw, obs)` arrays to be reconstructed with transposed data, mixing draws from different observations. One-line fix in `shm_extensions.py`.
+*   **Added prediction data-validity tests**: New `test_prediction_values.py` with 8 tests that verify prediction functions return meaningfully differentiated predictions across groups, catching data transposition/flattening bugs. Uses a simple `y ~ group` model with group means 100 apart.
+
+
+
 ## 0.3.2 - SHM slab allocator for wide-data workloads
-*25.02.17*
+*26.02.17*
 
 When encoding objects with many sub-arrays — such as an `InferenceData` from a large MaxDiff model or a DataFrame with hundreds of columns — the codec layer allocated a **separate SharedMemory block for every array**. Each block consumes one POSIX file descriptor, and real-world workloads (500+ columns, repeated fit/predict cycles) quickly exhausted the macOS default limit of fds, crashing with `OSError: [Errno 24] Too many open files`. (Issue #57)
 

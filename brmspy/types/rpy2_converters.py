@@ -18,12 +18,12 @@ Notes
 from collections.abc import Callable
 from typing import Any, Union
 
-import arviz as az
 import numpy as np
 import pandas as pd
 import xarray as xr
 from rpy2.rinterface_lib.sexp import Sexp
 
+from brmspy.types.arviz_types import InferenceDataLike
 from brmspy.types.shm import ShmPool
 
 __all__ = ["PyObject", "R2pyConverter", "Py2rConverter"]
@@ -41,10 +41,11 @@ PyObject = Union[
     pd.DataFrame,
     pd.Series,
     np.ndarray,
-    az.InferenceData,
+    InferenceDataLike,
     xr.DataArray,
     xr.Dataset,
 ]
+
 """
 Union of common Python-side objects produced by R→Python conversion.
 

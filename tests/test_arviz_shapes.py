@@ -20,6 +20,8 @@ import pandas as pd
 import pytest
 import xarray as xr
 
+from brmspy.helpers.arviz_compat import InferenceDataLike, get_groups
+
 from brmspy.types.brms_results import (
     FitResult,
     IDBrm,
@@ -51,14 +53,14 @@ M = 25
 # -------------------------
 
 
-def _groups(idata: az.InferenceData) -> set[str]:
-    return set(idata.groups())
+def _groups(idata: InferenceDataLike) -> set[str]:
+    return set(get_groups(idata))
 
 
-def _assert_groups_exact(idata: az.InferenceData, expected: set[str]) -> None:
+def _assert_groups_exact(idata: InferenceDataLike, expected: set[str]) -> None:
     assert (
         _groups(idata) == expected
-    ), f"groups={idata.groups()!r}, expected={sorted(expected)!r}"
+    ), f"groups={get_groups(idata)!r}, expected={sorted(expected)!r}"
 
 
 def _assert_da_dims_and_shape(

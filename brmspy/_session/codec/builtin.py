@@ -21,10 +21,16 @@ from dataclasses import dataclass, fields as dc_fields
 from dataclasses import is_dataclass
 from typing import Any, Literal, TypedDict
 
-import arviz as az
 import numpy as np
 import pandas as pd
 import xarray as xr
+
+from brmspy.helpers.arviz_compat import (
+    is_inference_data,
+    get_groups as az_get_groups,
+    get_group_dataset as az_get_group_dataset,
+    construct_from_datasets,
+)
 
 from brmspy.helpers.log import log_warning
 from brmspy._session.codec.base import CodecRegistry
@@ -242,20 +248,20 @@ class PickleCodec(Encoder):
 
 
 class InferenceDataCodec(Encoder):
-    """Encode arviz.InferenceData by pushing its underlying arrays into shm."""
+    """Encode ArviZ inference data by pushing its underlying arrays into shm."""
 
     def can_encode(self, obj: Any) -> bool:
-        return isinstance(obj, az.InferenceData)
+        return is_inference_data(obj)
 
-    def encode(self, obj: az.InferenceData, shm_pool: Any) -> EncodeResult:
+    def encode(self, obj: Any, shm_pool: Any) -> EncodeResult:
         buffers: list[ShmRef] = []
         groups_meta: dict[str, Any] = {}
         total_bytes = 0
 
         # -- Pass 1: estimate total SHM bytes needed -----------------------
         estimated = 0
-        for group_name in obj.groups():
-            ds: xr.Dataset = getattr(obj, group_name)
+        for group_name in az_get_groups(obj):
+            ds: xr.Dataset = az_get_group_dataset(obj, group_name)
             for coord in ds.coords.values():
                 values = np.asarray(coord.values)
                 if values.dtype.kind in "iufb":
@@ -269,8 +275,8 @@ class InferenceDataCodec(Encoder):
 
         try:
             # Walk each group: posterior, posterior_predictive, etc.
-            for group_name in obj.groups():
-                ds: xr.Dataset = getattr(obj, group_name)
+            for group_name in az_get_groups(obj):
+                ds: xr.Dataset = az_get_group_dataset(obj, group_name)
                 g_meta: dict[str, Any] = {
                     "data_vars": {},
                     "coords": {},
@@ -388,8 +394,8 @@ class InferenceDataCodec(Encoder):
             )
             groups[group_name] = ds
 
-        # Construct InferenceData from datasets
-        idata = az.InferenceData(**groups, warn_on_custom_groups=False)
+        # Construct from datasets using compat layer
+        idata = construct_from_datasets(groups)
         return idata
 
 
