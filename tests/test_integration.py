@@ -5,7 +5,7 @@ These tests check end-to-end functionality:
 - brms installation
 - Data loading from brms
 - Model fitting with simple examples
-- CmdStanPy integration
+- CmdStanR integration
 
 Mark with: @pytest.mark.requires_brms
 These will be automatically skipped if brms is not installed.
@@ -329,6 +329,7 @@ class TestNaNRegression:
         Fix: Renumber draws within each chain before pivoting
         """
         from brmspy import brms
+        from brmspy.helpers.arviz_compat import get_group_dataset
 
         # Create simple test data
         np.random.seed(42)
@@ -347,7 +348,7 @@ class TestNaNRegression:
 
         # Check that r has no NaNs (via posterior package)
 
-        df = result.get_group_dataset(idata, "posterior").to_dataframe()
+        df = get_group_dataset(result.idata, "posterior").to_dataframe()
         print(df.head().to_string())
 
         # Verify no NaNs in original draws from R
