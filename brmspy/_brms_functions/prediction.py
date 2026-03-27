@@ -472,6 +472,11 @@ def log_lik(
         resp_names=resp_names,
         **kwargs,
     )
+
+    if not result:
+        from brmspy.types.errors import RSessionError
+        raise RSessionError("brms::log_lik failed. Ensure newdata contains the response column(s).")
+
     if newdata is None:
         idata = az_from_dict(log_likelihood=result, dims=dims, coords=coords)
         idata = cast(IDLogLikelihoodInsample, idata)
