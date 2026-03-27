@@ -189,7 +189,8 @@ def posterior_epred(
         idata = az_from_dict(posterior=result, coords=coords, dims=dims)
         idata = cast(IDPosterior, idata)
     else:
-        idata = az_from_dict(predictions=result, coords=coords, dims=dims)
+        pred_dims = {k: ["chain", "draw"] + v for k, v in dims.items()}
+        idata = az_from_dict(predictions=result, coords=coords, dims=pred_dims)
         idata = cast(IDPredictions, idata)
 
     _idata_add_resp_names_suffix(idata, "_mean", resp_names)
@@ -199,7 +200,9 @@ def posterior_epred(
         model_r, newdata=newdata, resp_names=resp_names
     )
     group_name = "constant_data" if newdata is None else "predictions_constant_data"
-    _arviz_add_constant_data(idata, constant_data_dict, group_name)
+    _arviz_add_constant_data(
+        idata, constant_data_dict, group_name, obs_id=coords.get("obs_id")
+    )
 
     return IDResult(r=cast(ProxyListSexpVector, r), idata=idata)
 
@@ -280,9 +283,10 @@ def posterior_predict(
         )
         idata = cast(IDPosteriorPredictive, idata)
     else:
+        pred_dims = {k: ["chain", "draw"] + v for k, v in dims.items()}
         idata = az_from_dict(
             predictions=result,
-            dims=dims,
+            dims=pred_dims,
             coords=coords,
         )
         idata = cast(IDPredictions, idata)
@@ -292,7 +296,9 @@ def posterior_predict(
         model_r, newdata=newdata, resp_names=resp_names
     )
     group_name = "constant_data" if newdata is None else "predictions_constant_data"
-    _arviz_add_constant_data(idata, constant_data_dict, group_name)
+    _arviz_add_constant_data(
+        idata, constant_data_dict, group_name, obs_id=coords.get("obs_id")
+    )
 
     return IDResult(r=cast(ProxyListSexpVector, r), idata=idata)
 
@@ -377,9 +383,10 @@ def posterior_linpred(
         )
         idata = cast(IDPosterior, idata)
     else:
+        pred_dims = {k: ["chain", "draw"] + v for k, v in dims.items()}
         idata = az_from_dict(
             predictions=result,
-            dims=dims,
+            dims=pred_dims,
             coords=coords,
         )
         idata = cast(IDPredictions, idata)
@@ -391,7 +398,9 @@ def posterior_linpred(
         model_r, newdata=newdata, resp_names=resp_names
     )
     group_name = "constant_data" if newdata is None else "predictions_constant_data"
-    _arviz_add_constant_data(idata, constant_data_dict, group_name)
+    _arviz_add_constant_data(
+        idata, constant_data_dict, group_name, obs_id=coords.get("obs_id")
+    )
 
     return IDResult(r=cast(ProxyListSexpVector, r), idata=idata)
 
@@ -478,6 +487,8 @@ def log_lik(
         model_r, newdata=newdata, resp_names=resp_names
     )
     group_name = "constant_data" if newdata is None else "predictions_constant_data"
-    _arviz_add_constant_data(idata, constant_data_dict, group_name)
+    _arviz_add_constant_data(
+        idata, constant_data_dict, group_name, obs_id=coords.get("obs_id")
+    )
 
     return IDResult(r=cast(ProxyListSexpVector, r), idata=idata)
