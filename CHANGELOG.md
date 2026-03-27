@@ -7,7 +7,7 @@ ArviZ 1.0 replaces `arviz.InferenceData` with `xarray.DataTree`. brmspy now supp
 *   **Version-aware compat layer** (`brmspy.helpers.arviz_compat`): Centralises all ArviZ version-dependent behaviour. The rest of the codebase never imports `arviz` directly — making future removal of < 1.0 support a single-file change.
 *   **Dynamic type hierarchy**: `IDBrm`, `IDPosterior`, and other typed result classes automatically subclass `InferenceData` on ArviZ < 1.0 and `DataTree` on >= 1.0. IDE autocomplete and `isinstance()` checks work correctly for whichever version is installed.
 *   **Native return types**: `model.idata` returns the type that ArviZ expects — `InferenceData` on < 1.0, `DataTree` on >= 1.0 — so `az.summary(model.idata)` works out of the box in both versions.
-*   **CI matrix**: Added ArviZ version matrix testing (`0.22.0` and `1.0.0`) to the full `build-test` integration suite on Ubuntu Python 3.12, ensuring end-to-end functionality across versions.
+*   **CI matrix**: Added ArviZ version matrix testing (`0.23.4` and `1.0.0`) to the full `build-test` integration suite on Ubuntu Python 3.12, ensuring end-to-end functionality across versions.
 
 ### Prediction function fixes
 
