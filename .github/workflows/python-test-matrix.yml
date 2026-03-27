@@ -152,13 +152,12 @@ jobs:
           # extra OSes, but only with 3.12
           - os: "macos-latest"
             python-version: "3.12"
+            arviz-version: "1.0.0"
           - os: "windows-latest"
             python-version: "3.12"
+            arviz-version: "1.0.0"
           # ArviZ version compat — full integration on ubuntu/3.12
           - os: "ubuntu-latest"
-            python-version: "3.12"
-            arviz-version: "1.0.0"
-          - os: "macos-latest"
             python-version: "3.12"
             arviz-version: "1.0.0"
 
