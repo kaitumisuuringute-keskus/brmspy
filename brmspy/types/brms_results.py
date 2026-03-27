@@ -7,7 +7,7 @@ import pandas as pd
 import xarray as xr
 from rpy2.rinterface import ListSexpVector
 
-from brmspy.helpers.arviz_compat import InferenceDataBase
+from brmspy.types.arviz_types import InferenceDataBase
 from brmspy.types.session import SexpWrapper
 
 

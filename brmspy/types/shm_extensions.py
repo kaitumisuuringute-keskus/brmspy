@@ -105,7 +105,7 @@ class ShmArray(np.ndarray):
                 shape=shape,
                 dtype=dtype,
                 buffer=view,
-                order=kwargs.get("order", "F"),
+                order=kwargs.get("order", "C"),
             )
             obj = base.view(ShmArray)
             obj._shm_metadata = block.to_ref()
@@ -237,7 +237,7 @@ class ShmDataFrameSimple(pd.DataFrame):
         ShmDataFrameSimple
         """
         _dtype = np.dtype(dtype)
-        arr = ShmArray.from_block(shape=(ncols, nrows), dtype=_dtype, block=block)
+        arr = ShmArray.from_block(shape=(ncols, nrows), dtype=_dtype, block=block, order="F")
 
         df = ShmDataFrameSimple(data=arr.T, index=index, columns=columns)
         df._set_shm_metadata(block.to_ref())

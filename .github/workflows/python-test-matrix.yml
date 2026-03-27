@@ -179,6 +179,13 @@ jobs:
             python-version: "3.12"
           - os: "windows-latest"
             python-version: "3.12"
+          # ArviZ version compat — full integration on ubuntu/3.12
+          - os: "ubuntu-latest"
+            python-version: "3.12"
+            arviz-version: "0.22.0"
+          - os: "ubuntu-latest"
+            python-version: "3.12"
+            arviz-version: "1.0.0"
 
     env:
       RSPM: https://cloud.r-project.org
@@ -256,6 +263,9 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install pytest pytest-cov pytest-xdist arviz tqdm
           python -m pip install -e ".[dev]"
+          if [ -n "${{ matrix.arviz-version }}" ]; then
+            python -m pip install "arviz==${{ matrix.arviz-version }}"
+          fi
 
       - name: Fix paths for rpy2 ABI mode
         if: runner.os != 'Windows'

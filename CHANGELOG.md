@@ -9,6 +9,10 @@ ArviZ 1.0 replaces `arviz.InferenceData` with `xarray.DataTree`. brmspy now supp
 *   **Native return types**: `model.idata` returns the type that ArviZ expects — `InferenceData` on < 1.0, `DataTree` on >= 1.0 — so `az.summary(model.idata)` works out of the box in both versions.
 *   **CI matrix**: Added a lightweight `arviz-compat` job that tests against both ArviZ 0.22.0 and 1.0.0 on Python 3.12 (no R/CmdStan needed).
 
+### Prediction function fixes
+
+*   **Fixed prediction data corruption** (Issue #58): All prediction wrappers (`posterior_epred`, `posterior_predict`, `posterior_linpred`, `log_lik`) returned nearly constant predictions that averaged out all group differentiation. Root cause: `ShmArray.from_block()` defaulted to Fortran memory order (`order='F'`) while `to_shm()` always serialized as C-order (`tobytes(order='C')`). The mismatch caused 3D `(chain, draw, obs)` arrays to be reconstructed with transposed data, mixing draws from different observations. One-line fix in `shm_extensions.py`.
+*   **Added prediction data-validity tests**: New `test_prediction_values.py` with 8 tests that verify prediction functions return meaningfully differentiated predictions across groups, catching data transposition/flattening bugs. Uses a simple `y ~ group` model with group means 100 apart.
 
 ## 0.3.2 - SHM slab allocator for wide-data workloads
 *26.02.17*

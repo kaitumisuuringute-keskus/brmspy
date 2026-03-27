@@ -23,7 +23,7 @@ import pandas as pd
 import xarray as xr
 from rpy2.rinterface_lib.sexp import Sexp
 
-from brmspy.helpers.arviz_compat import InferenceDataLike
+from brmspy.types.arviz_types import InferenceDataLike
 from brmspy.types.shm import ShmPool
 
 __all__ = ["PyObject", "R2pyConverter", "Py2rConverter"]

@@ -17,7 +17,8 @@ from typing import Any, Union
 
 import arviz as az
 import xarray as xr
-from packaging.version import Version
+
+from brmspy.types.arviz_types import ARVIZ_V1, InferenceDataBase, InferenceDataLike
 
 __all__ = [
     "ARVIZ_V1",
@@ -32,26 +33,9 @@ __all__ = [
     "is_inference_data",
 ]
 
-# ---------------------------------------------------------------------------
-# Version detection (evaluated once at import time)
-# ---------------------------------------------------------------------------
-
-ARVIZ_V1: bool = Version(az.__version__) >= Version("1.0.0")
-"""True when the installed ArviZ is ≥ 1.0 (DataTree-based)."""
-
-# ---------------------------------------------------------------------------
-# Canonical types
-# ---------------------------------------------------------------------------
-
-if ARVIZ_V1:
-    InferenceDataLike = xr.DataTree
-    """Runtime type returned by ``from_dict`` and stored on result objects."""
-
-    InferenceDataBase: type = xr.DataTree
-    """Base class for the typed InferenceData subclasses in ``brms_results``."""
-else:
-    InferenceDataLike = az.InferenceData  # type: ignore[misc]
-    InferenceDataBase: type = az.InferenceData  # type: ignore[misc]
+# Version flag and canonical types are defined in types.arviz_types
+# (kept in types/ to avoid a types → helpers import cycle).
+# Re-exported here for convenience so callers only need one import.
 
 
 # ---------------------------------------------------------------------------
