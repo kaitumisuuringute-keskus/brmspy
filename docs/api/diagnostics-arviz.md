@@ -1,10 +1,12 @@
 # Diagnostics with ArviZ
 
-This guide covers how to use ArviZ for comprehensive diagnostics with brmspy models. All fitted models return `arviz.InferenceData` objects by default, enabling seamless integration with ArviZ's extensive diagnostic toolkit.
+This guide covers how to use ArviZ for comprehensive diagnostics with brmspy models. All fitted models return `ArviZ DataTree / InferenceData` objects by default, enabling seamless integration with ArviZ's extensive diagnostic toolkit.
 
-**Key Feature**: brmspy's InferenceData outputs are in the correct format for both univariate and multivariate models, so any ArviZ analysis function works directly without additional conversion or configuration.
+**Key Feature**: brmspy's ArviZ data structure outputs are correctly formatted for both univariate and multivariate models, so any ArviZ analysis function works directly without additional conversion or configuration.
 
-## InferenceData Structure
+Note: The documentation reflects usage of ArviZ 1.0 API.
+
+## Data Structure
 
 Each fitted model's `.idata` attribute contains:
 
@@ -19,18 +21,18 @@ Each fitted model's `.idata` attribute contains:
 
 ### Summary Statistics
 
-Use [`az.summary()`](https://arviz-devs.github.io/arviz/api/generated/arviz.summary.html) to get posterior estimates with convergence diagnostics:
+Use `arviz_stats.summary()` to get posterior estimates with convergence diagnostics:
 
 ```python
 import brmspy
-import arviz as az
+from arviz_stats import summary
 
 # Fit model
 model = brmspy.fit("count ~ zAge + (1|patient)", data=data, family="poisson")
 
 # Get summary with Rhat and ESS
-summary = az.summary(model.idata)
-print(summary)
+summ = summary(model.idata)
+print(summ)
 #                mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
 # b_Intercept   1.234  0.123   1.012    1.456      0.002    0.001    3421.0    3012.0   1.00
 # b_zAge        0.567  0.089   0.398    0.732      0.001    0.001    4123.0    3456.0   1.00
@@ -42,13 +44,15 @@ print(summary)
 Check for convergence issues:
 
 ```python
+from arviz_stats import rhat, ess
+
 # Rhat values (should be < 1.01)
-rhat = az.rhat(model.idata)
-print(f"Max Rhat: {rhat.max().values}")
+rh = rhat(model.idata)
+print(f"Max Rhat: {rh.max().values}")
 
 # Effective sample size
-ess_bulk = az.ess(model.idata, method="bulk")
-ess_tail = az.ess(model.idata, method="tail")
+ess_bulk = ess(model.idata, method="bulk")
+ess_tail = ess(model.idata, method="tail")
 print(f"Min bulk ESS: {ess_bulk.min().values}")
 ```
 
@@ -57,29 +61,29 @@ print(f"Min bulk ESS: {ess_bulk.min().values}")
 Visualize MCMC chains:
 
 ```python
+from arviz_plots import plot_trace
+
 # All parameters
-az.plot_trace(model.idata)
+plot_trace(model.idata)
 
 # Specific parameters only
-az.plot_trace(model.idata, var_names=["b_Intercept", "b_zAge"])
+plot_trace(model.idata, var_names=["b_Intercept", "b_zAge"])
 ```
 
 ## Posterior Predictive Checks
 
 ### Univariate Models
 
-Use [`az.plot_ppc()`](https://arviz-devs.github.io/arviz/api/generated/arviz.plot_ppc.html) to assess model fit:
+Use `arviz_plots.plot_ppc_dist()` to assess model fit:
 
 ```python
+from arviz_plots import plot_ppc_dist
+
 # Basic posterior predictive check
-az.plot_ppc(model.idata)
+plot_ppc_dist(model.idata)
 
 # With specific number of samples
-az.plot_ppc(model.idata, num_pp_samples=100)
-
-# Different plot types
-az.plot_ppc(model.idata, kind="cumulative")
-az.plot_ppc(model.idata, kind="scatter")
+plot_ppc_dist(model.idata, num_samples=100)
 ```
 
 ### Multivariate Models
@@ -96,8 +100,8 @@ mv_model = brmspy.fit(
 )
 
 # Check each response separately
-az.plot_ppc(mv_model.idata, var_names=["tarsus"])
-az.plot_ppc(mv_model.idata, var_names=["back"])
+plot_ppc_dist(mv_model.idata, var_names=["tarsus"])
+plot_ppc_dist(mv_model.idata, var_names=["back"])
 ```
 
 ## Model Comparison
@@ -107,57 +111,41 @@ az.plot_ppc(mv_model.idata, var_names=["back"])
 Compute LOO information criterion for model comparison:
 
 ```python
+from arviz_stats import loo
+
 # Univariate model
-loo_result = az.loo(model.idata)
+loo_result = loo(model.idata)
 print(loo_result)
-# Computed from 4000 posterior samples and 100 observations log-likelihood matrix.
-#          Estimate       SE
-# elpd_loo   -234.5      8.2
-# p_loo         12.3      1.1
-# looic        469.0     16.4
 
 # Multivariate model - specify response variable
-loo_tarsus = az.loo(mv_model.idata, var_name="tarsus")
-loo_back = az.loo(mv_model.idata, var_name="back")
-```
-
-### WAIC (Widely Applicable Information Criterion)
-
-Alternative to LOO for model comparison:
-
-```python
-waic_result = az.waic(model.idata)
-print(waic_result)
-
-# For multivariate models
-waic_tarsus = az.waic(mv_model.idata, var_name="tarsus")
+loo_tarsus = loo(mv_model.idata, var_names=["tarsus"])
+loo_back = loo(mv_model.idata, var_names=["back"])
 ```
 
 ### Comparing Multiple Models
 
-Use [`az.compare()`](https://arviz-devs.github.io/arviz/api/generated/arviz.compare.html) to compare multiple models:
+Use `arviz_stats.compare()` to compare multiple models:
 
 ```python
+from arviz_stats import compare
+from arviz_plots import plot_compare
+
 # Fit competing models
 model1 = brmspy.fit("y ~ x1", data=data)
 model2 = brmspy.fit("y ~ x1 + x2", data=data)
 model3 = brmspy.fit("y ~ x1 * x2", data=data)
 
 # Compare with LOO
-comparison = az.compare({
+comp = compare({
     "model1": model1.idata,
     "model2": model2.idata,
     "model3": model3.idata
-}, ic="loo")
+})
 
-print(comparison)
-#         rank  loo    p_loo   d_loo   weight    se   dse  warning  loo_scale
-# model3     0 -234.5   12.3    0.0    0.72    8.2   0.0    False        log
-# model2     1 -237.8   10.1    3.3    0.24    8.0   2.1    False        log
-# model1     2 -245.2    8.9   10.7    0.04    7.8   4.5    False        log
+print(comp)
 
 # Visualize comparison
-az.plot_compare(comparison)
+plot_compare(comp)
 ```
 
 ### Multivariate Model Comparison
@@ -177,18 +165,16 @@ mv_model2 = brmspy.fit(
 )
 
 # Compare for 'back' response
-comparison_back = az.compare(
+comparison_back = compare(
     {"model1": mv_model1.idata, "model2": mv_model2.idata},
-    ic="loo",
-    var_name="back"
+    var_names=["back"]
 )
 print(comparison_back)
 
 # Compare for 'tarsus' response
-comparison_tarsus = az.compare(
+comparison_tarsus = compare(
     {"model1": mv_model1.idata, "model2": mv_model2.idata},
-    ic="loo",
-    var_name="tarsus"
+    var_names=["tarsus"]
 )
 ```
 
@@ -199,18 +185,18 @@ comparison_tarsus = az.compare(
 Visualize parameter posteriors:
 
 ```python
+from arviz_plots import plot_forest, plot_dist
+
 # Forest plot
-az.plot_forest(model.idata, var_names=["b"])
+plot_forest(model.idata, var_names=["b"])
 
 # Posterior densities
-az.plot_posterior(model.idata, var_names=["b_Intercept", "b_zAge"])
+plot_dist(model.idata, var_names=["b_Intercept", "b_zAge"])
 
-# With reference values
-az.plot_posterior(
+# With reference values (Note: parameter varies by plot type in 1.0)
+plot_dist(
     model.idata,
-    var_names=["b_zAge"],
-    ref_val=0,  # Add reference line at 0
-    hdi_prob=0.95
+    var_names=["b_zAge"]
 )
 ```
 
@@ -219,15 +205,17 @@ az.plot_posterior(
 Examine parameter correlations:
 
 ```python
+from arviz_plots import plot_pair
+
 # Pair plot for selected parameters
-az.plot_pair(
+plot_pair(
     model.idata,
     var_names=["b_Intercept", "b_zAge"],
     kind="hexbin"
 )
 
 # Include divergences (if any)
-az.plot_pair(
+plot_pair(
     model.idata,
     var_names=["b"],
     divergences=True
@@ -239,7 +227,8 @@ az.plot_pair(
 Diagnose sampling issues:
 
 ```python
-az.plot_energy(model.idata)
+from arviz_plots import plot_energy
+plot_energy(model.idata)
 ```
 
 ## Complete Diagnostic Workflow
@@ -248,7 +237,8 @@ Here's a complete example showing the full diagnostic workflow:
 
 ```python
 from brmspy import brms
-import arviz as az
+from arviz_stats import summary, rhat, loo
+from arviz_plots import plot_trace, plot_ppc_dist, plot_dist
 import matplotlib.pyplot as plt
 
 # Fit model
@@ -262,27 +252,26 @@ model = brms.fit(
 )
 
 # 1. Check convergence
-print(az.summary(model.idata))
-assert all(az.rhat(model.idata) < 1.01), "Convergence issues detected"
+print(summary(model.idata))
+assert all(rhat(model.idata).to_array().values < 1.01), "Convergence issues detected"
 
 # 2. Visualize chains
-az.plot_trace(model.idata, var_names=["b"])
+plot_trace(model.idata, var_names=["b"])
 plt.tight_layout()
 plt.show()
 
 # 3. Posterior predictive check
-az.plot_ppc(model.idata, num_pp_samples=100)
+plot_ppc_dist(model.idata, num_samples=100)
 plt.show()
 
 # 4. Model comparison
-loo = az.loo(model.idata)
-print(f"LOO: {loo.loo:.1f} ± {loo.loo_se:.1f}")
+loo_res = loo(model.idata)
+print(loo_res)
 
 # 5. Examine specific parameters
-az.plot_posterior(
+plot_dist(
     model.idata,
-    var_names=["b_zAge", "b_Trt"],
-    ref_val=0
+    var_names=["b_zAge", "b_Trt"]
 )
 plt.show()
 ```
@@ -308,10 +297,5 @@ For large models or datasets, LOO computation can be slow. Consider using `az.lo
 
 ## See Also
 
-- [arviz.summary](https://arviz-devs.github.io/arviz/api/generated/arviz.summary.html) - Posterior summary statistics
-- [arviz.loo](https://arviz-devs.github.io/arviz/api/generated/arviz.loo.html) - Leave-one-out cross-validation
-- [arviz.waic](https://arviz-devs.github.io/arviz/api/generated/arviz.waic.html) - WAIC information criterion
-- [arviz.compare](https://arviz-devs.github.io/arviz/api/generated/arviz.compare.html) - Compare multiple models
-- [arviz.plot_ppc](https://arviz-devs.github.io/arviz/api/generated/arviz.plot_ppc.html) - Posterior predictive checks
-- [arviz.plot_trace](https://arviz-devs.github.io/arviz/api/generated/arviz.plot_trace.html) - MCMC trace plots
-- [ArviZ Documentation](https://arviz-devs.github.io/arviz/api/index.html) - Complete ArviZ API reference
+- [arviz_stats API](https://python.arviz.org/projects/stats/en/stable/api/index.html) - Statistical and diagnostic functions
+- [arviz_plots API](https://python.arviz.org/projects/plots/en/stable/api/index.html) - Plotting and visualization functions
