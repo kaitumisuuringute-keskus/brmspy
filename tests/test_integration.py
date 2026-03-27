@@ -300,7 +300,8 @@ class TestRealWorldExample:
         assert any("b_zBase" in p for p in param_names)
 
         # Check some basic convergence (Rhat close to 1)
-        summary = az.summary(model.idata)
+        # We pass round_to="none" because ArviZ 1.0.0 otherwise formats summaries as strings for display.
+        summary = az.summary(model.idata, round_to="none")
         if "r_hat" in summary.columns:
             max_rhat = summary["r_hat"].max()
             # Warn if convergence is poor, but don't fail

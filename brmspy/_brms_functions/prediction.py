@@ -189,8 +189,7 @@ def posterior_epred(
         idata = az_from_dict(posterior=result, coords=coords, dims=dims)
         idata = cast(IDPosterior, idata)
     else:
-        pred_dims = {k: ["chain", "draw"] + v for k, v in dims.items()}
-        idata = az_from_dict(predictions=result, coords=coords, dims=pred_dims)
+        idata = az_from_dict(predictions=result, coords=coords, dims=dims)
         idata = cast(IDPredictions, idata)
 
     _idata_add_resp_names_suffix(idata, "_mean", resp_names)
@@ -283,10 +282,9 @@ def posterior_predict(
         )
         idata = cast(IDPosteriorPredictive, idata)
     else:
-        pred_dims = {k: ["chain", "draw"] + v for k, v in dims.items()}
         idata = az_from_dict(
             predictions=result,
-            dims=pred_dims,
+            dims=dims,
             coords=coords,
         )
         idata = cast(IDPredictions, idata)
@@ -383,10 +381,9 @@ def posterior_linpred(
         )
         idata = cast(IDPosterior, idata)
     else:
-        pred_dims = {k: ["chain", "draw"] + v for k, v in dims.items()}
         idata = az_from_dict(
             predictions=result,
-            dims=pred_dims,
+            dims=dims,
             coords=coords,
         )
         idata = cast(IDPredictions, idata)

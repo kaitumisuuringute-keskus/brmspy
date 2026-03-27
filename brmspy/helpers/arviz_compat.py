@@ -58,21 +58,55 @@ def from_dict(**kwargs: Any) -> InferenceDataLike:  # type: ignore[return]
     data = {}
     other_kwargs = {}
     known_groups = {
-        "posterior", "posterior_predictive", "log_likelihood", "prior",
-        "prior_predictive", "sample_stats", "sample_stats_prior",
-        "observed_data", "constant_data", "predictions", "predictions_constant_data",
-        "warmup_posterior", "warmup_posterior_predictive", "warmup_predictions",
-        "warmup_log_likelihood", "warmup_sample_stats"
+        "posterior",
+        "posterior_predictive",
+        "log_likelihood",
+        "prior",
+        "prior_predictive",
+        "sample_stats",
+        "sample_stats_prior",
+        "observed_data",
+        "constant_data",
+        "predictions",
+        "predictions_constant_data",
+        "warmup_posterior",
+        "warmup_posterior_predictive",
+        "warmup_predictions",
+        "warmup_log_likelihood",
+        "warmup_sample_stats",
     }
+
+    renamed_groups = {}
 
     for k, v in kwargs.items():
         if v is not None:
-            if k in known_groups:
+            if k == "predictions":
+                # map "predictions" to standard "posterior_predictive" to inherit correct ArviZ 1.0 dims
+                data["posterior_predictive"] = v
+                renamed_groups["posterior_predictive"] = "predictions"
+            elif k == "predictions_constant_data":
+                data["constant_data"] = v
+                renamed_groups["constant_data"] = "predictions_constant_data"
+            elif k in known_groups:
                 data[k] = v
             else:
                 other_kwargs[k] = v
 
-    return az.from_dict(data, **other_kwargs)
+    idata = az.from_dict(data, **other_kwargs)
+
+    # Re-apply custom group names as DataTree node assignments
+    for src, dst in renamed_groups.items():
+        if hasattr(idata, "children"):
+            if src in idata.children:
+                idata[dst] = idata[src]
+                del idata[src]
+        else:
+            # ArviZ < 1.0 workaround for renamed groups logic if it ever hits here
+            if hasattr(idata, src):
+                setattr(idata, dst, getattr(idata, src))
+                delattr(idata, src)
+
+    return idata
 
 
 def get_groups(obj: InferenceDataLike) -> list[str]:
