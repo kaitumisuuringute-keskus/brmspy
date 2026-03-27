@@ -1,5 +1,13 @@
-## 0.4.0 - Arviz 1.0 support, Prediction functions fixes
+## 0.4.0 - ArviZ 1.0 support, Prediction functions fixes
 
+### ArviZ 1.0 Compatibility
+
+ArviZ 1.0 replaces `arviz.InferenceData` with `xarray.DataTree`. brmspy now supports both ArviZ < 1.0 and >= 1.0 seamlessly: (Issue #56)
+
+*   **Version-aware compat layer** (`brmspy.helpers.arviz_compat`): Centralises all ArviZ version-dependent behaviour. The rest of the codebase never imports `arviz` directly — making future removal of < 1.0 support a single-file change.
+*   **Dynamic type hierarchy**: `IDBrm`, `IDPosterior`, and other typed result classes automatically subclass `InferenceData` on ArviZ < 1.0 and `DataTree` on >= 1.0. IDE autocomplete and `isinstance()` checks work correctly for whichever version is installed.
+*   **Native return types**: `model.idata` returns the type that ArviZ expects — `InferenceData` on < 1.0, `DataTree` on >= 1.0 — so `az.summary(model.idata)` works out of the box in both versions.
+*   **CI matrix**: Added a lightweight `arviz-compat` job that tests against both ArviZ 0.22.0 and 1.0.0 on Python 3.12 (no R/CmdStan needed).
 
 
 ## 0.3.2 - SHM slab allocator for wide-data workloads
